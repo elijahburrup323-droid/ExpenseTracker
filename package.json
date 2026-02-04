@@ -1,0 +1,24 @@
+{
+  "name": "expense-tracker",
+  "private": true,
+  "devDependencies": {
+    "@tailwindcss/forms": "^0.5.7",
+    "@tailwindcss/typography": "^0.5.10"
+  },
+  "version": "1.0.0",
+  "description": "A Ruby on Rails expense tracking application with comprehensive authentication options.",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "playwright": "^1.58.1"
+  }
+}

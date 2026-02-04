@@ -1,0 +1,24 @@
+<% if flash.any? %>
+  <div class="fixed top-4 right-4 z-50 space-y-2" data-controller="flash">
+    <% flash.each do |type, message| %>
+      <% bg_class = case type.to_sym
+                    when :notice, :success then "bg-green-50 border-green-400 text-green-800"
+                    when :alert, :error then "bg-red-50 border-red-400 text-red-800"
+                    when :warning then "bg-yellow-50 border-yellow-400 text-yellow-800"
+                    else "bg-blue-50 border-blue-400 text-blue-800"
+                    end %>
+      <div class="<%= bg_class %> border-l-4 p-4 rounded-r-lg shadow-lg max-w-md"
+           data-flash-target="message"
+           data-action="click->flash#dismiss">
+        <div class="flex items-center justify-between">
+          <p class="text-sm font-medium"><%= message %></p>
+          <button type="button" class="ml-4 text-current opacity-50 hover:opacity-100">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>
