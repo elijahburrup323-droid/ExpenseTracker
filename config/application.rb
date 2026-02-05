@@ -10,6 +10,9 @@ module ExpenseTracker
 
     config.autoload_lib(ignore: %w[assets tasks])
 
+    # Run app at /expensetracker subdirectory
+    config.relative_url_root = "/expensetracker"
+
     config.time_zone = "UTC"
 
     config.generators do |g|
