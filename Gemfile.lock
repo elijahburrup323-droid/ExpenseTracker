@@ -127,6 +127,7 @@ GEM
       railties (>= 6.1)
     drb (2.2.3)
     erb (6.0.1)
+    error_highlight (0.7.1)
     erubi (1.13.1)
     factory_bot (6.5.6)
       activesupport (>= 6.1.0)
@@ -210,6 +211,8 @@ GEM
     nio4r (2.7.5)
     nokogiri (1.19.0-x64-mingw-ucrt)
       racc (~> 1.4)
+    nokogiri (1.19.0-x86_64-linux-gnu)
+      racc (~> 1.4)
     oauth2 (2.0.18)
       faraday (>= 0.17.3, < 4.0)
       jwt (>= 1.0, < 4.0)
@@ -242,6 +245,7 @@ GEM
       omniauth (~> 2.0)
     orm_adapter (0.5.0)
     pg (1.6.3-x64-mingw-ucrt)
+    pg (1.6.3-x86_64-linux)
     phonelib (0.10.15)
     pp (0.6.3)
       prettyprint
@@ -352,6 +356,7 @@ GEM
       railties (>= 7.0.0)
       tailwindcss-ruby (~> 4.0)
     tailwindcss-ruby (4.1.18-x64-mingw-ucrt)
+    tailwindcss-ruby (4.1.18-x86_64-linux-gnu)
     thor (1.5.0)
     timeout (0.6.0)
     tsort (0.2.0)
@@ -386,6 +391,7 @@ GEM
 
 PLATFORMS
   x64-mingw-ucrt
+  x86_64-linux
 
 DEPENDENCIES
   annotate
