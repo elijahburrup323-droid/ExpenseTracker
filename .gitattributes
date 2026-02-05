@@ -1,0 +1,11 @@
+# Handle line endings automatically for files detected as text
+* text=auto
+
+# Shell scripts must have Unix line endings
+*.sh text eol=lf
+
+# Ensure Ruby files have Unix line endings
+*.rb text eol=lf
+*.ru text eol=lf
+Gemfile text eol=lf
+Rakefile text eol=lf
