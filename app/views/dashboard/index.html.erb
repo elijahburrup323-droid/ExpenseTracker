@@ -1,64 +1,295 @@
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-  <div class="mb-8">
-    <h1 class="text-2xl font-bold text-gray-900">Welcome back, <%= current_user.full_name %>!</h1>
-    <p class="text-gray-600 mt-1">Here's your financial overview</p>
-  </div>
-
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-sm font-medium text-gray-500">Total Expenses</p>
-          <p class="text-2xl font-bold text-gray-900 mt-1">$0.00</p>
-        </div>
-        <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-          <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
-          </svg>
-        </div>
-      </div>
-      <p class="text-sm text-gray-500 mt-2">This month</p>
-    </div>
-
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-sm font-medium text-gray-500">Budget Remaining</p>
-          <p class="text-2xl font-bold text-gray-900 mt-1">$0.00</p>
-        </div>
-        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-          <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
-      </div>
-      <p class="text-sm text-gray-500 mt-2">Set your budget</p>
-    </div>
-
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-sm font-medium text-gray-500">Transactions</p>
-          <p class="text-2xl font-bold text-gray-900 mt-1">0</p>
-        </div>
-        <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
-          <svg class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-          </svg>
-        </div>
-      </div>
-      <p class="text-sm text-gray-500 mt-2">This month</p>
+<%# ===== WELCOME BANNER ===== %>
+<div class="bg-gradient-to-r from-brand-700 via-brand-600 to-brand-400 -mt-px">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <h1 class="text-3xl font-bold text-white">Hello <%= current_user.first_name || current_user.full_name %></h1>
+    <p class="text-brand-100 mt-1">Let's start tracking your money and hitting your goals!</p>
+    <div class="mt-4">
+      <%= link_to "#", class: "inline-flex items-center px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold rounded-full shadow transition" do %>
+        View Budget
+      <% end %>
     </div>
   </div>
+</div>
 
-  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-    <h2 class="text-lg font-semibold text-gray-900 mb-4">Recent Transactions</h2>
-    <div class="text-center py-12 text-gray-500">
-      <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-      </svg>
-      <p class="mt-4 text-sm">No transactions yet</p>
-      <p class="text-sm">Start tracking your expenses to see them here</p>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+  <%# ===== TOP ROW: Budget Overview | Accounts | Net Worth ===== %>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+    <%# --- Budget Overview Card --- %>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <h2 class="text-sm font-semibold text-gray-800 mb-4">Budget Overview</h2>
+      <div class="flex items-center space-x-4">
+        <%# Donut chart SVG %>
+        <div class="relative w-28 h-28 flex-shrink-0">
+          <svg viewBox="0 0 36 36" class="w-full h-full">
+            <%# Background ring %>
+            <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#e5e7eb" stroke-width="3"/>
+            <%# Spent portion (63.5% of plan) %>
+            <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#a855f7" stroke-width="3"
+                    stroke-dasharray="63.5 36.5" stroke-dashoffset="25" stroke-linecap="round"/>
+            <%# Remaining portion %>
+            <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#22c55e" stroke-width="3"
+                    stroke-dasharray="36.5 63.5" stroke-dashoffset="61.5" stroke-linecap="round"/>
+          </svg>
+          <div class="absolute inset-0 flex flex-col items-center justify-center">
+            <span class="text-xl font-bold text-gray-900">$2,300</span>
+            <span class="text-xs text-gray-500">left</span>
+          </div>
+        </div>
+        <div>
+          <p class="text-sm text-gray-600"><span class="font-semibold text-gray-800">$4,000</span> spent</p>
+          <p class="text-sm text-gray-500">of $6,300 plan</p>
+          <a href="#" class="text-xs text-brand-600 hover:text-brand-700 font-medium mt-2 inline-block">View Details &rsaquo;</a>
+        </div>
+      </div>
     </div>
+
+    <%# --- Accounts Card --- %>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <h2 class="text-sm font-semibold text-gray-800 mb-4">Accounts</h2>
+      <ul class="space-y-3">
+        <li class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+              <svg class="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+              </svg>
+            </span>
+            <span class="text-sm text-gray-700">Checking</span>
+          </div>
+          <span class="text-sm font-semibold text-gray-900">$2,446</span>
+        </li>
+        <li class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="w-7 h-7 rounded-lg bg-green-100 flex items-center justify-center">
+              <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 10v1"/>
+              </svg>
+            </span>
+            <span class="text-sm text-gray-700">Savings</span>
+          </div>
+          <span class="text-sm font-semibold text-gray-900">$7,020</span>
+        </li>
+        <li class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="w-7 h-7 rounded-lg bg-red-100 flex items-center justify-center">
+              <svg class="w-4 h-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+              </svg>
+            </span>
+            <span class="text-sm text-gray-700">Credit Card</span>
+          </div>
+          <span class="text-sm font-semibold text-gray-900">$650</span>
+        </li>
+      </ul>
+      <div class="mt-4 pt-3 border-t border-gray-100">
+        <a href="#" class="text-xs text-brand-600 hover:text-brand-700 font-medium">Manage Accounts &rsaquo;</a>
+      </div>
+    </div>
+
+    <%# --- Net Worth Card --- %>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <h2 class="text-sm font-semibold text-gray-800 mb-1">Net Worth</h2>
+      <div class="flex items-baseline space-x-2 mb-3">
+        <span class="text-2xl font-bold text-gray-900">$20,305</span>
+        <span class="text-xs font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">+$498 from last month</span>
+      </div>
+      <%# Mini line chart SVG %>
+      <div class="w-full h-20">
+        <svg viewBox="0 0 200 60" class="w-full h-full" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="netWorthGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#a855f7" stop-opacity="0.3"/>
+              <stop offset="100%" stop-color="#a855f7" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <%# Area fill %>
+          <path d="M0,45 L33,42 L66,38 L100,35 L133,25 L166,18 L200,12 L200,60 L0,60 Z"
+                fill="url(#netWorthGrad)"/>
+          <%# Line %>
+          <polyline points="0,45 33,42 66,38 100,35 133,25 166,18 200,12"
+                    fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <%# Dot at end %>
+          <circle cx="200" cy="12" r="3" fill="#a855f7"/>
+        </svg>
+      </div>
+      <div class="flex justify-between text-[10px] text-gray-400 mt-1">
+        <span>Sep 2025</span>
+        <span>Oct 2025</span>
+        <span>Nov 2025</span>
+        <span>Jan 2026</span>
+        <span>Feb 2026</span>
+      </div>
+    </div>
+  </div>
+
+  <%# ===== BOTTOM ROW: Income & Spending | Buckets Activity ===== %>
+  <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+
+    <%# --- Income & Spending Card (wider) --- %>
+    <div class="lg:col-span-3 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div class="flex items-center justify-between mb-5">
+        <div class="flex items-baseline space-x-2">
+          <h2 class="text-sm font-semibold text-gray-800">Income & Spending</h2>
+          <span class="text-xs text-gray-500">Overview for <span class="font-medium text-gray-700">April 2026</span></span>
+        </div>
+        <span class="text-xl font-bold text-gray-900">$11,600</span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1">
+        <%# Left column: Income items %>
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <span class="w-6 h-6 rounded bg-emerald-100 flex items-center justify-center">
+                <span class="text-emerald-600 text-xs font-bold">$</span>
+              </span>
+              <span class="text-sm text-gray-700">Beginning Balance</span>
+            </div>
+            <span class="text-sm font-semibold text-gray-900">$9,200</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <span class="w-6 h-6 rounded bg-blue-100 flex items-center justify-center">
+                <svg class="w-3.5 h-3.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 10v1"/>
+                </svg>
+              </span>
+              <span class="text-sm text-gray-700">Paychecks</span>
+            </div>
+            <span class="text-sm font-semibold text-gray-900">$5,200</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <span class="w-6 h-6 rounded bg-purple-100 flex items-center justify-center">
+                <svg class="w-3.5 h-3.5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+              </span>
+              <span class="text-sm text-gray-700">Freelance Income</span>
+            </div>
+            <span class="text-sm font-semibold text-gray-900">$1,150</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <span class="w-6 h-6 rounded bg-teal-100 flex items-center justify-center">
+                <svg class="w-3.5 h-3.5 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
+              </span>
+              <span class="text-sm text-gray-700">Social Security</span>
+            </div>
+            <span class="text-sm font-semibold text-gray-900">$500</span>
+          </div>
+        </div>
+
+        <%# Right column: Money In / Money Out summary %>
+        <div class="flex flex-col justify-between">
+          <div class="flex items-center space-x-4 mb-3">
+            <div class="flex items-center space-x-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span class="text-xs text-gray-500">Money In</span>
+              <span class="text-sm font-semibold text-gray-900">$6,850</span>
+            </div>
+          </div>
+
+          <%# Bar chart %>
+          <div class="space-y-2">
+            <div class="text-xs text-gray-500 mb-1">Current Balance</div>
+            <div class="flex space-x-1 h-8">
+              <div class="bg-brand-500 rounded-sm flex-1"></div>
+              <div class="bg-brand-400 rounded-sm flex-1"></div>
+              <div class="bg-brand-600 rounded-sm flex-1"></div>
+              <div class="bg-brand-500 rounded-sm flex-1"></div>
+              <div class="bg-emerald-500 rounded-sm flex-1"></div>
+              <div class="bg-emerald-400 rounded-sm flex-1"></div>
+              <div class="bg-brand-400 rounded-sm flex-1"></div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+            <div class="text-center">
+              <p class="text-xs text-emerald-600 font-medium">+ $6,850</p>
+              <p class="text-[10px] text-gray-400">Money In</p>
+            </div>
+            <div class="text-center">
+              <p class="text-xs text-red-500 font-medium">$4,450</p>
+              <p class="text-[10px] text-gray-400">Money Out</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4 pt-3 border-t border-gray-100">
+        <a href="#" class="text-xs text-brand-600 hover:text-brand-700 font-medium">Manage Buckets &rsaquo;</a>
+      </div>
+    </div>
+
+    <%# --- Buckets Activity Card --- %>
+    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <h2 class="text-sm font-semibold text-gray-800 mb-4">Buckets Activity</h2>
+      <ul class="space-y-3">
+        <li class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="w-7 h-7 rounded-lg bg-red-100 flex items-center justify-center">
+              <svg class="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+              </svg>
+            </span>
+            <span class="text-sm text-gray-700">Emergency Fund</span>
+          </div>
+          <span class="text-sm font-semibold text-gray-900">$1,200</span>
+        </li>
+        <li class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="w-7 h-7 rounded-lg bg-sky-100 flex items-center justify-center">
+              <svg class="w-4 h-4 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064"/>
+              </svg>
+            </span>
+            <span class="text-sm text-gray-700">Vacation</span>
+          </div>
+          <span class="text-sm font-semibold text-gray-900">$450</span>
+        </li>
+        <li class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="w-7 h-7 rounded-lg bg-violet-100 flex items-center justify-center">
+              <svg class="w-4 h-4 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+              </svg>
+            </span>
+            <span class="text-sm text-gray-700">Streaming Subscription</span>
+          </div>
+          <span class="text-sm font-semibold text-gray-900">$45</span>
+        </li>
+        <li class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center">
+              <svg class="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+              </svg>
+            </span>
+            <span class="text-sm text-gray-700">Car Repair</span>
+          </div>
+          <span class="text-sm font-semibold text-gray-900">$300</span>
+        </li>
+        <li class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center">
+              <svg class="w-4 h-4 text-emerald-500" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z"/>
+              </svg>
+            </span>
+            <span class="text-sm text-gray-700">House Projects</span>
+          </div>
+          <span class="text-sm font-semibold text-gray-900">$75</span>
+        </li>
+      </ul>
+      <div class="mt-4 pt-3 border-t border-gray-100">
+        <a href="#" class="text-xs text-brand-600 hover:text-brand-700 font-medium">Manage Buckets &rsaquo;</a>
+      </div>
+    </div>
+
   </div>
 </div>

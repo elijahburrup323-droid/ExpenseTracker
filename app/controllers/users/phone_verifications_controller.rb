@@ -28,6 +28,7 @@ class Users::PhoneVerificationsController < ApplicationController
     unless @verification && !@verification.expired?
       flash[:alert] = "Verification session expired. Please try again."
       redirect_to new_users_phone_verification_path
+      return
     end
   end
 

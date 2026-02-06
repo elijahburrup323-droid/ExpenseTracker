@@ -27,7 +27,8 @@ async function testSite() {
   try {
     // Test 1: Home page
     log('--- Test 1: Home Page ---');
-    const response = await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 30000 });
+    const baseUrl = 'https://expensetracker-d8tf.onrender.com/expensetracker';
+    const response = await page.goto(baseUrl + '/', { waitUntil: 'domcontentloaded', timeout: 30000 });
 
     if (!response.ok()) {
       log('ISSUE: Home page returned status ' + response.status());
@@ -47,7 +48,7 @@ async function testSite() {
     // Test 2: Login page
     log('');
     log('--- Test 2: Login Page ---');
-    const loginResponse = await page.goto('http://localhost:3000/users/sign_in', { waitUntil: 'domcontentloaded', timeout: 30000 });
+    const loginResponse = await page.goto('https://expensetracker-d8tf.onrender.com/expensetracker/users/sign_in', { waitUntil: 'domcontentloaded', timeout: 30000 });
 
     if (loginResponse.ok()) {
       log('OK: Login page accessible');
@@ -93,7 +94,7 @@ async function testSite() {
     // Test 4: Signup page
     log('');
     log('--- Test 5: Signup Page ---');
-    const signupResponse = await page.goto('http://localhost:3000/users/sign_up', { waitUntil: 'domcontentloaded', timeout: 30000 });
+    const signupResponse = await page.goto('https://expensetracker-d8tf.onrender.com/expensetracker/users/sign_up', { waitUntil: 'domcontentloaded', timeout: 30000 });
     log(signupResponse.ok() ? 'OK: Signup page accessible' : 'ISSUE: Signup page returned status ' + signupResponse.status());
 
   } catch (error) {
