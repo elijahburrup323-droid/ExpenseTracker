@@ -20,6 +20,14 @@ Rails.application.routes.draw do
   # Dashboard/Home
   get "dashboard", to: "dashboard#index", as: :dashboard
 
+  # Spending Types (HTML page)
+  resources :spending_types, only: [:index]
+
+  # API endpoints
+  namespace :api do
+    resources :spending_types, only: [:index, :create, :update, :destroy]
+  end
+
   # Static pages
   root "home#index"
 

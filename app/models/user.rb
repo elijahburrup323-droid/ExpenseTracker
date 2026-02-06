@@ -4,6 +4,7 @@ class User < ApplicationRecord
          :omniauthable, omniauth_providers: [:google_oauth2, :apple, :microsoft_graph]
 
   has_many :identities, dependent: :destroy
+  has_many :spending_types, dependent: :destroy
 
   validates :email, presence: true, uniqueness: true, unless: :phone_only_user?
   validates :phone_number, uniqueness: true, allow_blank: true

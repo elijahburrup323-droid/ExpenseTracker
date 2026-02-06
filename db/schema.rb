@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_01_01_000003) do
+ActiveRecord::Schema[7.1].define(version: 2024_01_01_000004) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -37,6 +37,23 @@ ActiveRecord::Schema[7.1].define(version: 2024_01_01_000003) do
     t.datetime "updated_at", null: false
     t.index ["phone_number", "code"], name: "index_phone_verifications_on_phone_number_and_code"
     t.index ["phone_number"], name: "index_phone_verifications_on_phone_number"
+  end
+
+  create_table "spending_types", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "name", limit: 80, null: false
+    t.string "description", limit: 255
+    t.string "icon_key", limit: 40
+    t.string "color_key", limit: 40
+    t.integer "sort_order", default: 0, null: false
+    t.boolean "is_system", default: false, null: false
+    t.boolean "is_active", default: true, null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "user_id, lower((name)::text)", name: "index_spending_types_on_user_id_and_lower_name", unique: true, where: "(deleted_at IS NULL)"
+    t.index ["user_id", "sort_order"], name: "index_spending_types_on_user_id_and_sort_order"
+    t.index ["user_id"], name: "index_spending_types_on_user_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -71,4 +88,5 @@ ActiveRecord::Schema[7.1].define(version: 2024_01_01_000003) do
   end
 
   add_foreign_key "identities", "users"
+  add_foreign_key "spending_types", "users"
 end
