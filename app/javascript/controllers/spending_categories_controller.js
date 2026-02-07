@@ -3,9 +3,10 @@ import { ICON_CATALOG, COLOR_OPTIONS, renderIconSvg, defaultIconSvg, iconFor, es
 
 export default class extends Controller {
   static targets = ["tableBody", "addButton", "deleteModal", "deleteModalName"]
-  static values = { apiUrl: String, csrfToken: String }
+  static values = { apiUrl: String, typesUrl: String, csrfToken: String }
 
   connect() {
+    this.categories = []
     this.spendingTypes = []
     this.state = "idle" // idle | adding | editing
     this.editingId = null
@@ -33,12 +34,12 @@ export default class extends Controller {
 
   async fetchAll() {
     try {
-      const response = await fetch(this.apiUrlValue, {
-        headers: { "Accept": "application/json" }
-      })
-      if (response.ok) {
-        this.spendingTypes = await response.json()
-      }
+      const [catRes, typesRes] = await Promise.all([
+        fetch(this.apiUrlValue, { headers: { "Accept": "application/json" } }),
+        fetch(this.typesUrlValue, { headers: { "Accept": "application/json" } })
+      ])
+      if (catRes.ok) this.categories = await catRes.json()
+      if (typesRes.ok) this.spendingTypes = await typesRes.json()
     } catch (e) {
       // silently fail, show empty table
     }
@@ -67,12 +68,20 @@ export default class extends Controller {
   async saveNew() {
     const nameInput = this.tableBodyTarget.querySelector("input[name='name']")
     const descInput = this.tableBodyTarget.querySelector("input[name='description']")
+    const typeSelect = this.tableBodyTarget.querySelector("select[name='spending_type_id']")
     const name = nameInput?.value?.trim()
     const description = descInput?.value?.trim()
+    const spending_type_id = typeSelect?.value
 
     if (!name) {
       this.showRowError("Name is required")
       nameInput?.focus()
+      return
+    }
+
+    if (!spending_type_id) {
+      this.showRowError("Spending Type is required")
+      typeSelect?.focus()
       return
     }
 
@@ -84,17 +93,18 @@ export default class extends Controller {
           "Accept": "application/json",
           "X-CSRF-Token": this.csrfTokenValue
         },
-        body: JSON.stringify({ spending_type: {
+        body: JSON.stringify({ spending_category: {
           name,
           description,
+          spending_type_id,
           icon_key: this.selectedIconKey,
           color_key: this.selectedColorKey
         }})
       })
 
       if (response.ok) {
-        const newType = await response.json()
-        this.spendingTypes.push(newType)
+        const newCat = await response.json()
+        this.categories.push(newCat)
         this.state = "idle"
         this.iconPickerOpen = false
         this.renderTable()
@@ -110,11 +120,11 @@ export default class extends Controller {
   startEditing(event) {
     if (this.state !== "idle") return
     const id = Number(event.currentTarget.dataset.id)
-    const st = this.spendingTypes.find(s => s.id === id)
+    const cat = this.categories.find(c => c.id === id)
     this.state = "editing"
     this.editingId = id
-    this.selectedIconKey = st?.icon_key || null
-    this.selectedColorKey = st?.color_key || "blue"
+    this.selectedIconKey = cat?.icon_key || null
+    this.selectedColorKey = cat?.color_key || "blue"
     this.iconPickerOpen = false
     this.renderTable()
     const nameInput = this.tableBodyTarget.querySelector("input[name='name']")
@@ -131,12 +141,22 @@ export default class extends Controller {
   async saveEdit() {
     const nameInput = this.tableBodyTarget.querySelector("input[name='name']")
     const descInput = this.tableBodyTarget.querySelector("input[name='description']")
+    const typeSelect = this.tableBodyTarget.querySelector("select[name='spending_type_id']")
+    const debtToggle = this.tableBodyTarget.querySelector("input[name='is_debt']")
     const name = nameInput?.value?.trim()
     const description = descInput?.value?.trim()
+    const spending_type_id = typeSelect?.value
+    const is_debt = debtToggle?.checked || false
 
     if (!name) {
       this.showRowError("Name is required")
       nameInput?.focus()
+      return
+    }
+
+    if (!spending_type_id) {
+      this.showRowError("Spending Type is required")
+      typeSelect?.focus()
       return
     }
 
@@ -148,9 +168,11 @@ export default class extends Controller {
           "Accept": "application/json",
           "X-CSRF-Token": this.csrfTokenValue
         },
-        body: JSON.stringify({ spending_type: {
+        body: JSON.stringify({ spending_category: {
           name,
           description,
+          spending_type_id,
+          is_debt,
           icon_key: this.selectedIconKey,
           color_key: this.selectedColorKey
         }})
@@ -158,8 +180,8 @@ export default class extends Controller {
 
       if (response.ok) {
         const updated = await response.json()
-        const idx = this.spendingTypes.findIndex(st => st.id === this.editingId)
-        if (idx !== -1) this.spendingTypes[idx] = updated
+        const idx = this.categories.findIndex(c => c.id === this.editingId)
+        if (idx !== -1) this.categories[idx] = updated
         this.state = "idle"
         this.editingId = null
         this.iconPickerOpen = false
@@ -176,11 +198,11 @@ export default class extends Controller {
   confirmDelete(event) {
     if (this.state !== "idle") return
     const id = Number(event.currentTarget.dataset.id)
-    const st = this.spendingTypes.find(s => s.id === id)
-    if (!st) return
+    const cat = this.categories.find(c => c.id === id)
+    if (!cat) return
 
     this.deletingId = id
-    this.deleteModalNameTarget.textContent = st.name
+    this.deleteModalNameTarget.textContent = cat.name
     this.deleteModalTarget.classList.remove("hidden")
     this.addButtonTarget.disabled = true
   }
@@ -201,7 +223,7 @@ export default class extends Controller {
       })
 
       if (response.ok || response.status === 204) {
-        this.spendingTypes = this.spendingTypes.filter(st => st.id !== this.deletingId)
+        this.categories = this.categories.filter(c => c.id !== this.deletingId)
         this.renderTable()
       }
     } catch (e) {
@@ -270,7 +292,7 @@ export default class extends Controller {
       const ringClass = selected ? `ring-2 ${c.ring} ring-offset-1` : ""
       return `<button type="button" data-color-key="${c.key}"
         class="w-6 h-6 rounded-full ${c.bg} ${ringClass} hover:ring-2 hover:${c.ring} hover:ring-offset-1 transition flex items-center justify-center"
-        data-action="click->spending-types#selectColor"
+        data-action="click->spending-categories#selectColor"
         title="${c.label}">
         <span class="w-3 h-3 rounded-full ${c.css.replace('text-', 'bg-')}"></span>
       </button>`
@@ -281,7 +303,7 @@ export default class extends Controller {
       const bgClass = selected ? "bg-brand-100 ring-2 ring-brand-500" : "hover:bg-gray-100"
       return `<button type="button" data-icon-key="${icon.key}"
         class="p-1.5 rounded-md ${bgClass} transition flex items-center justify-center"
-        data-action="click->spending-types#selectIcon"
+        data-action="click->spending-categories#selectIcon"
         title="${icon.label}">
         ${renderIconSvg(icon.key, this.selectedColorKey, "h-5 w-5")}
       </button>`
@@ -324,44 +346,50 @@ export default class extends Controller {
     let html = ""
 
     if (this.state === "adding") {
-      html += this.renderInputRow("", "")
+      html += this.renderAddRow()
     }
 
-    for (const st of this.spendingTypes) {
-      if (this.state === "editing" && st.id === this.editingId) {
-        html += this.renderInputRow(st.name, st.description || "")
+    for (const cat of this.categories) {
+      if (this.state === "editing" && cat.id === this.editingId) {
+        html += this.renderEditRow(cat)
       } else {
-        html += this.renderDisplayRow(st, isIdle)
+        html += this.renderDisplayRow(cat, isIdle)
       }
     }
 
-    if (this.spendingTypes.length === 0 && this.state !== "adding") {
-      html = `<tr><td colspan="4" class="px-6 py-8 text-center text-sm text-gray-400">No spending types yet. Click "Add Spending Type" to create one.</td></tr>`
+    if (this.categories.length === 0 && this.state !== "adding") {
+      html = `<tr><td colspan="6" class="px-6 py-8 text-center text-sm text-gray-400">No spending categories yet. Click "Add Spending Category" to create one.</td></tr>`
     }
 
     this.tableBodyTarget.innerHTML = html
   }
 
-  renderDisplayRow(st, actionsEnabled) {
+  renderDisplayRow(cat, actionsEnabled) {
     const disabledClass = actionsEnabled ? "" : "opacity-50 cursor-not-allowed"
     const disabledAttr = actionsEnabled ? "" : "disabled"
 
+    const debtPill = cat.is_debt
+      ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">True</span>`
+      : `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">False</span>`
+
     return `<tr class="hover:bg-gray-50 transition-colors">
-      <td class="px-6 py-4">${iconFor(st.icon_key, st.color_key)}</td>
-      <td class="px-6 py-4 text-sm font-medium text-gray-900">${escapeHtml(st.name)}</td>
-      <td class="px-6 py-4 text-sm text-gray-500">${escapeHtml(st.description || "")}</td>
+      <td class="px-6 py-4">${iconFor(cat.icon_key, cat.color_key)}</td>
+      <td class="px-6 py-4 text-sm font-medium text-gray-900">${escapeHtml(cat.name)}</td>
+      <td class="px-6 py-4 text-sm text-gray-500">${escapeHtml(cat.description || "")}</td>
+      <td class="px-6 py-4 text-sm text-gray-500 w-48 max-w-[12rem] truncate">${escapeHtml(cat.spending_type_name || "")}</td>
+      <td class="px-6 py-4 text-center">${debtPill}</td>
       <td class="px-6 py-4 text-right space-x-2">
         <button type="button"
                 class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-brand-700 bg-brand-50 hover:bg-brand-100 transition ${disabledClass}"
-                data-id="${st.id}"
-                data-action="click->spending-types#startEditing"
+                data-id="${cat.id}"
+                data-action="click->spending-categories#startEditing"
                 ${disabledAttr}>
           Edit
         </button>
         <button type="button"
                 class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100 transition ${disabledClass}"
-                data-id="${st.id}"
-                data-action="click->spending-types#confirmDelete"
+                data-id="${cat.id}"
+                data-action="click->spending-categories#confirmDelete"
                 ${disabledAttr}>
           Delete
         </button>
@@ -369,18 +397,21 @@ export default class extends Controller {
     </tr>`
   }
 
-  renderInputRow(name, description) {
-    const isAdding = this.state === "adding"
+  renderAddRow() {
     const previewIcon = this.selectedIconKey
       ? renderIconSvg(this.selectedIconKey, this.selectedColorKey, "h-5 w-5")
       : `<svg class="h-5 w-5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`
+
+    const typeOptions = this.spendingTypes.map(st =>
+      `<option value="${st.id}">${escapeHtml(st.name)}</option>`
+    ).join("")
 
     return `<tr class="bg-brand-50/40">
       <td class="px-6 py-3">
         <div class="relative" data-icon-picker>
           <button type="button"
                   class="p-1.5 rounded-md border border-gray-300 hover:bg-gray-50 transition"
-                  data-action="click->spending-types#toggleIconPicker"
+                  data-action="click->spending-categories#toggleIconPicker"
                   title="Choose icon">
             <span data-icon-preview>${previewIcon}</span>
           </button>
@@ -389,39 +420,125 @@ export default class extends Controller {
         </div>
       </td>
       <td class="px-6 py-3">
-        <input type="text" name="name" value="${escapeAttr(name)}" placeholder="Name"
+        <input type="text" name="name" value="" placeholder="Name"
                maxlength="80"
                class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-               data-action="keydown->spending-types#handleKeydown">
+               data-action="keydown->spending-categories#handleKeydown">
       </td>
       <td class="px-6 py-3">
-        <input type="text" name="description" value="${escapeAttr(description)}" placeholder="Description"
+        <input type="text" name="description" value="" placeholder="Description"
                maxlength="255"
                class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-               data-action="keydown->spending-types#handleKeydown">
+               data-action="keydown->spending-categories#handleKeydown">
+      </td>
+      <td class="px-6 py-3 w-48">
+        <select name="spending_type_id"
+                class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+                data-action="keydown->spending-categories#handleKeydown">
+          <option value="">Select type...</option>
+          ${typeOptions}
+        </select>
+      </td>
+      <td class="px-6 py-3 text-center">
       </td>
       <td class="px-6 py-3 text-right space-x-2">
         <button type="button"
                 class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
-                data-action="click->spending-types#${isAdding ? 'saveNew' : 'saveEdit'}">
+                data-action="click->spending-categories#saveNew">
           Save
         </button>
         <button type="button"
                 class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 transition"
-                data-action="click->spending-types#${isAdding ? 'cancelAdding' : 'cancelEditing'}">
+                data-action="click->spending-categories#cancelAdding">
           Cancel
         </button>
       </td>
     </tr>
-    <tr class="hidden" data-spending-types-target="rowError">
-      <td colspan="4" class="px-6 py-2 text-sm text-red-600 bg-red-50"></td>
+    <tr class="hidden" data-spending-categories-target="rowError">
+      <td colspan="6" class="px-6 py-2 text-sm text-red-600 bg-red-50"></td>
     </tr>`
+  }
+
+  renderEditRow(cat) {
+    const previewIcon = this.selectedIconKey
+      ? renderIconSvg(this.selectedIconKey, this.selectedColorKey, "h-5 w-5")
+      : `<svg class="h-5 w-5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`
+
+    const typeOptions = this.spendingTypes.map(st => {
+      const selected = st.id === cat.spending_type_id ? "selected" : ""
+      return `<option value="${st.id}" ${selected}>${escapeHtml(st.name)}</option>`
+    }).join("")
+
+    const checked = cat.is_debt ? "checked" : ""
+    const toggleBg = cat.is_debt ? "bg-purple-600" : "bg-gray-200"
+    const toggleTranslate = cat.is_debt ? "translate-x-5" : "translate-x-0"
+
+    return `<tr class="bg-brand-50/40">
+      <td class="px-6 py-3">
+        <div class="relative" data-icon-picker>
+          <button type="button"
+                  class="p-1.5 rounded-md border border-gray-300 hover:bg-gray-50 transition"
+                  data-action="click->spending-categories#toggleIconPicker"
+                  title="Choose icon">
+            <span data-icon-preview>${previewIcon}</span>
+          </button>
+          <div data-icon-picker-dropdown class="hidden absolute left-0 top-full mt-1 z-50 bg-white rounded-lg shadow-xl ring-1 ring-gray-200 w-80">
+          </div>
+        </div>
+      </td>
+      <td class="px-6 py-3">
+        <input type="text" name="name" value="${escapeAttr(cat.name)}" placeholder="Name"
+               maxlength="80"
+               class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+               data-action="keydown->spending-categories#handleKeydown">
+      </td>
+      <td class="px-6 py-3">
+        <input type="text" name="description" value="${escapeAttr(cat.description || "")}" placeholder="Description"
+               maxlength="255"
+               class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+               data-action="keydown->spending-categories#handleKeydown">
+      </td>
+      <td class="px-6 py-3 w-48">
+        <select name="spending_type_id"
+                class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+                data-action="keydown->spending-categories#handleKeydown">
+          <option value="">Select type...</option>
+          ${typeOptions}
+        </select>
+      </td>
+      <td class="px-6 py-3 text-center">
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" name="is_debt" class="sr-only peer" ${checked}
+                 data-action="change->spending-categories#toggleDebtVisual">
+          <div class="w-11 h-6 ${toggleBg} peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-300 rounded-full peer peer-checked:bg-purple-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+        </label>
+      </td>
+      <td class="px-6 py-3 text-right space-x-2">
+        <button type="button"
+                class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
+                data-action="click->spending-categories#saveEdit">
+          Save
+        </button>
+        <button type="button"
+                class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 transition"
+                data-action="click->spending-categories#cancelEditing">
+          Cancel
+        </button>
+      </td>
+    </tr>
+    <tr class="hidden" data-spending-categories-target="rowError">
+      <td colspan="6" class="px-6 py-2 text-sm text-red-600 bg-red-50"></td>
+    </tr>`
+  }
+
+  toggleDebtVisual(event) {
+    // Visual update handled by CSS peer classes - no JS needed
   }
 
   // --- Error Display ---
 
   showRowError(message) {
-    const errorRow = this.tableBodyTarget.querySelector("[data-spending-types-target='rowError']")
+    const errorRow = this.tableBodyTarget.querySelector("[data-spending-categories-target='rowError']")
     if (errorRow) {
       errorRow.classList.remove("hidden")
       errorRow.querySelector("td").textContent = message

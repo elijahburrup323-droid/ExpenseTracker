@@ -1,5 +1,6 @@
 class SpendingType < ApplicationRecord
   belongs_to :user
+  has_many :spending_categories
 
   default_scope { where(deleted_at: nil) }
 

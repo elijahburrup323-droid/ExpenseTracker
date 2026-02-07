@@ -23,10 +23,18 @@ Rails.application.routes.draw do
   # Spending Types (HTML page)
   resources :spending_types, only: [:index]
 
+  # Spending Categories (HTML page)
+  resources :spending_categories, only: [:index]
+
   # API endpoints
   namespace :api do
     resources :spending_types, only: [:index, :create, :update, :destroy]
+    resources :spending_categories, only: [:index, :create, :update, :destroy]
   end
+
+  # Documentation
+  get "documentation", to: "documentation#index", as: :documentation
+  get "documentation/database-schema", to: "documentation#database_schema", as: :documentation_database_schema
 
   # Static pages
   root "home#index"

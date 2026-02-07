@@ -1,0 +1,278 @@
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="mb-6">
+    <div class="flex items-center space-x-2 text-sm text-gray-500 mb-2">
+      <%= link_to "Documentation", documentation_path, class: "hover:text-brand-600 transition" %>
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      <span class="text-gray-900 font-medium">Database Schema</span>
+    </div>
+    <h1 class="text-2xl font-bold text-gray-900">Database Schema</h1>
+    <p class="mt-1 text-sm text-gray-500">PostgreSQL &mdash; All tables, columns, relationships, and indexes</p>
+  </div>
+
+  <%# ── Relationships Diagram ── %>
+  <div class="bg-white rounded-lg shadow-sm ring-1 ring-gray-200 p-6 mb-6">
+    <h2 class="text-lg font-semibold text-gray-900 mb-4">Relationships</h2>
+    <div class="text-sm font-mono text-gray-700 bg-gray-50 rounded-lg p-4 overflow-x-auto">
+      <pre class="whitespace-pre">users
+ ├── has_many :identities           (identities.user_id → users.id)
+ ├── has_many :spending_types       (spending_types.user_id → users.id)
+ ├── has_many :spending_categories  (spending_categories.user_id → users.id)
+ └── referenced by phone_verifications (via phone_number, no FK)
+
+identities
+ └── belongs_to :user               (user_id FK → users.id)
+
+spending_types
+ ├── belongs_to :user               (user_id FK → users.id)
+ └── has_many :spending_categories  (spending_categories.spending_type_id → spending_types.id)
+
+spending_categories
+ ├── belongs_to :user               (user_id FK → users.id)
+ └── belongs_to :spending_type      (spending_type_id FK → spending_types.id)
+
+phone_verifications
+ └── standalone (linked by phone_number, no foreign key)</pre>
+    </div>
+  </div>
+
+  <%# ── Users ── %>
+  <div class="bg-white rounded-lg shadow-sm ring-1 ring-gray-200 mb-6 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+      <h2 class="text-lg font-semibold text-gray-900">users</h2>
+      <p class="text-xs text-gray-500 mt-0.5">Primary user accounts &mdash; managed by Devise</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-100">
+            <th class="px-6 py-2 text-left font-medium text-gray-500 uppercase text-xs tracking-wider">Column</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 uppercase text-xs tracking-wider">Type</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 uppercase text-xs tracking-wider">Constraints</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 uppercase text-xs tracking-wider">Description</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr><td class="px-6 py-2 font-mono font-medium text-gray-900">id</td><td class="px-6 py-2 text-gray-600">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">PK</span> <span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">auto</span></td><td class="px-6 py-2 text-gray-500">Primary key</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">email</td><td class="px-6 py-2 text-gray-600">string</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">UNIQUE</span></td><td class="px-6 py-2 text-gray-500">Login email (default: "")</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">encrypted_password</td><td class="px-6 py-2 text-gray-600">string</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">Bcrypt password hash</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">first_name</td><td class="px-6 py-2 text-gray-600">string</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500">User first name</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">last_name</td><td class="px-6 py-2 text-gray-600">string</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500">User last name</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">avatar_url</td><td class="px-6 py-2 text-gray-600">string</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500">Profile image URL (from OAuth)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">phone_number</td><td class="px-6 py-2 text-gray-600">string</td><td class="px-6 py-2"><span class="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">UNIQUE</span></td><td class="px-6 py-2 text-gray-500">E.164 phone number</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">reset_password_token</td><td class="px-6 py-2 text-gray-600">string</td><td class="px-6 py-2"><span class="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">UNIQUE</span></td><td class="px-6 py-2 text-gray-500">Devise recoverable token</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">reset_password_sent_at</td><td class="px-6 py-2 text-gray-600">datetime</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500">When reset was sent</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">remember_created_at</td><td class="px-6 py-2 text-gray-600">datetime</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500">Devise rememberable timestamp</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">sign_in_count</td><td class="px-6 py-2 text-gray-600">integer</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">Devise trackable (default: 0)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">current_sign_in_at</td><td class="px-6 py-2 text-gray-600">datetime</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500">Current session start</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">last_sign_in_at</td><td class="px-6 py-2 text-gray-600">datetime</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500">Previous session start</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">current_sign_in_ip</td><td class="px-6 py-2 text-gray-600">string</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500">Current session IP</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">last_sign_in_ip</td><td class="px-6 py-2 text-gray-600">string</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500">Previous session IP</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">confirmation_token</td><td class="px-6 py-2 text-gray-600">string</td><td class="px-6 py-2"><span class="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">UNIQUE</span></td><td class="px-6 py-2 text-gray-500">Devise confirmable token</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">confirmed_at</td><td class="px-6 py-2 text-gray-600">datetime</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500">Email confirmation timestamp</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">confirmation_sent_at</td><td class="px-6 py-2 text-gray-600">datetime</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500">When confirmation was sent</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">unconfirmed_email</td><td class="px-6 py-2 text-gray-600">string</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500">Pending email change</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">failed_attempts</td><td class="px-6 py-2 text-gray-600">integer</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">Devise lockable (default: 0)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">unlock_token</td><td class="px-6 py-2 text-gray-600">string</td><td class="px-6 py-2"><span class="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">UNIQUE</span></td><td class="px-6 py-2 text-gray-500">Devise lockable unlock token</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">locked_at</td><td class="px-6 py-2 text-gray-600">datetime</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500">Account lock timestamp</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">created_at</td><td class="px-6 py-2 text-gray-600">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">Record created</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">updated_at</td><td class="px-6 py-2 text-gray-600">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">Record last updated</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 border-t border-gray-200">
+      <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 font-mono space-y-0.5">
+        <li>UNIQUE (email)</li>
+        <li>UNIQUE (phone_number)</li>
+        <li>UNIQUE (reset_password_token)</li>
+        <li>UNIQUE (confirmation_token)</li>
+        <li>UNIQUE (unlock_token)</li>
+      </ul>
+    </div>
+  </div>
+
+  <%# ── Identities ── %>
+  <div class="bg-white rounded-lg shadow-sm ring-1 ring-gray-200 mb-6 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+      <h2 class="text-lg font-semibold text-gray-900">identities</h2>
+      <p class="text-xs text-gray-500 mt-0.5">OAuth provider connections (Google, Apple, Microsoft)</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-100">
+            <th class="px-6 py-2 text-left font-medium text-gray-500 uppercase text-xs tracking-wider">Column</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 uppercase text-xs tracking-wider">Type</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 uppercase text-xs tracking-wider">Constraints</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 uppercase text-xs tracking-wider">Description</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr><td class="px-6 py-2 font-mono font-medium text-gray-900">id</td><td class="px-6 py-2 text-gray-600">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">PK</span> <span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">auto</span></td><td class="px-6 py-2 text-gray-500">Primary key</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">user_id</td><td class="px-6 py-2 text-gray-600">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded">FK &rarr; users</span></td><td class="px-6 py-2 text-gray-500">Owning user</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">provider</td><td class="px-6 py-2 text-gray-600">string</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">OAuth provider name</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">uid</td><td class="px-6 py-2 text-gray-600">string</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">Provider user ID</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">access_token</td><td class="px-6 py-2 text-gray-600">string</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500">OAuth access token</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">refresh_token</td><td class="px-6 py-2 text-gray-600">string</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500">OAuth refresh token</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">expires_at</td><td class="px-6 py-2 text-gray-600">datetime</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500">Token expiry</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">created_at</td><td class="px-6 py-2 text-gray-600">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">Record created</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">updated_at</td><td class="px-6 py-2 text-gray-600">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">Record last updated</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 border-t border-gray-200">
+      <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 font-mono space-y-0.5">
+        <li>UNIQUE (provider, uid)</li>
+        <li>UNIQUE (user_id, provider)</li>
+        <li>(user_id)</li>
+      </ul>
+    </div>
+  </div>
+
+  <%# ── Spending Types ── %>
+  <div class="bg-white rounded-lg shadow-sm ring-1 ring-gray-200 mb-6 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+      <h2 class="text-lg font-semibold text-gray-900">spending_types</h2>
+      <p class="text-xs text-gray-500 mt-0.5">Per-user spending classifications with soft delete</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-100">
+            <th class="px-6 py-2 text-left font-medium text-gray-500 uppercase text-xs tracking-wider">Column</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 uppercase text-xs tracking-wider">Type</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 uppercase text-xs tracking-wider">Constraints</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 uppercase text-xs tracking-wider">Description</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr><td class="px-6 py-2 font-mono font-medium text-gray-900">id</td><td class="px-6 py-2 text-gray-600">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">PK</span> <span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">auto</span></td><td class="px-6 py-2 text-gray-500">Primary key</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">user_id</td><td class="px-6 py-2 text-gray-600">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded">FK &rarr; users</span></td><td class="px-6 py-2 text-gray-500">Owning user</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">name</td><td class="px-6 py-2 text-gray-600">string(80)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">Display name</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">description</td><td class="px-6 py-2 text-gray-600">string(255)</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500">Short description</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">icon_key</td><td class="px-6 py-2 text-gray-600">string(40)</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500">Icon identifier (e.g. "home", "star")</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">color_key</td><td class="px-6 py-2 text-gray-600">string(40)</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500">Color identifier (e.g. "blue", "green")</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">sort_order</td><td class="px-6 py-2 text-gray-600">integer</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">Display order (default: 0)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">is_system</td><td class="px-6 py-2 text-gray-600">boolean</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">Auto-seeded row (default: false)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">is_active</td><td class="px-6 py-2 text-gray-600">boolean</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">Active flag (default: true)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">deleted_at</td><td class="px-6 py-2 text-gray-600">datetime</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500">Soft-delete timestamp</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">created_at</td><td class="px-6 py-2 text-gray-600">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">Record created</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">updated_at</td><td class="px-6 py-2 text-gray-600">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">Record last updated</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 border-t border-gray-200">
+      <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 font-mono space-y-0.5">
+        <li>UNIQUE (user_id, LOWER(name)) WHERE deleted_at IS NULL &mdash; <span class="text-gray-400">partial unique, prevents duplicate names per user</span></li>
+        <li>(user_id, sort_order)</li>
+        <li>(user_id)</li>
+      </ul>
+    </div>
+  </div>
+
+  <%# ── Spending Categories ── %>
+  <div class="bg-white rounded-lg shadow-sm ring-1 ring-gray-200 mb-6 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+      <h2 class="text-lg font-semibold text-gray-900">spending_categories</h2>
+      <p class="text-xs text-gray-500 mt-0.5">Per-user spending categories with soft delete &mdash; each references a spending type</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-100">
+            <th class="px-6 py-2 text-left font-medium text-gray-500 uppercase text-xs tracking-wider">Column</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 uppercase text-xs tracking-wider">Type</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 uppercase text-xs tracking-wider">Constraints</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 uppercase text-xs tracking-wider">Description</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr><td class="px-6 py-2 font-mono font-medium text-gray-900">id</td><td class="px-6 py-2 text-gray-600">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">PK</span> <span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">auto</span></td><td class="px-6 py-2 text-gray-500">Primary key</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">user_id</td><td class="px-6 py-2 text-gray-600">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded">FK &rarr; users</span></td><td class="px-6 py-2 text-gray-500">Owning user</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">spending_type_id</td><td class="px-6 py-2 text-gray-600">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded">FK &rarr; spending_types</span></td><td class="px-6 py-2 text-gray-500">Parent spending type</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">name</td><td class="px-6 py-2 text-gray-600">string(80)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">Display name</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">description</td><td class="px-6 py-2 text-gray-600">string(255)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">Short description</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">is_debt</td><td class="px-6 py-2 text-gray-600">boolean</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">Debt flag (default: false)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">icon_key</td><td class="px-6 py-2 text-gray-600">string(40)</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500">Icon identifier (e.g. "home", "star")</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">color_key</td><td class="px-6 py-2 text-gray-600">string(40)</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500">Color identifier (e.g. "blue", "green")</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">sort_order</td><td class="px-6 py-2 text-gray-600">integer</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">Display order (default: 0)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">deleted_at</td><td class="px-6 py-2 text-gray-600">datetime</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500">Soft-delete timestamp</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">created_at</td><td class="px-6 py-2 text-gray-600">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">Record created</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">updated_at</td><td class="px-6 py-2 text-gray-600">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">Record last updated</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 border-t border-gray-200">
+      <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 font-mono space-y-0.5">
+        <li>UNIQUE (user_id, LOWER(name)) WHERE deleted_at IS NULL &mdash; <span class="text-gray-400">partial unique, prevents duplicate names per user</span></li>
+        <li>(user_id, sort_order)</li>
+        <li>(user_id)</li>
+        <li>(spending_type_id)</li>
+      </ul>
+    </div>
+  </div>
+
+  <%# ── Phone Verifications ── %>
+  <div class="bg-white rounded-lg shadow-sm ring-1 ring-gray-200 mb-6 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+      <h2 class="text-lg font-semibold text-gray-900">phone_verifications</h2>
+      <p class="text-xs text-gray-500 mt-0.5">SMS verification codes for phone-based authentication</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-100">
+            <th class="px-6 py-2 text-left font-medium text-gray-500 uppercase text-xs tracking-wider">Column</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 uppercase text-xs tracking-wider">Type</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 uppercase text-xs tracking-wider">Constraints</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 uppercase text-xs tracking-wider">Description</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr><td class="px-6 py-2 font-mono font-medium text-gray-900">id</td><td class="px-6 py-2 text-gray-600">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">PK</span> <span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">auto</span></td><td class="px-6 py-2 text-gray-500">Primary key</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">phone_number</td><td class="px-6 py-2 text-gray-600">string</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">E.164 phone number</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">code</td><td class="px-6 py-2 text-gray-600">string</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">Verification code</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">expires_at</td><td class="px-6 py-2 text-gray-600">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">Code expiry timestamp</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">verified_at</td><td class="px-6 py-2 text-gray-600">datetime</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500">When code was verified</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">created_at</td><td class="px-6 py-2 text-gray-600">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">Record created</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">updated_at</td><td class="px-6 py-2 text-gray-600">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">Record last updated</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 border-t border-gray-200">
+      <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 font-mono space-y-0.5">
+        <li>(phone_number, code)</li>
+        <li>(phone_number)</li>
+      </ul>
+    </div>
+  </div>
+
+  <%# ── Foreign Keys Summary ── %>
+  <div class="bg-white rounded-lg shadow-sm ring-1 ring-gray-200 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+      <h2 class="text-lg font-semibold text-gray-900">Foreign Keys</h2>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-100">
+            <th class="px-6 py-2 text-left font-medium text-gray-500 uppercase text-xs tracking-wider">From</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 uppercase text-xs tracking-wider">Column</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 uppercase text-xs tracking-wider">To</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 uppercase text-xs tracking-wider">On Delete</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr><td class="px-6 py-2 font-mono text-gray-900">identities</td><td class="px-6 py-2 font-mono text-gray-600">user_id</td><td class="px-6 py-2 font-mono text-gray-600">users.id</td><td class="px-6 py-2 text-gray-500">cascade (via Rails dependent: :destroy)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">spending_types</td><td class="px-6 py-2 font-mono text-gray-600">user_id</td><td class="px-6 py-2 font-mono text-gray-600">users.id</td><td class="px-6 py-2 text-gray-500">cascade (via Rails dependent: :destroy)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">spending_categories</td><td class="px-6 py-2 font-mono text-gray-600">user_id</td><td class="px-6 py-2 font-mono text-gray-600">users.id</td><td class="px-6 py-2 text-gray-500">cascade (via Rails dependent: :destroy)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">spending_categories</td><td class="px-6 py-2 font-mono text-gray-600">spending_type_id</td><td class="px-6 py-2 font-mono text-gray-600">spending_types.id</td><td class="px-6 py-2 text-gray-500">restrict (DB-level foreign key)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
