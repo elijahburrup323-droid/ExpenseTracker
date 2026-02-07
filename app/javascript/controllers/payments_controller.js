@@ -15,7 +15,10 @@ export default class extends Controller {
     "tableBody", "addButton", "deleteModal", "deleteModalName",
     "filterStartDate", "filterEndDate", "filterAccount", "filterCategory", "filterType", "filterSearch"
   ]
-  static values = { apiUrl: String, accountsUrl: String, categoriesUrl: String, typesUrl: String, csrfToken: String }
+  static values = {
+    apiUrl: String, accountsUrl: String, categoriesUrl: String, typesUrl: String, csrfToken: String,
+    accountsPageUrl: String, categoriesPageUrl: String, typesPageUrl: String
+  }
 
   connect() {
     this.payments = []
@@ -70,26 +73,36 @@ export default class extends Controller {
 
   _populateFilterDropdowns() {
     const accSelect = this.filterAccountTarget
-    accSelect.innerHTML = `<option value="">All Accounts</option>` +
-      this.accounts.map(a => {
-        const bal = parseFloat(a.balance || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-        const typeName = a.account_type_name ? ` (${a.account_type_name})` : ""
-        return `<option value="${a.id}">${escapeHtml(a.name)}${escapeHtml(typeName)} — $${bal}</option>`
-      }).join("")
+    accSelect.innerHTML = `<option value="">All Accounts</option><option value="new">— New Account —</option>` +
+      this._buildAccountOptions()
 
     const catSelect = this.filterCategoryTarget
-    catSelect.innerHTML = `<option value="">All Categories</option>` +
-      this.categories.map(c => {
-        const typeName = c.spending_type_name ? ` (${c.spending_type_name})` : ""
-        return `<option value="${c.id}">${escapeHtml(c.name)}${escapeHtml(typeName)}</option>`
-      }).join("")
+    catSelect.innerHTML = `<option value="">All Categories</option><option value="new">— New Category —</option>` +
+      this._buildCategoryOptions()
 
     const typeSelect = this.filterTypeTarget
-    typeSelect.innerHTML = `<option value="">All Spending Types</option>` +
+    typeSelect.innerHTML = `<option value="">All Spending Types</option><option value="new">— New Spending Type —</option>` +
       this.spendingTypes.map(t => {
         const desc = t.description ? ` — ${t.description}` : ""
         return `<option value="${t.name}">${escapeHtml(t.name)}${escapeHtml(desc)}</option>`
       }).join("")
+  }
+
+  _buildAccountOptions(selectedId = null) {
+    return this.accounts.map(a => {
+      const bal = parseFloat(a.balance || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      const typeName = a.account_type_name ? ` (${a.account_type_name})` : ""
+      const sel = selectedId != null && a.id === selectedId ? "selected" : ""
+      return `<option value="${a.id}" ${sel}>${escapeHtml(a.name)}${escapeHtml(typeName)} — $${bal}</option>`
+    }).join("")
+  }
+
+  _buildCategoryOptions(selectedId = null) {
+    return this.categories.map(c => {
+      const typeName = c.spending_type_name ? ` (${c.spending_type_name})` : ""
+      const sel = selectedId != null && c.id === selectedId ? "selected" : ""
+      return `<option value="${c.id}" ${sel}>${escapeHtml(c.name)}${escapeHtml(typeName)}</option>`
+    }).join("")
   }
 
   _applyDefaultDates() {
@@ -99,7 +112,22 @@ export default class extends Controller {
 
   // --- Filtering ---
 
-  applyFilters() {
+  applyFilters(event) {
+    if (event && event.target) {
+      const val = event.target.value
+      if (val === "new") {
+        const target = event.target
+        if (target === this.filterAccountTarget) {
+          window.open(this.accountsPageUrlValue, "_blank")
+        } else if (target === this.filterCategoryTarget) {
+          window.open(this.categoriesPageUrlValue, "_blank")
+        } else if (target === this.filterTypeTarget) {
+          window.open(this.typesPageUrlValue, "_blank")
+        }
+        target.value = ""
+        return
+      }
+    }
     this.renderTable()
   }
 
@@ -164,8 +192,8 @@ export default class extends Controller {
     const notes = notesInput?.value?.trim()
 
     if (!payment_date) { this.showRowError("Date is required"); dateInput?.focus(); return }
-    if (!account_id) { this.showRowError("Account is required"); accSelect?.focus(); return }
-    if (!spending_category_id) { this.showRowError("Category is required"); catSelect?.focus(); return }
+    if (!account_id || account_id === "new") { this.showRowError("Account is required — select an existing account or refresh after creating one"); accSelect?.focus(); return }
+    if (!spending_category_id || spending_category_id === "new") { this.showRowError("Category is required — select an existing category or refresh after creating one"); catSelect?.focus(); return }
     if (!description) { this.showRowError("Description is required"); descInput?.focus(); return }
     if (!amount || parseFloat(amount) === 0) { this.showRowError("Amount is required"); amtInput?.focus(); return }
 
@@ -227,8 +255,8 @@ export default class extends Controller {
     const notes = notesInput?.value?.trim()
 
     if (!payment_date) { this.showRowError("Date is required"); dateInput?.focus(); return }
-    if (!account_id) { this.showRowError("Account is required"); accSelect?.focus(); return }
-    if (!spending_category_id) { this.showRowError("Category is required"); catSelect?.focus(); return }
+    if (!account_id || account_id === "new") { this.showRowError("Account is required — select an existing account or refresh after creating one"); accSelect?.focus(); return }
+    if (!spending_category_id || spending_category_id === "new") { this.showRowError("Category is required — select an existing category or refresh after creating one"); catSelect?.focus(); return }
     if (!description) { this.showRowError("Description is required"); descInput?.focus(); return }
     if (!amount || parseFloat(amount) === 0) { this.showRowError("Amount is required"); amtInput?.focus(); return }
 
@@ -421,15 +449,8 @@ export default class extends Controller {
 
   _renderAddRow() {
     const today = this._formatDateValue(new Date())
-    const accountOptions = this.accounts.map(a => {
-      const bal = parseFloat(a.balance || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-      const typeName = a.account_type_name ? ` (${a.account_type_name})` : ""
-      return `<option value="${a.id}">${escapeHtml(a.name)}${escapeHtml(typeName)} — $${bal}</option>`
-    }).join("")
-    const categoryOptions = this.categories.map(c => {
-      const typeName = c.spending_type_name ? ` (${c.spending_type_name})` : ""
-      return `<option value="${c.id}">${escapeHtml(c.name)}${escapeHtml(typeName)}</option>`
-    }).join("")
+    const accountOptions = this._buildAccountOptions()
+    const categoryOptions = this._buildCategoryOptions()
 
     return `<tr class="bg-brand-50/40 dark:bg-brand-900/20">
       <td class="px-4 py-3">
@@ -440,16 +461,18 @@ export default class extends Controller {
       <td class="px-4 py-3">
         <select name="account_id"
                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
-                data-action="keydown->payments#handleKeydown">
+                data-action="keydown->payments#handleKeydown change->payments#handleNewDropdown">
           <option value="">Select...</option>
+          <option value="new">— New Account —</option>
           ${accountOptions}
         </select>
       </td>
       <td class="px-4 py-3">
         <select name="spending_category_id"
                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
-                data-action="keydown->payments#handleKeydown change->payments#onCategoryChange">
+                data-action="keydown->payments#handleKeydown change->payments#handleNewDropdown change->payments#onCategoryChange">
           <option value="">Select...</option>
+          <option value="new">— New Category —</option>
           ${categoryOptions}
         </select>
       </td>
@@ -497,17 +520,8 @@ export default class extends Controller {
   }
 
   _renderEditRow(payment) {
-    const accountOptions = this.accounts.map(a => {
-      const selected = a.id === payment.account_id ? "selected" : ""
-      const bal = parseFloat(a.balance || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-      const typeName = a.account_type_name ? ` (${a.account_type_name})` : ""
-      return `<option value="${a.id}" ${selected}>${escapeHtml(a.name)}${escapeHtml(typeName)} — $${bal}</option>`
-    }).join("")
-    const categoryOptions = this.categories.map(c => {
-      const selected = c.id === payment.spending_category_id ? "selected" : ""
-      const typeName = c.spending_type_name ? ` (${c.spending_type_name})` : ""
-      return `<option value="${c.id}" ${selected}>${escapeHtml(c.name)}${escapeHtml(typeName)}</option>`
-    }).join("")
+    const accountOptions = this._buildAccountOptions(payment.account_id)
+    const categoryOptions = this._buildCategoryOptions(payment.spending_category_id)
     const amtVal = parseFloat(payment.amount) || ""
 
     return `<tr class="bg-brand-50/40 dark:bg-brand-900/20">
@@ -519,16 +533,18 @@ export default class extends Controller {
       <td class="px-4 py-3">
         <select name="account_id"
                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
-                data-action="keydown->payments#handleKeydown">
+                data-action="keydown->payments#handleKeydown change->payments#handleNewDropdown">
           <option value="">Select...</option>
+          <option value="new">— New Account —</option>
           ${accountOptions}
         </select>
       </td>
       <td class="px-4 py-3">
         <select name="spending_category_id"
                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
-                data-action="keydown->payments#handleKeydown change->payments#onCategoryChange">
+                data-action="keydown->payments#handleKeydown change->payments#handleNewDropdown change->payments#onCategoryChange">
           <option value="">Select...</option>
+          <option value="new">— New Category —</option>
           ${categoryOptions}
         </select>
       </td>
@@ -566,6 +582,19 @@ export default class extends Controller {
     <tr class="hidden" data-payments-target="rowError">
       <td colspan="7" class="px-4 py-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30"></td>
     </tr>`
+  }
+
+  // --- "New" Dropdown Handler ---
+
+  handleNewDropdown(event) {
+    if (event.target.value !== "new") return
+    const name = event.target.name
+    if (name === "account_id") {
+      window.open(this.accountsPageUrlValue, "_blank")
+    } else if (name === "spending_category_id") {
+      window.open(this.categoriesPageUrlValue, "_blank")
+    }
+    // Leave "new" selected so user knows they need to refresh/reselect
   }
 
   // --- Category Change (Auto-type) ---
