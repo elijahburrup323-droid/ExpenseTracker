@@ -404,14 +404,16 @@ export default class extends Controller {
       </td>
       <td class="px-6 py-3 text-right space-x-2">
         <button type="button"
-                class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
-                data-action="click->spending-types#${isAdding ? 'saveNew' : 'saveEdit'}">
-          Save
+                class="inline-flex items-center justify-center w-8 h-8 rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
+                data-action="click->spending-types#${isAdding ? 'saveNew' : 'saveEdit'}"
+                title="Save">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
         </button>
         <button type="button"
-                class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 transition"
-                data-action="click->spending-types#${isAdding ? 'cancelAdding' : 'cancelEditing'}">
-          Cancel
+                class="inline-flex items-center justify-center w-8 h-8 rounded-md text-red-600 bg-red-50 hover:bg-red-100 transition"
+                data-action="click->spending-types#${isAdding ? 'cancelAdding' : 'cancelEditing'}"
+                title="Cancel">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         </button>
       </td>
     </tr>

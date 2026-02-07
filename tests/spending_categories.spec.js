@@ -86,7 +86,7 @@ test.describe.serial("Spending Categories CRUD", () => {
     await debtToggle.check({ force: true });
 
     // Save
-    await page.click('button:has-text("Save")');
+    await page.click('button[title="Save"]');
     await page.waitForTimeout(2000);
 
     // Verify new row appears
@@ -122,7 +122,7 @@ test.describe.serial("Spending Categories CRUD", () => {
       .fill("Updated by Playwright");
 
     // Save
-    await page.click('button:has-text("Save")');
+    await page.click('button[title="Save"]');
     await page.waitForTimeout(2000);
 
     // Verify debt now shows False pill (we toggled it off)
