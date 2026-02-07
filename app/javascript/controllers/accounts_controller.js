@@ -279,7 +279,7 @@ export default class extends Controller {
     if (preview) {
       preview.innerHTML = this.selectedIconKey
         ? renderIconSvg(this.selectedIconKey, this.selectedColorKey, "h-5 w-5")
-        : `<svg class="h-5 w-5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`
+        : `<svg class="h-5 w-5 text-gray-300 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`
     }
   }
 
@@ -297,7 +297,7 @@ export default class extends Controller {
 
     const iconsHtml = ICON_CATALOG.map(icon => {
       const selected = icon.key === this.selectedIconKey
-      const bgClass = selected ? "bg-brand-100 ring-2 ring-brand-500" : "hover:bg-gray-100"
+      const bgClass = selected ? "bg-brand-100 dark:bg-brand-900/40 ring-2 ring-brand-500" : "hover:bg-gray-100 dark:hover:bg-gray-700"
       return `<button type="button" data-icon-key="${icon.key}"
         class="p-1.5 rounded-md ${bgClass} transition flex items-center justify-center"
         data-action="click->accounts#selectIcon"
@@ -307,12 +307,12 @@ export default class extends Controller {
     }).join("")
 
     return `
-      <div class="p-3 border-b border-gray-200">
-        <p class="text-xs font-medium text-gray-500 mb-2">Color</p>
+      <div class="p-3 border-b border-gray-200 dark:border-gray-700">
+        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Color</p>
         <div class="flex gap-1.5 flex-wrap">${colorHtml}</div>
       </div>
       <div class="p-3">
-        <p class="text-xs font-medium text-gray-500 mb-2">Icon</p>
+        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Icon</p>
         <div class="grid grid-cols-8 gap-1">${iconsHtml}</div>
       </div>`
   }
@@ -409,7 +409,7 @@ export default class extends Controller {
     }
 
     if (this.accounts.length === 0 && this.state !== "adding") {
-      html = `<tr><td colspan="7" class="px-6 py-8 text-center text-sm text-gray-400">No accounts yet. Click "Add Account" to create one.</td></tr>`
+      html = `<tr><td colspan="7" class="px-6 py-8 text-center text-sm text-gray-400 dark:text-gray-500">No accounts yet. Click "Add Account" to create one.</td></tr>`
     }
 
     this.tableBodyTarget.innerHTML = html
@@ -426,16 +426,16 @@ export default class extends Controller {
     const disabledAttr = actionsEnabled ? "" : "disabled"
     const budgetToggle = this._renderBudgetToggle(acc.include_in_budget, acc.id)
 
-    return `<tr class="hover:bg-gray-50 transition-colors">
+    return `<tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
       <td class="px-6 py-4">${iconFor(acc.icon_key, acc.color_key)}</td>
-      <td class="px-6 py-4 text-sm font-medium text-gray-900">${escapeHtml(acc.name)}</td>
-      <td class="px-6 py-4 text-sm text-gray-500">${escapeHtml(acc.account_type_name || "")}</td>
-      <td class="px-6 py-4 text-sm text-gray-500">${escapeHtml(acc.institution || "")}</td>
-      <td class="px-6 py-4 text-sm text-gray-900 text-right font-mono">${this._formatBalance(acc.balance)}</td>
+      <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">${escapeHtml(acc.name)}</td>
+      <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">${escapeHtml(acc.account_type_name || "")}</td>
+      <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">${escapeHtml(acc.institution || "")}</td>
+      <td class="px-6 py-4 text-sm text-gray-900 dark:text-white text-right font-mono">${this._formatBalance(acc.balance)}</td>
       <td class="px-6 py-4 text-center">${budgetToggle}</td>
       <td class="px-6 py-4 text-right space-x-2">
         <button type="button"
-                class="inline-flex items-center justify-center w-8 h-8 rounded-md text-brand-700 bg-brand-50 hover:bg-brand-100 transition ${disabledClass}"
+                class="inline-flex items-center justify-center w-8 h-8 rounded-md text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800 transition ${disabledClass}"
                 data-id="${acc.id}"
                 data-action="click->accounts#startEditing"
                 ${disabledAttr}
@@ -443,7 +443,7 @@ export default class extends Controller {
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
         </button>
         <button type="button"
-                class="inline-flex items-center justify-center w-8 h-8 rounded-md text-red-700 bg-red-50 hover:bg-red-100 transition ${disabledClass}"
+                class="inline-flex items-center justify-center w-8 h-8 rounded-md text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 transition ${disabledClass}"
                 data-id="${acc.id}"
                 data-action="click->accounts#confirmDelete"
                 ${disabledAttr}
@@ -457,34 +457,34 @@ export default class extends Controller {
   renderAddRow() {
     const previewIcon = this.selectedIconKey
       ? renderIconSvg(this.selectedIconKey, this.selectedColorKey, "h-5 w-5")
-      : `<svg class="h-5 w-5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`
+      : `<svg class="h-5 w-5 text-gray-300 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`
 
     const typeOptions = this.accountTypes.map(at =>
       `<option value="${at.id}">${escapeHtml(at.name)}</option>`
     ).join("")
 
-    return `<tr class="bg-brand-50/40">
+    return `<tr class="bg-brand-50/40 dark:bg-brand-900/20">
       <td class="px-6 py-3">
         <div class="relative" data-icon-picker>
           <button type="button"
-                  class="p-1.5 rounded-md border border-gray-300 hover:bg-gray-50 transition"
+                  class="p-1.5 rounded-md border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                   data-action="click->accounts#toggleIconPicker"
                   title="Choose icon">
             <span data-icon-preview>${previewIcon}</span>
           </button>
-          <div data-icon-picker-dropdown class="hidden fixed z-[9999] bg-white rounded-lg shadow-xl ring-1 ring-gray-200 w-80">
+          <div data-icon-picker-dropdown class="hidden fixed z-[9999] bg-white dark:bg-gray-800 rounded-lg shadow-xl ring-1 ring-gray-200 dark:ring-gray-700 w-80">
           </div>
         </div>
       </td>
       <td class="px-6 py-3">
         <input type="text" name="name" value="" placeholder="Name"
                maxlength="80"
-               class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+               class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
                data-action="keydown->accounts#handleKeydown">
       </td>
       <td class="px-6 py-3">
         <select name="account_type_id"
-                class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
                 data-action="keydown->accounts#handleKeydown">
           <option value="">Select type...</option>
           ${typeOptions}
@@ -493,14 +493,14 @@ export default class extends Controller {
       <td class="px-6 py-3">
         <input type="text" name="institution" value="" placeholder="Institution"
                maxlength="120"
-               class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+               class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
                data-action="keydown->accounts#handleKeydown">
       </td>
       <td class="px-6 py-3">
         <div class="flex items-center">
-          <span class="text-sm text-gray-500 mr-1">$</span>
+          <span class="text-sm text-gray-500 dark:text-gray-400 mr-1">$</span>
           <input type="number" name="balance" value="" placeholder="0.00" step="0.01"
-                 class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5 text-right"
+                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5 text-right"
                  data-action="keydown->accounts#handleKeydown">
         </div>
       </td>
@@ -515,7 +515,7 @@ export default class extends Controller {
           <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 21v-8H7v8"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 3v5h8"/></svg>
         </button>
         <button type="button"
-                class="inline-flex items-center justify-center w-9 h-9 rounded-md text-red-600 bg-red-50 hover:bg-red-100 transition"
+                class="inline-flex items-center justify-center w-9 h-9 rounded-md text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 transition"
                 data-action="click->accounts#cancelAdding"
                 title="Cancel">
           <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -523,14 +523,14 @@ export default class extends Controller {
       </td>
     </tr>
     <tr class="hidden" data-accounts-target="rowError">
-      <td colspan="7" class="px-6 py-2 text-sm text-red-600 bg-red-50"></td>
+      <td colspan="7" class="px-6 py-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30"></td>
     </tr>`
   }
 
   renderEditRow(acc) {
     const previewIcon = this.selectedIconKey
       ? renderIconSvg(this.selectedIconKey, this.selectedColorKey, "h-5 w-5")
-      : `<svg class="h-5 w-5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`
+      : `<svg class="h-5 w-5 text-gray-300 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`
 
     const typeOptions = this.accountTypes.map(at => {
       const selected = at.id === acc.account_type_id ? "selected" : ""
@@ -539,28 +539,28 @@ export default class extends Controller {
 
     const balVal = parseFloat(acc.balance) || ""
 
-    return `<tr class="bg-brand-50/40">
+    return `<tr class="bg-brand-50/40 dark:bg-brand-900/20">
       <td class="px-6 py-3">
         <div class="relative" data-icon-picker>
           <button type="button"
-                  class="p-1.5 rounded-md border border-gray-300 hover:bg-gray-50 transition"
+                  class="p-1.5 rounded-md border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                   data-action="click->accounts#toggleIconPicker"
                   title="Choose icon">
             <span data-icon-preview>${previewIcon}</span>
           </button>
-          <div data-icon-picker-dropdown class="hidden fixed z-[9999] bg-white rounded-lg shadow-xl ring-1 ring-gray-200 w-80">
+          <div data-icon-picker-dropdown class="hidden fixed z-[9999] bg-white dark:bg-gray-800 rounded-lg shadow-xl ring-1 ring-gray-200 dark:ring-gray-700 w-80">
           </div>
         </div>
       </td>
       <td class="px-6 py-3">
         <input type="text" name="name" value="${escapeAttr(acc.name)}" placeholder="Name"
                maxlength="80"
-               class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+               class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
                data-action="keydown->accounts#handleKeydown">
       </td>
       <td class="px-6 py-3">
         <select name="account_type_id"
-                class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
                 data-action="keydown->accounts#handleKeydown">
           <option value="">Select type...</option>
           ${typeOptions}
@@ -569,14 +569,14 @@ export default class extends Controller {
       <td class="px-6 py-3">
         <input type="text" name="institution" value="${escapeAttr(acc.institution || "")}" placeholder="Institution"
                maxlength="120"
-               class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+               class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
                data-action="keydown->accounts#handleKeydown">
       </td>
       <td class="px-6 py-3">
         <div class="flex items-center">
-          <span class="text-sm text-gray-500 mr-1">$</span>
+          <span class="text-sm text-gray-500 dark:text-gray-400 mr-1">$</span>
           <input type="number" name="balance" value="${balVal}" placeholder="0.00" step="0.01"
-                 class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5 text-right"
+                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5 text-right"
                  data-action="keydown->accounts#handleKeydown">
         </div>
       </td>
@@ -591,7 +591,7 @@ export default class extends Controller {
           <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 21v-8H7v8"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 3v5h8"/></svg>
         </button>
         <button type="button"
-                class="inline-flex items-center justify-center w-9 h-9 rounded-md text-red-600 bg-red-50 hover:bg-red-100 transition"
+                class="inline-flex items-center justify-center w-9 h-9 rounded-md text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 transition"
                 data-action="click->accounts#cancelEditing"
                 title="Cancel">
           <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -599,7 +599,7 @@ export default class extends Controller {
       </td>
     </tr>
     <tr class="hidden" data-accounts-target="rowError">
-      <td colspan="7" class="px-6 py-2 text-sm text-red-600 bg-red-50"></td>
+      <td colspan="7" class="px-6 py-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30"></td>
     </tr>`
   }
 

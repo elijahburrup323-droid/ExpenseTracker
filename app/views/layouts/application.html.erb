@@ -9,6 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
+        darkMode: 'class',
         theme: {
           extend: {
             colors: {
@@ -32,10 +33,16 @@
         }
       }
     </script>
+    <script>
+      // Apply saved theme immediately to prevent flash
+      if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark')
+      }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <%= javascript_importmap_tags %>
   </head>
-  <body class="font-sans bg-gray-50 min-h-screen">
+  <body class="font-sans bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">
     <% if user_signed_in? %>
       <%= render "shared/navbar" %>
     <% end %>
