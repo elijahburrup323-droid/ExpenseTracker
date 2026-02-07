@@ -1,20 +1,20 @@
 <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
   <div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-900">Documentation</h1>
-    <p class="mt-1 text-sm text-gray-500">Technical reference for the BudgetHQ application</p>
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Documentation</h1>
+    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Technical reference for the BudgetHQ application</p>
   </div>
 
   <div class="grid gap-4 sm:grid-cols-2">
-    <%= link_to documentation_database_schema_path, class: "group block bg-white rounded-lg shadow-sm ring-1 ring-gray-200 p-6 hover:ring-brand-300 hover:shadow-md transition" do %>
+    <%= link_to documentation_database_schema_path, class: "group block bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 hover:ring-brand-300 hover:shadow-md transition" do %>
       <div class="flex items-start space-x-4">
-        <div class="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-lg bg-brand-50 text-brand-600 group-hover:bg-brand-100 transition">
+        <div class="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-lg bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 group-hover:bg-brand-100 dark:group-hover:bg-brand-900/50 transition">
           <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
           </svg>
         </div>
         <div>
-          <h2 class="text-lg font-semibold text-gray-900 group-hover:text-brand-700 transition">Database Schema</h2>
-          <p class="mt-1 text-sm text-gray-500">Tables, columns, relationships, and indexes</p>
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-brand-700 dark:group-hover:text-brand-400 transition">Database Schema</h2>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Tables, columns, relationships, and indexes</p>
         </div>
       </div>
     <% end %>
