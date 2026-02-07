@@ -71,15 +71,25 @@ export default class extends Controller {
   _populateFilterDropdowns() {
     const accSelect = this.filterAccountTarget
     accSelect.innerHTML = `<option value="">All Accounts</option>` +
-      this.accounts.map(a => `<option value="${a.id}">${escapeHtml(a.name)}</option>`).join("")
+      this.accounts.map(a => {
+        const bal = parseFloat(a.balance || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        const typeName = a.account_type_name ? ` (${a.account_type_name})` : ""
+        return `<option value="${a.id}">${escapeHtml(a.name)}${escapeHtml(typeName)} — $${bal}</option>`
+      }).join("")
 
     const catSelect = this.filterCategoryTarget
     catSelect.innerHTML = `<option value="">All Categories</option>` +
-      this.categories.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("")
+      this.categories.map(c => {
+        const typeName = c.spending_type_name ? ` (${c.spending_type_name})` : ""
+        return `<option value="${c.id}">${escapeHtml(c.name)}${escapeHtml(typeName)}</option>`
+      }).join("")
 
     const typeSelect = this.filterTypeTarget
-    typeSelect.innerHTML = `<option value="">All Types</option>` +
-      this.spendingTypes.map(t => `<option value="${t.name}">${escapeHtml(t.name)}</option>`).join("")
+    typeSelect.innerHTML = `<option value="">All Spending Types</option>` +
+      this.spendingTypes.map(t => {
+        const desc = t.description ? ` — ${t.description}` : ""
+        return `<option value="${t.name}">${escapeHtml(t.name)}${escapeHtml(desc)}</option>`
+      }).join("")
   }
 
   _applyDefaultDates() {
@@ -411,12 +421,15 @@ export default class extends Controller {
 
   _renderAddRow() {
     const today = this._formatDateValue(new Date())
-    const accountOptions = this.accounts.map(a =>
-      `<option value="${a.id}">${escapeHtml(a.name)}</option>`
-    ).join("")
-    const categoryOptions = this.categories.map(c =>
-      `<option value="${c.id}">${escapeHtml(c.name)}</option>`
-    ).join("")
+    const accountOptions = this.accounts.map(a => {
+      const bal = parseFloat(a.balance || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      const typeName = a.account_type_name ? ` (${a.account_type_name})` : ""
+      return `<option value="${a.id}">${escapeHtml(a.name)}${escapeHtml(typeName)} — $${bal}</option>`
+    }).join("")
+    const categoryOptions = this.categories.map(c => {
+      const typeName = c.spending_type_name ? ` (${c.spending_type_name})` : ""
+      return `<option value="${c.id}">${escapeHtml(c.name)}${escapeHtml(typeName)}</option>`
+    }).join("")
 
     return `<tr class="bg-brand-50/40 dark:bg-brand-900/20">
       <td class="px-4 py-3">
@@ -486,11 +499,14 @@ export default class extends Controller {
   _renderEditRow(payment) {
     const accountOptions = this.accounts.map(a => {
       const selected = a.id === payment.account_id ? "selected" : ""
-      return `<option value="${a.id}" ${selected}>${escapeHtml(a.name)}</option>`
+      const bal = parseFloat(a.balance || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      const typeName = a.account_type_name ? ` (${a.account_type_name})` : ""
+      return `<option value="${a.id}" ${selected}>${escapeHtml(a.name)}${escapeHtml(typeName)} — $${bal}</option>`
     }).join("")
     const categoryOptions = this.categories.map(c => {
       const selected = c.id === payment.spending_category_id ? "selected" : ""
-      return `<option value="${c.id}" ${selected}>${escapeHtml(c.name)}</option>`
+      const typeName = c.spending_type_name ? ` (${c.spending_type_name})` : ""
+      return `<option value="${c.id}" ${selected}>${escapeHtml(c.name)}${escapeHtml(typeName)}</option>`
     }).join("")
     const amtVal = parseFloat(payment.amount) || ""
 
