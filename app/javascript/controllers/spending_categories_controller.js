@@ -278,6 +278,14 @@ export default class extends Controller {
 
     dropdown.classList.remove("hidden")
     dropdown.innerHTML = this._renderIconPickerContent()
+
+    // Position fixed dropdown relative to the icon button
+    const btn = dropdown.closest("[data-icon-picker]")?.querySelector("button")
+    if (btn) {
+      const rect = btn.getBoundingClientRect()
+      dropdown.style.left = `${rect.left}px`
+      dropdown.style.top = `${rect.bottom + 4}px`
+    }
   }
 
   _updateIconButtonPreview() {
@@ -319,7 +327,7 @@ export default class extends Controller {
       </div>
       <div class="p-3">
         <p class="text-xs font-medium text-gray-500 mb-2">Icon</p>
-        <div class="grid grid-cols-8 gap-1 max-h-48 overflow-y-auto">${iconsHtml}</div>
+        <div class="grid grid-cols-8 gap-1">${iconsHtml}</div>
       </div>`
   }
 
@@ -418,7 +426,7 @@ export default class extends Controller {
                   title="Choose icon">
             <span data-icon-preview>${previewIcon}</span>
           </button>
-          <div data-icon-picker-dropdown class="hidden absolute left-0 top-full mt-1 z-50 bg-white rounded-lg shadow-xl ring-1 ring-gray-200 w-80">
+          <div data-icon-picker-dropdown class="hidden fixed z-[9999] bg-white rounded-lg shadow-xl ring-1 ring-gray-200 w-80">
           </div>
         </div>
       </td>
@@ -484,7 +492,7 @@ export default class extends Controller {
                   title="Choose icon">
             <span data-icon-preview>${previewIcon}</span>
           </button>
-          <div data-icon-picker-dropdown class="hidden absolute left-0 top-full mt-1 z-50 bg-white rounded-lg shadow-xl ring-1 ring-gray-200 w-80">
+          <div data-icon-picker-dropdown class="hidden fixed z-[9999] bg-white rounded-lg shadow-xl ring-1 ring-gray-200 w-80">
           </div>
         </div>
       </td>

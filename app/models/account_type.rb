@@ -16,9 +16,9 @@ class AccountType < ApplicationRecord
   validates :description, length: { maximum: 255 }
 
   DEFAULTS = [
-    { name: "Checking", description: "Checking Account", icon_key: "credit-card", color_key: "blue", sort_order: 1 },
+    { name: "Checking", description: "Checking Account", icon_key: "banknotes", color_key: "blue", sort_order: 1 },
     { name: "Savings", description: "Savings Account", icon_key: "piggy-bank", color_key: "green", sort_order: 2 },
-    { name: "Venmo", description: "Venmo Cash Card", icon_key: "smartphone", color_key: "purple", sort_order: 3 }
+    { name: "Venmo", description: "Venmo Cash Card", icon_key: "device", color_key: "purple", sort_order: 3 }
   ].freeze
 
   def soft_delete!
