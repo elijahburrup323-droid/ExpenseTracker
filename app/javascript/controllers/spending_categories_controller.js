@@ -69,9 +69,11 @@ export default class extends Controller {
     const nameInput = this.tableBodyTarget.querySelector("input[name='name']")
     const descInput = this.tableBodyTarget.querySelector("input[name='description']")
     const typeSelect = this.tableBodyTarget.querySelector("select[name='spending_type_id']")
+    const debtToggle = this.tableBodyTarget.querySelector("input[name='is_debt']")
     const name = nameInput?.value?.trim()
     const description = descInput?.value?.trim()
     const spending_type_id = typeSelect?.value
+    const is_debt = debtToggle?.checked || false
 
     if (!name) {
       this.showRowError("Name is required")
@@ -97,6 +99,7 @@ export default class extends Controller {
           name,
           description,
           spending_type_id,
+          is_debt,
           icon_key: this.selectedIconKey,
           color_key: this.selectedColorKey
         }})
@@ -440,6 +443,11 @@ export default class extends Controller {
         </select>
       </td>
       <td class="px-6 py-3 text-center">
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" name="is_debt" class="sr-only peer"
+                 data-action="change->spending-categories#toggleDebtVisual">
+          <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-300 rounded-full peer peer-checked:bg-purple-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+        </label>
       </td>
       <td class="px-6 py-3 text-right space-x-2">
         <button type="button"

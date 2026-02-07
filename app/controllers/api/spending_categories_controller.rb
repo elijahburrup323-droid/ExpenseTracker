@@ -14,7 +14,6 @@ module Api
       max_sort = current_user.spending_categories.maximum(:sort_order) || 0
       category = current_user.spending_categories.build(create_params)
       category.sort_order = max_sort + 1
-      category.is_debt = false
 
       if category.save
         render json: category.as_json(only: [:id, :name, :description, :spending_type_id, :is_debt, :icon_key, :color_key, :sort_order])
@@ -47,7 +46,7 @@ module Api
     end
 
     def create_params
-      params.require(:spending_category).permit(:name, :description, :spending_type_id, :icon_key, :color_key)
+      params.require(:spending_category).permit(:name, :description, :spending_type_id, :is_debt, :icon_key, :color_key)
     end
 
     def update_params
