@@ -3,7 +3,7 @@ import { ICON_CATALOG, COLOR_OPTIONS, renderIconSvg, defaultIconSvg, iconFor, es
 
 export default class extends Controller {
   static targets = ["tableBody", "addButton", "deleteModal", "deleteModalName"]
-  static values = { apiUrl: String, typesUrl: String, csrfToken: String }
+  static values = { apiUrl: String, typesUrl: String, csrfToken: String, typesPageUrl: String }
 
   connect() {
     this.categories = []
@@ -82,8 +82,8 @@ export default class extends Controller {
       return
     }
 
-    if (!spending_type_id) {
-      this.showRowError("Spending Type is required")
+    if (!spending_type_id || spending_type_id === "new") {
+      this.showRowError("Spending Type is required — select an existing type or refresh after creating one")
       typeSelect?.focus()
       return
     }
@@ -158,8 +158,8 @@ export default class extends Controller {
       return
     }
 
-    if (!spending_type_id) {
-      this.showRowError("Spending Type is required")
+    if (!spending_type_id || spending_type_id === "new") {
+      this.showRowError("Spending Type is required — select an existing type or refresh after creating one")
       typeSelect?.focus()
       return
     }
@@ -446,8 +446,9 @@ export default class extends Controller {
       <td class="px-6 py-3 w-48">
         <select name="spending_type_id"
                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-                data-action="keydown->spending-categories#handleKeydown">
+                data-action="keydown->spending-categories#handleKeydown change->spending-categories#handleNewDropdown">
           <option value="">Select type...</option>
+          <option value="new">&mdash; New Spending Type &mdash;</option>
           ${typeOptions}
         </select>
       </td>
@@ -512,8 +513,9 @@ export default class extends Controller {
       <td class="px-6 py-3 w-48">
         <select name="spending_type_id"
                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-                data-action="keydown->spending-categories#handleKeydown">
+                data-action="keydown->spending-categories#handleKeydown change->spending-categories#handleNewDropdown">
           <option value="">Select type...</option>
+          <option value="new">&mdash; New Spending Type &mdash;</option>
           ${typeOptions}
         </select>
       </td>
@@ -593,6 +595,25 @@ export default class extends Controller {
         knob.className = knob.className.replace(wasOn ? "translate-x-1" : "translate-x-7", wasOn ? "translate-x-7" : "translate-x-1")
       }
     }
+  }
+
+  // --- "New" Dropdown Handler ---
+
+  handleNewDropdown(event) {
+    if (event.target.value !== "new") return
+    if (this.hasTypesPageUrlValue) this._openInNewTab(this.typesPageUrlValue)
+  }
+
+  // Safari blocks window.open from non-direct user gestures; anchor click works reliably
+  _openInNewTab(url) {
+    const a = document.createElement("a")
+    a.href = url
+    a.target = "_blank"
+    a.rel = "noopener noreferrer"
+    a.style.display = "none"
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
   }
 
   // --- Error Display ---

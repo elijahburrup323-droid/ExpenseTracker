@@ -73,15 +73,15 @@ export default class extends Controller {
 
   _populateFilterDropdowns() {
     const accSelect = this.filterAccountTarget
-    accSelect.innerHTML = `<option value="">All Accounts</option><option value="new">— New Account —</option>` +
+    accSelect.innerHTML = `<option value="">All Accounts</option>` +
       this._buildAccountOptions()
 
     const catSelect = this.filterCategoryTarget
-    catSelect.innerHTML = `<option value="">All Categories</option><option value="new">— New Category —</option>` +
+    catSelect.innerHTML = `<option value="">All Categories</option>` +
       this._buildCategoryOptions()
 
     const typeSelect = this.filterTypeTarget
-    typeSelect.innerHTML = `<option value="">All Spending Types</option><option value="new">— New Spending Type —</option>` +
+    typeSelect.innerHTML = `<option value="">All Spending Types</option>` +
       this.spendingTypes.map(t => {
         const desc = t.description ? ` — ${t.description}` : ""
         return `<option value="${t.name}">${escapeHtml(t.name)}${escapeHtml(desc)}</option>`
@@ -112,22 +112,7 @@ export default class extends Controller {
 
   // --- Filtering ---
 
-  applyFilters(event) {
-    if (event && event.target) {
-      const val = event.target.value
-      if (val === "new") {
-        const target = event.target
-        if (target === this.filterAccountTarget) {
-          window.open(this.accountsPageUrlValue, "_blank")
-        } else if (target === this.filterCategoryTarget) {
-          window.open(this.categoriesPageUrlValue, "_blank")
-        } else if (target === this.filterTypeTarget) {
-          window.open(this.typesPageUrlValue, "_blank")
-        }
-        target.value = ""
-        return
-      }
-    }
+  applyFilters() {
     this.renderTable()
   }
 
@@ -589,12 +574,23 @@ export default class extends Controller {
   handleNewDropdown(event) {
     if (event.target.value !== "new") return
     const name = event.target.name
-    if (name === "account_id") {
-      window.open(this.accountsPageUrlValue, "_blank")
-    } else if (name === "spending_category_id") {
-      window.open(this.categoriesPageUrlValue, "_blank")
-    }
+    let url = null
+    if (name === "account_id") url = this.accountsPageUrlValue
+    else if (name === "spending_category_id") url = this.categoriesPageUrlValue
+    if (url) this._openInNewTab(url)
     // Leave "new" selected so user knows they need to refresh/reselect
+  }
+
+  // Safari blocks window.open from non-direct user gestures; anchor click works reliably
+  _openInNewTab(url) {
+    const a = document.createElement("a")
+    a.href = url
+    a.target = "_blank"
+    a.rel = "noopener noreferrer"
+    a.style.display = "none"
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
   }
 
   // --- Category Change (Auto-type) ---
