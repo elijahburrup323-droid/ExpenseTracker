@@ -3,10 +3,11 @@ import { ICON_CATALOG, COLOR_OPTIONS, renderIconSvg, defaultIconSvg, iconFor, es
 
 export default class extends Controller {
   static targets = ["tableBody", "addButton", "deleteModal", "deleteModalName"]
-  static values = { apiUrl: String, csrfToken: String }
+  static values = { apiUrl: String, typesUrl: String, csrfToken: String }
 
   connect() {
-    this.spendingTypes = []
+    this.accounts = []
+    this.accountTypes = []
     this.state = "idle" // idle | adding | editing
     this.editingId = null
     this.deletingId = null
@@ -15,7 +16,6 @@ export default class extends Controller {
     this.iconPickerOpen = false
     this.fetchAll()
 
-    // Close icon picker when clicking outside
     this._onDocumentClick = (e) => {
       if (this.iconPickerOpen && !e.target.closest("[data-icon-picker]")) {
         this.iconPickerOpen = false
@@ -33,14 +33,14 @@ export default class extends Controller {
 
   async fetchAll() {
     try {
-      const response = await fetch(this.apiUrlValue, {
-        headers: { "Accept": "application/json" }
-      })
-      if (response.ok) {
-        this.spendingTypes = await response.json()
-      }
+      const [accRes, typesRes] = await Promise.all([
+        fetch(this.apiUrlValue, { headers: { "Accept": "application/json" } }),
+        fetch(this.typesUrlValue, { headers: { "Accept": "application/json" } })
+      ])
+      if (accRes.ok) this.accounts = await accRes.json()
+      if (typesRes.ok) this.accountTypes = await typesRes.json()
     } catch (e) {
-      // silently fail, show empty table
+      // silently fail
     }
     this.renderTable()
   }
@@ -67,13 +67,22 @@ export default class extends Controller {
 
   async saveNew() {
     const nameInput = this.tableBodyTarget.querySelector("input[name='name']")
-    const descInput = this.tableBodyTarget.querySelector("input[name='description']")
+    const typeSelect = this.tableBodyTarget.querySelector("select[name='account_type_id']")
+    const instInput = this.tableBodyTarget.querySelector("input[name='institution']")
+    const balInput = this.tableBodyTarget.querySelector("input[name='balance']")
     const name = nameInput?.value?.trim()
-    const description = descInput?.value?.trim()
+    const account_type_id = typeSelect?.value
+    const institution = instInput?.value?.trim()
+    const balance = balInput?.value?.trim() || "0"
 
     if (!name) {
       this.showRowError("Name is required")
       nameInput?.focus()
+      return
+    }
+    if (!account_type_id) {
+      this.showRowError("Account Type is required")
+      typeSelect?.focus()
       return
     }
 
@@ -85,17 +94,16 @@ export default class extends Controller {
           "Accept": "application/json",
           "X-CSRF-Token": this.csrfTokenValue
         },
-        body: JSON.stringify({ spending_type: {
-          name,
-          description,
+        body: JSON.stringify({ account: {
+          name, account_type_id, institution, balance,
           icon_key: this.selectedIconKey,
           color_key: this.selectedColorKey
         }})
       })
 
       if (response.ok) {
-        const newType = await response.json()
-        this.spendingTypes.push(newType)
+        const newAcc = await response.json()
+        this.accounts.push(newAcc)
         this.state = "idle"
         this.iconPickerOpen = false
         this.renderTable()
@@ -111,11 +119,11 @@ export default class extends Controller {
   startEditing(event) {
     if (this.state !== "idle") { this.state = "idle"; this.editingId = null; this.iconPickerOpen = false }
     const id = Number(event.currentTarget.dataset.id)
-    const st = this.spendingTypes.find(s => s.id === id)
+    const acc = this.accounts.find(a => a.id === id)
     this.state = "editing"
     this.editingId = id
-    this.selectedIconKey = st?.icon_key || null
-    this.selectedColorKey = st?.color_key || "blue"
+    this.selectedIconKey = acc?.icon_key || null
+    this.selectedColorKey = acc?.color_key || "blue"
     this.iconPickerOpen = false
     this.renderTable()
     const nameInput = this.tableBodyTarget.querySelector("input[name='name']")
@@ -131,13 +139,22 @@ export default class extends Controller {
 
   async saveEdit() {
     const nameInput = this.tableBodyTarget.querySelector("input[name='name']")
-    const descInput = this.tableBodyTarget.querySelector("input[name='description']")
+    const typeSelect = this.tableBodyTarget.querySelector("select[name='account_type_id']")
+    const instInput = this.tableBodyTarget.querySelector("input[name='institution']")
+    const balInput = this.tableBodyTarget.querySelector("input[name='balance']")
     const name = nameInput?.value?.trim()
-    const description = descInput?.value?.trim()
+    const account_type_id = typeSelect?.value
+    const institution = instInput?.value?.trim()
+    const balance = balInput?.value?.trim() || "0"
 
     if (!name) {
       this.showRowError("Name is required")
       nameInput?.focus()
+      return
+    }
+    if (!account_type_id) {
+      this.showRowError("Account Type is required")
+      typeSelect?.focus()
       return
     }
 
@@ -149,9 +166,8 @@ export default class extends Controller {
           "Accept": "application/json",
           "X-CSRF-Token": this.csrfTokenValue
         },
-        body: JSON.stringify({ spending_type: {
-          name,
-          description,
+        body: JSON.stringify({ account: {
+          name, account_type_id, institution, balance,
           icon_key: this.selectedIconKey,
           color_key: this.selectedColorKey
         }})
@@ -159,8 +175,8 @@ export default class extends Controller {
 
       if (response.ok) {
         const updated = await response.json()
-        const idx = this.spendingTypes.findIndex(st => st.id === this.editingId)
-        if (idx !== -1) this.spendingTypes[idx] = updated
+        const idx = this.accounts.findIndex(a => a.id === this.editingId)
+        if (idx !== -1) this.accounts[idx] = updated
         this.state = "idle"
         this.editingId = null
         this.iconPickerOpen = false
@@ -177,11 +193,11 @@ export default class extends Controller {
   confirmDelete(event) {
     if (this.state !== "idle") { this.state = "idle"; this.editingId = null; this.iconPickerOpen = false; this.renderTable() }
     const id = Number(event.currentTarget.dataset.id)
-    const st = this.spendingTypes.find(s => s.id === id)
-    if (!st) return
+    const acc = this.accounts.find(a => a.id === id)
+    if (!acc) return
 
     this.deletingId = id
-    this.deleteModalNameTarget.textContent = st.name
+    this.deleteModalNameTarget.textContent = acc.name
     this.deleteModalTarget.classList.remove("hidden")
     this.addButtonTarget.disabled = true
   }
@@ -196,18 +212,13 @@ export default class extends Controller {
     try {
       const response = await fetch(`${this.apiUrlValue}/${this.deletingId}`, {
         method: "DELETE",
-        headers: {
-          "X-CSRF-Token": this.csrfTokenValue
-        }
+        headers: { "X-CSRF-Token": this.csrfTokenValue }
       })
-
       if (response.ok || response.status === 204) {
-        this.spendingTypes = this.spendingTypes.filter(st => st.id !== this.deletingId)
+        this.accounts = this.accounts.filter(a => a.id !== this.deletingId)
         this.renderTable()
       }
-    } catch (e) {
-      // silently fail
-    }
+    } catch (e) {}
 
     this.deletingId = null
     this.deleteModalTarget.classList.add("hidden")
@@ -255,7 +266,6 @@ export default class extends Controller {
     dropdown.classList.remove("hidden")
     dropdown.innerHTML = this._renderIconPickerContent()
 
-    // Position fixed dropdown relative to the icon button
     const btn = dropdown.closest("[data-icon-picker]")?.querySelector("button")
     if (btn) {
       const rect = btn.getBoundingClientRect()
@@ -279,7 +289,7 @@ export default class extends Controller {
       const ringClass = selected ? `ring-2 ${c.ring} ring-offset-1` : ""
       return `<button type="button" data-color-key="${c.key}"
         class="w-6 h-6 rounded-full ${c.bg} ${ringClass} hover:ring-2 hover:${c.ring} hover:ring-offset-1 transition flex items-center justify-center"
-        data-action="click->spending-types#selectColor"
+        data-action="click->accounts#selectColor"
         title="${c.label}">
         <span class="w-3 h-3 rounded-full ${c.css.replace('text-', 'bg-')}"></span>
       </button>`
@@ -290,7 +300,7 @@ export default class extends Controller {
       const bgClass = selected ? "bg-brand-100 ring-2 ring-brand-500" : "hover:bg-gray-100"
       return `<button type="button" data-icon-key="${icon.key}"
         class="p-1.5 rounded-md ${bgClass} transition flex items-center justify-center"
-        data-action="click->spending-types#selectIcon"
+        data-action="click->accounts#selectIcon"
         title="${icon.label}">
         ${renderIconSvg(icon.key, this.selectedColorKey, "h-5 w-5")}
       </button>`
@@ -305,6 +315,60 @@ export default class extends Controller {
         <p class="text-xs font-medium text-gray-500 mb-2">Icon</p>
         <div class="grid grid-cols-8 gap-1">${iconsHtml}</div>
       </div>`
+  }
+
+  // --- Budget Toggle ---
+
+  _renderBudgetToggle(isOn, accId = null) {
+    const bg = isOn ? "bg-brand-600" : "bg-gray-300"
+    const knobTranslate = isOn ? "translate-x-7" : "translate-x-1"
+    const dataId = accId ? `data-id="${accId}"` : ""
+    return `<button type="button"
+      class="budget-toggle relative inline-flex h-7 w-14 items-center rounded-full transition-colors ${bg} focus:outline-none focus:ring-2 focus:ring-brand-300"
+      data-checked="${isOn}" ${dataId}
+      data-action="click->accounts#toggleBudget"
+      role="switch" aria-checked="${isOn}" title="${isOn ? 'In Budget: Yes' : 'In Budget: No'}">
+      <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${knobTranslate}"></span>
+    </button>`
+  }
+
+  async toggleBudget(event) {
+    const btn = event.currentTarget
+    const wasOn = btn.dataset.checked === "true"
+    const nowOn = !wasOn
+
+    btn.dataset.checked = String(nowOn)
+    btn.setAttribute("aria-checked", String(nowOn))
+    btn.title = nowOn ? "In Budget: Yes" : "In Budget: No"
+    btn.className = btn.className.replace(nowOn ? "bg-gray-300" : "bg-brand-600", nowOn ? "bg-brand-600" : "bg-gray-300")
+    const knob = btn.querySelector("span")
+    knob.className = knob.className.replace(nowOn ? "translate-x-1" : "translate-x-7", nowOn ? "translate-x-7" : "translate-x-1")
+
+    const accId = btn.dataset.id
+    if (accId && this.state === "idle") {
+      try {
+        const response = await fetch(`${this.apiUrlValue}/${accId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "X-CSRF-Token": this.csrfTokenValue
+          },
+          body: JSON.stringify({ account: { include_in_budget: nowOn } })
+        })
+        if (response.ok) {
+          const updated = await response.json()
+          const idx = this.accounts.findIndex(a => a.id === Number(accId))
+          if (idx !== -1) this.accounts[idx] = updated
+        }
+      } catch (e) {
+        btn.dataset.checked = String(wasOn)
+        btn.setAttribute("aria-checked", String(wasOn))
+        btn.title = wasOn ? "In Budget: Yes" : "In Budget: No"
+        btn.className = btn.className.replace(wasOn ? "bg-gray-300" : "bg-brand-600", wasOn ? "bg-brand-600" : "bg-gray-300")
+        knob.className = knob.className.replace(wasOn ? "translate-x-1" : "translate-x-7", wasOn ? "translate-x-7" : "translate-x-1")
+      }
+    }
   }
 
   // --- Keyboard Handling ---
@@ -333,45 +397,55 @@ export default class extends Controller {
     let html = ""
 
     if (this.state === "adding") {
-      html += this.renderInputRow("", "")
+      html += this.renderAddRow()
     }
 
-    for (const st of this.spendingTypes) {
-      if (this.state === "editing" && st.id === this.editingId) {
-        html += this.renderInputRow(st.name, st.description || "")
+    for (const acc of this.accounts) {
+      if (this.state === "editing" && acc.id === this.editingId) {
+        html += this.renderEditRow(acc)
       } else {
-        html += this.renderDisplayRow(st, isIdle)
+        html += this.renderDisplayRow(acc, isIdle)
       }
     }
 
-    if (this.spendingTypes.length === 0 && this.state !== "adding") {
-      html = `<tr><td colspan="4" class="px-6 py-8 text-center text-sm text-gray-400">No spending types yet. Click "Add Spending Type" to create one.</td></tr>`
+    if (this.accounts.length === 0 && this.state !== "adding") {
+      html = `<tr><td colspan="7" class="px-6 py-8 text-center text-sm text-gray-400">No accounts yet. Click "Add Account" to create one.</td></tr>`
     }
 
     this.tableBodyTarget.innerHTML = html
   }
 
-  renderDisplayRow(st, actionsEnabled) {
+  _formatBalance(balance) {
+    const num = parseFloat(balance)
+    if (!num && num !== 0) return "&mdash;"
+    return `$${num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+
+  renderDisplayRow(acc, actionsEnabled) {
     const disabledClass = actionsEnabled ? "" : "opacity-50 cursor-not-allowed"
     const disabledAttr = actionsEnabled ? "" : "disabled"
+    const budgetToggle = this._renderBudgetToggle(acc.include_in_budget, acc.id)
 
     return `<tr class="hover:bg-gray-50 transition-colors">
-      <td class="px-6 py-4">${iconFor(st.icon_key, st.color_key)}</td>
-      <td class="px-6 py-4 text-sm font-medium text-gray-900">${escapeHtml(st.name)}</td>
-      <td class="px-6 py-4 text-sm text-gray-500">${escapeHtml(st.description || "")}</td>
+      <td class="px-6 py-4">${iconFor(acc.icon_key, acc.color_key)}</td>
+      <td class="px-6 py-4 text-sm font-medium text-gray-900">${escapeHtml(acc.name)}</td>
+      <td class="px-6 py-4 text-sm text-gray-500">${escapeHtml(acc.account_type_name || "")}</td>
+      <td class="px-6 py-4 text-sm text-gray-500">${escapeHtml(acc.institution || "")}</td>
+      <td class="px-6 py-4 text-sm text-gray-900 text-right font-mono">${this._formatBalance(acc.balance)}</td>
+      <td class="px-6 py-4 text-center">${budgetToggle}</td>
       <td class="px-6 py-4 text-right space-x-2">
         <button type="button"
                 class="inline-flex items-center justify-center w-8 h-8 rounded-md text-brand-700 bg-brand-50 hover:bg-brand-100 transition ${disabledClass}"
-                data-id="${st.id}"
-                data-action="click->spending-types#startEditing"
+                data-id="${acc.id}"
+                data-action="click->accounts#startEditing"
                 ${disabledAttr}
                 title="Edit">
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
         </button>
         <button type="button"
                 class="inline-flex items-center justify-center w-8 h-8 rounded-md text-red-700 bg-red-50 hover:bg-red-100 transition ${disabledClass}"
-                data-id="${st.id}"
-                data-action="click->spending-types#confirmDelete"
+                data-id="${acc.id}"
+                data-action="click->accounts#confirmDelete"
                 ${disabledAttr}
                 title="Delete">
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
@@ -380,18 +454,21 @@ export default class extends Controller {
     </tr>`
   }
 
-  renderInputRow(name, description) {
-    const isAdding = this.state === "adding"
+  renderAddRow() {
     const previewIcon = this.selectedIconKey
       ? renderIconSvg(this.selectedIconKey, this.selectedColorKey, "h-5 w-5")
       : `<svg class="h-5 w-5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`
+
+    const typeOptions = this.accountTypes.map(at =>
+      `<option value="${at.id}">${escapeHtml(at.name)}</option>`
+    ).join("")
 
     return `<tr class="bg-brand-50/40">
       <td class="px-6 py-3">
         <div class="relative" data-icon-picker>
           <button type="button"
                   class="p-1.5 rounded-md border border-gray-300 hover:bg-gray-50 transition"
-                  data-action="click->spending-types#toggleIconPicker"
+                  data-action="click->accounts#toggleIconPicker"
                   title="Choose icon">
             <span data-icon-preview>${previewIcon}</span>
           </button>
@@ -400,41 +477,136 @@ export default class extends Controller {
         </div>
       </td>
       <td class="px-6 py-3">
-        <input type="text" name="name" value="${escapeAttr(name)}" placeholder="Name"
+        <input type="text" name="name" value="" placeholder="Name"
                maxlength="80"
                class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-               data-action="keydown->spending-types#handleKeydown">
+               data-action="keydown->accounts#handleKeydown">
       </td>
       <td class="px-6 py-3">
-        <input type="text" name="description" value="${escapeAttr(description)}" placeholder="Description"
-               maxlength="255"
+        <select name="account_type_id"
+                class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+                data-action="keydown->accounts#handleKeydown">
+          <option value="">Select type...</option>
+          ${typeOptions}
+        </select>
+      </td>
+      <td class="px-6 py-3">
+        <input type="text" name="institution" value="" placeholder="Institution"
+               maxlength="120"
                class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-               data-action="keydown->spending-types#handleKeydown">
+               data-action="keydown->accounts#handleKeydown">
+      </td>
+      <td class="px-6 py-3">
+        <div class="flex items-center">
+          <span class="text-sm text-gray-500 mr-1">$</span>
+          <input type="number" name="balance" value="" placeholder="0.00" step="0.01"
+                 class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5 text-right"
+                 data-action="keydown->accounts#handleKeydown">
+        </div>
+      </td>
+      <td class="px-6 py-3 text-center">
+        ${this._renderBudgetToggle(true)}
       </td>
       <td class="px-6 py-3 text-right space-x-2">
         <button type="button"
                 class="inline-flex items-center justify-center w-9 h-9 rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
-                data-action="click->spending-types#${isAdding ? 'saveNew' : 'saveEdit'}"
+                data-action="click->accounts#saveNew"
                 title="Save">
           <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 21v-8H7v8"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 3v5h8"/></svg>
         </button>
         <button type="button"
                 class="inline-flex items-center justify-center w-9 h-9 rounded-md text-red-600 bg-red-50 hover:bg-red-100 transition"
-                data-action="click->spending-types#${isAdding ? 'cancelAdding' : 'cancelEditing'}"
+                data-action="click->accounts#cancelAdding"
                 title="Cancel">
           <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         </button>
       </td>
     </tr>
-    <tr class="hidden" data-spending-types-target="rowError">
-      <td colspan="4" class="px-6 py-2 text-sm text-red-600 bg-red-50"></td>
+    <tr class="hidden" data-accounts-target="rowError">
+      <td colspan="7" class="px-6 py-2 text-sm text-red-600 bg-red-50"></td>
+    </tr>`
+  }
+
+  renderEditRow(acc) {
+    const previewIcon = this.selectedIconKey
+      ? renderIconSvg(this.selectedIconKey, this.selectedColorKey, "h-5 w-5")
+      : `<svg class="h-5 w-5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`
+
+    const typeOptions = this.accountTypes.map(at => {
+      const selected = at.id === acc.account_type_id ? "selected" : ""
+      return `<option value="${at.id}" ${selected}>${escapeHtml(at.name)}</option>`
+    }).join("")
+
+    const balVal = parseFloat(acc.balance) || ""
+
+    return `<tr class="bg-brand-50/40">
+      <td class="px-6 py-3">
+        <div class="relative" data-icon-picker>
+          <button type="button"
+                  class="p-1.5 rounded-md border border-gray-300 hover:bg-gray-50 transition"
+                  data-action="click->accounts#toggleIconPicker"
+                  title="Choose icon">
+            <span data-icon-preview>${previewIcon}</span>
+          </button>
+          <div data-icon-picker-dropdown class="hidden fixed z-[9999] bg-white rounded-lg shadow-xl ring-1 ring-gray-200 w-80">
+          </div>
+        </div>
+      </td>
+      <td class="px-6 py-3">
+        <input type="text" name="name" value="${escapeAttr(acc.name)}" placeholder="Name"
+               maxlength="80"
+               class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+               data-action="keydown->accounts#handleKeydown">
+      </td>
+      <td class="px-6 py-3">
+        <select name="account_type_id"
+                class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+                data-action="keydown->accounts#handleKeydown">
+          <option value="">Select type...</option>
+          ${typeOptions}
+        </select>
+      </td>
+      <td class="px-6 py-3">
+        <input type="text" name="institution" value="${escapeAttr(acc.institution || "")}" placeholder="Institution"
+               maxlength="120"
+               class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+               data-action="keydown->accounts#handleKeydown">
+      </td>
+      <td class="px-6 py-3">
+        <div class="flex items-center">
+          <span class="text-sm text-gray-500 mr-1">$</span>
+          <input type="number" name="balance" value="${balVal}" placeholder="0.00" step="0.01"
+                 class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5 text-right"
+                 data-action="keydown->accounts#handleKeydown">
+        </div>
+      </td>
+      <td class="px-6 py-3 text-center">
+        ${this._renderBudgetToggle(acc.include_in_budget)}
+      </td>
+      <td class="px-6 py-3 text-right space-x-2">
+        <button type="button"
+                class="inline-flex items-center justify-center w-9 h-9 rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
+                data-action="click->accounts#saveEdit"
+                title="Save">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 21v-8H7v8"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 3v5h8"/></svg>
+        </button>
+        <button type="button"
+                class="inline-flex items-center justify-center w-9 h-9 rounded-md text-red-600 bg-red-50 hover:bg-red-100 transition"
+                data-action="click->accounts#cancelEditing"
+                title="Cancel">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </button>
+      </td>
+    </tr>
+    <tr class="hidden" data-accounts-target="rowError">
+      <td colspan="7" class="px-6 py-2 text-sm text-red-600 bg-red-50"></td>
     </tr>`
   }
 
   // --- Error Display ---
 
   showRowError(message) {
-    const errorRow = this.tableBodyTarget.querySelector("[data-spending-types-target='rowError']")
+    const errorRow = this.tableBodyTarget.querySelector("[data-accounts-target='rowError']")
     if (errorRow) {
       errorRow.classList.remove("hidden")
       errorRow.querySelector("td").textContent = message

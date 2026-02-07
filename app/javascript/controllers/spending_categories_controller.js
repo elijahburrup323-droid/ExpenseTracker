@@ -49,7 +49,8 @@ export default class extends Controller {
   // --- State Transitions ---
 
   startAdding() {
-    if (this.state !== "idle") return
+    if (this.state === "adding") return
+    if (this.state !== "idle") { this.state = "idle"; this.editingId = null; this.iconPickerOpen = false }
     this.state = "adding"
     this.selectedIconKey = null
     this.selectedColorKey = "blue"
@@ -121,7 +122,7 @@ export default class extends Controller {
   }
 
   startEditing(event) {
-    if (this.state !== "idle") return
+    if (this.state !== "idle") { this.state = "idle"; this.editingId = null; this.iconPickerOpen = false }
     const id = Number(event.currentTarget.dataset.id)
     const cat = this.categories.find(c => c.id === id)
     this.state = "editing"
@@ -199,7 +200,7 @@ export default class extends Controller {
   }
 
   confirmDelete(event) {
-    if (this.state !== "idle") return
+    if (this.state !== "idle") { this.state = "idle"; this.editingId = null; this.iconPickerOpen = false; this.renderTable() }
     const id = Number(event.currentTarget.dataset.id)
     const cat = this.categories.find(c => c.id === id)
     if (!cat) return

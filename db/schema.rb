@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_01_01_000006) do
+ActiveRecord::Schema[7.1].define(version: 2024_01_01_000007) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -29,6 +29,25 @@ ActiveRecord::Schema[7.1].define(version: 2024_01_01_000006) do
     t.index "user_id, lower((name)::text)", name: "index_account_types_on_user_id_and_lower_name", unique: true, where: "(deleted_at IS NULL)"
     t.index ["user_id", "sort_order"], name: "index_account_types_on_user_id_and_sort_order"
     t.index ["user_id"], name: "index_account_types_on_user_id"
+  end
+
+  create_table "accounts", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "account_type_id", null: false
+    t.string "name", limit: 80, null: false
+    t.string "institution", limit: 120
+    t.decimal "balance", precision: 12, scale: 2, default: "0.0", null: false
+    t.boolean "include_in_budget", default: true, null: false
+    t.string "icon_key", limit: 40
+    t.string "color_key", limit: 40
+    t.integer "sort_order", default: 0, null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "user_id, lower((name)::text)", name: "index_accounts_on_user_id_and_lower_name", unique: true, where: "(deleted_at IS NULL)"
+    t.index ["account_type_id"], name: "index_accounts_on_account_type_id"
+    t.index ["user_id", "sort_order"], name: "index_accounts_on_user_id_and_sort_order"
+    t.index ["user_id"], name: "index_accounts_on_user_id"
   end
 
   create_table "identities", force: :cascade do |t|
@@ -123,6 +142,8 @@ ActiveRecord::Schema[7.1].define(version: 2024_01_01_000006) do
   end
 
   add_foreign_key "account_types", "users"
+  add_foreign_key "accounts", "account_types"
+  add_foreign_key "accounts", "users"
   add_foreign_key "identities", "users"
   add_foreign_key "spending_categories", "spending_types"
   add_foreign_key "spending_categories", "users"

@@ -1,5 +1,6 @@
 class AccountType < ApplicationRecord
   belongs_to :user
+  has_many :accounts
 
   default_scope { where(deleted_at: nil) }
 
