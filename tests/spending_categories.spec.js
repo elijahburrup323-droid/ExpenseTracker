@@ -79,11 +79,11 @@ test.describe.serial("Spending Categories CRUD", () => {
     // Select a spending type from dropdown (index 1 = first real option after placeholder)
     await page.selectOption('select[name="spending_type_id"]', { index: 1 });
 
-    // Debt toggle should be visible in add mode (defaults to unchecked/false)
-    const debtToggle = page.locator("tr.bg-brand-50\\/40 input[name='is_debt']");
+    // Debt toggle should be visible in add mode (defaults to No)
+    const debtToggle = page.locator("tr.bg-brand-50\\/40 button.debt-toggle");
     await expect(debtToggle).toHaveCount(1);
-    // Toggle it to true for this test category
-    await debtToggle.check({ force: true });
+    // Toggle it to Yes for this test category
+    await debtToggle.click();
 
     // Save
     await page.click('button[title="Save"]');
@@ -92,9 +92,10 @@ test.describe.serial("Spending Categories CRUD", () => {
     // Verify new row appears
     await expect(page.locator("tbody")).toContainText("Test Category PW");
 
-    // Verify debt shows True pill (we toggled it on)
+    // Verify debt toggle shows Yes (we toggled it on)
     const newRow = page.locator("tr", { hasText: "Test Category PW" });
-    await expect(newRow.locator("span", { hasText: "True" })).toBeVisible();
+    const newDebtBtn = newRow.locator("button.debt-toggle");
+    await expect(newDebtBtn).toHaveAttribute("data-checked", "true");
   });
 
   test("edit a spending category with debt toggle", async ({ page }) => {
@@ -111,10 +112,11 @@ test.describe.serial("Spending Categories CRUD", () => {
 
     // Verify debt toggle IS visible in edit mode
     const editRow = page.locator("tr.bg-brand-50\\/40");
-    await expect(editRow.locator("input[name='is_debt']")).toHaveCount(1);
+    const editDebtBtn = editRow.locator("button.debt-toggle");
+    await expect(editDebtBtn).toHaveCount(1);
 
     // Toggle debt off (it was set to true during creation)
-    await editRow.locator("input[name='is_debt']").uncheck({ force: true });
+    await editDebtBtn.click();
 
     // Change description
     await editRow
@@ -125,11 +127,10 @@ test.describe.serial("Spending Categories CRUD", () => {
     await page.click('button[title="Save"]');
     await page.waitForTimeout(2000);
 
-    // Verify debt now shows False pill (we toggled it off)
+    // Verify debt toggle shows No (we toggled it off)
     const updatedRow = page.locator("tr", { hasText: "Test Category PW" });
-    await expect(
-      updatedRow.locator("span", { hasText: "False" })
-    ).toBeVisible();
+    const updatedDebtBtn = updatedRow.locator("button.debt-toggle");
+    await expect(updatedDebtBtn).toHaveAttribute("data-checked", "false");
     await expect(updatedRow).toContainText("Updated by Playwright");
   });
 

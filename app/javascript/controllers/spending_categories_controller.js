@@ -69,11 +69,11 @@ export default class extends Controller {
     const nameInput = this.tableBodyTarget.querySelector("input[name='name']")
     const descInput = this.tableBodyTarget.querySelector("input[name='description']")
     const typeSelect = this.tableBodyTarget.querySelector("select[name='spending_type_id']")
-    const debtToggle = this.tableBodyTarget.querySelector("input[name='is_debt']")
+    const debtToggle = this.tableBodyTarget.querySelector(".debt-toggle")
     const name = nameInput?.value?.trim()
     const description = descInput?.value?.trim()
     const spending_type_id = typeSelect?.value
-    const is_debt = debtToggle?.checked || false
+    const is_debt = debtToggle?.dataset.checked === "true"
 
     if (!name) {
       this.showRowError("Name is required")
@@ -145,11 +145,11 @@ export default class extends Controller {
     const nameInput = this.tableBodyTarget.querySelector("input[name='name']")
     const descInput = this.tableBodyTarget.querySelector("input[name='description']")
     const typeSelect = this.tableBodyTarget.querySelector("select[name='spending_type_id']")
-    const debtToggle = this.tableBodyTarget.querySelector("input[name='is_debt']")
+    const debtToggle = this.tableBodyTarget.querySelector(".debt-toggle")
     const name = nameInput?.value?.trim()
     const description = descInput?.value?.trim()
     const spending_type_id = typeSelect?.value
-    const is_debt = debtToggle?.checked || false
+    const is_debt = debtToggle?.dataset.checked === "true"
 
     if (!name) {
       this.showRowError("Name is required")
@@ -371,16 +371,14 @@ export default class extends Controller {
     const disabledClass = actionsEnabled ? "" : "opacity-50 cursor-not-allowed"
     const disabledAttr = actionsEnabled ? "" : "disabled"
 
-    const debtPill = cat.is_debt
-      ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">True</span>`
-      : `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">False</span>`
+    const debtToggle = this._renderDebtToggle(cat.is_debt, cat.id)
 
     return `<tr class="hover:bg-gray-50 transition-colors">
       <td class="px-6 py-4">${iconFor(cat.icon_key, cat.color_key)}</td>
       <td class="px-6 py-4 text-sm font-medium text-gray-900">${escapeHtml(cat.name)}</td>
       <td class="px-6 py-4 text-sm text-gray-500">${escapeHtml(cat.description || "")}</td>
       <td class="px-6 py-4 text-sm text-gray-500 w-48 max-w-[12rem] truncate">${escapeHtml(cat.spending_type_name || "")}</td>
-      <td class="px-6 py-4 text-center">${debtPill}</td>
+      <td class="px-6 py-4 text-center">${debtToggle}</td>
       <td class="px-6 py-4 text-right space-x-2">
         <button type="button"
                 class="inline-flex items-center justify-center w-8 h-8 rounded-md text-brand-700 bg-brand-50 hover:bg-brand-100 transition ${disabledClass}"
@@ -445,18 +443,14 @@ export default class extends Controller {
         </select>
       </td>
       <td class="px-6 py-3 text-center">
-        <label class="relative inline-flex items-center cursor-pointer">
-          <input type="checkbox" name="is_debt" class="sr-only peer"
-                 data-action="change->spending-categories#toggleDebtVisual">
-          <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-300 rounded-full peer peer-checked:bg-purple-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
-        </label>
+        ${this._renderDebtToggle(false)}
       </td>
       <td class="px-6 py-3 text-right space-x-2">
         <button type="button"
                 class="inline-flex items-center justify-center w-8 h-8 rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
                 data-action="click->spending-categories#saveNew"
                 title="Save">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 21v-8H7v8"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 3v5h8"/></svg>
         </button>
         <button type="button"
                 class="inline-flex items-center justify-center w-8 h-8 rounded-md text-red-600 bg-red-50 hover:bg-red-100 transition"
@@ -480,10 +474,6 @@ export default class extends Controller {
       const selected = st.id === cat.spending_type_id ? "selected" : ""
       return `<option value="${st.id}" ${selected}>${escapeHtml(st.name)}</option>`
     }).join("")
-
-    const checked = cat.is_debt ? "checked" : ""
-    const toggleBg = cat.is_debt ? "bg-purple-600" : "bg-gray-200"
-    const toggleTranslate = cat.is_debt ? "translate-x-5" : "translate-x-0"
 
     return `<tr class="bg-brand-50/40">
       <td class="px-6 py-3">
@@ -519,18 +509,14 @@ export default class extends Controller {
         </select>
       </td>
       <td class="px-6 py-3 text-center">
-        <label class="relative inline-flex items-center cursor-pointer">
-          <input type="checkbox" name="is_debt" class="sr-only peer" ${checked}
-                 data-action="change->spending-categories#toggleDebtVisual">
-          <div class="w-11 h-6 ${toggleBg} peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-300 rounded-full peer peer-checked:bg-purple-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
-        </label>
+        ${this._renderDebtToggle(cat.is_debt)}
       </td>
       <td class="px-6 py-3 text-right space-x-2">
         <button type="button"
                 class="inline-flex items-center justify-center w-8 h-8 rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
                 data-action="click->spending-categories#saveEdit"
                 title="Save">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 21v-8H7v8"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 3v5h8"/></svg>
         </button>
         <button type="button"
                 class="inline-flex items-center justify-center w-8 h-8 rounded-md text-red-600 bg-red-50 hover:bg-red-100 transition"
@@ -545,8 +531,69 @@ export default class extends Controller {
     </tr>`
   }
 
-  toggleDebtVisual(event) {
-    // Visual update handled by CSS peer classes - no JS needed
+  _renderDebtToggle(isOn, catId = null) {
+    const bg = isOn ? "bg-purple-600" : "bg-gray-300"
+    const knobTranslate = isOn ? "translate-x-7" : "translate-x-1"
+    const yesClass = isOn ? "" : "hidden"
+    const noClass = isOn ? "hidden" : ""
+    const dataId = catId ? `data-id="${catId}"` : ""
+    return `<button type="button"
+      class="debt-toggle relative inline-flex h-7 w-14 items-center rounded-full transition-colors ${bg} focus:outline-none focus:ring-2 focus:ring-purple-300"
+      data-checked="${isOn}" ${dataId}
+      data-action="click->spending-categories#toggleDebt"
+      role="switch" aria-checked="${isOn}" title="${isOn ? 'Debt: Yes' : 'Debt: No'}">
+      <span class="absolute left-1.5 text-[10px] font-bold text-white select-none ${yesClass}">Yes</span>
+      <span class="absolute right-1 text-[10px] font-bold text-gray-500 select-none ${noClass}">No</span>
+      <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${knobTranslate}"></span>
+    </button>`
+  }
+
+  async toggleDebt(event) {
+    const btn = event.currentTarget
+    const wasOn = btn.dataset.checked === "true"
+    const nowOn = !wasOn
+
+    // Update visual state immediately
+    btn.dataset.checked = String(nowOn)
+    btn.setAttribute("aria-checked", String(nowOn))
+    btn.title = nowOn ? "Debt: Yes" : "Debt: No"
+    btn.className = btn.className.replace(nowOn ? "bg-gray-300" : "bg-purple-600", nowOn ? "bg-purple-600" : "bg-gray-300")
+    const knob = btn.querySelector("span:last-child")
+    knob.className = knob.className.replace(nowOn ? "translate-x-1" : "translate-x-7", nowOn ? "translate-x-7" : "translate-x-1")
+    const yesLabel = btn.querySelector("span:first-child")
+    const noLabel = btn.querySelector("span:nth-child(2)")
+    yesLabel.classList.toggle("hidden", !nowOn)
+    noLabel.classList.toggle("hidden", nowOn)
+
+    // If in display mode (has data-id), make an API call
+    const catId = btn.dataset.id
+    if (catId && this.state === "idle") {
+      try {
+        const response = await fetch(`${this.apiUrlValue}/${catId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "X-CSRF-Token": this.csrfTokenValue
+          },
+          body: JSON.stringify({ spending_category: { is_debt: nowOn } })
+        })
+        if (response.ok) {
+          const updated = await response.json()
+          const idx = this.categories.findIndex(c => c.id === Number(catId))
+          if (idx !== -1) this.categories[idx] = updated
+        }
+      } catch (e) {
+        // Revert on error
+        btn.dataset.checked = String(wasOn)
+        btn.setAttribute("aria-checked", String(wasOn))
+        btn.title = wasOn ? "Debt: Yes" : "Debt: No"
+        btn.className = btn.className.replace(wasOn ? "bg-gray-300" : "bg-purple-600", wasOn ? "bg-purple-600" : "bg-gray-300")
+        knob.className = knob.className.replace(wasOn ? "translate-x-1" : "translate-x-7", wasOn ? "translate-x-7" : "translate-x-1")
+        yesLabel.classList.toggle("hidden", !wasOn)
+        noLabel.classList.toggle("hidden", wasOn)
+      }
+    }
   }
 
   // --- Error Display ---
