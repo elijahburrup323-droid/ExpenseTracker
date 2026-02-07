@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 import { ICON_CATALOG, COLOR_OPTIONS, renderIconSvg, defaultIconSvg, iconFor, escapeHtml, escapeAttr } from "controllers/shared/icon_catalog"
 
 export default class extends Controller {
-  static targets = ["tableBody", "addButton", "deleteModal", "deleteModalName"]
+  static targets = ["tableBody", "addButton", "generateButton", "deleteModal", "deleteModalName"]
   static values = { apiUrl: String, csrfToken: String }
 
   connect() {
@@ -42,6 +42,55 @@ export default class extends Controller {
     } catch (e) {
       // silently fail, show empty table
     }
+    this.renderTable()
+  }
+
+  // --- Generate Data ---
+
+  async generateData() {
+    if (this.state !== "idle") return
+    const btn = this.generateButtonTarget
+    const originalText = btn.innerHTML
+    btn.disabled = true
+    btn.innerHTML = `<svg class="animate-spin h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>Generating...`
+    this.addButtonTarget.disabled = true
+
+    const dummyData = [
+      { name: "Checking", description: "Everyday checking accounts", icon_key: "banknotes", color_key: "blue" },
+      { name: "Savings", description: "Savings and money market", icon_key: "piggy-bank", color_key: "green" },
+      { name: "Credit Card", description: "Credit card accounts", icon_key: "receipt", color_key: "red" },
+      { name: "Investment", description: "Brokerage and retirement", icon_key: "chart-line", color_key: "purple" },
+      { name: "Cash", description: "Physical cash on hand", icon_key: "currency", color_key: "gold" },
+      { name: "Loan", description: "Personal and auto loans", icon_key: "document", color_key: "orange" },
+      { name: "Mortgage", description: "Home mortgage accounts", icon_key: "home", color_key: "indigo" },
+      { name: "Digital Wallet", description: "PayPal, Venmo, etc.", icon_key: "device", color_key: "teal" },
+      { name: "HSA", description: "Health savings account", icon_key: "medical", color_key: "pink" },
+      { name: "Emergency Fund", description: "Emergency reserves", icon_key: "shield", color_key: "gray" }
+    ]
+
+    for (const item of dummyData) {
+      try {
+        const response = await fetch(this.apiUrlValue, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "X-CSRF-Token": this.csrfTokenValue
+          },
+          body: JSON.stringify({ account_type: item })
+        })
+        if (response.ok) {
+          const newType = await response.json()
+          this.accountTypes.push(newType)
+        }
+      } catch (e) {
+        // skip on error
+      }
+    }
+
+    btn.innerHTML = originalText
+    btn.disabled = false
+    this.addButtonTarget.disabled = false
     this.renderTable()
   }
 
@@ -339,6 +388,7 @@ export default class extends Controller {
   renderTable() {
     const isIdle = this.state === "idle"
     this.addButtonTarget.disabled = !isIdle
+    if (this.hasGenerateButtonTarget) this.generateButtonTarget.disabled = !isIdle
 
     let html = ""
 

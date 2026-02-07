@@ -12,7 +12,7 @@ const DEFAULT_BADGE = { bg: "bg-gray-100 dark:bg-gray-700", text: "text-gray-700
 
 export default class extends Controller {
   static targets = [
-    "tableBody", "addButton", "deleteModal", "deleteModalName",
+    "tableBody", "addButton", "generateButton", "deleteModal", "deleteModalName",
     "filterStartDate", "filterEndDate", "filterAccount", "filterCategory", "filterType", "filterSearch"
   ]
   static values = {
@@ -47,6 +47,79 @@ export default class extends Controller {
     const m = String(d.getMonth() + 1).padStart(2, "0")
     const day = String(d.getDate()).padStart(2, "0")
     return `${y}-${m}-${day}`
+  }
+
+  // --- Generate Data ---
+
+  async generateData() {
+    if (this.state !== "idle") return
+    if (this.accounts.length === 0 || this.categories.length === 0) {
+      alert("Please generate Accounts and Spending Categories first before generating payments.")
+      return
+    }
+
+    const btn = this.generateButtonTarget
+    const originalText = btn.innerHTML
+    btn.disabled = true
+    btn.innerHTML = `<svg class="animate-spin h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>Generating...`
+    this.addButtonTarget.disabled = true
+
+    const pick = (arr) => arr[Math.floor(Math.random() * arr.length)]
+    const randAmt = () => (Math.random() * 495 + 5).toFixed(2)
+    const daysAgo = (n) => {
+      const d = new Date()
+      d.setDate(d.getDate() - n)
+      return this._formatDateValue(d)
+    }
+
+    const dummyData = [
+      { description: "Whole Foods", daysBack: 1 },
+      { description: "Shell Gas Station", daysBack: 3 },
+      { description: "Netflix Monthly", daysBack: 5 },
+      { description: "Rent Payment", daysBack: 7 },
+      { description: "Dr. Smith Copay", daysBack: 9 },
+      { description: "Amazon Purchase", daysBack: 12 },
+      { description: "Electric Company", daysBack: 15 },
+      { description: "Planet Fitness", daysBack: 18 },
+      { description: "Target Shopping", daysBack: 22 },
+      { description: "Uber Ride", daysBack: 27 }
+    ]
+
+    for (const item of dummyData) {
+      const account = pick(this.accounts)
+      const category = pick(this.categories)
+      const amount = randAmt()
+      try {
+        const response = await fetch(this.apiUrlValue, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "X-CSRF-Token": this.csrfTokenValue
+          },
+          body: JSON.stringify({ payment: {
+            account_id: account.id,
+            spending_category_id: category.id,
+            payment_date: daysAgo(item.daysBack),
+            description: item.description,
+            amount
+          }})
+        })
+        if (response.ok) {
+          const newPayment = await response.json()
+          this.payments.unshift(newPayment)
+          this._adjustLocalAccountBalance(account.id, -parseFloat(amount))
+        }
+      } catch (e) {
+        // skip on error
+      }
+    }
+
+    btn.innerHTML = originalText
+    btn.disabled = false
+    this.addButtonTarget.disabled = false
+    this._populateFilterDropdowns()
+    this.renderTable()
   }
 
   // --- Data Fetching ---
@@ -353,6 +426,7 @@ export default class extends Controller {
   renderTable() {
     const isIdle = this.state === "idle"
     this.addButtonTarget.disabled = !isIdle
+    if (this.hasGenerateButtonTarget) this.generateButtonTarget.disabled = !isIdle
 
     const filtered = this._getFilteredPayments()
     let html = ""

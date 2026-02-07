@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 import { ICON_CATALOG, COLOR_OPTIONS, renderIconSvg, defaultIconSvg, iconFor, escapeHtml, escapeAttr } from "controllers/shared/icon_catalog"
 
 export default class extends Controller {
-  static targets = ["tableBody", "addButton", "deleteModal", "deleteModalName"]
+  static targets = ["tableBody", "addButton", "generateButton", "deleteModal", "deleteModalName"]
   static values = { apiUrl: String, typesUrl: String, csrfToken: String, typesPageUrl: String }
 
   connect() {
@@ -43,6 +43,63 @@ export default class extends Controller {
     } catch (e) {
       // silently fail, show empty table
     }
+    this.renderTable()
+  }
+
+  // --- Generate Data ---
+
+  async generateData() {
+    if (this.state !== "idle") return
+    if (this.spendingTypes.length === 0) {
+      alert("Please generate Spending Types first before generating categories.")
+      return
+    }
+
+    const btn = this.generateButtonTarget
+    const originalText = btn.innerHTML
+    btn.disabled = true
+    btn.innerHTML = `<svg class="animate-spin h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>Generating...`
+    this.addButtonTarget.disabled = true
+
+    const pick = (arr) => arr[Math.floor(Math.random() * arr.length)]
+
+    const dummyData = [
+      { name: "Groceries", description: "Supermarket and food shopping", is_debt: false, icon_key: "shopping-bag", color_key: "green" },
+      { name: "Gas", description: "Fuel for vehicles", is_debt: false, icon_key: "car", color_key: "gold" },
+      { name: "Netflix", description: "Streaming subscription", is_debt: false, icon_key: "film", color_key: "red" },
+      { name: "Rent", description: "Monthly rent payment", is_debt: false, icon_key: "home", color_key: "blue" },
+      { name: "Doctor Visit", description: "Medical appointments", is_debt: false, icon_key: "medical", color_key: "pink" },
+      { name: "Student Loan", description: "Education loan payment", is_debt: true, icon_key: "academic", color_key: "indigo" },
+      { name: "Credit Card Payment", description: "Monthly credit card bill", is_debt: true, icon_key: "receipt", color_key: "red" },
+      { name: "Electric Bill", description: "Monthly electricity", is_debt: false, icon_key: "lightning", color_key: "orange" },
+      { name: "Gym Membership", description: "Monthly gym fee", is_debt: false, icon_key: "heart", color_key: "teal" },
+      { name: "Clothing", description: "Apparel and accessories", is_debt: false, icon_key: "shopping-bag", color_key: "purple" }
+    ]
+
+    for (const item of dummyData) {
+      const type = pick(this.spendingTypes)
+      try {
+        const response = await fetch(this.apiUrlValue, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "X-CSRF-Token": this.csrfTokenValue
+          },
+          body: JSON.stringify({ spending_category: { ...item, spending_type_id: type.id } })
+        })
+        if (response.ok) {
+          const newCat = await response.json()
+          this.categories.push(newCat)
+        }
+      } catch (e) {
+        // skip on error
+      }
+    }
+
+    btn.innerHTML = originalText
+    btn.disabled = false
+    this.addButtonTarget.disabled = false
     this.renderTable()
   }
 
@@ -354,6 +411,7 @@ export default class extends Controller {
   renderTable() {
     const isIdle = this.state === "idle"
     this.addButtonTarget.disabled = !isIdle
+    if (this.hasGenerateButtonTarget) this.generateButtonTarget.disabled = !isIdle
 
     let html = ""
 
