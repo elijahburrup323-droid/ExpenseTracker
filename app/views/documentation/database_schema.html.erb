@@ -17,6 +17,7 @@
  ├── has_many :identities           (identities.user_id → users.id)
  ├── has_many :spending_types       (spending_types.user_id → users.id)
  ├── has_many :spending_categories  (spending_categories.user_id → users.id)
+ ├── has_many :account_types        (account_types.user_id → users.id)
  └── referenced by phone_verifications (via phone_number, no FK)
 
 identities
@@ -29,6 +30,9 @@ spending_types
 spending_categories
  ├── belongs_to :user               (user_id FK → users.id)
  └── belongs_to :spending_type      (spending_type_id FK → spending_types.id)
+
+account_types
+ └── belongs_to :user               (user_id FK → users.id)
 
 phone_verifications
  └── standalone (linked by phone_number, no foreign key)</pre>
@@ -215,6 +219,48 @@ phone_verifications
     </div>
   </div>
 
+  <%# ── Account Types ── %>
+  <div class="bg-white rounded-lg shadow-sm ring-1 ring-gray-200 mb-6 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+      <h2 class="text-lg font-semibold text-gray-900">account_types</h2>
+      <p class="text-xs text-gray-500 mt-0.5">Per-user financial account classifications with soft delete</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-100">
+            <th class="px-6 py-2 text-left font-medium text-gray-500 uppercase text-xs tracking-wider">Column</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 uppercase text-xs tracking-wider">Type</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 uppercase text-xs tracking-wider">Constraints</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 uppercase text-xs tracking-wider">Description</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr><td class="px-6 py-2 font-mono font-medium text-gray-900">id</td><td class="px-6 py-2 text-gray-600">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">PK</span> <span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">auto</span></td><td class="px-6 py-2 text-gray-500">Primary key</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">user_id</td><td class="px-6 py-2 text-gray-600">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded">FK &rarr; users</span></td><td class="px-6 py-2 text-gray-500">Owning user</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">name</td><td class="px-6 py-2 text-gray-600">string(80)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">Display name</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">description</td><td class="px-6 py-2 text-gray-600">string(255)</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500">Short description</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">icon_key</td><td class="px-6 py-2 text-gray-600">string(40)</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500">Icon identifier (e.g. "credit-card")</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">color_key</td><td class="px-6 py-2 text-gray-600">string(40)</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500">Color identifier (e.g. "blue", "green")</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">sort_order</td><td class="px-6 py-2 text-gray-600">integer</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">Display order (default: 0)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">is_system</td><td class="px-6 py-2 text-gray-600">boolean</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">Auto-seeded row (default: false)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">is_active</td><td class="px-6 py-2 text-gray-600">boolean</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">Active flag (default: true)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">deleted_at</td><td class="px-6 py-2 text-gray-600">datetime</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500">Soft-delete timestamp</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">created_at</td><td class="px-6 py-2 text-gray-600">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">Record created</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">updated_at</td><td class="px-6 py-2 text-gray-600">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500">Record last updated</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 border-t border-gray-200">
+      <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 font-mono space-y-0.5">
+        <li>UNIQUE (user_id, LOWER(name)) WHERE deleted_at IS NULL &mdash; <span class="text-gray-400">partial unique, prevents duplicate names per user</span></li>
+        <li>(user_id, sort_order)</li>
+        <li>(user_id)</li>
+      </ul>
+    </div>
+  </div>
+
   <%# ── Phone Verifications ── %>
   <div class="bg-white rounded-lg shadow-sm ring-1 ring-gray-200 mb-6 overflow-hidden">
     <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
@@ -269,6 +315,7 @@ phone_verifications
         <tbody class="divide-y divide-gray-100">
           <tr><td class="px-6 py-2 font-mono text-gray-900">identities</td><td class="px-6 py-2 font-mono text-gray-600">user_id</td><td class="px-6 py-2 font-mono text-gray-600">users.id</td><td class="px-6 py-2 text-gray-500">cascade (via Rails dependent: :destroy)</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900">spending_types</td><td class="px-6 py-2 font-mono text-gray-600">user_id</td><td class="px-6 py-2 font-mono text-gray-600">users.id</td><td class="px-6 py-2 text-gray-500">cascade (via Rails dependent: :destroy)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900">account_types</td><td class="px-6 py-2 font-mono text-gray-600">user_id</td><td class="px-6 py-2 font-mono text-gray-600">users.id</td><td class="px-6 py-2 text-gray-500">cascade (via Rails dependent: :destroy)</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900">spending_categories</td><td class="px-6 py-2 font-mono text-gray-600">user_id</td><td class="px-6 py-2 font-mono text-gray-600">users.id</td><td class="px-6 py-2 text-gray-500">cascade (via Rails dependent: :destroy)</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900">spending_categories</td><td class="px-6 py-2 font-mono text-gray-600">spending_type_id</td><td class="px-6 py-2 font-mono text-gray-600">spending_types.id</td><td class="px-6 py-2 text-gray-500">restrict (DB-level foreign key)</td></tr>
         </tbody>

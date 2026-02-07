@@ -10,9 +10,26 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_01_01_000005) do
+ActiveRecord::Schema[7.1].define(version: 2024_01_01_000006) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "account_types", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "name", limit: 80, null: false
+    t.string "description", limit: 255
+    t.string "icon_key", limit: 40
+    t.string "color_key", limit: 40
+    t.integer "sort_order", default: 0, null: false
+    t.boolean "is_system", default: false, null: false
+    t.boolean "is_active", default: true, null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "user_id, lower((name)::text)", name: "index_account_types_on_user_id_and_lower_name", unique: true, where: "(deleted_at IS NULL)"
+    t.index ["user_id", "sort_order"], name: "index_account_types_on_user_id_and_sort_order"
+    t.index ["user_id"], name: "index_account_types_on_user_id"
+  end
 
   create_table "identities", force: :cascade do |t|
     t.bigint "user_id", null: false
@@ -105,6 +122,7 @@ ActiveRecord::Schema[7.1].define(version: 2024_01_01_000005) do
     t.index ["unlock_token"], name: "index_users_on_unlock_token", unique: true
   end
 
+  add_foreign_key "account_types", "users"
   add_foreign_key "identities", "users"
   add_foreign_key "spending_categories", "spending_types"
   add_foreign_key "spending_categories", "users"

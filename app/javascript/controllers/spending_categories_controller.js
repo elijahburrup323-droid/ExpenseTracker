@@ -447,16 +447,16 @@ export default class extends Controller {
       </td>
       <td class="px-6 py-3 text-right space-x-2">
         <button type="button"
-                class="inline-flex items-center justify-center w-8 h-8 rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
+                class="inline-flex items-center justify-center w-9 h-9 rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
                 data-action="click->spending-categories#saveNew"
                 title="Save">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 21v-8H7v8"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 3v5h8"/></svg>
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 21v-8H7v8"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 3v5h8"/></svg>
         </button>
         <button type="button"
-                class="inline-flex items-center justify-center w-8 h-8 rounded-md text-red-600 bg-red-50 hover:bg-red-100 transition"
+                class="inline-flex items-center justify-center w-9 h-9 rounded-md text-red-600 bg-red-50 hover:bg-red-100 transition"
                 data-action="click->spending-categories#cancelAdding"
                 title="Cancel">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         </button>
       </td>
     </tr>
@@ -513,16 +513,16 @@ export default class extends Controller {
       </td>
       <td class="px-6 py-3 text-right space-x-2">
         <button type="button"
-                class="inline-flex items-center justify-center w-8 h-8 rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
+                class="inline-flex items-center justify-center w-9 h-9 rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
                 data-action="click->spending-categories#saveEdit"
                 title="Save">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 21v-8H7v8"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 3v5h8"/></svg>
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 21v-8H7v8"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 3v5h8"/></svg>
         </button>
         <button type="button"
-                class="inline-flex items-center justify-center w-8 h-8 rounded-md text-red-600 bg-red-50 hover:bg-red-100 transition"
+                class="inline-flex items-center justify-center w-9 h-9 rounded-md text-red-600 bg-red-50 hover:bg-red-100 transition"
                 data-action="click->spending-categories#cancelEditing"
                 title="Cancel">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         </button>
       </td>
     </tr>
@@ -534,16 +534,12 @@ export default class extends Controller {
   _renderDebtToggle(isOn, catId = null) {
     const bg = isOn ? "bg-purple-600" : "bg-gray-300"
     const knobTranslate = isOn ? "translate-x-7" : "translate-x-1"
-    const yesClass = isOn ? "" : "hidden"
-    const noClass = isOn ? "hidden" : ""
     const dataId = catId ? `data-id="${catId}"` : ""
     return `<button type="button"
       class="debt-toggle relative inline-flex h-7 w-14 items-center rounded-full transition-colors ${bg} focus:outline-none focus:ring-2 focus:ring-purple-300"
       data-checked="${isOn}" ${dataId}
       data-action="click->spending-categories#toggleDebt"
       role="switch" aria-checked="${isOn}" title="${isOn ? 'Debt: Yes' : 'Debt: No'}">
-      <span class="absolute left-1.5 text-[10px] font-bold text-white select-none ${yesClass}">Yes</span>
-      <span class="absolute right-1 text-[10px] font-bold text-gray-500 select-none ${noClass}">No</span>
       <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${knobTranslate}"></span>
     </button>`
   }
@@ -558,12 +554,8 @@ export default class extends Controller {
     btn.setAttribute("aria-checked", String(nowOn))
     btn.title = nowOn ? "Debt: Yes" : "Debt: No"
     btn.className = btn.className.replace(nowOn ? "bg-gray-300" : "bg-purple-600", nowOn ? "bg-purple-600" : "bg-gray-300")
-    const knob = btn.querySelector("span:last-child")
+    const knob = btn.querySelector("span")
     knob.className = knob.className.replace(nowOn ? "translate-x-1" : "translate-x-7", nowOn ? "translate-x-7" : "translate-x-1")
-    const yesLabel = btn.querySelector("span:first-child")
-    const noLabel = btn.querySelector("span:nth-child(2)")
-    yesLabel.classList.toggle("hidden", !nowOn)
-    noLabel.classList.toggle("hidden", nowOn)
 
     // If in display mode (has data-id), make an API call
     const catId = btn.dataset.id
@@ -590,8 +582,6 @@ export default class extends Controller {
         btn.title = wasOn ? "Debt: Yes" : "Debt: No"
         btn.className = btn.className.replace(wasOn ? "bg-gray-300" : "bg-purple-600", wasOn ? "bg-purple-600" : "bg-gray-300")
         knob.className = knob.className.replace(wasOn ? "translate-x-1" : "translate-x-7", wasOn ? "translate-x-7" : "translate-x-1")
-        yesLabel.classList.toggle("hidden", !wasOn)
-        noLabel.classList.toggle("hidden", wasOn)
       }
     }
   }
