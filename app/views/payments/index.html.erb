@@ -30,38 +30,38 @@
   <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4 mb-4 ring-1 ring-gray-200 dark:ring-gray-700">
     <%# Top row: date/dropdown filters + Find/Reset buttons %>
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3 items-end">
-      <div>
+      <div class="min-w-0">
         <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Start Date</label>
         <input type="date" data-payments-target="filterStartDate"
-               class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+               class="w-full min-w-0 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
                data-action="change->payments#applyFilters">
       </div>
-      <div>
+      <div class="min-w-0">
         <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">End Date</label>
         <input type="date" data-payments-target="filterEndDate"
-               class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+               class="w-full min-w-0 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
                data-action="change->payments#applyFilters">
       </div>
-      <div>
+      <div class="min-w-0">
         <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Account</label>
         <select data-payments-target="filterAccount"
-                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+                class="w-full min-w-0 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
                 data-action="change->payments#applyFilters">
           <option value="">All Accounts</option>
         </select>
       </div>
-      <div>
+      <div class="min-w-0">
         <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Category</label>
         <select data-payments-target="filterCategory"
-                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+                class="w-full min-w-0 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
                 data-action="change->payments#applyFilters">
           <option value="">All Categories</option>
         </select>
       </div>
-      <div>
+      <div class="min-w-0">
         <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Spending Type</label>
         <select data-payments-target="filterType"
-                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+                class="w-full min-w-0 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
                 data-action="change->payments#applyFilters">
           <option value="">All Spending Types</option>
         </select>
