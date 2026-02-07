@@ -429,7 +429,7 @@ export default class extends Controller {
     return `<tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
       <td class="px-6 py-4">${iconFor(acc.icon_key, acc.color_key)}</td>
       <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">${escapeHtml(acc.name)}</td>
-      <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">${escapeHtml(acc.account_type_name || "")}</td>
+      <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">${escapeHtml(acc.account_type_description || acc.account_type_name || "")}</td>
       <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">${escapeHtml(acc.institution || "")}</td>
       <td class="px-6 py-4 text-sm text-gray-900 dark:text-white text-right font-mono">${this._formatBalance(acc.balance)}</td>
       <td class="px-6 py-4 text-center">${budgetToggle}</td>

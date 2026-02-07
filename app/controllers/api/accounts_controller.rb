@@ -6,7 +6,7 @@ module Api
       accounts = current_user.accounts.ordered.includes(:account_type)
       render json: accounts.map { |a|
         a.as_json(only: [:id, :name, :institution, :balance, :include_in_budget, :icon_key, :color_key, :sort_order])
-          .merge(account_type_id: a.account_type_id, account_type_name: a.account_type.name)
+          .merge(account_type_id: a.account_type_id, account_type_name: a.account_type.name, account_type_description: a.account_type.description)
       }
     end
 
@@ -14,21 +14,25 @@ module Api
       max_sort = current_user.accounts.maximum(:sort_order) || 0
       account = current_user.accounts.build(account_params)
       account.sort_order = max_sort + 1
+      account.beginning_balance = account.balance
 
       if account.save
         account_type = account.account_type
         render json: account.as_json(only: [:id, :name, :institution, :balance, :include_in_budget, :icon_key, :color_key, :sort_order])
-          .merge(account_type_id: account.account_type_id, account_type_name: account_type.name), status: :created
+          .merge(account_type_id: account.account_type_id, account_type_name: account_type.name, account_type_description: account_type.description), status: :created
       else
         render_errors(account)
       end
     end
 
     def update
+      if @account.beginning_balance.to_f == 0 && account_params[:balance].present?
+        @account.beginning_balance = account_params[:balance]
+      end
       if @account.update(account_params)
         account_type = @account.account_type
         render json: @account.as_json(only: [:id, :name, :institution, :balance, :include_in_budget, :icon_key, :color_key, :sort_order])
-          .merge(account_type_id: @account.account_type_id, account_type_name: account_type.name)
+          .merge(account_type_id: @account.account_type_id, account_type_name: account_type.name, account_type_description: account_type.description)
       else
         render_errors(@account)
       end

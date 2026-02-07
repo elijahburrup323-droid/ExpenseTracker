@@ -14,7 +14,7 @@ class AccountType < ApplicationRecord
     conditions: -> { where(deleted_at: nil) },
     message: "has already been taken"
   }
-  validates :description, length: { maximum: 255 }
+  validates :description, presence: true, length: { maximum: 255 }
 
   DEFAULTS = [
     { name: "Checking", description: "Checking Account", icon_key: "banknotes", color_key: "blue", sort_order: 1 },

@@ -8,6 +8,7 @@ class User < ApplicationRecord
   has_many :spending_categories, dependent: :destroy
   has_many :account_types, dependent: :destroy
   has_many :accounts, dependent: :destroy
+  has_many :payments, dependent: :destroy
 
   validates :email, presence: true, uniqueness: true, unless: :phone_only_user?
   validates :phone_number, uniqueness: true, allow_blank: true

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_07_065739) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_07_100002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -44,6 +44,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_07_065739) do
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "beginning_balance", precision: 12, scale: 2, default: "0.0", null: false
+    t.boolean "month_ending_balance", default: false, null: false
     t.index "user_id, lower((name)::text)", name: "index_accounts_on_user_id_and_lower_name", unique: true, where: "(deleted_at IS NULL)"
     t.index ["account_type_id"], name: "index_accounts_on_account_type_id"
     t.index ["user_id", "sort_order"], name: "index_accounts_on_user_id_and_sort_order"
@@ -62,6 +64,25 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_07_065739) do
     t.index ["provider", "uid"], name: "index_identities_on_provider_and_uid", unique: true
     t.index ["user_id", "provider"], name: "index_identities_on_user_id_and_provider", unique: true
     t.index ["user_id"], name: "index_identities_on_user_id"
+  end
+
+  create_table "payments", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "account_id", null: false
+    t.bigint "spending_category_id", null: false
+    t.date "payment_date", null: false
+    t.string "description", limit: 255, null: false
+    t.text "notes"
+    t.decimal "amount", precision: 12, scale: 2, null: false
+    t.integer "sort_order"
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_payments_on_account_id"
+    t.index ["spending_category_id"], name: "index_payments_on_spending_category_id"
+    t.index ["user_id", "payment_date"], name: "index_payments_on_user_id_and_payment_date"
+    t.index ["user_id", "sort_order"], name: "index_payments_on_user_id_and_sort_order"
+    t.index ["user_id"], name: "index_payments_on_user_id"
   end
 
   create_table "phone_verifications", force: :cascade do |t|
@@ -147,6 +168,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_07_065739) do
   add_foreign_key "accounts", "account_types"
   add_foreign_key "accounts", "users"
   add_foreign_key "identities", "users"
+  add_foreign_key "payments", "accounts"
+  add_foreign_key "payments", "spending_categories"
+  add_foreign_key "payments", "users"
   add_foreign_key "spending_categories", "spending_types"
   add_foreign_key "spending_categories", "users"
   add_foreign_key "spending_types", "users"

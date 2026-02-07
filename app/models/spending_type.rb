@@ -14,7 +14,7 @@ class SpendingType < ApplicationRecord
     conditions: -> { where(deleted_at: nil) },
     message: "has already been taken"
   }
-  validates :description, length: { maximum: 255 }
+  validates :description, presence: true, length: { maximum: 255 }
 
   DEFAULTS = [
     { name: "Need", description: "Required essential spending.", icon_key: "check-circle", color_key: "blue", sort_order: 1 },

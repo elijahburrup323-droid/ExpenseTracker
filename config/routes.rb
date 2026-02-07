@@ -32,12 +32,16 @@ Rails.application.routes.draw do
   # Accounts (HTML page)
   resources :accounts, only: [:index]
 
+  # Payments (HTML page)
+  resources :payments, only: [:index]
+
   # API endpoints
   namespace :api do
     resources :spending_types, only: [:index, :create, :update, :destroy]
     resources :spending_categories, only: [:index, :create, :update, :destroy]
     resources :account_types, only: [:index, :create, :update, :destroy]
     resources :accounts, only: [:index, :create, :update, :destroy]
+    resources :payments, only: [:index, :create, :update, :destroy]
   end
 
   # Documentation

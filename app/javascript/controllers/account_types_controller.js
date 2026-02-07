@@ -76,6 +76,11 @@ export default class extends Controller {
       nameInput?.focus()
       return
     }
+    if (!description) {
+      this.showRowError("Description is required")
+      descInput?.focus()
+      return
+    }
 
     try {
       const response = await fetch(this.apiUrlValue, {
@@ -138,6 +143,11 @@ export default class extends Controller {
     if (!name) {
       this.showRowError("Name is required")
       nameInput?.focus()
+      return
+    }
+    if (!description) {
+      this.showRowError("Description is required")
+      descInput?.focus()
       return
     }
 

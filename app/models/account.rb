@@ -16,6 +16,7 @@ class Account < ApplicationRecord
   }
   validates :institution, length: { maximum: 120 }
   validates :balance, numericality: true
+  validates :beginning_balance, numericality: true
 
   def soft_delete!
     update_columns(deleted_at: Time.current)
