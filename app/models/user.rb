@@ -11,8 +11,22 @@ class User < ApplicationRecord
 
   validates :email, presence: true, uniqueness: true, unless: :phone_only_user?
   validates :phone_number, uniqueness: true, allow_blank: true
+  validates :secondary_email, uniqueness: true, allow_blank: true,
+            format: { with: URI::MailTo::EMAIL_REGEXP, message: "is not a valid email address" }
+  validate :secondary_email_not_same_as_primary
+  validate :secondary_email_not_another_users_primary
 
   before_validation :normalize_phone_number
+
+  def self.find_for_database_authentication(warden_conditions)
+    conditions = warden_conditions.dup
+    login = conditions.delete(:email)&.downcase&.strip
+    if login
+      where("LOWER(email) = :login OR LOWER(secondary_email) = :login", login: login).first
+    else
+      where(conditions).first
+    end
+  end
 
   def self.from_omniauth(auth)
     identity = Identity.find_or_initialize_by(provider: auth.provider, uid: auth.uid)
@@ -71,6 +85,20 @@ class User < ApplicationRecord
   end
 
   private
+
+  def secondary_email_not_same_as_primary
+    return if secondary_email.blank?
+    if secondary_email.downcase.strip == email&.downcase&.strip
+      errors.add(:secondary_email, "can't be the same as your primary email")
+    end
+  end
+
+  def secondary_email_not_another_users_primary
+    return if secondary_email.blank?
+    if User.where.not(id: id).where("LOWER(email) = ?", secondary_email.downcase.strip).exists?
+      errors.add(:secondary_email, "is already used as a primary email by another account")
+    end
+  end
 
   def normalize_phone_number
     return if phone_number.blank?

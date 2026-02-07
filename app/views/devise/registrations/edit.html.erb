@@ -1,0 +1,98 @@
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-2xl mx-auto">
+    <div class="mb-8">
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Account Settings</h1>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Manage your profile, email, and password.</p>
+    </div>
+
+    <%= form_for(resource, as: resource_name, url: registration_path(resource_name), html: { method: :put, class: "space-y-6" }) do |f| %>
+      <%= render "devise/shared/error_messages", resource: resource %>
+
+      <%# Profile Information %>
+      <div class="bg-white dark:bg-gray-800 shadow rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">Profile Information</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Update your name. No password required.</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <%= f.label :first_name, class: "block text-sm font-medium text-gray-700 dark:text-gray-300" %>
+            <%= f.text_field :first_name, autocomplete: "given-name",
+                class: "mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent",
+                placeholder: "John" %>
+          </div>
+          <div>
+            <%= f.label :last_name, class: "block text-sm font-medium text-gray-700 dark:text-gray-300" %>
+            <%= f.text_field :last_name, autocomplete: "family-name",
+                class: "mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent",
+                placeholder: "Doe" %>
+          </div>
+        </div>
+      </div>
+
+      <%# Email Settings %>
+      <div class="bg-white dark:bg-gray-800 shadow rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">Email Settings</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Changing your email requires your current password below.</p>
+
+        <div class="space-y-4">
+          <div>
+            <%= f.label :email, "Primary Email", class: "block text-sm font-medium text-gray-700 dark:text-gray-300" %>
+            <%= f.email_field :email, autocomplete: "email",
+                class: "mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent" %>
+          </div>
+
+          <div>
+            <%= f.label :secondary_email, "Secondary Email", class: "block text-sm font-medium text-gray-700 dark:text-gray-300" %>
+            <%= f.email_field :secondary_email, autocomplete: "email",
+                class: "mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent",
+                placeholder: "optional-alt@example.com" %>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">You can use this email to sign in as an alternative to your primary email.</p>
+          </div>
+        </div>
+      </div>
+
+      <%# Change Password %>
+      <div class="bg-white dark:bg-gray-800 shadow rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">Change Password</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Leave blank if you don't want to change your password.</p>
+
+        <div class="space-y-4">
+          <div>
+            <%= f.label :password, "New Password", class: "block text-sm font-medium text-gray-700 dark:text-gray-300" %>
+            <%= f.password_field :password, autocomplete: "new-password",
+                class: "mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent",
+                placeholder: "Minimum #{@minimum_password_length} characters" %>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400"><%= @minimum_password_length %> characters minimum</p>
+          </div>
+
+          <div>
+            <%= f.label :password_confirmation, "Confirm New Password", class: "block text-sm font-medium text-gray-700 dark:text-gray-300" %>
+            <%= f.password_field :password_confirmation, autocomplete: "new-password",
+                class: "mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent",
+                placeholder: "Confirm your new password" %>
+          </div>
+        </div>
+      </div>
+
+      <%# Current Password + Submit %>
+      <div class="bg-white dark:bg-gray-800 shadow rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">Confirm Changes</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Enter your current password to save email or password changes.</p>
+
+        <div>
+          <%= f.label :current_password, class: "block text-sm font-medium text-gray-700 dark:text-gray-300" %>
+          <%= f.password_field :current_password, autocomplete: "current-password",
+              class: "mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent",
+              placeholder: "Required for email or password changes" %>
+        </div>
+
+        <div class="mt-6 flex items-center justify-between">
+          <%= link_to "Back to Dashboard", dashboard_path,
+              class: "text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition" %>
+          <%= f.submit "Save Changes",
+              class: "inline-flex justify-center py-3 px-6 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 dark:focus:ring-offset-gray-800 transition duration-150 cursor-pointer" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
