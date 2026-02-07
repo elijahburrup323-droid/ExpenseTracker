@@ -116,13 +116,20 @@ export default class extends Controller {
     this.renderTable()
   }
 
+  searchKeydown(event) {
+    if (event.key === "Enter") {
+      event.preventDefault()
+      this.renderTable()
+    }
+  }
+
   resetFilters() {
     this.filterStartDateTarget.value = this._defaultStartDate
     this.filterEndDateTarget.value = this._defaultEndDate
     this.filterAccountTarget.value = ""
     this.filterCategoryTarget.value = ""
     this.filterTypeTarget.value = ""
-    this.filterSearchTarget.value = ""
+    // Intentionally do NOT clear the search description box
     this.renderTable()
   }
 

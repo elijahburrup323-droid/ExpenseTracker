@@ -99,9 +99,10 @@ test.describe.serial("Payments CRUD", () => {
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(3000);
 
-    // Search for "Updated Payment"
+    // Search for "Updated Payment" (must press Enter to trigger)
     const searchInput = page.locator('[data-payments-target="filterSearch"]');
     await searchInput.fill("Updated Payment");
+    await searchInput.press("Enter");
     await page.waitForTimeout(500);
 
     // Should still show our payment
@@ -109,13 +110,22 @@ test.describe.serial("Payments CRUD", () => {
 
     // Search for something that doesn't exist
     await searchInput.fill("ZZZZNOTEXIST");
+    await searchInput.press("Enter");
     await page.waitForTimeout(500);
 
     // Should show no results
     await expect(page.locator("tbody")).toContainText("No payments found");
 
-    // Reset filters
+    // Reset filters — should NOT clear the search box
     await page.click('button:has-text("Reset")');
+    await page.waitForTimeout(500);
+
+    // Search box should still have the text
+    await expect(searchInput).toHaveValue("ZZZZNOTEXIST");
+
+    // Clear search manually and press Enter to show payments again
+    await searchInput.fill("");
+    await searchInput.press("Enter");
     await page.waitForTimeout(500);
 
     // Should show payments again
