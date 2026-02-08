@@ -450,7 +450,7 @@ export default class extends Controller {
       <td class="px-6 py-3">
         <div class="relative" data-icon-picker>
           <button type="button"
-                  class="p-1.5 rounded-md border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+                  class="p-1.5 rounded-md border border-gray-900 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                   data-action="click->account-types#toggleIconPicker"
                   title="Choose icon">
             <span data-icon-preview>${previewIcon}</span>
@@ -462,13 +462,13 @@ export default class extends Controller {
       <td class="px-6 py-3">
         <input type="text" name="name" value="${escapeAttr(name)}" placeholder="Name"
                maxlength="80"
-               class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
                data-action="keydown->account-types#handleKeydown">
       </td>
       <td class="px-6 py-3">
         <input type="text" name="description" value="${escapeAttr(description)}" placeholder="Description"
                maxlength="255"
-               class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
                data-action="keydown->account-types#handleKeydown">
       </td>
       <td class="px-6 py-3 text-right space-x-2">

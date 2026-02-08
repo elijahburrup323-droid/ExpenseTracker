@@ -250,13 +250,13 @@ export default class extends Controller {
     return `<tr ${marker} class="bg-brand-50 dark:bg-brand-900/20">
       <td class="px-6 py-3">
         <input data-field="name" type="text" value="${this._escapeAttr(m.name)}"
-               class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm shadow-sm focus:ring-brand-500 focus:border-brand-500"
+               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm shadow-sm focus:ring-brand-500 focus:border-brand-500"
                placeholder="Frequency name"
                data-action="keydown->${action} keydown->income-frequency-masters#handleEscape" autofocus>
       </td>
       <td class="px-6 py-3">
         <select data-field="frequency_type"
-                class="rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm shadow-sm focus:ring-brand-500 focus:border-brand-500">
+                class="rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm shadow-sm focus:ring-brand-500 focus:border-brand-500">
           <option value="standard" ${m.frequency_type === "standard" ? "selected" : ""}>Standard</option>
           <option value="exact_day" ${m.frequency_type === "exact_day" ? "selected" : ""}>Exact Day</option>
           <option value="ordinal_weekday" ${m.frequency_type === "ordinal_weekday" ? "selected" : ""}>Ordinal Weekday</option>
@@ -265,17 +265,17 @@ export default class extends Controller {
       <td class="px-6 py-3">
         <div class="flex items-center space-x-2 text-xs">
           <input data-field="interval_days" type="number" value="${m.interval_days || ''}" placeholder="Days" title="Interval days"
-                 class="w-16 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm shadow-sm focus:ring-brand-500 focus:border-brand-500"
+                 class="w-16 rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm shadow-sm focus:ring-brand-500 focus:border-brand-500"
                  data-action="keydown->${action} keydown->income-frequency-masters#handleEscape">
           <input data-field="day_of_month" type="number" min="1" max="28" value="${m.day_of_month || ''}" placeholder="Day" title="Day of month"
-                 class="w-16 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm shadow-sm focus:ring-brand-500 focus:border-brand-500"
+                 class="w-16 rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm shadow-sm focus:ring-brand-500 focus:border-brand-500"
                  data-action="keydown->${action} keydown->income-frequency-masters#handleEscape">
-          <label class="flex items-center space-x-1 text-gray-600 dark:text-gray-400">
-            <input data-field="is_last_day" type="checkbox" ${m.is_last_day ? "checked" : ""} class="rounded border-gray-300 dark:border-gray-600 text-brand-600 focus:ring-brand-500">
+          <label class="flex items-center space-x-1 font-bold text-gray-600 dark:text-gray-400">
+            <input data-field="is_last_day" type="checkbox" ${m.is_last_day ? "checked" : ""} class="rounded border-gray-900 dark:border-gray-600 text-brand-600 focus:ring-brand-500">
             <span>Last</span>
           </label>
           <select data-field="weekday" title="Weekday"
-                  class="rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm shadow-sm focus:ring-brand-500 focus:border-brand-500">
+                  class="rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm shadow-sm focus:ring-brand-500 focus:border-brand-500">
             <option value="">Wkday</option>
             <option value="1" ${m.weekday == 1 ? "selected" : ""}>Mon</option>
             <option value="2" ${m.weekday == 2 ? "selected" : ""}>Tue</option>
@@ -284,7 +284,7 @@ export default class extends Controller {
             <option value="5" ${m.weekday == 5 ? "selected" : ""}>Fri</option>
           </select>
           <select data-field="ordinal" title="Ordinal"
-                  class="rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm shadow-sm focus:ring-brand-500 focus:border-brand-500">
+                  class="rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm shadow-sm focus:ring-brand-500 focus:border-brand-500">
             <option value="">Ord</option>
             <option value="1" ${m.ordinal == 1 ? "selected" : ""}>1st</option>
             <option value="2" ${m.ordinal == 2 ? "selected" : ""}>2nd</option>
@@ -292,7 +292,7 @@ export default class extends Controller {
             <option value="4" ${m.ordinal == 4 ? "selected" : ""}>4th</option>
           </select>
           <input data-field="sort_order" type="number" value="${m.sort_order || ''}" placeholder="Sort" title="Sort order"
-                 class="w-16 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm shadow-sm focus:ring-brand-500 focus:border-brand-500"
+                 class="w-16 rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm shadow-sm focus:ring-brand-500 focus:border-brand-500"
                  data-action="keydown->${action} keydown->income-frequency-masters#handleEscape">
         </div>
       </td>

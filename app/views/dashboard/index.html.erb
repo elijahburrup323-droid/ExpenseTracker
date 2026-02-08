@@ -22,13 +22,13 @@
                     stroke-dasharray="<%= remaining_pct %> <%= spent_pct %>" stroke-dashoffset="<%= 25 + spent_pct %>" stroke-linecap="round"/>
           </svg>
           <div class="absolute inset-0 flex flex-col items-center justify-center">
-            <span class="text-xl font-bold text-gray-900 dark:text-white"><%= number_to_currency(budget_val, precision: 0) %></span>
+            <span class="text-xl font-bold text-gray-900 dark:text-white"><%= number_to_currency(budget_val, precision: 2) %></span>
             <span class="text-xs text-gray-500 dark:text-gray-400">left</span>
           </div>
         </div>
         <div>
-          <p class="text-sm text-gray-600 dark:text-gray-400"><span class="font-semibold text-gray-800 dark:text-gray-200"><%= number_to_currency(spent_val, precision: 0) %></span> spent</p>
-          <p class="text-sm text-gray-500 dark:text-gray-400">of <%= number_to_currency(plan_val, precision: 0) %> plan</p>
+          <p class="text-sm text-gray-600 dark:text-gray-400"><span class="font-semibold text-gray-800 dark:text-gray-200"><%= number_to_currency(spent_val, precision: 2) %></span> spent</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">of <%= number_to_currency(plan_val, precision: 2) %> plan</p>
           <a href="#" class="text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium mt-2 inline-block">View Details &rsaquo;</a>
         </div>
       </div>
@@ -132,7 +132,7 @@
         </div>
         <div class="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
           <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">Current Balance</span>
-          <span class="text-sm font-bold text-gray-900 dark:text-white"><%= number_to_currency(@net_worth) %></span>
+          <span class="text-sm font-bold text-gray-900 dark:text-white"><%= number_to_currency(@budget_total) %></span>
         </div>
       </div>
       <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">

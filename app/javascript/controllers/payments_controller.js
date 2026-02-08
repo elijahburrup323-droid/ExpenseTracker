@@ -12,7 +12,7 @@ const DEFAULT_BADGE = { bg: "bg-gray-100 dark:bg-gray-700", text: "text-gray-700
 
 export default class extends Controller {
   static targets = [
-    "tableBody", "addButton", "generateButton", "deleteModal", "deleteModalName",
+    "tableBody", "tableHead", "addButton", "generateButton", "deleteModal", "deleteModalName",
     "filterStartDate", "filterEndDate", "filterAccount", "filterCategory", "filterType", "filterSearch"
   ]
   static values = {
@@ -28,6 +28,8 @@ export default class extends Controller {
     this.state = "idle" // idle | adding | editing
     this.editingId = null
     this.deletingId = null
+    this._sortColumn = "payment_date"
+    this._sortDirection = "asc"
     this._setDefaultDateRange()
     this.fetchAll()
   }
@@ -214,8 +216,8 @@ export default class extends Controller {
     const typeName = this.filterTypeTarget.value
     const search = this.filterSearchTarget.value.trim()
 
-    // Check for combination search pattern: (amount)
-    const comboMatch = search.match(/^\(([0-9]+\.?[0-9]*)\)$/)
+    // Check for combination search pattern: =amount (e.g. =56.74)
+    const comboMatch = search.match(/^=([0-9]+\.?[0-9]*)$/)
     this._highlightedPaymentIds = null
 
     let filtered = this.payments.filter(p => {
@@ -482,6 +484,57 @@ export default class extends Controller {
     }
   }
 
+  // --- Column Sorting ---
+
+  sortColumn(event) {
+    const col = event.currentTarget.dataset.sortCol
+    if (this._sortColumn === col) {
+      this._sortDirection = this._sortDirection === "asc" ? "desc" : "asc"
+    } else {
+      this._sortColumn = col
+      this._sortDirection = "asc"
+    }
+    this.renderTable()
+  }
+
+  _sortPayments(payments) {
+    const col = this._sortColumn
+    const dir = this._sortDirection === "asc" ? 1 : -1
+
+    return [...payments].sort((a, b) => {
+      let aVal, bVal
+      switch (col) {
+        case "payment_date":
+          aVal = a.payment_date || ""; bVal = b.payment_date || ""
+          return aVal.localeCompare(bVal) * dir
+        case "account":
+          aVal = (a.account_name || "").toLowerCase(); bVal = (b.account_name || "").toLowerCase()
+          return aVal.localeCompare(bVal) * dir
+        case "category":
+          aVal = (a.spending_category_name || "").toLowerCase(); bVal = (b.spending_category_name || "").toLowerCase()
+          return aVal.localeCompare(bVal) * dir
+        case "type":
+          aVal = (a.spending_type_name || "").toLowerCase(); bVal = (b.spending_type_name || "").toLowerCase()
+          return aVal.localeCompare(bVal) * dir
+        case "description":
+          aVal = (a.description || "").toLowerCase(); bVal = (b.description || "").toLowerCase()
+          return aVal.localeCompare(bVal) * dir
+        case "amount":
+          aVal = parseFloat(a.amount) || 0; bVal = parseFloat(b.amount) || 0
+          return (aVal - bVal) * dir
+        default:
+          return 0
+      }
+    })
+  }
+
+  _sortIndicator(col) {
+    if (this._sortColumn !== col) return ""
+    return this._sortDirection === "asc"
+      ? ` <svg class="inline h-3 w-3 ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>`
+      : ` <svg class="inline h-3 w-3 ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>`
+  }
+
   // --- Rendering ---
 
   renderTable() {
@@ -489,7 +542,22 @@ export default class extends Controller {
     this.addButtonTarget.disabled = !isIdle
     if (this.hasGenerateButtonTarget) this.generateButtonTarget.disabled = !isIdle
 
-    const filtered = this._getFilteredPayments()
+    let filtered = this._getFilteredPayments()
+
+    // Sort: default by date ascending, or by user-selected column
+    if (this._sortColumn) {
+      filtered = this._sortPayments(filtered)
+    } else {
+      filtered.sort((a, b) => (a.payment_date || "").localeCompare(b.payment_date || ""))
+    }
+
+    // Move highlighted (combination search) rows to the top
+    if (this._highlightedPaymentIds && this._highlightedPaymentIds.size > 0) {
+      const highlighted = filtered.filter(p => this._highlightedPaymentIds.has(p.id))
+      const rest = filtered.filter(p => !this._highlightedPaymentIds.has(p.id))
+      filtered = [...highlighted, ...rest]
+    }
+
     let html = ""
 
     if (this.state === "adding") {
@@ -509,6 +577,26 @@ export default class extends Controller {
     }
 
     this.tableBodyTarget.innerHTML = html
+    this._updateSortHeaders()
+  }
+
+  _updateSortHeaders() {
+    if (!this.hasTableHeadTarget) return
+    this.tableHeadTarget.querySelectorAll("[data-sort-col]").forEach(th => {
+      const col = th.dataset.sortCol
+      // Remove any existing indicator
+      const existingIndicator = th.querySelector(".sort-indicator")
+      if (existingIndicator) existingIndicator.remove()
+      // Add indicator if this is the active sort column
+      if (this._sortColumn === col) {
+        const span = document.createElement("span")
+        span.className = "sort-indicator"
+        span.innerHTML = this._sortDirection === "asc"
+          ? `<svg class="inline h-3 w-3 ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>`
+          : `<svg class="inline h-3 w-3 ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>`
+        th.appendChild(span)
+      }
+    })
   }
 
   _formatBalance(balance) {
@@ -591,12 +679,12 @@ export default class extends Controller {
     return `<tr class="bg-brand-50/40 dark:bg-brand-900/20">
       <td class="px-4 py-3">
         <input type="date" name="payment_date" value="${today}"
-               class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
+               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
                data-action="keydown->payments#handleKeydown">
       </td>
       <td class="px-4 py-3">
         <select name="account_id"
-                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
+                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
                 data-action="keydown->payments#handleKeydown change->payments#handleNewDropdown">
           <option value="">Select...</option>
           <option value="new">— New Account —</option>
@@ -605,7 +693,7 @@ export default class extends Controller {
       </td>
       <td class="px-4 py-3">
         <select name="spending_category_id"
-                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
+                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
                 data-action="keydown->payments#handleKeydown change->payments#handleNewDropdown change->payments#onCategoryChange">
           <option value="">Select...</option>
           <option value="new">— New Category —</option>
@@ -614,7 +702,7 @@ export default class extends Controller {
       </td>
       <td class="px-4 py-3">
         <select name="spending_type_override_id"
-                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
+                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
                 data-action="keydown->payments#handleKeydown">
           <option value="">Auto (from category)</option>
           ${this._buildTypeOptions()}
@@ -622,14 +710,14 @@ export default class extends Controller {
       </td>
       <td class="px-4 py-3">
         <input type="text" name="description" value="" placeholder="Description" maxlength="255"
-               class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
+               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
                data-action="keydown->payments#handleKeydown">
       </td>
       <td class="px-4 py-3">
         <div class="flex items-center">
           <span class="text-sm text-gray-500 dark:text-gray-400 mr-1">$</span>
           <input type="number" name="amount" value="" placeholder="0.00" step="0.01"
-                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5 text-right"
+                 class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5 text-right"
                  data-action="keydown->payments#handleKeydown">
         </div>
       </td>
@@ -651,7 +739,7 @@ export default class extends Controller {
     <tr class="hidden">
       <td colspan="7" class="px-4 py-3">
         <input type="text" name="notes" value="" placeholder="Notes (optional)" maxlength="500"
-               class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
+               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
                data-action="keydown->payments#handleKeydown">
       </td>
     </tr>
@@ -664,16 +752,17 @@ export default class extends Controller {
     const accountOptions = this._buildAccountOptions(payment.account_id)
     const categoryOptions = this._buildCategoryOptions(payment.spending_category_id)
     const amtVal = parseFloat(payment.amount) || ""
+    const autoTypeName = payment.spending_type_name ? `Auto: ${payment.spending_type_name}` : "Auto (from category)"
 
     return `<tr class="bg-brand-50/40 dark:bg-brand-900/20">
       <td class="px-4 py-3">
         <input type="date" name="payment_date" value="${escapeAttr(payment.payment_date || "")}"
-               class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
+               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
                data-action="keydown->payments#handleKeydown">
       </td>
       <td class="px-4 py-3">
         <select name="account_id"
-                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
+                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
                 data-action="keydown->payments#handleKeydown change->payments#handleNewDropdown">
           <option value="">Select...</option>
           <option value="new">— New Account —</option>
@@ -682,7 +771,7 @@ export default class extends Controller {
       </td>
       <td class="px-4 py-3">
         <select name="spending_category_id"
-                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
+                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
                 data-action="keydown->payments#handleKeydown change->payments#handleNewDropdown change->payments#onCategoryChange">
           <option value="">Select...</option>
           <option value="new">— New Category —</option>
@@ -691,22 +780,22 @@ export default class extends Controller {
       </td>
       <td class="px-4 py-3">
         <select name="spending_type_override_id"
-                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
+                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
                 data-action="keydown->payments#handleKeydown">
-          <option value="">Auto (from category)</option>
+          <option value="">${escapeHtml(autoTypeName)}</option>
           ${this._buildTypeOptions(payment.spending_type_override_id)}
         </select>
       </td>
       <td class="px-4 py-3">
         <input type="text" name="description" value="${escapeAttr(payment.description)}" placeholder="Description" maxlength="255"
-               class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
+               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
                data-action="keydown->payments#handleKeydown">
       </td>
       <td class="px-4 py-3">
         <div class="flex items-center">
           <span class="text-sm text-gray-500 dark:text-gray-400 mr-1">$</span>
           <input type="number" name="amount" value="${amtVal}" placeholder="0.00" step="0.01"
-                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5 text-right"
+                 class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5 text-right"
                  data-action="keydown->payments#handleKeydown">
         </div>
       </td>

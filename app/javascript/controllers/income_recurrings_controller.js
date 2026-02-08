@@ -387,32 +387,32 @@ export default class extends Controller {
     return `<tr class="bg-brand-50/40 dark:bg-brand-900/20">
       <td class="px-4 py-3">
         <input type="text" name="name" value="" placeholder="Source Name" maxlength="80"
-               class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
                data-action="keydown->income-recurrings#handleKeydown">
       </td>
       <td class="px-4 py-3">
         <input type="text" name="description" value="" placeholder="Description" maxlength="255"
-               class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
                data-action="keydown->income-recurrings#handleKeydown">
       </td>
       <td class="px-4 py-3">
         <div class="flex items-center">
           <span class="text-sm text-gray-500 dark:text-gray-400 mr-1">$</span>
           <input type="number" name="amount" value="" placeholder="0.00" step="0.01"
-                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5 text-right"
+                 class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5 text-right"
                  data-action="keydown->income-recurrings#handleKeydown">
         </div>
       </td>
       <td class="px-4 py-3">
         <select name="account_id"
-                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5">
+                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5">
           <option value="">No Account</option>
           ${accOptions}
         </select>
       </td>
       <td class="px-4 py-3">
         <select name="frequency_master_id"
-                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
                 data-action="keydown->income-recurrings#handleKeydown">
           <option value="">Select frequency...</option>
           ${freqOptions}
@@ -420,7 +420,7 @@ export default class extends Controller {
       </td>
       <td class="px-4 py-3">
         <input type="date" name="next_date" value="${today}"
-               class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
                data-action="keydown->income-recurrings#handleKeydown">
       </td>
       <td class="px-4 py-3 text-center">
@@ -460,32 +460,32 @@ export default class extends Controller {
     return `<tr class="bg-brand-50/40 dark:bg-brand-900/20">
       <td class="px-4 py-3">
         <input type="text" name="name" value="${this._escAttr(rec.name)}" placeholder="Source Name" maxlength="80"
-               class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
                data-action="keydown->income-recurrings#handleKeydown">
       </td>
       <td class="px-4 py-3">
         <input type="text" name="description" value="${this._escAttr(rec.description || "")}" placeholder="Description" maxlength="255"
-               class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
                data-action="keydown->income-recurrings#handleKeydown">
       </td>
       <td class="px-4 py-3">
         <div class="flex items-center">
           <span class="text-sm text-gray-500 dark:text-gray-400 mr-1">$</span>
           <input type="number" name="amount" value="${amtVal}" placeholder="0.00" step="0.01"
-                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5 text-right"
+                 class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5 text-right"
                  data-action="keydown->income-recurrings#handleKeydown">
         </div>
       </td>
       <td class="px-4 py-3">
         <select name="account_id"
-                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5">
+                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5">
           <option value="">No Account</option>
           ${accOptions}
         </select>
       </td>
       <td class="px-4 py-3">
         <select name="frequency_master_id"
-                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
                 data-action="keydown->income-recurrings#handleKeydown">
           <option value="">Select frequency...</option>
           ${freqOptions}
@@ -493,7 +493,7 @@ export default class extends Controller {
       </td>
       <td class="px-4 py-3">
         <input type="date" name="next_date" value="${rec.next_date || ""}"
-               class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
                data-action="keydown->income-recurrings#handleKeydown">
       </td>
       <td class="px-4 py-3 text-center">

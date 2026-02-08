@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["tableBody"]
+  static targets = ["tableBody", "toggleAllButton", "toggleAllLabel"]
   static values = { apiUrl: String, csrfToken: String }
 
   connect() {
@@ -17,6 +17,40 @@ export default class extends Controller {
       if (response.ok) this.frequencies = await response.json()
     } catch (e) {
       // silently fail
+    }
+    this.renderTable()
+  }
+
+  // --- Toggle All ---
+
+  async toggleAll() {
+    const allOn = this.frequencies.every(f => f.use_flag)
+    const newState = !allOn
+
+    // Update toggle all button visual
+    const btn = this.toggleAllButtonTarget
+    btn.dataset.checked = String(newState)
+    btn.setAttribute("aria-checked", String(newState))
+    btn.className = btn.className.replace(newState ? "bg-gray-300" : "bg-purple-600", newState ? "bg-purple-600" : "bg-gray-300")
+    const knob = btn.querySelector("span")
+    knob.className = knob.className.replace(newState ? "translate-x-1" : "translate-x-7", newState ? "translate-x-7" : "translate-x-1")
+
+    // Update all frequencies
+    for (const freq of this.frequencies) {
+      if (freq.use_flag !== newState) {
+        freq.use_flag = newState
+        try {
+          await fetch(`${this.apiUrlValue}/${freq.id}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+              "X-CSRF-Token": this.csrfTokenValue
+            },
+            body: JSON.stringify({ income_user_frequency: { use_flag: newState } })
+          })
+        } catch (e) { /* best effort */ }
+      }
     }
     this.renderTable()
   }

@@ -17,39 +17,39 @@
 
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <%= f.label :first_name, class: "block text-sm font-medium text-gray-700 dark:text-gray-300" %>
+            <%= f.label :first_name, class: "block text-sm font-bold text-gray-700 dark:text-gray-300" %>
             <%= f.text_field :first_name, autocomplete: "given-name",
-                class: "mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent",
+                class: "mt-1 block w-full px-4 py-3 border border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent",
                 placeholder: "John" %>
           </div>
 
           <div>
-            <%= f.label :last_name, class: "block text-sm font-medium text-gray-700 dark:text-gray-300" %>
+            <%= f.label :last_name, class: "block text-sm font-bold text-gray-700 dark:text-gray-300" %>
             <%= f.text_field :last_name, autocomplete: "family-name",
-                class: "mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent",
+                class: "mt-1 block w-full px-4 py-3 border border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent",
                 placeholder: "Doe" %>
           </div>
         </div>
 
         <div>
-          <%= f.label :email, class: "block text-sm font-medium text-gray-700 dark:text-gray-300" %>
+          <%= f.label :email, class: "block text-sm font-bold text-gray-700 dark:text-gray-300" %>
           <%= f.email_field :email, autofocus: true, autocomplete: "email",
-              class: "mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent",
+              class: "mt-1 block w-full px-4 py-3 border border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent",
               placeholder: "you@example.com" %>
         </div>
 
         <div>
-          <%= f.label :password, class: "block text-sm font-medium text-gray-700 dark:text-gray-300" %>
+          <%= f.label :password, class: "block text-sm font-bold text-gray-700 dark:text-gray-300" %>
           <%= f.password_field :password, autocomplete: "new-password",
-              class: "mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent",
+              class: "mt-1 block w-full px-4 py-3 border border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent",
               placeholder: "Minimum 8 characters" %>
           <p class="mt-1 text-xs text-gray-500 dark:text-gray-400"><%= @minimum_password_length %> characters minimum</p>
         </div>
 
         <div>
-          <%= f.label :password_confirmation, "Confirm password", class: "block text-sm font-medium text-gray-700 dark:text-gray-300" %>
+          <%= f.label :password_confirmation, "Confirm password", class: "block text-sm font-bold text-gray-700 dark:text-gray-300" %>
           <%= f.password_field :password_confirmation, autocomplete: "new-password",
-              class: "mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent",
+              class: "mt-1 block w-full px-4 py-3 border border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent",
               placeholder: "Confirm your password" %>
         </div>
 

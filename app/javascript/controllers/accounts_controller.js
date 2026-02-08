@@ -3,7 +3,7 @@ import { ICON_CATALOG, COLOR_OPTIONS, renderIconSvg, defaultIconSvg, iconFor, es
 
 export default class extends Controller {
   static targets = ["tableBody", "addButton", "generateButton", "deleteModal", "deleteModalName"]
-  static values = { apiUrl: String, typesUrl: String, csrfToken: String }
+  static values = { apiUrl: String, typesUrl: String, csrfToken: String, typesPageUrl: String }
 
   connect() {
     this.accounts = []
@@ -536,7 +536,7 @@ export default class extends Controller {
       <td class="px-6 py-3">
         <div class="relative" data-icon-picker>
           <button type="button"
-                  class="p-1.5 rounded-md border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+                  class="p-1.5 rounded-md border border-gray-900 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                   data-action="click->accounts#toggleIconPicker"
                   title="Choose icon">
             <span data-icon-preview>${previewIcon}</span>
@@ -548,28 +548,29 @@ export default class extends Controller {
       <td class="px-6 py-3">
         <input type="text" name="name" value="" placeholder="Name"
                maxlength="80"
-               class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
                data-action="keydown->accounts#handleKeydown">
       </td>
       <td class="px-6 py-3">
         <select name="account_type_id"
-                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-                data-action="keydown->accounts#handleKeydown">
+                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+                data-action="keydown->accounts#handleKeydown change->accounts#handleNewDropdown">
           <option value="">Select type...</option>
+          <option value="new">&mdash; New Account Type &mdash;</option>
           ${typeOptions}
         </select>
       </td>
       <td class="px-6 py-3">
         <input type="text" name="institution" value="" placeholder="Institution"
                maxlength="120"
-               class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
                data-action="keydown->accounts#handleKeydown">
       </td>
       <td class="px-6 py-3">
         <div class="flex items-center">
           <span class="text-sm text-gray-500 dark:text-gray-400 mr-1">$</span>
           <input type="number" name="balance" value="" placeholder="0.00" step="0.01"
-                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5 text-right"
+                 class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5 text-right"
                  data-action="keydown->accounts#handleKeydown">
         </div>
       </td>
@@ -612,7 +613,7 @@ export default class extends Controller {
       <td class="px-6 py-3">
         <div class="relative" data-icon-picker>
           <button type="button"
-                  class="p-1.5 rounded-md border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+                  class="p-1.5 rounded-md border border-gray-900 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                   data-action="click->accounts#toggleIconPicker"
                   title="Choose icon">
             <span data-icon-preview>${previewIcon}</span>
@@ -624,28 +625,29 @@ export default class extends Controller {
       <td class="px-6 py-3">
         <input type="text" name="name" value="${escapeAttr(acc.name)}" placeholder="Name"
                maxlength="80"
-               class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
                data-action="keydown->accounts#handleKeydown">
       </td>
       <td class="px-6 py-3">
         <select name="account_type_id"
-                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-                data-action="keydown->accounts#handleKeydown">
+                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+                data-action="keydown->accounts#handleKeydown change->accounts#handleNewDropdown">
           <option value="">Select type...</option>
+          <option value="new">&mdash; New Account Type &mdash;</option>
           ${typeOptions}
         </select>
       </td>
       <td class="px-6 py-3">
         <input type="text" name="institution" value="${escapeAttr(acc.institution || "")}" placeholder="Institution"
                maxlength="120"
-               class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
                data-action="keydown->accounts#handleKeydown">
       </td>
       <td class="px-6 py-3">
         <div class="flex items-center">
           <span class="text-sm text-gray-500 dark:text-gray-400 mr-1">$</span>
           <input type="number" name="balance" value="${balVal}" placeholder="0.00" step="0.01"
-                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5 text-right"
+                 class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5 text-right"
                  data-action="keydown->accounts#handleKeydown">
         </div>
       </td>
@@ -670,6 +672,22 @@ export default class extends Controller {
     <tr class="hidden" data-accounts-target="rowError">
       <td colspan="7" class="px-6 py-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30"></td>
     </tr>`
+  }
+
+  // --- "New" Dropdown Handler ---
+
+  handleNewDropdown(event) {
+    if (event.target.value !== "new") return
+    if (event.target.name === "account_type_id" && this.typesPageUrlValue) {
+      const a = document.createElement("a")
+      a.href = this.typesPageUrlValue
+      a.target = "_blank"
+      a.rel = "noopener noreferrer"
+      a.style.display = "none"
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+    }
   }
 
   // --- Error Display ---

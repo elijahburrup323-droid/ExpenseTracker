@@ -480,7 +480,7 @@ export default class extends Controller {
       <td class="px-6 py-3">
         <div class="relative" data-icon-picker>
           <button type="button"
-                  class="p-1.5 rounded-md border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+                  class="p-1.5 rounded-md border border-gray-900 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                   data-action="click->spending-categories#toggleIconPicker"
                   title="Choose icon">
             <span data-icon-preview>${previewIcon}</span>
@@ -492,18 +492,18 @@ export default class extends Controller {
       <td class="px-6 py-3">
         <input type="text" name="name" value="" placeholder="Name"
                maxlength="80"
-               class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
                data-action="keydown->spending-categories#handleKeydown">
       </td>
       <td class="px-6 py-3">
         <input type="text" name="description" value="" placeholder="Description"
                maxlength="255"
-               class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
                data-action="keydown->spending-categories#handleKeydown">
       </td>
       <td class="px-6 py-3 w-48">
         <select name="spending_type_id"
-                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
                 data-action="keydown->spending-categories#handleKeydown change->spending-categories#handleNewDropdown">
           <option value="">Select type...</option>
           <option value="new">&mdash; New Spending Type &mdash;</option>
@@ -547,7 +547,7 @@ export default class extends Controller {
       <td class="px-6 py-3">
         <div class="relative" data-icon-picker>
           <button type="button"
-                  class="p-1.5 rounded-md border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+                  class="p-1.5 rounded-md border border-gray-900 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                   data-action="click->spending-categories#toggleIconPicker"
                   title="Choose icon">
             <span data-icon-preview>${previewIcon}</span>
@@ -559,18 +559,18 @@ export default class extends Controller {
       <td class="px-6 py-3">
         <input type="text" name="name" value="${escapeAttr(cat.name)}" placeholder="Name"
                maxlength="80"
-               class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
                data-action="keydown->spending-categories#handleKeydown">
       </td>
       <td class="px-6 py-3">
         <input type="text" name="description" value="${escapeAttr(cat.description || "")}" placeholder="Description"
                maxlength="255"
-               class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
                data-action="keydown->spending-categories#handleKeydown">
       </td>
       <td class="px-6 py-3 w-48">
         <select name="spending_type_id"
-                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
                 data-action="keydown->spending-categories#handleKeydown change->spending-categories#handleNewDropdown">
           <option value="">Select type...</option>
           <option value="new">&mdash; New Spending Type &mdash;</option>

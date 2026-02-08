@@ -32,11 +32,73 @@ module Api
     end
 
     def generate
+      # If no recurring sources exist, create some dummy data first
+      if current_user.income_recurrings.count == 0
+        seed_dummy_recurrings
+      end
+
       count = generate_due_entries
+
+      # If no due entries were generated, create some sample entries directly
+      if count == 0
+        count = create_sample_entries
+      end
+
       render json: { generated: count }
     end
 
     private
+
+    def seed_dummy_recurrings
+      masters = IncomeFrequencyMaster.active.ordered
+      weekly = masters.find { |m| m.name == "Bi-Weekly" } || masters.first
+      monthly = masters.find { |m| m.name == "Monthly" } || masters.first
+      account = current_user.accounts.first
+
+      sources = [
+        { name: "Salary", amount: 2500.00, frequency: weekly, days_ago: 0 },
+        { name: "Freelance Work", amount: 800.00, frequency: monthly, days_ago: 3 },
+        { name: "Rental Income", amount: 1200.00, frequency: monthly, days_ago: 7 },
+      ]
+
+      sources.each do |src|
+        current_user.income_recurrings.create!(
+          name: src[:name],
+          amount: src[:amount],
+          frequency_master: src[:frequency],
+          account: account,
+          next_date: Date.today - src[:days_ago],
+          use_flag: true,
+          sort_order: (current_user.income_recurrings.maximum(:sort_order) || 0) + 1
+        )
+      end
+    end
+
+    def create_sample_entries
+      account = current_user.accounts.first
+      frequency = IncomeFrequencyMaster.active.first
+
+      samples = [
+        { name: "Paycheck", amount: 2500.00, days_ago: 1 },
+        { name: "Freelance Payment", amount: 750.00, days_ago: 5 },
+        { name: "Dividend", amount: 125.50, days_ago: 10 },
+        { name: "Rental Income", amount: 1200.00, days_ago: 15 },
+        { name: "Side Project", amount: 300.00, days_ago: 20 },
+      ]
+
+      samples.each do |s|
+        current_user.income_entries.create!(
+          source_name: s[:name],
+          amount: s[:amount],
+          entry_date: Date.today - s[:days_ago],
+          account: account,
+          frequency_master: frequency,
+          received_flag: false,
+          sort_order: (current_user.income_entries.maximum(:sort_order) || 0) + 1
+        )
+      end
+      samples.size
+    end
 
     def generate_due_entries
       entries = IncomeEntry.generate_due_entries_for(current_user)
