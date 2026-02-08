@@ -64,6 +64,18 @@ Rails.application.routes.draw do
     end
   end
 
+  # Admin
+  namespace :admin do
+    resources :users, only: [:index]
+  end
+
+  # Admin API
+  namespace :api do
+    namespace :admin do
+      resources :users, only: [:index, :update]
+    end
+  end
+
   # Documentation
   get "documentation", to: "documentation#index", as: :documentation
   get "documentation/database-schema", to: "documentation#database_schema", as: :documentation_database_schema

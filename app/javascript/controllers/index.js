@@ -14,6 +14,8 @@ import IncomeUserFrequenciesController from "controllers/income_user_frequencies
 import IncomeRecurringsController from "controllers/income_recurrings_controller"
 import IncomeEntriesController from "controllers/income_entries_controller"
 import SidebarController from "controllers/sidebar_controller"
+import AdminUsersController from "controllers/admin_users_controller"
+import QuotesController from "controllers/quotes_controller"
 
 application.register("flash", FlashController)
 application.register("dropdown", DropdownController)
@@ -29,3 +31,5 @@ application.register("income-user-frequencies", IncomeUserFrequenciesController)
 application.register("income-recurrings", IncomeRecurringsController)
 application.register("income-entries", IncomeEntriesController)
 application.register("sidebar", SidebarController)
+application.register("admin-users", AdminUsersController)
+application.register("quotes", QuotesController)

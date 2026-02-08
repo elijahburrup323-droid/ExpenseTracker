@@ -25,6 +25,7 @@ export default class extends Controller {
 
   startAdding() {
     if (this.state === "adding") return
+    if (this.state !== "idle") { this.state = "idle"; this.editingId = null }
     this.state = "adding"
     this.editingId = null
     this.renderTable()
@@ -37,6 +38,7 @@ export default class extends Controller {
   }
 
   startEditing(event) {
+    if (this.state !== "idle") { this.state = "idle"; this.editingId = null }
     const id = Number(event.currentTarget.dataset.id)
     this.state = "editing"
     this.editingId = id

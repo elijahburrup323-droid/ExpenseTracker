@@ -2,6 +2,7 @@ module Api
   class IncomeUserFrequenciesController < BaseController
     def index
       frequencies = current_user.income_user_frequencies.ordered.includes(:frequency_master)
+                      .joins(:frequency_master).where(income_frequency_masters: { active: true })
       render json: frequencies.map { |uf|
         master = uf.frequency_master
         {

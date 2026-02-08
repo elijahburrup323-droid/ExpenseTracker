@@ -1,0 +1,52 @@
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+     data-controller="admin-users"
+     data-admin-users-api-url-value="<%= api_admin_users_path %>"
+     data-admin-users-csrf-token-value="<%= form_authenticity_token %>">
+
+  <%# Page Header %>
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Users</h1>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Manage user accounts and admin access</p>
+    </div>
+  </div>
+
+  <%# Search Bar %>
+  <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4 mb-4 ring-1 ring-gray-200 dark:ring-gray-700">
+    <div class="flex gap-3 items-end">
+      <div class="flex-1">
+        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Search</label>
+        <input type="text" placeholder="Search by name or email..."
+               data-admin-users-target="searchInput"
+               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2"
+               data-action="keydown->admin-users#searchKeydown">
+      </div>
+      <div>
+        <button type="button"
+                class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition"
+                data-action="click->admin-users#applySearch">
+          Search
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <%# Table %>
+  <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden ring-1 ring-gray-200 dark:ring-gray-700">
+    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+      <thead class="bg-gray-50 dark:bg-gray-800">
+        <tr>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">First Name</th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Last Name</th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Email</th>
+          <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">Admin</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700" data-admin-users-target="tableBody">
+        <tr>
+          <td colspan="4" class="px-6 py-8 text-center text-sm text-gray-400 dark:text-gray-500">Loading...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

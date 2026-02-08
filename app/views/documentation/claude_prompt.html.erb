@@ -40,7 +40,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 
 ### Layout Structure
 - Collapsible left sidebar (w-56 expanded, w-16 collapsed) with gradient purple background
-- Top header bar showing "Hello {first name}", page title, and current date
+- Top header bar showing "Hello {first name}", motivational quote, and current date
 - Main content area shifts with sidebar via margin
 - Sidebar state + group collapse state persisted in localStorage
 - Dark/light theme toggle persisted in localStorage
@@ -52,10 +52,12 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 4. **Inline editing** — add row appears at top of table, edit row replaces display row, Enter saves, Escape cancels
 5. **Soft delete** — all models use deleted_at timestamp, default_scope excludes deleted records
 
-## BudgetHQ Agent Role
+## Admin Role
 - **budgethq_agent** boolean on users table (default false). Only DJ and Elijah have this flag.
-- Agents can see: Documentation menu item, Generate Data buttons on all CRUD screens, Frequency Masters maintenance screen.
-- Non-agents see the normal user experience without admin tools.
+- Admin users see an "Admin" group in the sidebar containing: Frequency Masters, Users, and Documentation.
+- Admin users also see Generate Data buttons on all CRUD screens.
+- Non-admins see the normal user experience without admin tools.
+- Admin user management screen (/admin/users) lets admins search users and toggle admin status via API.
 
 ## Database Tables
 
@@ -96,8 +98,9 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 /income_entries ........ Income Entries CRUD screen (with Generate Data button)
 /income_recurrings ..... Income Sources CRUD screen
 /income_user_frequencies Frequencies toggle screen
-/income_frequency_masters Frequency Masters CRUD (agent-only)
-/documentation ......... Documentation index (agent-only sidebar link)
+/income_frequency_masters Frequency Masters CRUD (admin-only)
+/admin/users ............. Admin user management (admin-only)
+/documentation ......... Documentation index (admin-only sidebar link)
 /documentation/database-schema
 /documentation/claude-prompt
 
@@ -107,10 +110,11 @@ API endpoints (all under /api/):
   /api/account_types .......... CRUD
   /api/accounts ............... CRUD
   /api/payments ............... CRUD (with transactional balance updates)
-  /api/income_frequency_masters  CRUD (agent-only)
-  /api/income_user_frequencies  index + update (use_flag toggle)
+  /api/income_frequency_masters  CRUD (admin-only)
+  /api/income_user_frequencies  index + update (use_flag toggle, filters inactive masters)
   /api/income_recurrings ...... CRUD
   /api/income_entries ......... CRUD + POST /generate
+  /api/admin/users ........... index + update (admin toggle, admin-only)
 ```
 
 ## Stimulus Controllers
@@ -125,10 +129,12 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 - **account_types_controller.js** — CRUD with icon/color picker, generate dummy data
 - **accounts_controller.js** — CRUD with type select, budget toggle, generate dummy data
 - **payments_controller.js** — CRUD with date/account/category/type filters, search, combination sum search, generate dummy data
-- **income_frequency_masters_controller.js** — CRUD with inline editing, active toggle, sort_order editing (agent-only)
-- **income_user_frequencies_controller.js** — use_flag toggle list
+- **income_frequency_masters_controller.js** — CRUD with inline editing, active toggle, sort_order editing (admin-only)
+- **income_user_frequencies_controller.js** — use_flag toggle list (filters out inactive frequency masters)
 - **income_recurrings_controller.js** — CRUD with frequency/account selects, generate dummy data
 - **income_entries_controller.js** — CRUD with received toggle (opens edit on amount), Generate Data button
+- **admin_users_controller.js** — Admin user management with search, admin toggle (admin-only)
+- **quotes_controller.js** — Rotating motivational budget quotes in header bar (100 quotes, cycles on page load, toggle to hide via localStorage)
 
 ## Seeding & Initialization
 - db/seeds.rb creates test user (test@example.com / password123) and 40+ IncomeFrequencyMaster records
@@ -144,7 +150,10 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 6. **Sort order** — auto-assigned as max(sort_order)+1 on create
 7. **Case-insensitive uniqueness** — name fields use lower() index with deleted_at IS NULL filter
 8. **API error format** — { errors: ["message"] } with 422 status
-9. **BudgetHQ Agent gating** — Documentation sidebar link, Generate Data buttons, and Frequency Masters screen are only visible/accessible to users with budgethq_agent=true
+9. **Admin gating** — Admin sidebar group (Frequency Masters, Users, Documentation), Generate Data buttons, and admin API endpoints are only visible/accessible to users with budgethq_agent=true
+10. **Motivational quotes** — Header displays rotating budget quotes from a pool of 100, cycling on each page load, with a toggle button to show/hide (preference stored in localStorage)
+11. **Auto-cancel editing** — Clicking Add/Edit/Delete while another row is being edited auto-cancels the previous edit (no need for explicit cancel)
+12. **Auto-save toggles** — All toggle switches (budget, use_flag, active, admin) save immediately via API without requiring a Save button
 
 ## Development Notes
 - Windows filesystem is case-insensitive but Rails can fail template lookups if path case doesn't match. Always start server from C:/Projects/ExpenseTracker (correct case).

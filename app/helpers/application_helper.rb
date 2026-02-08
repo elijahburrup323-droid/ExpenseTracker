@@ -27,6 +27,7 @@ module ApplicationHelper
       "documentation#index"          => "Documentation",
       "documentation#database_schema"=> "Database Schema",
       "documentation#claude_prompt"  => "Claude.ai Prompt",
+      "users#index"                  => "Users",
     }
     titles["#{controller_name}##{action_name}"] || controller_name.titleize
   end
