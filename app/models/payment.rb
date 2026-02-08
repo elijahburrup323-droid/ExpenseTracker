@@ -2,6 +2,7 @@ class Payment < ApplicationRecord
   belongs_to :user
   belongs_to :account
   belongs_to :spending_category
+  belongs_to :spending_type_override, class_name: 'SpendingType', optional: true
 
   default_scope { where(deleted_at: nil) }
 

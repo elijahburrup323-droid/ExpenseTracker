@@ -212,17 +212,71 @@ export default class extends Controller {
     const accountId = this.filterAccountTarget.value
     const categoryId = this.filterCategoryTarget.value
     const typeName = this.filterTypeTarget.value
-    const search = this.filterSearchTarget.value.toLowerCase().trim()
+    const search = this.filterSearchTarget.value.trim()
 
-    return this.payments.filter(p => {
+    // Check for combination search pattern: (amount)
+    const comboMatch = search.match(/^\(([0-9]+\.?[0-9]*)\)$/)
+    this._highlightedPaymentIds = null
+
+    let filtered = this.payments.filter(p => {
       if (startDate && p.payment_date < startDate) return false
       if (endDate && p.payment_date > endDate) return false
       if (accountId && p.account_id !== Number(accountId)) return false
       if (categoryId && p.spending_category_id !== Number(categoryId)) return false
       if (typeName && p.spending_type_name !== typeName) return false
-      if (search && !p.description.toLowerCase().includes(search)) return false
+      if (search && !comboMatch) {
+        const lowerSearch = search.toLowerCase()
+        const amountStr = String(parseFloat(p.amount || 0))
+        const formattedAmount = parseFloat(p.amount || 0).toFixed(2)
+        if (!p.description.toLowerCase().includes(lowerSearch) &&
+            !amountStr.includes(search) &&
+            !formattedAmount.includes(search)) return false
+      }
       return true
     })
+
+    if (comboMatch) {
+      const targetAmount = parseFloat(comboMatch[1])
+      // Find exact matches first
+      const exactMatches = filtered.filter(p => Math.abs(parseFloat(p.amount) - targetAmount) < 0.005)
+      if (exactMatches.length > 0) {
+        this._highlightedPaymentIds = new Set(exactMatches.map(p => p.id))
+      }
+      // Find combinations that sum to the target
+      const comboIds = this._findCombination(filtered, targetAmount)
+      if (comboIds) {
+        this._highlightedPaymentIds = this._highlightedPaymentIds || new Set()
+        comboIds.forEach(id => this._highlightedPaymentIds.add(id))
+      }
+    }
+
+    return filtered
+  }
+
+  _findCombination(payments, target) {
+    // Subset-sum: find a group of payments whose amounts sum to target
+    // Limit to first 50 payments for performance
+    const candidates = payments.slice(0, 50)
+    const epsilon = 0.005
+
+    // Try combinations of increasing size (2 to 6)
+    for (let size = 2; size <= Math.min(6, candidates.length); size++) {
+      const result = this._combineN(candidates, 0, size, target, [], epsilon)
+      if (result) return result.map(p => p.id)
+    }
+    return null
+  }
+
+  _combineN(arr, start, remaining, target, current, epsilon) {
+    if (remaining === 0) {
+      const sum = current.reduce((s, p) => s + parseFloat(p.amount), 0)
+      return Math.abs(sum - target) < epsilon ? current : null
+    }
+    for (let i = start; i <= arr.length - remaining; i++) {
+      const result = this._combineN(arr, i + 1, remaining - 1, target, [...current, arr[i]], epsilon)
+      if (result) return result
+    }
+    return null
   }
 
   // --- State Transitions ---
@@ -232,8 +286,11 @@ export default class extends Controller {
     if (this.state !== "idle") { this.state = "idle"; this.editingId = null }
     this.state = "adding"
     this.renderTable()
-    const descInput = this.tableBodyTarget.querySelector("input[name='description']")
-    if (descInput) descInput.focus()
+    const dateInput = this.tableBodyTarget.querySelector("input[name='payment_date']")
+    if (dateInput) {
+      dateInput.focus()
+      try { dateInput.showPicker() } catch (e) { /* browser may not support showPicker */ }
+    }
   }
 
   cancelAdding() {
@@ -245,6 +302,7 @@ export default class extends Controller {
     const dateInput = this.tableBodyTarget.querySelector("input[name='payment_date']")
     const accSelect = this.tableBodyTarget.querySelector("select[name='account_id']")
     const catSelect = this.tableBodyTarget.querySelector("select[name='spending_category_id']")
+    const typeOverrideSelect = this.tableBodyTarget.querySelector("select[name='spending_type_override_id']")
     const descInput = this.tableBodyTarget.querySelector("input[name='description']")
     const amtInput = this.tableBodyTarget.querySelector("input[name='amount']")
     const notesInput = this.tableBodyTarget.querySelector("input[name='notes']")
@@ -252,6 +310,7 @@ export default class extends Controller {
     const payment_date = dateInput?.value
     const account_id = accSelect?.value
     const spending_category_id = catSelect?.value
+    const spending_type_override_id = typeOverrideSelect?.value || null
     const description = descInput?.value?.trim()
     const amount = amtInput?.value?.trim() || "0"
     const notes = notesInput?.value?.trim()
@@ -270,7 +329,7 @@ export default class extends Controller {
           "Accept": "application/json",
           "X-CSRF-Token": this.csrfTokenValue
         },
-        body: JSON.stringify({ payment: { account_id, spending_category_id, payment_date, description, notes, amount } })
+        body: JSON.stringify({ payment: { account_id, spending_category_id, spending_type_override_id, payment_date, description, notes, amount } })
       })
 
       if (response.ok) {
@@ -308,6 +367,7 @@ export default class extends Controller {
     const dateInput = this.tableBodyTarget.querySelector("input[name='payment_date']")
     const accSelect = this.tableBodyTarget.querySelector("select[name='account_id']")
     const catSelect = this.tableBodyTarget.querySelector("select[name='spending_category_id']")
+    const typeOverrideSelect = this.tableBodyTarget.querySelector("select[name='spending_type_override_id']")
     const descInput = this.tableBodyTarget.querySelector("input[name='description']")
     const amtInput = this.tableBodyTarget.querySelector("input[name='amount']")
     const notesInput = this.tableBodyTarget.querySelector("input[name='notes']")
@@ -315,6 +375,7 @@ export default class extends Controller {
     const payment_date = dateInput?.value
     const account_id = accSelect?.value
     const spending_category_id = catSelect?.value
+    const spending_type_override_id = typeOverrideSelect?.value || null
     const description = descInput?.value?.trim()
     const amount = amtInput?.value?.trim() || "0"
     const notes = notesInput?.value?.trim()
@@ -337,7 +398,7 @@ export default class extends Controller {
           "Accept": "application/json",
           "X-CSRF-Token": this.csrfTokenValue
         },
-        body: JSON.stringify({ payment: { account_id, spending_category_id, payment_date, description, notes, amount } })
+        body: JSON.stringify({ payment: { account_id, spending_category_id, spending_type_override_id, payment_date, description, notes, amount } })
       })
 
       if (response.ok) {
@@ -467,6 +528,13 @@ export default class extends Controller {
     return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${colors.bg} ${colors.text}">${escapeHtml(name)}</span>`
   }
 
+  _buildTypeOptions(selectedId = null) {
+    return this.spendingTypes.map(t => {
+      const sel = selectedId != null && t.id === selectedId ? "selected" : ""
+      return `<option value="${t.id}" ${sel}>${escapeHtml(t.name)}</option>`
+    }).join("")
+  }
+
   _getAutoTypeName(categoryId) {
     const cat = this.categories.find(c => c.id === Number(categoryId))
     if (!cat) return ""
@@ -484,8 +552,10 @@ export default class extends Controller {
   _renderDisplayRow(payment, actionsEnabled) {
     const disabledClass = actionsEnabled ? "" : "opacity-50 cursor-not-allowed"
     const disabledAttr = actionsEnabled ? "" : "disabled"
+    const highlighted = this._highlightedPaymentIds && this._highlightedPaymentIds.has(payment.id)
+    const rowClass = highlighted ? "bg-yellow-50 dark:bg-yellow-900/20 ring-1 ring-yellow-300 dark:ring-yellow-700" : "hover:bg-gray-50 dark:hover:bg-gray-700"
 
-    return `<tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+    return `<tr class="${rowClass} transition-colors">
       <td class="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">${this._formatDate(payment.payment_date)}</td>
       <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${escapeHtml(payment.account_name || "")}</td>
       <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${escapeHtml(payment.spending_category_name || "")}</td>
@@ -543,7 +613,12 @@ export default class extends Controller {
         </select>
       </td>
       <td class="px-4 py-3">
-        <span class="text-xs text-gray-400 dark:text-gray-500 italic" data-payments-target="autoType">Auto</span>
+        <select name="spending_type_override_id"
+                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
+                data-action="keydown->payments#handleKeydown">
+          <option value="">Auto (from category)</option>
+          ${this._buildTypeOptions()}
+        </select>
       </td>
       <td class="px-4 py-3">
         <input type="text" name="description" value="" placeholder="Description" maxlength="255"
@@ -615,7 +690,12 @@ export default class extends Controller {
         </select>
       </td>
       <td class="px-4 py-3">
-        <span class="text-xs text-gray-400 dark:text-gray-500 italic" data-payments-target="autoType">${this._renderTypeBadge(payment.spending_type_color_key, payment.spending_type_name || "Auto")}</span>
+        <select name="spending_type_override_id"
+                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
+                data-action="keydown->payments#handleKeydown">
+          <option value="">Auto (from category)</option>
+          ${this._buildTypeOptions(payment.spending_type_override_id)}
+        </select>
       </td>
       <td class="px-4 py-3">
         <input type="text" name="description" value="${escapeAttr(payment.description)}" placeholder="Description" maxlength="255"

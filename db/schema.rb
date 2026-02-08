@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_07_100002) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_08_015058) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -78,6 +78,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_07_100002) do
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "spending_type_override_id"
     t.index ["account_id"], name: "index_payments_on_account_id"
     t.index ["spending_category_id"], name: "index_payments_on_spending_category_id"
     t.index ["user_id", "payment_date"], name: "index_payments_on_user_id_and_payment_date"
@@ -170,6 +171,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_07_100002) do
   add_foreign_key "identities", "users"
   add_foreign_key "payments", "accounts"
   add_foreign_key "payments", "spending_categories"
+  add_foreign_key "payments", "spending_types", column: "spending_type_override_id", on_delete: :nullify
   add_foreign_key "payments", "users"
   add_foreign_key "spending_categories", "spending_types"
   add_foreign_key "spending_categories", "users"
