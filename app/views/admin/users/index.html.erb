@@ -1,7 +1,8 @@
 <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
      data-controller="admin-users"
      data-admin-users-api-url-value="<%= api_admin_users_path %>"
-     data-admin-users-csrf-token-value="<%= form_authenticity_token %>">
+     data-admin-users-csrf-token-value="<%= form_authenticity_token %>"
+     data-admin-users-current-user-id-value="<%= current_user.id %>">
 
   <%# Page Header %>
   <div class="flex items-center justify-between mb-6">

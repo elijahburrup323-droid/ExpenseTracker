@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static targets = ["tableBody", "searchInput"]
-  static values = { apiUrl: String, csrfToken: String }
+  static values = { apiUrl: String, csrfToken: String, currentUserId: Number }
 
   connect() {
     this.users = []
@@ -47,6 +47,12 @@ export default class extends Controller {
     const userId = btn.dataset.id
     const wasAdmin = btn.dataset.checked === "true"
     const nowAdmin = !wasAdmin
+
+    // Prevent self-demotion
+    if (Number(userId) === this.currentUserIdValue && !nowAdmin) {
+      alert("You cannot remove your own admin access.")
+      return
+    }
 
     // Update visual immediately
     btn.dataset.checked = String(nowAdmin)

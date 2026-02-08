@@ -12,6 +12,10 @@ module Api
         user = User.find_by(id: params[:id])
         return render_not_found unless user
 
+        if user.id == current_user.id && params.dig(:user, :budgethq_agent).to_s == "false"
+          return render json: { error: "You cannot remove your own admin access" }, status: :unprocessable_entity
+        end
+
         if user.update(user_params)
           render json: user_json(user)
         else
