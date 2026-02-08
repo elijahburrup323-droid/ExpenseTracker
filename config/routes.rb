@@ -35,6 +35,15 @@ Rails.application.routes.draw do
   # Payments (HTML page)
   resources :payments, only: [:index]
 
+  # Income Frequencies (HTML page)
+  resources :income_user_frequencies, only: [:index]
+
+  # Income Sources (HTML page)
+  resources :income_recurrings, only: [:index]
+
+  # Income Entries (HTML page)
+  resources :income_entries, only: [:index]
+
   # API endpoints
   namespace :api do
     resources :spending_types, only: [:index, :create, :update, :destroy]
@@ -42,6 +51,13 @@ Rails.application.routes.draw do
     resources :account_types, only: [:index, :create, :update, :destroy]
     resources :accounts, only: [:index, :create, :update, :destroy]
     resources :payments, only: [:index, :create, :update, :destroy]
+    resources :income_user_frequencies, only: [:index, :update]
+    resources :income_recurrings, only: [:index, :create, :update, :destroy]
+    resources :income_entries, only: [:index, :create, :update, :destroy] do
+      collection do
+        post :generate
+      end
+    end
   end
 
   # Documentation

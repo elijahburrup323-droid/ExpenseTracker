@@ -1,121 +1,169 @@
-<nav class="bg-gradient-to-r from-brand-700 via-brand-600 to-brand-500 shadow-lg">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex items-center justify-between h-14">
-      <%# Logo %>
-      <div class="flex items-center space-x-8">
-        <%= link_to dashboard_path, class: "flex items-center space-x-2" do %>
-          <svg class="h-7 w-7 text-white" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z"/>
+<%# Mobile hamburger button (fixed, visible only on small screens) %>
+<button type="button"
+        class="md:hidden fixed top-3 left-3 z-50 p-2 rounded-lg bg-brand-600 text-white shadow-lg hover:bg-brand-700 transition"
+        data-action="click->sidebar#openMobile">
+  <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+  </svg>
+</button>
+
+<%# Backdrop for mobile sidebar %>
+<div class="hidden fixed inset-0 bg-black/50 z-40 md:hidden"
+     data-sidebar-target="backdrop"
+     data-action="click->sidebar#closeMobile"></div>
+
+<%# Sidebar %>
+<aside class="fixed top-0 left-0 h-screen z-40 bg-gradient-to-b from-brand-700 via-brand-600 to-brand-500 shadow-lg flex flex-col transition-all duration-300 w-56 -translate-x-full md:translate-x-0"
+       data-sidebar-target="sidebar"
+       data-collapsed="false">
+
+  <%# Logo %>
+  <div class="flex items-center h-14 px-4 border-b border-white/20">
+    <%= link_to dashboard_path, class: "flex items-center space-x-2 min-w-0" do %>
+      <svg class="h-7 w-7 text-white flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z"/>
+      </svg>
+      <span class="text-lg font-bold text-white tracking-tight truncate" data-sidebar-label>BudgetHQ</span>
+    <% end %>
+  </div>
+
+  <%# Navigation links %>
+  <nav class="flex-1 overflow-y-auto py-3 px-2 space-y-1">
+    <%
+      # Grouped navigation structure
+      nav_groups = [
+        {
+          heading: "Accounts",
+          path: accounts_path,
+          icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M2 7a2 2 0 012-2h16a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V7zm10 3a2 2 0 100 4 2 2 0 000-4zm-6 2h.01M18 12h.01"/>',
+          children: [
+            { path: account_types_path, label: "Account Types", icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>' },
+            { path: spending_categories_path, label: "Categories", icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/>' },
+            { path: spending_types_path, label: "Spending Types", icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>' },
+          ]
+        },
+        {
+          heading: "Income Entries",
+          path: income_entries_path,
+          icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>',
+          children: [
+            { path: income_user_frequencies_path, label: "Frequencies", icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>' },
+            { path: income_recurrings_path, label: "Income Sources", icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>' },
+          ]
+        },
+      ]
+
+      standalone_links = [
+        { path: payments_path, label: "Payments", icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a5 5 0 00-10 0v2M12 12v3m-3-3h6m-9 7h12a2 2 0 002-2v-4a2 2 0 00-2-2H6a2 2 0 00-2 2v4a2 2 0 002 2z"/>' },
+        { path: documentation_path, label: "Documentation", icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>' },
+      ]
+    %>
+
+    <%# Grouped sections %>
+    <% nav_groups.each do |group| %>
+      <%# Group heading link %>
+      <% active = current_page?(group[:path]) %>
+      <%= link_to group[:path], class: "group relative flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-semibold transition #{active ? 'bg-white/20 text-white' : 'text-white/90 hover:bg-white/10 hover:text-white'}" do %>
+        <svg class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <%= group[:icon].html_safe %>
+        </svg>
+        <span data-sidebar-label class="truncate"><%= group[:heading] %></span>
+        <span data-sidebar-tooltip class="invisible group-hover:visible absolute left-full ml-2 px-2 py-1 rounded bg-gray-900 text-white text-xs whitespace-nowrap z-50 shadow-lg pointer-events-none">
+          <%= group[:heading] %>
+        </span>
+      <% end %>
+
+      <%# Child links (indented) %>
+      <% group[:children].each do |link| %>
+        <% active = current_page?(link[:path]) %>
+        <%= link_to link[:path], class: "group relative flex items-center space-x-3 pl-6 pr-3 py-1.5 rounded-lg text-sm font-medium transition #{active ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'}" do %>
+          <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <%= link[:icon].html_safe %>
           </svg>
-          <span class="text-lg font-bold text-white tracking-tight">BudgetHQ</span>
+          <span data-sidebar-label class="truncate"><%= link[:label] %></span>
+          <span data-sidebar-tooltip class="invisible group-hover:visible absolute left-full ml-2 px-2 py-1 rounded bg-gray-900 text-white text-xs whitespace-nowrap z-50 shadow-lg pointer-events-none">
+            <%= link[:label] %>
+          </span>
         <% end %>
+      <% end %>
 
-        <%# Nav Links %>
-        <div class="hidden md:flex items-center space-x-6">
-          <%= link_to spending_categories_path, class: "flex items-center space-x-1.5 text-white/90 hover:text-white text-sm font-medium transition" do %>
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/>
-            </svg>
-            <span>Categories</span>
-          <% end %>
+      <div class="my-1"></div>
+    <% end %>
 
-          <%= link_to spending_types_path, class: "flex items-center space-x-1.5 text-white/90 hover:text-white text-sm font-medium transition" do %>
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-            </svg>
-            <span>Spending Types</span>
-          <% end %>
+    <%# Standalone links %>
+    <% standalone_links.each do |link| %>
+      <% active = current_page?(link[:path]) %>
+      <%= link_to link[:path], class: "group relative flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition #{active ? 'bg-white/20 text-white' : 'text-white/80 hover:bg-white/10 hover:text-white'}" do %>
+        <svg class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <%= link[:icon].html_safe %>
+        </svg>
+        <span data-sidebar-label class="truncate"><%= link[:label] %></span>
+        <span data-sidebar-tooltip class="invisible group-hover:visible absolute left-full ml-2 px-2 py-1 rounded bg-gray-900 text-white text-xs whitespace-nowrap z-50 shadow-lg pointer-events-none">
+          <%= link[:label] %>
+        </span>
+      <% end %>
+    <% end %>
+  </nav>
 
-          <%= link_to account_types_path, class: "flex items-center space-x-1.5 text-white/90 hover:text-white text-sm font-medium transition" do %>
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
-            </svg>
-            <span>Account Types</span>
-          <% end %>
+  <%# Bottom section %>
+  <div class="border-t border-white/20 px-3 py-3 space-y-2">
+    <%# Date %>
+    <div class="flex items-center space-x-3 px-1 text-white/70 text-xs">
+      <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+      </svg>
+      <span data-sidebar-label><%= Date.today.strftime("%b %-d, %Y") %></span>
+    </div>
 
-          <%= link_to accounts_path, class: "flex items-center space-x-1.5 text-white/90 hover:text-white text-sm font-medium transition" do %>
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M2 7a2 2 0 012-2h16a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V7zm10 3a2 2 0 100 4 2 2 0 000-4zm-6 2h.01M18 12h.01"/>
-            </svg>
-            <span>Accounts</span>
-          <% end %>
+    <%# Theme toggle %>
+    <div class="flex items-center space-x-3 px-1" data-controller="theme">
+      <button type="button"
+              class="flex items-center space-x-3 text-white/80 hover:text-white transition w-full"
+              data-action="click->theme#toggle"
+              title="Toggle dark mode">
+        <span data-theme-target="moonIcon">
+          <svg class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+        </span>
+        <span data-theme-target="sunIcon" class="hidden">
+          <svg class="h-5 w-5 flex-shrink-0 text-yellow-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+        </span>
+        <span data-sidebar-label class="text-sm">Theme</span>
+      </button>
+    </div>
 
-          <%= link_to payments_path, class: "flex items-center space-x-1.5 text-white/90 hover:text-white text-sm font-medium transition" do %>
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a5 5 0 00-10 0v2M12 12v3m-3-3h6m-9 7h12a2 2 0 002-2v-4a2 2 0 00-2-2H6a2 2 0 00-2 2v4a2 2 0 002 2z"/>
-            </svg>
-            <span>Payments</span>
-          <% end %>
-
-          <%= link_to documentation_path, class: "flex items-center space-x-1.5 text-white/90 hover:text-white text-sm font-medium transition" do %>
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-            </svg>
-            <span>Documentation</span>
-          <% end %>
+    <%# User info & sign out %>
+    <div class="flex items-center space-x-3 px-1">
+      <% if current_user.avatar_url.present? %>
+        <img src="<%= current_user.avatar_url %>" alt="Avatar" class="h-8 w-8 rounded-full ring-2 ring-white/30 flex-shrink-0">
+      <% else %>
+        <div class="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center ring-2 ring-white/30 flex-shrink-0">
+          <span class="text-white text-sm font-medium"><%= current_user.full_name.first.upcase %></span>
         </div>
-      </div>
-
-      <%# Right side: date + user menu %>
-      <div class="flex items-center space-x-4">
-        <div class="hidden sm:flex items-center space-x-1.5 text-white/80 text-sm">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-          </svg>
-          <span><%= Date.today.strftime("%b %-d, %Y") %></span>
-        </div>
-
-        <div class="relative" data-controller="dropdown">
-          <button type="button"
-                  class="flex items-center space-x-2 text-white/90 hover:text-white transition"
-                  data-action="click->dropdown#toggle">
-            <% if current_user.avatar_url.present? %>
-              <img src="<%= current_user.avatar_url %>" alt="Avatar" class="h-8 w-8 rounded-full ring-2 ring-white/30">
-            <% else %>
-              <div class="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center ring-2 ring-white/30">
-                <span class="text-white text-sm font-medium">
-                  <%= current_user.full_name.first.upcase %>
-                </span>
-              </div>
-            <% end %>
-            <svg class="h-4 w-4 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-
-          <div class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-1 ring-1 ring-black ring-opacity-5 z-50"
-               data-dropdown-target="menu">
-            <div class="px-4 py-2 flex items-center justify-between" data-controller="theme">
-              <span class="text-sm text-gray-700 dark:text-gray-300">Theme</span>
-              <button type="button"
-                      class="relative inline-flex h-7 w-14 items-center rounded-full bg-gray-300 dark:bg-brand-600 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-300"
-                      data-action="click->theme#toggle"
-                      title="Toggle dark mode">
-                <span data-theme-target="moonIcon" class="absolute left-1.5">
-                  <svg class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
-                </span>
-                <span data-theme-target="sunIcon" class="hidden absolute left-1.5">
-                  <svg class="h-4 w-4 text-yellow-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                </span>
-                <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform translate-x-1 dark:translate-x-7"></span>
-              </button>
-            </div>
-            <div class="border-t border-gray-200 dark:border-gray-600"></div>
-            <%= link_to "Settings", edit_user_registration_path, class: "block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700" %>
-            <%= button_to "Sign out", destroy_user_session_path, method: :delete, class: "block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700" %>
-          </div>
-        </div>
+      <% end %>
+      <div data-sidebar-label class="min-w-0">
+        <p class="text-sm font-medium text-white truncate"><%= current_user.full_name %></p>
+        <%= link_to "Settings", edit_user_registration_path, class: "text-xs text-white/60 hover:text-white/90 transition" %>
       </div>
     </div>
-  </div>
 
-  <%# Mobile nav %>
-  <div class="md:hidden border-t border-white/20 px-4 py-2 flex space-x-4 overflow-x-auto">
-    <%= link_to spending_categories_path, class: "text-white/90 text-xs font-medium whitespace-nowrap" do %>Categories<% end %>
-    <%= link_to spending_types_path, class: "text-white/90 text-xs font-medium whitespace-nowrap" do %>Spending Types<% end %>
-    <%= link_to account_types_path, class: "text-white/90 text-xs font-medium whitespace-nowrap" do %>Account Types<% end %>
-    <%= link_to accounts_path, class: "text-white/90 text-xs font-medium whitespace-nowrap" do %>Accounts<% end %>
-    <%= link_to payments_path, class: "text-white/90 text-xs font-medium whitespace-nowrap" do %>Payments<% end %>
-    <%= link_to documentation_path, class: "text-white/90 text-xs font-medium whitespace-nowrap" do %>Documentation<% end %>
+    <%# Sign out %>
+    <div class="px-1">
+      <%= button_to destroy_user_session_path, method: :delete, class: "flex items-center space-x-3 w-full text-white/70 hover:text-white text-sm transition py-1" do %>
+        <svg class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+        </svg>
+        <span data-sidebar-label>Sign out</span>
+      <% end %>
+    </div>
+
+    <%# Collapse toggle (desktop only) %>
+    <button type="button"
+            class="hidden md:flex items-center justify-center w-full py-1 text-white/60 hover:text-white transition"
+            data-action="click->sidebar#toggle"
+            title="Toggle sidebar">
+      <svg class="h-5 w-5 transition-transform duration-300" data-sidebar-target="toggleIcon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+      </svg>
+    </button>
   </div>
-</nav>
+</aside>

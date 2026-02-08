@@ -1,0 +1,45 @@
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+     data-controller="income-user-frequencies"
+     data-income-user-frequencies-api-url-value="<%= api_income_user_frequencies_path %>"
+     data-income-user-frequencies-csrf-token-value="<%= form_authenticity_token %>">
+
+  <%# Page Header %>
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Income Frequencies</h1>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Toggle which pay frequencies are available for your income sources</p>
+    </div>
+  </div>
+
+  <%# Table %>
+  <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden ring-1 ring-gray-200 dark:ring-gray-700">
+    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+      <thead class="bg-gray-50 dark:bg-gray-800">
+        <tr>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Frequency Name</th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Category</th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Pattern Details</th>
+          <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-20">Use</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700" data-income-user-frequencies-target="tableBody">
+        <tr>
+          <td colspan="4" class="px-6 py-8 text-center text-sm text-gray-400 dark:text-gray-500">Loading...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <%# Info Box %>
+  <div class="mt-6 rounded-lg bg-blue-50 dark:bg-blue-900/30 p-4 ring-1 ring-blue-200 dark:ring-blue-800">
+    <div class="flex">
+      <svg class="h-5 w-5 text-blue-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+      </svg>
+      <p class="ml-3 text-sm text-blue-700 dark:text-blue-300">
+        Income Frequencies control which pay schedules appear in the Income Sources dropdown.
+        Toggle "Use" to show or hide a frequency from your available options.
+      </p>
+    </div>
+  </div>
+</div>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_08_015058) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_08_100004) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -64,6 +64,77 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_08_015058) do
     t.index ["provider", "uid"], name: "index_identities_on_provider_and_uid", unique: true
     t.index ["user_id", "provider"], name: "index_identities_on_user_id_and_provider", unique: true
     t.index ["user_id"], name: "index_identities_on_user_id"
+  end
+
+  create_table "income_entries", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "income_recurring_id"
+    t.string "source_name", limit: 80, null: false
+    t.string "description", limit: 255
+    t.date "entry_date", null: false
+    t.decimal "amount", precision: 10, scale: 2, null: false
+    t.bigint "account_id"
+    t.bigint "frequency_master_id"
+    t.boolean "received_flag", default: false
+    t.integer "sort_order", default: 0
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_income_entries_on_account_id"
+    t.index ["frequency_master_id"], name: "index_income_entries_on_frequency_master_id"
+    t.index ["income_recurring_id"], name: "index_income_entries_on_income_recurring_id"
+    t.index ["received_flag"], name: "index_income_entries_on_received_flag"
+    t.index ["user_id", "entry_date"], name: "index_income_entries_on_user_id_and_entry_date"
+    t.index ["user_id"], name: "index_income_entries_on_user_id"
+  end
+
+  create_table "income_frequency_masters", force: :cascade do |t|
+    t.string "name", limit: 80, null: false
+    t.string "frequency_type", limit: 40
+    t.integer "interval_days"
+    t.integer "day_of_month"
+    t.boolean "is_last_day", default: false
+    t.integer "weekday"
+    t.integer "ordinal"
+    t.integer "sort_order", null: false
+    t.boolean "active", default: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["frequency_type"], name: "index_income_frequency_masters_on_frequency_type"
+    t.index ["sort_order"], name: "index_income_frequency_masters_on_sort_order"
+  end
+
+  create_table "income_recurrings", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "name", limit: 80, null: false
+    t.string "description", limit: 255
+    t.decimal "amount", precision: 10, scale: 2, null: false
+    t.bigint "account_id"
+    t.bigint "frequency_master_id", null: false
+    t.date "next_date", null: false
+    t.boolean "use_flag", default: true
+    t.text "notes"
+    t.integer "sort_order", default: 0
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_income_recurrings_on_account_id"
+    t.index ["frequency_master_id"], name: "index_income_recurrings_on_frequency_master_id"
+    t.index ["user_id", "next_date"], name: "index_income_recurrings_on_user_id_and_next_date"
+    t.index ["user_id", "sort_order"], name: "index_income_recurrings_on_user_id_and_sort_order"
+    t.index ["user_id"], name: "index_income_recurrings_on_user_id"
+  end
+
+  create_table "income_user_frequencies", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "frequency_master_id", null: false
+    t.boolean "use_flag", default: true
+    t.integer "sort_order", default: 0
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["frequency_master_id"], name: "index_income_user_frequencies_on_frequency_master_id"
+    t.index ["user_id", "frequency_master_id"], name: "idx_income_user_freq_unique", unique: true
+    t.index ["user_id"], name: "index_income_user_frequencies_on_user_id"
   end
 
   create_table "payments", force: :cascade do |t|
@@ -169,6 +240,15 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_08_015058) do
   add_foreign_key "accounts", "account_types"
   add_foreign_key "accounts", "users"
   add_foreign_key "identities", "users"
+  add_foreign_key "income_entries", "accounts"
+  add_foreign_key "income_entries", "income_frequency_masters", column: "frequency_master_id"
+  add_foreign_key "income_entries", "income_recurrings"
+  add_foreign_key "income_entries", "users"
+  add_foreign_key "income_recurrings", "accounts"
+  add_foreign_key "income_recurrings", "income_frequency_masters", column: "frequency_master_id"
+  add_foreign_key "income_recurrings", "users"
+  add_foreign_key "income_user_frequencies", "income_frequency_masters", column: "frequency_master_id"
+  add_foreign_key "income_user_frequencies", "users"
   add_foreign_key "payments", "accounts"
   add_foreign_key "payments", "spending_categories"
   add_foreign_key "payments", "spending_types", column: "spending_type_override_id", on_delete: :nullify

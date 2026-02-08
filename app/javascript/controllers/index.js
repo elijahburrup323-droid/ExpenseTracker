@@ -9,6 +9,10 @@ import AccountTypesController from "controllers/account_types_controller"
 import AccountsController from "controllers/accounts_controller"
 import PaymentsController from "controllers/payments_controller"
 import ThemeController from "controllers/theme_controller"
+import IncomeUserFrequenciesController from "controllers/income_user_frequencies_controller"
+import IncomeRecurringsController from "controllers/income_recurrings_controller"
+import IncomeEntriesController from "controllers/income_entries_controller"
+import SidebarController from "controllers/sidebar_controller"
 
 application.register("flash", FlashController)
 application.register("dropdown", DropdownController)
@@ -19,3 +23,7 @@ application.register("account-types", AccountTypesController)
 application.register("accounts", AccountsController)
 application.register("payments", PaymentsController)
 application.register("theme", ThemeController)
+application.register("income-user-frequencies", IncomeUserFrequenciesController)
+application.register("income-recurrings", IncomeRecurringsController)
+application.register("income-entries", IncomeEntriesController)
+application.register("sidebar", SidebarController)
