@@ -78,8 +78,8 @@ export default class extends Controller {
     if (this.state !== "idle") { this.state = "idle"; this.editingId = null }
     this.state = "adding"
     this.renderTable()
-    const nameInput = this.tableBodyTarget.querySelector("input[name='source_name']")
-    if (nameInput) nameInput.focus()
+    const dateInput = this.tableBodyTarget.querySelector("input[name='entry_date']")
+    if (dateInput) dateInput.focus()
   }
 
   cancelAdding() {
@@ -106,7 +106,7 @@ export default class extends Controller {
           "Accept": "application/json",
           "X-CSRF-Token": this.csrfTokenValue
         },
-        body: JSON.stringify({ income_entry: { source_name, description, entry_date, amount, account_id, frequency_master_id, received_flag: false } })
+        body: JSON.stringify({ income_entry: { source_name, description, entry_date, amount, account_id, frequency_master_id, received_flag: true } })
       })
 
       if (response.ok) {
@@ -406,7 +406,7 @@ export default class extends Controller {
         </select>
       </td>
       <td class="px-4 py-3 text-center">
-        ${this._renderReceivedToggle(false)}
+        ${this._renderReceivedToggle(true)}
       </td>
       <td class="px-4 py-3 text-right space-x-2">
         <button type="button"

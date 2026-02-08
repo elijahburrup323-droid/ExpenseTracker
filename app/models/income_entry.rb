@@ -17,7 +17,11 @@ class IncomeEntry < ApplicationRecord
   end
 
   def self.generate_due_entries_for(user)
+    generated = []
     user.income_recurrings.due.each do |recurring|
+      # Prevent duplicate: skip if an entry already exists for this recurring + date
+      next if user.income_entries.exists?(income_recurring_id: recurring.id, entry_date: recurring.next_date)
+
       entry = user.income_entries.create!(
         income_recurring: recurring,
         source_name: recurring.name,
@@ -29,7 +33,9 @@ class IncomeEntry < ApplicationRecord
         received_flag: false,
         sort_order: recurring.sort_order
       )
+      generated << entry
       recurring.advance_next_date!
     end
+    generated
   end
 end

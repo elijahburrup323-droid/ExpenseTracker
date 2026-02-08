@@ -54,7 +54,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 
 ## Admin Role
 - **budgethq_agent** boolean on users table (default false). Only DJ and Elijah have this flag.
-- Admin users see an "Admin" group in the sidebar containing: Frequency Masters, Users, and Documentation.
+- Admin users see an "Admin" group in the sidebar containing: Frequency Masters, Users, DBU, and Documentation.
 - Admin users also see Generate Data buttons on all CRUD screens.
 - Non-admins see the normal user experience without admin tools.
 - Admin user management screen (/admin/users) lets admins search users and toggle admin status via API.
@@ -100,6 +100,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 /income_user_frequencies Frequencies toggle screen
 /income_frequency_masters Frequency Masters CRUD (admin-only)
 /admin/users ............. Admin user management (admin-only)
+/dbu .................. Database Utility admin tool (admin-only)
 /documentation ......... Documentation index (admin-only sidebar link)
 /documentation/database-schema
 /documentation/claude-prompt
@@ -115,6 +116,9 @@ API endpoints (all under /api/):
   /api/income_recurrings ...... CRUD
   /api/income_entries ......... CRUD + POST /generate
   /api/admin/users ........... index + update (admin toggle, admin-only)
+  /api/dbu/tables ............ DBU table catalog (admin-only)
+  /api/dbu/users ............. DBU user list (admin-only)
+  /api/dbu/records ........... DBU record list/show/update/delete (admin-only)
 ```
 
 ## Stimulus Controllers
@@ -135,6 +139,7 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 - **income_entries_controller.js** — CRUD with received toggle (opens edit on amount), Generate Data button
 - **admin_users_controller.js** — Admin user management with search, admin toggle (admin-only)
 - **quotes_controller.js** — Rotating motivational budget quotes in header bar (100 quotes, cycles on page load, toggle to hide via localStorage)
+- **dbu_controller.js** — Database Utility: browse/edit any table via dbu_table_catalogs, search, user filter, record navigation (Prev/Next), dirty state protection, save/delete (admin-only)
 
 ## Seeding & Initialization
 - db/seeds.rb creates test user (test@example.com / password123) and 40+ IncomeFrequencyMaster records

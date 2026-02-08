@@ -280,13 +280,18 @@ export default class extends Controller {
     try {
       const response = await fetch(`${this.apiUrlValue}/${this.deletingId}`, {
         method: "DELETE",
-        headers: { "X-CSRF-Token": this.csrfTokenValue }
+        headers: { "Accept": "application/json", "X-CSRF-Token": this.csrfTokenValue }
       })
       if (response.ok || response.status === 204) {
         this.accounts = this.accounts.filter(a => a.id !== this.deletingId)
         this.renderTable()
+      } else {
+        const data = await response.json().catch(() => ({}))
+        alert(data.errors?.[0] || "Failed to delete account")
       }
-    } catch (e) {}
+    } catch (e) {
+      alert("Network error while deleting account")
+    }
 
     this.deletingId = null
     this.deleteModalTarget.classList.add("hidden")

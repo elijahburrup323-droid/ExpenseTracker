@@ -130,8 +130,29 @@
           </div>
           <span class="text-sm font-semibold text-red-600 dark:text-red-400"><%= number_to_currency(@current_month_payments) %></span>
         </div>
+        <% @new_budget_accounts.each do |account| %>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <span class="w-6 h-6 rounded bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <svg class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                </svg>
+              </span>
+              <div class="flex flex-col">
+                <span class="text-sm text-gray-700 dark:text-gray-300">New Account Added</span>
+                <span class="text-xs text-gray-500 dark:text-gray-400">(<%= account.name %>)</span>
+              </div>
+            </div>
+            <span class="text-sm font-semibold text-emerald-600 dark:text-emerald-400">+<%= number_to_currency(account.beginning_balance) %></span>
+          </div>
+        <% end %>
         <div class="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
-          <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">Current Balance</span>
+          <div class="flex items-center space-x-2">
+            <span class="w-6 h-6 rounded bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+              <span class="text-emerald-600 dark:text-emerald-400 text-xs font-bold">$</span>
+            </span>
+            <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">Current Balance</span>
+          </div>
           <span class="text-sm font-bold text-gray-900 dark:text-white"><%= number_to_currency(@budget_total) %></span>
         </div>
       </div>
@@ -139,7 +160,7 @@
         <%= link_to payments_path, class: "text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium" do %>
           Manage Payments &rsaquo;
         <% end %>
-        <%= link_to "#", class: "text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium" do %>
+        <%= link_to income_entries_path, class: "text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium" do %>
           Manage Income &rsaquo;
         <% end %>
       </div>

@@ -39,6 +39,9 @@ module Api
     end
 
     def destroy
+      if @account.payments.exists?
+        return render json: { errors: ["This account cannot be deleted because payments are associated with it. Please reassign or remove those payments before deleting the account."] }, status: :unprocessable_entity
+      end
       @account.soft_delete!
       head :no_content
     end

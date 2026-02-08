@@ -74,7 +74,19 @@ Rails.application.routes.draw do
     namespace :admin do
       resources :users, only: [:index, :update]
     end
+    # DBU API (admin only)
+    scope :dbu, controller: "dbu", as: :dbu do
+      get "tables", action: :tables
+      get "users", action: :users_list
+      get "records", action: :records
+      get "records/:record_id", action: :show_record, as: :show_record
+      put "records/:record_id", action: :update_record, as: :update_record
+      delete "records/:record_id", action: :destroy_record, as: :destroy_record
+    end
   end
+
+  # DBU (Database Utility — admin only)
+  get "dbu", to: "dbu#index", as: :dbu
 
   # Documentation
   get "documentation", to: "documentation#index", as: :documentation

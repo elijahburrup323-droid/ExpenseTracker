@@ -7,16 +7,17 @@
   <div class="flex items-center justify-between mb-6">
     <div>
       <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Income Frequencies</h1>
-      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Toggle which pay frequencies are available for your income sources</p>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Toggle which pay frequencies you want available for your income sources</p>
     </div>
     <div class="flex items-center space-x-3">
-      <span class="text-sm text-gray-500 dark:text-gray-400" data-income-user-frequencies-target="toggleAllLabel">Toggle All</span>
+      <span class="text-sm text-gray-500 dark:text-gray-400" data-income-user-frequencies-target="toggleAllLabel">View All</span>
       <button type="button"
-              class="relative inline-flex h-7 w-14 items-center rounded-full transition-colors bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-300"
+              class="relative inline-flex h-7 w-14 items-center rounded-full transition-colors bg-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-300"
               data-income-user-frequencies-target="toggleAllButton"
-              data-action="click->income-user-frequencies#toggleAll"
-              role="switch" aria-checked="true" title="Toggle all on/off">
-        <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform translate-x-7"></span>
+              data-action="click->income-user-frequencies#toggleViewAll"
+              data-checked="false"
+              role="switch" aria-checked="false" title="View all frequencies">
+        <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform translate-x-1"></span>
       </button>
     </div>
   </div>

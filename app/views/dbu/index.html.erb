@@ -1,0 +1,70 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+     data-controller="dbu"
+     data-dbu-tables-url-value="<%= api_dbu_tables_path %>"
+     data-dbu-users-url-value="<%= api_dbu_users_path %>"
+     data-dbu-records-url-value="<%= api_dbu_records_path %>"
+     data-dbu-csrf-token-value="<%= form_authenticity_token %>">
+
+  <%# Header %>
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">DBU</h1>
+    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Search and maintain database tables.</p>
+  </div>
+
+  <%# Filter Row %>
+  <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4 mb-4 ring-1 ring-gray-200 dark:ring-gray-700">
+    <div class="flex flex-wrap gap-3 items-end">
+      <div class="flex-shrink-0 w-48">
+        <input type="text" placeholder="Search tables..." data-dbu-target="searchInput"
+               class="w-full h-9 rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2"
+               data-action="keydown->dbu#searchKeydown">
+      </div>
+      <div class="flex-shrink-0">
+        <button type="button"
+                class="h-9 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition"
+                data-action="click->dbu#search">
+          Search
+        </button>
+      </div>
+      <div class="flex-shrink-0">
+        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">User</label>
+        <select data-dbu-target="userSelect"
+                class="h-9 rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2"
+                data-action="change->dbu#onUserChange">
+          <option value="current">Current User</option>
+          <option value="all">All Users</option>
+        </select>
+      </div>
+      <div class="flex-shrink-0 min-w-[10rem]">
+        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Table Name</label>
+        <select data-dbu-target="tableNameSelect"
+                class="w-full h-9 rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2"
+                data-action="change->dbu#onTableNameChange">
+          <option value="">Select Table...</option>
+        </select>
+      </div>
+      <div class="flex-shrink-0 min-w-[10rem]">
+        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Table Description</label>
+        <select data-dbu-target="tableDescSelect"
+                class="w-full h-9 rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2"
+                data-action="change->dbu#onTableDescChange">
+          <option value="">Select Description...</option>
+        </select>
+      </div>
+      <div class="flex-shrink-0 ml-auto">
+        <button type="button"
+                class="text-sm text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium"
+                data-action="click->dbu#resetFilters">
+          Reset Filters
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <%# Record Panel %>
+  <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg ring-1 ring-gray-200 dark:ring-gray-700 min-h-[300px]" data-dbu-target="recordPanel">
+    <div class="flex items-center justify-center h-64">
+      <p class="text-sm text-gray-400 dark:text-gray-500" data-dbu-target="emptyMessage">No tables match your criteria.</p>
+    </div>
+  </div>
+</div>

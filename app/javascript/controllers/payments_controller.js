@@ -13,7 +13,8 @@ const DEFAULT_BADGE = { bg: "bg-gray-100 dark:bg-gray-700", text: "text-gray-700
 export default class extends Controller {
   static targets = [
     "tableBody", "tableHead", "addButton", "generateButton", "deleteModal", "deleteModalName",
-    "filterStartDate", "filterEndDate", "filterAccount", "filterCategory", "filterType", "filterSearch"
+    "filterStartDate", "filterEndDate", "filterAccount", "filterCategory", "filterType", "filterSearch",
+    "filterCount"
   ]
   static values = {
     apiUrl: String, accountsUrl: String, categoriesUrl: String, typesUrl: String, csrfToken: String,
@@ -32,15 +33,40 @@ export default class extends Controller {
     this._sortDirection = "asc"
     this._setDefaultDateRange()
     this.fetchAll()
+
+    // Warn user before leaving with unsaved changes
+    this._beforeUnloadHandler = (e) => {
+      if (this.state === "adding" || this.state === "editing") {
+        e.preventDefault()
+        e.returnValue = ""
+      }
+    }
+    this._turboBeforeVisitHandler = (e) => {
+      if (this.state === "adding" || this.state === "editing") {
+        if (!confirm("You have unsaved changes. Discard and leave?")) {
+          e.preventDefault()
+        } else {
+          this.state = "idle"
+          this.editingId = null
+        }
+      }
+    }
+    window.addEventListener("beforeunload", this._beforeUnloadHandler)
+    document.addEventListener("turbo:before-visit", this._turboBeforeVisitHandler)
+  }
+
+  disconnect() {
+    window.removeEventListener("beforeunload", this._beforeUnloadHandler)
+    document.removeEventListener("turbo:before-visit", this._turboBeforeVisitHandler)
   }
 
   // --- Default Date Range ---
 
   _setDefaultDateRange() {
     const today = new Date()
-    const twoWeeksAgo = new Date(today)
-    twoWeeksAgo.setDate(today.getDate() - 14)
-    this._defaultStartDate = this._formatDateValue(twoWeeksAgo)
+    // Default to start of current month (not 14 days) so payments don't appear to "disappear"
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
+    this._defaultStartDate = this._formatDateValue(monthStart)
     this._defaultEndDate = this._formatDateValue(today)
   }
 
@@ -165,18 +191,15 @@ export default class extends Controller {
 
   _buildAccountOptions(selectedId = null) {
     return this.accounts.map(a => {
-      const bal = parseFloat(a.balance || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-      const typeName = a.account_type_name ? ` (${a.account_type_name})` : ""
       const sel = selectedId != null && a.id === selectedId ? "selected" : ""
-      return `<option value="${a.id}" ${sel}>${escapeHtml(a.name)}${escapeHtml(typeName)} — $${bal}</option>`
+      return `<option value="${a.id}" ${sel}>${escapeHtml(a.name)}</option>`
     }).join("")
   }
 
   _buildCategoryOptions(selectedId = null) {
     return this.categories.map(c => {
-      const typeName = c.spending_type_name ? ` (${c.spending_type_name})` : ""
       const sel = selectedId != null && c.id === selectedId ? "selected" : ""
-      return `<option value="${c.id}" ${sel}>${escapeHtml(c.name)}${escapeHtml(typeName)}</option>`
+      return `<option value="${c.id}" ${sel}>${escapeHtml(c.name)}</option>`
     }).join("")
   }
 
@@ -198,6 +221,12 @@ export default class extends Controller {
     }
   }
 
+  clearSearch() {
+    this.filterSearchTarget.value = ""
+    this.filterSearchTarget.focus()
+    this.renderTable()
+  }
+
   resetFilters() {
     this.filterStartDateTarget.value = this._defaultStartDate
     this.filterEndDateTarget.value = this._defaultEndDate
@@ -216,8 +245,8 @@ export default class extends Controller {
     const typeName = this.filterTypeTarget.value
     const search = this.filterSearchTarget.value.trim()
 
-    // Check for combination search pattern: =amount (e.g. =56.74)
-    const comboMatch = search.match(/^=([0-9]+\.?[0-9]*)$/)
+    // Check for combination search pattern: =amount or (amount) (e.g. =56.74 or (56.74))
+    const comboMatch = search.match(/^[=(]([0-9]+\.?[0-9]*)\)?$/)
     this._highlightedPaymentIds = null
 
     let filtered = this.payments.filter(p => {
@@ -238,14 +267,14 @@ export default class extends Controller {
     })
 
     if (comboMatch) {
-      const targetAmount = parseFloat(comboMatch[1])
-      // Find exact matches first
-      const exactMatches = filtered.filter(p => Math.abs(parseFloat(p.amount) - targetAmount) < 0.005)
+      const targetCents = Math.round(parseFloat(comboMatch[1]) * 100)
+      // Find exact matches first (using integer cents for precision)
+      const exactMatches = filtered.filter(p => Math.round(parseFloat(p.amount) * 100) === targetCents)
       if (exactMatches.length > 0) {
         this._highlightedPaymentIds = new Set(exactMatches.map(p => p.id))
       }
       // Find combinations that sum to the target
-      const comboIds = this._findCombination(filtered, targetAmount)
+      const comboIds = this._findCombinationCents(filtered, targetCents)
       if (comboIds) {
         this._highlightedPaymentIds = this._highlightedPaymentIds || new Set()
         comboIds.forEach(id => this._highlightedPaymentIds.add(id))
@@ -255,27 +284,27 @@ export default class extends Controller {
     return filtered
   }
 
-  _findCombination(payments, target) {
-    // Subset-sum: find a group of payments whose amounts sum to target
-    // Limit to first 50 payments for performance
-    const candidates = payments.slice(0, 50)
-    const epsilon = 0.005
+  _findCombinationCents(payments, targetCents) {
+    // Subset-sum using integer cents for precision
+    const candidates = payments.slice(0, 50).map(p => ({
+      id: p.id,
+      cents: Math.round(parseFloat(p.amount) * 100)
+    }))
 
-    // Try combinations of increasing size (2 to 6)
     for (let size = 2; size <= Math.min(6, candidates.length); size++) {
-      const result = this._combineN(candidates, 0, size, target, [], epsilon)
-      if (result) return result.map(p => p.id)
+      const result = this._combineNCents(candidates, 0, size, targetCents, [])
+      if (result) return result.map(c => c.id)
     }
     return null
   }
 
-  _combineN(arr, start, remaining, target, current, epsilon) {
+  _combineNCents(arr, start, remaining, targetCents, current) {
     if (remaining === 0) {
-      const sum = current.reduce((s, p) => s + parseFloat(p.amount), 0)
-      return Math.abs(sum - target) < epsilon ? current : null
+      const sum = current.reduce((s, c) => s + c.cents, 0)
+      return sum === targetCents ? current : null
     }
     for (let i = start; i <= arr.length - remaining; i++) {
-      const result = this._combineN(arr, i + 1, remaining - 1, target, [...current, arr[i]], epsilon)
+      const result = this._combineNCents(arr, i + 1, remaining - 1, targetCents, [...current, arr[i]])
       if (result) return result
     }
     return null
@@ -340,6 +369,12 @@ export default class extends Controller {
         this._adjustLocalAccountBalance(Number(account_id), -parseFloat(amount))
         this.state = "idle"
         this.renderTable()
+        // Check if saved date falls outside the current filter range
+        const endFilter = this.filterEndDateTarget.value
+        const startFilter = this.filterStartDateTarget.value
+        if ((endFilter && payment_date > endFilter) || (startFilter && payment_date < startFilter)) {
+          alert(`Payment saved successfully! It doesn't appear in the table because the date (${this._formatDate(payment_date)}) is outside your current filter range (${this._formatDate(startFilter)} – ${this._formatDate(endFilter)}). Adjust your date filters to see it.`)
+        }
       } else {
         const data = await response.json()
         this.showRowError(data.errors?.[0] || "Failed to save")
@@ -576,6 +611,19 @@ export default class extends Controller {
 
     this.tableBodyTarget.innerHTML = html
     this._updateSortHeaders()
+    this._updateFilterCount(filtered.length)
+  }
+
+  _updateFilterCount(visibleCount) {
+    if (!this.hasFilterCountTarget) return
+    const total = this.payments.length
+    if (total === 0) {
+      this.filterCountTarget.textContent = ""
+    } else if (visibleCount === total) {
+      this.filterCountTarget.textContent = `Showing all ${total} payments`
+    } else {
+      this.filterCountTarget.textContent = `Showing ${visibleCount} of ${total} payments (adjust filters to see more)`
+    }
   }
 
   _updateSortHeaders() {
@@ -844,6 +892,18 @@ export default class extends Controller {
 
   onCategoryChange(event) {
     const categoryId = event.target.value
+    if (categoryId && categoryId !== "new") {
+      // Auto-select the matching spending type
+      const cat = this.categories.find(c => c.id === Number(categoryId))
+      if (cat && cat.spending_type_id) {
+        const typeSelect = this.tableBodyTarget.querySelector("select[name='spending_type_override_id']")
+        if (typeSelect) typeSelect.value = String(cat.spending_type_id)
+      }
+      // Move cursor to description field
+      const descInput = this.tableBodyTarget.querySelector("input[name='description']")
+      if (descInput) descInput.focus()
+    }
+
     const autoTypeEl = this.element.querySelector("[data-payments-target='autoType']")
     if (autoTypeEl) {
       if (categoryId) {

@@ -6,6 +6,7 @@ export default class extends Controller {
 
   connect() {
     this.frequencies = []
+    this.viewAll = false
     this.fetchAll()
   }
 
@@ -13,7 +14,8 @@ export default class extends Controller {
 
   async fetchAll() {
     try {
-      const response = await fetch(this.apiUrlValue, { headers: { "Accept": "application/json" } })
+      const url = this.viewAll ? `${this.apiUrlValue}?view_all=true` : this.apiUrlValue
+      const response = await fetch(url, { headers: { "Accept": "application/json" } })
       if (response.ok) this.frequencies = await response.json()
     } catch (e) {
       // silently fail
@@ -21,48 +23,31 @@ export default class extends Controller {
     this.renderTable()
   }
 
-  // --- Toggle All ---
+  // --- View All Toggle ---
 
-  async toggleAll() {
-    const allOn = this.frequencies.every(f => f.use_flag)
-    const newState = !allOn
+  toggleViewAll() {
+    this.viewAll = !this.viewAll
 
-    // Update toggle all button visual
     const btn = this.toggleAllButtonTarget
-    btn.dataset.checked = String(newState)
-    btn.setAttribute("aria-checked", String(newState))
-    btn.className = btn.className.replace(newState ? "bg-gray-300" : "bg-purple-600", newState ? "bg-purple-600" : "bg-gray-300")
+    btn.dataset.checked = String(this.viewAll)
+    btn.setAttribute("aria-checked", String(this.viewAll))
+    btn.className = btn.className.replace(this.viewAll ? "bg-gray-300" : "bg-purple-600", this.viewAll ? "bg-purple-600" : "bg-gray-300")
     const knob = btn.querySelector("span")
-    knob.className = knob.className.replace(newState ? "translate-x-1" : "translate-x-7", newState ? "translate-x-7" : "translate-x-1")
+    knob.className = knob.className.replace(this.viewAll ? "translate-x-1" : "translate-x-7", this.viewAll ? "translate-x-7" : "translate-x-1")
 
-    // Update all frequencies
-    for (const freq of this.frequencies) {
-      if (freq.use_flag !== newState) {
-        freq.use_flag = newState
-        try {
-          await fetch(`${this.apiUrlValue}/${freq.id}`, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              "Accept": "application/json",
-              "X-CSRF-Token": this.csrfTokenValue
-            },
-            body: JSON.stringify({ income_user_frequency: { use_flag: newState } })
-          })
-        } catch (e) { /* best effort */ }
-      }
-    }
-    this.renderTable()
+    this.fetchAll()
   }
 
   // --- Use Toggle ---
 
-  _renderUseToggle(isOn, freqId) {
+  _renderUseToggle(isOn, freqId, frequencyMasterId) {
     const bg = isOn ? "bg-purple-600" : "bg-gray-300"
     const knobTranslate = isOn ? "translate-x-7" : "translate-x-1"
+    const dataId = freqId ? `data-id="${freqId}"` : ""
+    const dataMasterId = frequencyMasterId ? `data-master-id="${frequencyMasterId}"` : ""
     return `<button type="button"
       class="use-toggle relative inline-flex h-7 w-14 items-center rounded-full transition-colors ${bg} focus:outline-none focus:ring-2 focus:ring-purple-300"
-      data-checked="${isOn}" data-id="${freqId}"
+      data-checked="${isOn}" ${dataId} ${dataMasterId}
       data-action="click->income-user-frequencies#toggleUse"
       role="switch" aria-checked="${isOn}" title="${isOn ? 'Use: Yes' : 'Use: No'}">
       <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${knobTranslate}"></span>
@@ -83,19 +68,31 @@ export default class extends Controller {
     knob.className = knob.className.replace(nowOn ? "translate-x-1" : "translate-x-7", nowOn ? "translate-x-7" : "translate-x-1")
 
     const freqId = btn.dataset.id
+    const masterId = btn.dataset.masterId
     try {
-      const response = await fetch(`${this.apiUrlValue}/${freqId}`, {
+      let url, body
+      if (freqId) {
+        url = `${this.apiUrlValue}/${freqId}`
+        body = JSON.stringify({ income_user_frequency: { use_flag: nowOn } })
+      } else {
+        // No user frequency record yet - pass frequency_master_id
+        url = `${this.apiUrlValue}/0?frequency_master_id=${masterId}`
+        body = JSON.stringify({ income_user_frequency: { use_flag: nowOn } })
+      }
+      const response = await fetch(url, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           "Accept": "application/json",
           "X-CSRF-Token": this.csrfTokenValue
         },
-        body: JSON.stringify({ income_user_frequency: { use_flag: nowOn } })
+        body
       })
       if (response.ok) {
         const updated = await response.json()
-        const idx = this.frequencies.findIndex(f => f.id === Number(freqId))
+        const idx = this.frequencies.findIndex(f =>
+          f.frequency_master_id === (updated.frequency_master_id || Number(masterId))
+        )
         if (idx !== -1) this.frequencies[idx] = updated
       }
     } catch (e) {
@@ -152,7 +149,7 @@ export default class extends Controller {
         <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">${escName}</td>
         <td class="px-6 py-4 text-sm">${this._categoryLabel(freq.frequency_type)}</td>
         <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">${this._patternDetails(freq)}</td>
-        <td class="px-6 py-4 text-center">${this._renderUseToggle(freq.use_flag, freq.id)}</td>
+        <td class="px-6 py-4 text-center">${this._renderUseToggle(freq.use_flag, freq.id, freq.frequency_master_id)}</td>
       </tr>`
     }
     this.tableBodyTarget.innerHTML = html

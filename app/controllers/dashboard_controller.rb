@@ -21,6 +21,12 @@ class DashboardController < ApplicationController
     @current_month_payments = current_user.payments.where(account_id: budget_accounts.select(:id)).where(payment_date: @current_month_start..Date.today).sum(:amount)
     @beginning_balance_total = budget_accounts.sum(:beginning_balance)
 
+    # Accounts added to budget this month (for "Initial Balance Added" line items)
+    @new_budget_accounts = budget_accounts.where(created_at: @current_month_start.beginning_of_day..)
+                                          .where.not(beginning_balance: 0)
+                                          .order(:created_at)
+    @new_account_balance_total = @new_budget_accounts.sum(:beginning_balance)
+
     # Card 5: Recent Activity — last 5 payments
     @recent_payments = current_user.payments.ordered.includes(:account, spending_category: :spending_type).limit(5)
   end

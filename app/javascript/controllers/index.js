@@ -16,6 +16,7 @@ import IncomeEntriesController from "controllers/income_entries_controller"
 import SidebarController from "controllers/sidebar_controller"
 import AdminUsersController from "controllers/admin_users_controller"
 import QuotesController from "controllers/quotes_controller"
+import DbuController from "controllers/dbu_controller"
 
 application.register("flash", FlashController)
 application.register("dropdown", DropdownController)
@@ -33,3 +34,4 @@ application.register("income-entries", IncomeEntriesController)
 application.register("sidebar", SidebarController)
 application.register("admin-users", AdminUsersController)
 application.register("quotes", QuotesController)
+application.register("dbu", DbuController)
