@@ -4,7 +4,7 @@ module Api
       before_action :require_admin
 
       def index
-        users = User.where(deleted_at: nil).order(:last_name, :first_name)
+        users = User.order(:last_name, :first_name)
         render json: users.map { |u| user_json(u) }
       end
 
