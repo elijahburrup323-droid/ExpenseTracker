@@ -14,39 +14,66 @@
     <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Relationships</h2>
     <div class="text-sm font-mono text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto">
       <pre class="whitespace-pre">users
- ├── has_many :identities           (identities.user_id → users.id)
- ├── has_many :spending_types       (spending_types.user_id → users.id)
- ├── has_many :spending_categories  (spending_categories.user_id → users.id)
- ├── has_many :account_types        (account_types.user_id → users.id)
- ├── has_many :accounts             (accounts.user_id → users.id)
- ├── has_many :payments             (payments.user_id → users.id)
+ ├── has_many :identities              (identities.user_id → users.id)
+ ├── has_many :spending_types          (spending_types.user_id → users.id)
+ ├── has_many :spending_categories     (spending_categories.user_id → users.id)
+ ├── has_many :account_types           (account_types.user_id → users.id)
+ ├── has_many :accounts                (accounts.user_id → users.id)
+ ├── has_many :payments                (payments.user_id → users.id)
+ ├── has_many :income_user_frequencies (income_user_frequencies.user_id → users.id)
+ ├── has_many :income_recurrings       (income_recurrings.user_id → users.id)
+ ├── has_many :income_entries          (income_entries.user_id → users.id)
  └── referenced by phone_verifications (via phone_number, no FK)
 
 identities
- └── belongs_to :user               (user_id FK → users.id)
+ └── belongs_to :user                  (user_id FK → users.id)
 
 spending_types
- ├── belongs_to :user               (user_id FK → users.id)
- └── has_many :spending_categories  (spending_categories.spending_type_id → spending_types.id)
+ ├── belongs_to :user                  (user_id FK → users.id)
+ └── has_many :spending_categories     (spending_categories.spending_type_id → spending_types.id)
 
 spending_categories
- ├── belongs_to :user               (user_id FK → users.id)
- ├── belongs_to :spending_type      (spending_type_id FK → spending_types.id)
- └── has_many :payments             (payments.spending_category_id → spending_categories.id)
+ ├── belongs_to :user                  (user_id FK → users.id)
+ ├── belongs_to :spending_type         (spending_type_id FK → spending_types.id)
+ └── has_many :payments                (payments.spending_category_id → spending_categories.id)
 
 account_types
- ├── belongs_to :user               (user_id FK → users.id)
- └── has_many :accounts             (accounts.account_type_id → account_types.id)
+ ├── belongs_to :user                  (user_id FK → users.id)
+ └── has_many :accounts                (accounts.account_type_id → account_types.id)
 
 accounts
- ├── belongs_to :user               (user_id FK → users.id)
- ├── belongs_to :account_type       (account_type_id FK → account_types.id)
- └── has_many :payments             (payments.account_id → accounts.id)
+ ├── belongs_to :user                  (user_id FK → users.id)
+ ├── belongs_to :account_type          (account_type_id FK → account_types.id)
+ ├── has_many :payments                (payments.account_id → accounts.id)
+ ├── has_many :income_recurrings       (income_recurrings.account_id → accounts.id)
+ └── has_many :income_entries          (income_entries.account_id → accounts.id)
 
 payments
- ├── belongs_to :user               (user_id FK → users.id)
- ├── belongs_to :account            (account_id FK → accounts.id)
- └── belongs_to :spending_category  (spending_category_id FK → spending_categories.id)
+ ├── belongs_to :user                  (user_id FK → users.id)
+ ├── belongs_to :account               (account_id FK → accounts.id)
+ ├── belongs_to :spending_category     (spending_category_id FK → spending_categories.id)
+ └── belongs_to :spending_type_override (optional, FK → spending_types.id)
+
+income_frequency_masters (global lookup, not user-scoped)
+ ├── has_many :income_user_frequencies (income_user_frequencies.frequency_master_id)
+ ├── has_many :income_recurrings       (income_recurrings.frequency_master_id)
+ └── has_many :income_entries          (income_entries.frequency_master_id)
+
+income_user_frequencies
+ ├── belongs_to :user                  (user_id FK → users.id)
+ └── belongs_to :frequency_master      (frequency_master_id FK → income_frequency_masters.id)
+
+income_recurrings
+ ├── belongs_to :user                  (user_id FK → users.id)
+ ├── belongs_to :account               (optional, account_id FK → accounts.id)
+ ├── belongs_to :frequency_master      (frequency_master_id FK → income_frequency_masters.id)
+ └── has_many :income_entries          (income_entries.income_recurring_id)
+
+income_entries
+ ├── belongs_to :user                  (user_id FK → users.id)
+ ├── belongs_to :income_recurring      (optional, income_recurring_id FK → income_recurrings.id)
+ ├── belongs_to :account               (optional, account_id FK → accounts.id)
+ └── belongs_to :frequency_master      (optional, frequency_master_id FK → income_frequency_masters.id)
 
 phone_verifications
  └── standalone (linked by phone_number, no foreign key)</pre>
@@ -367,6 +394,162 @@ phone_verifications
     </div>
   </div>
 
+  <%# ── Income Frequency Masters ── %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 mb-6 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">income_frequency_masters</h2>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Global lookup table &mdash; 40+ pre-seeded frequency patterns (not user-scoped)</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-100 dark:border-gray-700">
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Column</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Type</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Constraints</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Description</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr><td class="px-6 py-2 font-mono font-medium text-gray-900 dark:text-white">id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">PK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Primary key (1-11, 1001-1029, 2001-2020)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">name</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">string(80)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Display name (e.g., "Weekly", "Monthly - 15th")</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">frequency_type</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">string(40)</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">standard, exact_day, or ordinal_weekday</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">interval_days</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">integer</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Days between occurrences (standard type)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">day_of_month</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">integer</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Specific day 1-28 (exact_day type)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">is_last_day</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">boolean</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">default: false</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Last day of month flag</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">weekday</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">integer</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Day of week 0-6 (ordinal_weekday type)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">ordinal</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">integer</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">1st-4th occurrence (ordinal_weekday type)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">sort_order</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">integer</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Display order</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">active</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">boolean</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">default: true</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Whether available for selection</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <%# ── Income User Frequencies ── %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 mb-6 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">income_user_frequencies</h2>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">User-specific frequency preferences (toggle which frequencies to use)</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-100 dark:border-gray-700">
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Column</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Type</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Constraints</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Description</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr><td class="px-6 py-2 font-mono font-medium text-gray-900 dark:text-white">id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">PK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Primary key</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">user_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Owner &rarr; users.id</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">frequency_master_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">&rarr; income_frequency_masters.id</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">use_flag</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">boolean</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">default: true</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Whether user has this frequency enabled</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">sort_order</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">integer</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">default: 0</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Display order</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5">
+        <li>(user_id, frequency_master_id) UNIQUE</li>
+        <li>(user_id)</li>
+        <li>(frequency_master_id)</li>
+      </ul>
+    </div>
+  </div>
+
+  <%# ── Income Recurrings ── %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 mb-6 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">income_recurrings</h2>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Recurring income sources that auto-generate income entries</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-100 dark:border-gray-700">
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Column</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Type</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Constraints</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Description</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr><td class="px-6 py-2 font-mono font-medium text-gray-900 dark:text-white">id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">PK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Primary key</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">user_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Owner &rarr; users.id</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">name</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">string(80)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Income source name</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">description</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">string(255)</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Optional description</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">amount</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">decimal(10,2)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Expected income amount</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">account_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Optional &rarr; accounts.id</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">frequency_master_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">&rarr; income_frequency_masters.id</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">next_date</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">date</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Next expected payment date</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">use_flag</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">boolean</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">default: true</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Whether active for generation</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">notes</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">text</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Free-form notes</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">sort_order</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">integer</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">default: 0</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Display order</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">deleted_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Soft delete timestamp</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5">
+        <li>(user_id, next_date)</li>
+        <li>(user_id, sort_order)</li>
+        <li>(user_id)</li>
+        <li>(account_id)</li>
+        <li>(frequency_master_id)</li>
+      </ul>
+    </div>
+  </div>
+
+  <%# ── Income Entries ── %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 mb-6 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">income_entries</h2>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Individual income transactions (auto-generated from recurrings or manually created)</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-100 dark:border-gray-700">
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Column</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Type</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Constraints</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Description</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr><td class="px-6 py-2 font-mono font-medium text-gray-900 dark:text-white">id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">PK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Primary key</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">user_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Owner &rarr; users.id</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">income_recurring_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Optional &rarr; income_recurrings.id</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">source_name</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">string(80)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Income source name</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">description</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">string(255)</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Optional description</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">entry_date</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">date</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Date of income</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">amount</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">decimal(10,2)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Income amount</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">account_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Optional &rarr; accounts.id</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">frequency_master_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Optional &rarr; income_frequency_masters.id</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">received_flag</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">boolean</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">default: false</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Whether income has been received</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">sort_order</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">integer</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">default: 0</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Display order</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">deleted_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Soft delete timestamp</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5">
+        <li>(user_id, entry_date)</li>
+        <li>(user_id)</li>
+        <li>(income_recurring_id)</li>
+        <li>(account_id)</li>
+        <li>(frequency_master_id)</li>
+        <li>(received_flag)</li>
+      </ul>
+    </div>
+  </div>
+
   <%# ── Phone Verifications ── %>
   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 mb-6 overflow-hidden">
     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
@@ -429,6 +612,16 @@ phone_verifications
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">payments</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">cascade (via Rails dependent: :destroy)</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">payments</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">account_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">accounts.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (DB-level foreign key)</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">payments</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">spending_category_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">spending_categories.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (DB-level foreign key)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">payments</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">spending_type_override_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">spending_types.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">ON DELETE SET NULL</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">income_user_frequencies</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">income_user_frequencies</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">frequency_master_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">income_frequency_masters.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">income_recurrings</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">income_recurrings</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">account_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">accounts.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (optional)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">income_recurrings</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">frequency_master_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">income_frequency_masters.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">income_entries</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">income_entries</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">income_recurring_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">income_recurrings.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (optional)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">income_entries</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">account_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">accounts.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (optional)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">income_entries</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">frequency_master_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">income_frequency_masters.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (optional)</td></tr>
         </tbody>
       </table>
     </div>

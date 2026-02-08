@@ -11,4 +11,22 @@ module ApplicationHelper
       "bg-blue-50 border-blue-400 text-blue-800"
     end
   end
+
+  def page_title
+    titles = {
+      "dashboard#index"              => "Dashboard",
+      "accounts#index"               => "Accounts",
+      "account_types#index"          => "Account Types",
+      "spending_types#index"         => "Spending Types",
+      "spending_categories#index"    => "Categories",
+      "payments#index"               => "Payments",
+      "income_entries#index"         => "Income Entries",
+      "income_recurrings#index"      => "Income Sources",
+      "income_user_frequencies#index"=> "Frequencies",
+      "documentation#index"          => "Documentation",
+      "documentation#database_schema"=> "Database Schema",
+      "documentation#claude_prompt"  => "Claude.ai Prompt",
+    }
+    titles["#{controller_name}##{action_name}"] || controller_name.titleize
+  end
 end

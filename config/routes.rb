@@ -63,6 +63,7 @@ Rails.application.routes.draw do
   # Documentation
   get "documentation", to: "documentation#index", as: :documentation
   get "documentation/database-schema", to: "documentation#database_schema", as: :documentation_database_schema
+  get "documentation/claude-prompt", to: "documentation#claude_prompt", as: :documentation_claude_prompt
 
   # Static pages
   root "home#index"

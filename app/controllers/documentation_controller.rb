@@ -6,4 +6,7 @@ class DocumentationController < ApplicationController
 
   def database_schema
   end
+
+  def claude_prompt
+  end
 end

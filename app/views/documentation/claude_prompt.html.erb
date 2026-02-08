@@ -1,0 +1,150 @@
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="mb-6">
+    <div class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
+      <%= link_to "Documentation", documentation_path, class: "hover:text-brand-600 dark:hover:text-brand-400 transition" %>
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      <span class="text-gray-900 dark:text-white font-medium">Claude.ai Prompt</span>
+    </div>
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Claude.ai Prompt</h1>
+    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Copy this prompt into a new Claude.ai session to get it up to speed on the BudgetHQ project</p>
+  </div>
+
+  <%# Copy button %>
+  <div class="mb-4 flex justify-end">
+    <button type="button" id="copyPromptBtn"
+            class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg shadow-sm transition"
+            onclick="navigator.clipboard.writeText(document.getElementById('promptContent').innerText).then(() => { this.innerHTML = '<svg class=\'h-4 w-4 mr-1.5\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'currentColor\' stroke-width=\'2\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'M5 13l4 4L19 7\'/></svg>Copied!'; setTimeout(() => { this.innerHTML = '<svg class=\'h-4 w-4 mr-1.5\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'currentColor\' stroke-width=\'2\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3\'/></svg>Copy Prompt'; }, 2000) })">
+      <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+      Copy Prompt
+    </button>
+  </div>
+
+  <div id="promptContent" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 text-sm font-mono text-gray-800 dark:text-gray-200 whitespace-pre-wrap leading-relaxed">You are helping me build BudgetHQ, a personal finance / budget tracking web application. Here is everything you need to know about the project.
+
+## Tech Stack
+- Ruby 3.2, Rails 7.1
+- PostgreSQL database
+- Devise authentication (email/password, OmniAuth: Google, Apple, Microsoft, phone SMS via Twilio)
+- Hotwired: Turbo + Stimulus.js for frontend interactivity
+- Tailwind CSS via CDN (with custom brand purple color palette and dark mode)
+- Importmap for JavaScript module loading (no webpack/esbuild)
+- Deployed on Render.com at https://djburrup.com/expensetracker (relative_url_root = "/expensetracker")
+
+## Project Location
+- Local path: C:/Projects/ExpenseTracker
+- GitHub: https://github.com/elijahburrup323-droid/ExpenseTracker (main branch)
+- Windows development environment (MINGW64)
+
+## Architecture Overview
+The app uses a sidebar navigation layout. All CRUD screens are single-page with Stimulus controllers that call JSON API endpoints. There are NO Turbo Frames or Turbo Streams used for data — all data operations go through fetch() calls to /api/* endpoints.
+
+### Layout Structure
+- Collapsible left sidebar (w-56 expanded, w-16 collapsed) with gradient purple background
+- Top header bar showing "Hello {first name}", page title, and current date
+- Main content area shifts with sidebar via margin
+- Sidebar state + group collapse state persisted in localStorage
+- Dark/light theme toggle persisted in localStorage
+
+### Pattern: Every CRUD Screen Follows This Architecture
+1. **HTML page controller** (e.g., AccountsController#index) — renders the HTML shell with a Stimulus data-controller div
+2. **API controller** (e.g., Api::AccountsController) — JSON CRUD endpoints (index, create, update, destroy)
+3. **Stimulus controller** (e.g., accounts_controller.js) — fetches data on connect(), renders table rows as innerHTML, manages add/edit/delete state machine (idle → adding → editing)
+4. **Inline editing** — add row appears at top of table, edit row replaces display row, Enter saves, Escape cancels
+5. **Soft delete** — all models use deleted_at timestamp, default_scope excludes deleted records
+
+## Database Tables
+
+### Core User Data
+- **users** — Devise fields + first_name, last_name, avatar_url, phone_number, secondary_email
+- **identities** — OmniAuth provider linkage (provider, uid, tokens)
+- **phone_verifications** — SMS verification codes
+
+### Spending Side
+- **spending_types** — user-scoped categories of spending (Need, Want, Savings — seeded as system defaults)
+- **spending_categories** — user-scoped, belongs_to spending_type (Groceries, Dining, Mortgage — seeded)
+- **account_types** — user-scoped (Checking, Savings, Venmo — seeded as system defaults)
+- **accounts** — user-scoped, belongs_to account_type (balance, beginning_balance, include_in_budget flag)
+- **payments** — user-scoped, belongs_to account + spending_category, optional spending_type_override. Payment create/update/destroy adjusts account balance in a transaction.
+
+### Income Side
+- **income_frequency_masters** — global lookup table with 40+ frequency patterns (Weekly, Biweekly, Monthly 1st-28th, Last Day, ordinal weekdays like "2nd Friday"). Pre-seeded, not user-editable.
+- **income_user_frequencies** — user-scoped join to frequency_masters with use_flag toggle
+- **income_recurrings** — user-scoped recurring income sources (name, amount, frequency, next_date, use_flag). Has advance_next_date! to calculate next occurrence.
+- **income_entries** — user-scoped income transactions. Auto-generated from due recurrings via IncomeEntry.generate_due_entries_for(user). Has received_flag toggle.
+
+### Key Relationships
+- User has_many: spending_types, spending_categories, account_types, accounts, payments, income_user_frequencies, income_recurrings, income_entries
+- SpendingType has_many spending_categories; SpendingCategory has_many payments
+- AccountType has_many accounts; Account has_many payments
+- IncomeRecurring has_many income_entries; both link to frequency_master and optional account
+- All user-owned models use soft delete (deleted_at) with default_scope
+
+## Routes Structure
+```
+/ ...................... Landing page (redirects to dashboard if signed in)
+/dashboard ............. Dashboard with 6 cards (budget, accounts, net worth, income/spending, recent activity, buckets)
+/accounts .............. Accounts CRUD screen
+/account_types ......... Account Types CRUD screen
+/spending_types ........ Spending Types CRUD screen
+/spending_categories ... Categories CRUD screen
+/payments .............. Payments CRUD screen (with advanced filtering & combination search)
+/income_entries ........ Income Entries CRUD screen (with Generate Data button)
+/income_recurrings ..... Income Sources CRUD screen
+/income_user_frequencies Frequencies toggle screen
+/documentation ......... Documentation index
+/documentation/database-schema
+/documentation/claude-prompt
+
+API endpoints (all under /api/):
+  /api/spending_types ......... CRUD
+  /api/spending_categories .... CRUD
+  /api/account_types .......... CRUD
+  /api/accounts ............... CRUD
+  /api/payments ............... CRUD (with transactional balance updates)
+  /api/income_user_frequencies  index + update (use_flag toggle)
+  /api/income_recurrings ...... CRUD
+  /api/income_entries ......... CRUD + POST /generate
+```
+
+## Stimulus Controllers
+Each CRUD screen has a matching Stimulus controller in app/javascript/controllers/:
+- **sidebar_controller.js** — collapse/expand sidebar, group toggles, tooltips, flyout menus, mobile hamburger
+- **flash_controller.js** — auto-dismiss flash messages after 5s
+- **dropdown_controller.js** — simple toggle + outside-click close
+- **theme_controller.js** — dark/light mode toggle
+- **otp_controller.js** — 6-digit OTP input with auto-submit
+- **spending_types_controller.js** — CRUD with icon/color picker, generate dummy data
+- **spending_categories_controller.js** — CRUD with type select, debt toggle
+- **account_types_controller.js** — CRUD with icon/color picker, generate dummy data
+- **accounts_controller.js** — CRUD with type select, budget toggle, generate dummy data
+- **payments_controller.js** — CRUD with date/account/category/type filters, search, combination sum search, generate dummy data
+- **income_user_frequencies_controller.js** — use_flag toggle list
+- **income_recurrings_controller.js** — CRUD with frequency/account selects, generate dummy data
+- **income_entries_controller.js** — CRUD with received toggle (opens edit on amount), Generate Data button
+
+## Seeding & Initialization
+- db/seeds.rb creates test user (test@example.com / password123) and 40+ IncomeFrequencyMaster records
+- On first visit, each screen auto-seeds defaults per user (spending types, categories, account types, frequencies)
+- Must visit /spending_types before /spending_categories for new users (seeding dependency)
+
+## Key Patterns & Conventions
+1. **Soft delete everywhere** — model.soft_delete!, default_scope { where(deleted_at: nil) }
+2. **User-scoped queries** — always current_user.model.find/build/create
+3. **Transactional balance** — payments adjust account.balance atomically
+4. **State machine UI** — Stimulus controllers track state: idle/adding/editing
+5. **Generate Data buttons** — most screens have a button to create dummy data for testing
+6. **Sort order** — auto-assigned as max(sort_order)+1 on create
+7. **Case-insensitive uniqueness** — name fields use lower() index with deleted_at IS NULL filter
+8. **API error format** — { errors: ["message"] } with 422 status
+
+## Development Notes
+- Windows filesystem is case-insensitive but Rails can fail template lookups if path case doesn't match. Always start server from C:/Projects/ExpenseTracker (correct case).
+- Tailwind is loaded via CDN with JIT — classes must exist in HTML for generation. Dynamic class toggling via JS uses classList.add/remove (not string interpolation).
+- With Turbo loaded, forms submit via fetch(). Use Promise.all([page.waitForURL(...), page.click(...)]) for Turbo navigation waits in tests.
+- Flash messages are positioned fixed top-right and auto-dismiss after 5s.
+
+## Pre-Commit Checklist
+Before each git commit, update these two documentation files:
+1. app/views/documentation/database_schema.html.erb — reflect any schema changes
+2. app/views/documentation/claude_prompt.html.erb — reflect any architectural/feature changes</div>
+</div>
