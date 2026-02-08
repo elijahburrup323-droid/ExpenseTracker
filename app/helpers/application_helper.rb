@@ -22,6 +22,7 @@ module ApplicationHelper
       "payments#index"               => "Payments",
       "income_entries#index"         => "Income Entries",
       "income_recurrings#index"      => "Income Sources",
+      "income_frequency_masters#index"=> "Frequency Masters",
       "income_user_frequencies#index"=> "Frequencies",
       "documentation#index"          => "Documentation",
       "documentation#database_schema"=> "Database Schema",

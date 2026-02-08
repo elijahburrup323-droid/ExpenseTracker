@@ -1,4 +1,8 @@
 class IncomeFrequencyMaster < ApplicationRecord
+  validates :name, presence: true
+  validates :frequency_type, presence: true, inclusion: { in: %w[standard exact_day ordinal_weekday] }
+  validates :sort_order, presence: true
+
   scope :active, -> { where(active: true) }
   scope :ordered, -> { order(:sort_order) }
 

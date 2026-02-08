@@ -80,6 +80,10 @@ class User < ApplicationRecord
     phone_number.present? && email&.end_with?("@phone.local")
   end
 
+  def budgethq_agent?
+    budgethq_agent
+  end
+
   def has_password?
     encrypted_password.present? && !email&.end_with?("@phone.local")
   end

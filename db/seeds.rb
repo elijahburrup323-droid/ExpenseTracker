@@ -1,12 +1,16 @@
 # Create a test user
 if Rails.env.development?
-  User.find_or_create_by!(email: "test@example.com") do |user|
-    user.password = "password123"
-    user.first_name = "Test"
-    user.last_name = "User"
+  user = User.find_or_create_by!(email: "test@example.com") do |u|
+    u.password = "password123"
+    u.first_name = "Test"
+    u.last_name = "User"
   end
-  puts "Test user created: test@example.com / password123"
+  user.update!(budgethq_agent: true)
+  puts "Test user created: test@example.com / password123 (agent: true)"
 end
+
+# Set BudgetHQ Agent flag for DJ and Elijah
+User.where(first_name: %w[DJ Elijah]).update_all(budgethq_agent: true)
 
 # Seed Income Frequency Masters
 frequency_data = [

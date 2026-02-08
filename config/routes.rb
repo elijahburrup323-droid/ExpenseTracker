@@ -35,6 +35,9 @@ Rails.application.routes.draw do
   # Payments (HTML page)
   resources :payments, only: [:index]
 
+  # Income Frequency Masters (HTML page, agent-only)
+  resources :income_frequency_masters, only: [:index]
+
   # Income Frequencies (HTML page)
   resources :income_user_frequencies, only: [:index]
 
@@ -51,6 +54,7 @@ Rails.application.routes.draw do
     resources :account_types, only: [:index, :create, :update, :destroy]
     resources :accounts, only: [:index, :create, :update, :destroy]
     resources :payments, only: [:index, :create, :update, :destroy]
+    resources :income_frequency_masters, only: [:index, :create, :update, :destroy]
     resources :income_user_frequencies, only: [:index, :update]
     resources :income_recurrings, only: [:index, :create, :update, :destroy]
     resources :income_entries, only: [:index, :create, :update, :destroy] do
