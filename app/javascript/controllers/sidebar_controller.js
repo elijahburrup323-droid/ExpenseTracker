@@ -6,6 +6,7 @@ export default class extends Controller {
   connect() {
     const collapsed = localStorage.getItem("sidebarCollapsed") === "true"
     this._applyState(collapsed, false)
+    this._restoreGroupStates()
   }
 
   toggle() {
@@ -13,6 +14,25 @@ export default class extends Controller {
     const newState = !isCollapsed
     localStorage.setItem("sidebarCollapsed", newState)
     this._applyState(newState, true)
+  }
+
+  toggleGroup(event) {
+    const btn = event.currentTarget
+    const groupKey = btn.dataset.group
+    const container = this.sidebarTarget.querySelector(`[data-sidebar-group="${groupKey}"]`)
+    const chevron = this.sidebarTarget.querySelector(`[data-sidebar-chevron="${groupKey}"]`)
+    if (!container) return
+
+    const isHidden = container.classList.contains("hidden")
+    if (isHidden) {
+      container.classList.remove("hidden")
+      if (chevron) chevron.classList.remove("-rotate-90")
+      this._saveGroupState(groupKey, "open")
+    } else {
+      container.classList.add("hidden")
+      if (chevron) chevron.classList.add("-rotate-90")
+      this._saveGroupState(groupKey, "closed")
+    }
   }
 
   openMobile() {
@@ -51,6 +71,22 @@ export default class extends Controller {
       }
     })
 
+    // Hide/show group containers when collapsed
+    sidebar.querySelectorAll("[data-sidebar-group]").forEach(el => {
+      if (collapsed) {
+        el.classList.add("hidden")
+      } else {
+        // Restore from saved state
+        const groupKey = el.dataset.sidebarGroup
+        const saved = this._getGroupState(groupKey)
+        if (saved === "closed") {
+          el.classList.add("hidden")
+        } else {
+          el.classList.remove("hidden")
+        }
+      }
+    })
+
     // Rotate toggle chevron
     if (this.hasToggleIconTarget) {
       this.toggleIconTarget.classList.toggle("rotate-180", collapsed)
@@ -66,5 +102,40 @@ export default class extends Controller {
         this.mainContentTarget.classList.add("md:ml-56")
       }
     }
+  }
+
+  _restoreGroupStates() {
+    const sidebar = this.sidebarTarget
+    const isCollapsed = sidebar.dataset.collapsed === "true"
+    if (isCollapsed) return // groups hidden when sidebar collapsed
+
+    sidebar.querySelectorAll("[data-sidebar-group]").forEach(container => {
+      const groupKey = container.dataset.sidebarGroup
+      const chevron = sidebar.querySelector(`[data-sidebar-chevron="${groupKey}"]`)
+      const saved = this._getGroupState(groupKey)
+
+      if (saved === "closed") {
+        container.classList.add("hidden")
+        if (chevron) chevron.classList.add("-rotate-90")
+      } else {
+        container.classList.remove("hidden")
+        if (chevron) chevron.classList.remove("-rotate-90")
+      }
+    })
+  }
+
+  _getGroupState(groupKey) {
+    try {
+      const states = JSON.parse(localStorage.getItem("sidebarGroups") || "{}")
+      return states[groupKey] || "open"
+    } catch { return "open" }
+  }
+
+  _saveGroupState(groupKey, state) {
+    try {
+      const states = JSON.parse(localStorage.getItem("sidebarGroups") || "{}")
+      states[groupKey] = state
+      localStorage.setItem("sidebarGroups", JSON.stringify(states))
+    } catch {}
   }
 }

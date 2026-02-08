@@ -60,32 +60,49 @@
     %>
 
     <%# Grouped sections %>
-    <% nav_groups.each do |group| %>
-      <%# Group heading link %>
+    <% nav_groups.each_with_index do |group, gi| %>
+      <% group_key = group[:heading].parameterize %>
+      <% any_child_active = group[:children].any? { |c| current_page?(c[:path]) } %>
       <% active = current_page?(group[:path]) %>
-      <%= link_to group[:path], class: "group relative flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-semibold transition #{active ? 'bg-white/20 text-white' : 'text-white/90 hover:bg-white/10 hover:text-white'}" do %>
-        <svg class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <%= group[:icon].html_safe %>
-        </svg>
-        <span data-sidebar-label class="truncate"><%= group[:heading] %></span>
-        <span data-sidebar-tooltip class="invisible group-hover:visible absolute left-full ml-2 px-2 py-1 rounded bg-gray-900 text-white text-xs whitespace-nowrap z-50 shadow-lg pointer-events-none">
-          <%= group[:heading] %>
-        </span>
-      <% end %>
 
-      <%# Child links (indented) %>
-      <% group[:children].each do |link| %>
-        <% active = current_page?(link[:path]) %>
-        <%= link_to link[:path], class: "group relative flex items-center space-x-3 pl-6 pr-3 py-1.5 rounded-lg text-sm font-medium transition #{active ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'}" do %>
-          <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <%= link[:icon].html_safe %>
+      <%# Group heading row: link + chevron toggle %>
+      <div class="flex items-center">
+        <%= link_to group[:path], class: "group relative flex-1 flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-semibold transition #{active ? 'bg-white/20 text-white' : 'text-white/90 hover:bg-white/10 hover:text-white'}" do %>
+          <svg class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <%= group[:icon].html_safe %>
           </svg>
-          <span data-sidebar-label class="truncate"><%= link[:label] %></span>
+          <span data-sidebar-label class="truncate"><%= group[:heading] %></span>
           <span data-sidebar-tooltip class="invisible group-hover:visible absolute left-full ml-2 px-2 py-1 rounded bg-gray-900 text-white text-xs whitespace-nowrap z-50 shadow-lg pointer-events-none">
-            <%= link[:label] %>
+            <%= group[:heading] %>
           </span>
         <% end %>
-      <% end %>
+        <button type="button"
+                class="p-1 text-white/60 hover:text-white transition"
+                data-sidebar-label
+                data-action="click->sidebar#toggleGroup"
+                data-group="<%= group_key %>"
+                title="Toggle <%= group[:heading] %>">
+          <svg class="h-4 w-4 transition-transform duration-200" data-sidebar-chevron="<%= group_key %>" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+      </div>
+
+      <%# Collapsible child links %>
+      <div data-sidebar-group="<%= group_key %>" class="overflow-hidden transition-all duration-200">
+        <% group[:children].each do |link| %>
+          <% child_active = current_page?(link[:path]) %>
+          <%= link_to link[:path], class: "group relative flex items-center space-x-3 pl-6 pr-3 py-1.5 rounded-lg text-sm font-medium transition #{child_active ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'}" do %>
+            <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <%= link[:icon].html_safe %>
+            </svg>
+            <span data-sidebar-label class="truncate"><%= link[:label] %></span>
+            <span data-sidebar-tooltip class="invisible group-hover:visible absolute left-full ml-2 px-2 py-1 rounded bg-gray-900 text-white text-xs whitespace-nowrap z-50 shadow-lg pointer-events-none">
+              <%= link[:label] %>
+            </span>
+          <% end %>
+        <% end %>
+      </div>
 
       <div class="my-1"></div>
     <% end %>
