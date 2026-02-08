@@ -30,7 +30,6 @@
   <%# Navigation links %>
   <nav class="flex-1 overflow-y-auto py-3 px-2 space-y-1">
     <%
-      # Grouped navigation structure
       nav_groups = [
         {
           heading: "Accounts",
@@ -60,22 +59,22 @@
     %>
 
     <%# Grouped sections %>
-    <% nav_groups.each_with_index do |group, gi| %>
+    <% nav_groups.each do |group| %>
       <% group_key = group[:heading].parameterize %>
-      <% any_child_active = group[:children].any? { |c| current_page?(c[:path]) } %>
       <% active = current_page?(group[:path]) %>
 
       <%# Group heading row: link + chevron toggle %>
       <div class="flex items-center">
-        <%= link_to group[:path], class: "group relative flex-1 flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-semibold transition #{active ? 'bg-white/20 text-white' : 'text-white/90 hover:bg-white/10 hover:text-white'}" do %>
+        <a href="<%= group[:path] %>"
+           class="group relative flex-1 flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-semibold transition <%= active ? 'bg-white/20 text-white' : 'text-white/90 hover:bg-white/10 hover:text-white' %>"
+           data-tooltip="<%= group[:heading] %>"
+           data-group="<%= group_key %>"
+           data-action="mouseenter->sidebar#showTooltip mouseleave->sidebar#hideTooltip click->sidebar#handleGroupClick">
           <svg class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <%= group[:icon].html_safe %>
           </svg>
           <span data-sidebar-label class="truncate"><%= group[:heading] %></span>
-          <span data-sidebar-tooltip class="invisible group-hover:visible absolute left-full ml-2 px-2 py-1 rounded bg-gray-900 text-white text-xs whitespace-nowrap z-50 shadow-lg pointer-events-none">
-            <%= group[:heading] %>
-          </span>
-        <% end %>
+        </a>
         <button type="button"
                 class="p-1 text-white/60 hover:text-white transition"
                 data-sidebar-label
@@ -92,15 +91,15 @@
       <div data-sidebar-group="<%= group_key %>" class="overflow-hidden transition-all duration-200">
         <% group[:children].each do |link| %>
           <% child_active = current_page?(link[:path]) %>
-          <%= link_to link[:path], class: "group relative flex items-center space-x-3 pl-6 pr-3 py-1.5 rounded-lg text-sm font-medium transition #{child_active ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'}" do %>
+          <a href="<%= link[:path] %>"
+             class="group relative flex items-center space-x-3 pl-6 pr-3 py-1.5 rounded-lg text-sm font-medium transition <%= child_active ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white' %>"
+             data-tooltip="<%= link[:label] %>"
+             data-action="mouseenter->sidebar#showTooltip mouseleave->sidebar#hideTooltip">
             <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <%= link[:icon].html_safe %>
             </svg>
             <span data-sidebar-label class="truncate"><%= link[:label] %></span>
-            <span data-sidebar-tooltip class="invisible group-hover:visible absolute left-full ml-2 px-2 py-1 rounded bg-gray-900 text-white text-xs whitespace-nowrap z-50 shadow-lg pointer-events-none">
-              <%= link[:label] %>
-            </span>
-          <% end %>
+          </a>
         <% end %>
       </div>
 
@@ -110,15 +109,15 @@
     <%# Standalone links %>
     <% standalone_links.each do |link| %>
       <% active = current_page?(link[:path]) %>
-      <%= link_to link[:path], class: "group relative flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition #{active ? 'bg-white/20 text-white' : 'text-white/80 hover:bg-white/10 hover:text-white'}" do %>
+      <a href="<%= link[:path] %>"
+         class="group relative flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition <%= active ? 'bg-white/20 text-white' : 'text-white/80 hover:bg-white/10 hover:text-white' %>"
+         data-tooltip="<%= link[:label] %>"
+         data-action="mouseenter->sidebar#showTooltip mouseleave->sidebar#hideTooltip">
         <svg class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <%= link[:icon].html_safe %>
         </svg>
         <span data-sidebar-label class="truncate"><%= link[:label] %></span>
-        <span data-sidebar-tooltip class="invisible group-hover:visible absolute left-full ml-2 px-2 py-1 rounded bg-gray-900 text-white text-xs whitespace-nowrap z-50 shadow-lg pointer-events-none">
-          <%= link[:label] %>
-        </span>
-      <% end %>
+      </a>
     <% end %>
   </nav>
 
@@ -183,4 +182,13 @@
       </svg>
     </button>
   </div>
+
+  <%# Tooltip (positioned via JS, outside nav overflow) %>
+  <div data-sidebar-target="tooltip"
+       class="hidden fixed z-50 px-2.5 py-1.5 rounded-md bg-gray-900 text-white text-xs whitespace-nowrap shadow-lg pointer-events-none"></div>
+
+  <%# Flyout for collapsed group children (positioned via JS) %>
+  <div data-sidebar-target="flyout"
+       class="hidden fixed z-50 py-2 rounded-lg bg-gray-900 shadow-xl min-w-[10rem]"
+       data-action="mouseleave->sidebar#hideFlyout"></div>
 </aside>
