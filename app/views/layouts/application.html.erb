@@ -51,11 +51,11 @@
           <%# Top header bar %>
           <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 lg:px-8 py-4" data-controller="quotes">
             <div class="flex items-center justify-between">
-              <div>
-                <h1 class="text-xl font-bold text-gray-900 dark:text-white">Hello <%= current_user.first_name || current_user.full_name %></h1>
-                <p class="mt-1 text-xs italic text-gray-400 dark:text-gray-500 max-w-xl" data-quotes-target="text"></p>
+              <div class="flex items-center space-x-4 min-w-0">
+                <h1 class="text-xl font-bold text-gray-900 dark:text-white whitespace-nowrap">Hello <%= current_user.first_name || current_user.full_name %></h1>
+                <p class="text-base italic text-gray-400 dark:text-gray-500 truncate" data-quotes-target="text"></p>
               </div>
-              <div class="flex items-center space-x-3">
+              <div class="flex items-center space-x-3 flex-shrink-0">
                 <button type="button"
                         class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition"
                         data-quotes-target="toggle"
