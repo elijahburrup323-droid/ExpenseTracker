@@ -748,12 +748,12 @@ export default class extends Controller {
       <td class="px-4 py-3">
         <input type="date" name="payment_date" value="${today}"
                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
-               data-action="keydown->payments#handleKeydown">
+               data-action="keydown->payments#handleKeydown change->payments#onAddDateChange">
       </td>
       <td class="px-4 py-3">
         <select name="account_id"
                 class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
-                data-action="keydown->payments#handleKeydown change->payments#handleNewDropdown">
+                data-action="keydown->payments#handleKeydown change->payments#handleNewDropdown change->payments#onAddAccountChange">
           <option value="">Select...</option>
           <option value="new">— New Account —</option>
           ${accountOptions}
@@ -966,6 +966,23 @@ export default class extends Controller {
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
+  }
+
+  // --- Add Row Cursor Flow (Date → Account → Category → Description) ---
+
+  onAddDateChange() {
+    if (this.state !== "adding") return
+    const accSelect = this.tableBodyTarget.querySelector("select[name='account_id']")
+    if (accSelect) accSelect.focus()
+  }
+
+  onAddAccountChange(event) {
+    if (this.state !== "adding") return
+    const val = event.target.value
+    if (val && val !== "" && val !== "new") {
+      const catSelect = this.tableBodyTarget.querySelector("select[name='spending_category_id']")
+      if (catSelect) catSelect.focus()
+    }
   }
 
   // --- Category Change (Auto-type) ---

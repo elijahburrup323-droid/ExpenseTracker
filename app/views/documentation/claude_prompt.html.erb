@@ -161,7 +161,7 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 10. **Motivational quotes** — Header displays rotating budget quotes from a pool of 100, cycling on each page load, with a toggle button to show/hide (preference stored in localStorage)
 11. **Auto-cancel editing** — Clicking Add/Edit/Delete while another row is being edited auto-cancels the previous edit (no need for explicit cancel)
 12. **Auto-save toggles** — All toggle switches (budget, use_flag, active, admin) save immediately via API without requiring a Save button
-13. **Auto-advance cursor** — Deposits fields auto-advance focus to the next field in sequence (date → account → source → description → amount → frequency) on change
+13. **Auto-advance cursor** — Deposits fields auto-advance focus to the next field in sequence (date → account → source → description → amount → frequency) on change. Payments add-row also auto-advances: Date → Account → Category → (auto-populate Spending Type) → Description
 14. **Dashboard income integration** — Dashboard Card 4 (Income &amp; Spending) shows Beginning Balance, Income (received entries for budget accounts this month), Expenses, and accounts added this month. Card 1 (Budget Overview) reflects the current balance of all budget accounts.
 15. **Delete guards** — Accounts, spending categories, and spending types cannot be deleted if they have dependent records (payments or child categories). The API returns a 422 error with a descriptive message.
 16. **Resilient payment loading** — The payments index API preloads associations using unscoped queries, so payments with soft-deleted accounts/categories/types still render (showing "[Deleted]" labels) instead of crashing the entire endpoint.
