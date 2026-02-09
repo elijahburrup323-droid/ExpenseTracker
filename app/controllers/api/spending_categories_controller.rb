@@ -34,6 +34,9 @@ module Api
     end
 
     def destroy
+      if @spending_category.payments.exists?
+        return render json: { errors: ["This category cannot be deleted because payments are associated with it. Please reassign or remove those payments before deleting the category."] }, status: :unprocessable_entity
+      end
       @spending_category.soft_delete!
       head :no_content
     end

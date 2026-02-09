@@ -28,6 +28,12 @@ module Api
     end
 
     def destroy
+      if @spending_type.spending_categories.exists?
+        return render json: { errors: ["This type cannot be deleted because spending categories are associated with it. Please reassign or remove those categories before deleting the type."] }, status: :unprocessable_entity
+      end
+      if current_user.payments.where(spending_type_override_id: @spending_type.id).exists?
+        return render json: { errors: ["This type cannot be deleted because payments use it as an override type. Please remove those overrides before deleting the type."] }, status: :unprocessable_entity
+      end
       @spending_type.soft_delete!
       head :no_content
     end

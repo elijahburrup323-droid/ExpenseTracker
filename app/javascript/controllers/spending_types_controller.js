@@ -256,13 +256,17 @@ export default class extends Controller {
       const response = await fetch(`${this.apiUrlValue}/${this.deletingId}`, {
         method: "DELETE",
         headers: {
-          "X-CSRF-Token": this.csrfTokenValue
+          "X-CSRF-Token": this.csrfTokenValue,
+          "Accept": "application/json"
         }
       })
 
       if (response.ok || response.status === 204) {
         this.spendingTypes = this.spendingTypes.filter(st => st.id !== this.deletingId)
         this.renderTable()
+      } else if (response.status === 422) {
+        const data = await response.json()
+        alert(data.errors?.[0] || "Cannot delete this spending type.")
       }
     } catch (e) {
       // silently fail

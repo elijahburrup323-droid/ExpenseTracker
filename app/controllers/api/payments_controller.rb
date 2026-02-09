@@ -3,8 +3,9 @@ module Api
     before_action :set_payment, only: [:update, :destroy]
 
     def index
-      payments = current_user.payments.ordered.includes(spending_category: :spending_type, account: {}, spending_type_override: {})
-      render json: payments.map { |p| payment_json(p) }
+      payments = current_user.payments.ordered.to_a
+      lookup = preload_unscoped(payments)
+      render json: payments.map { |p| payment_json(p, lookup) }
     end
 
     def create
@@ -65,18 +66,47 @@ module Api
       params.require(:payment).permit(:account_id, :spending_category_id, :payment_date, :description, :notes, :amount, :spending_type_override_id)
     end
 
-    def payment_json(p)
-      effective_type = p.spending_type_override || p.spending_category.spending_type
+    def payment_json(p, lookup = nil)
+      if lookup
+        acct = lookup[:accounts][p.account_id]
+        cat = lookup[:categories][p.spending_category_id]
+        override_type = p.spending_type_override_id ? lookup[:types][p.spending_type_override_id] : nil
+        cat_type = cat ? lookup[:types][cat.spending_type_id] : nil
+      else
+        acct = p.account
+        cat = p.spending_category
+        override_type = p.spending_type_override
+        cat_type = cat&.spending_type
+      end
+
+      effective_type = override_type || cat_type
+
       p.as_json(only: [:id, :payment_date, :description, :notes, :amount, :sort_order])
         .merge(
           account_id: p.account_id,
           spending_category_id: p.spending_category_id,
           spending_type_override_id: p.spending_type_override_id,
-          account_name: p.account.name,
-          spending_category_name: p.spending_category.name,
-          spending_type_name: effective_type.name,
-          spending_type_color_key: effective_type.color_key
+          account_name: acct&.name || "[Deleted]",
+          spending_category_name: cat&.name || "[Deleted]",
+          spending_type_name: effective_type&.name || "Unknown",
+          spending_type_color_key: effective_type&.color_key || "blue"
         )
+    end
+
+    def preload_unscoped(payments)
+      acct_ids = payments.map(&:account_id).compact.uniq
+      cat_ids = payments.map(&:spending_category_id).compact.uniq
+      categories = SpendingCategory.unscoped.where(id: cat_ids).index_by(&:id)
+      type_ids = (
+        payments.map(&:spending_type_override_id).compact +
+        categories.values.map(&:spending_type_id).compact
+      ).uniq
+
+      {
+        accounts: Account.unscoped.where(id: acct_ids).index_by(&:id),
+        categories: categories,
+        types: SpendingType.unscoped.where(id: type_ids).index_by(&:id)
+      }
     end
   end
 end

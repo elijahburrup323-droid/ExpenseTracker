@@ -162,6 +162,8 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 12. **Auto-save toggles** — All toggle switches (budget, use_flag, active, admin) save immediately via API without requiring a Save button
 13. **Auto-advance cursor** — Income Entries fields auto-advance focus to the next field in sequence (date → account → source → description → amount → frequency) on change
 14. **Dashboard income integration** — Dashboard Card 4 (Income &amp; Spending) shows Beginning Balance, Income (received entries for budget accounts this month), Expenses, and accounts added this month. Card 1 (Budget Overview) reflects the current balance of all budget accounts.
+15. **Delete guards** — Accounts, spending categories, and spending types cannot be deleted if they have dependent records (payments or child categories). The API returns a 422 error with a descriptive message.
+16. **Resilient payment loading** — The payments index API preloads associations using unscoped queries, so payments with soft-deleted accounts/categories/types still render (showing "[Deleted]" labels) instead of crashing the entire endpoint.
 
 ## Development Notes
 - Windows filesystem is case-insensitive but Rails can fail template lookups if path case doesn't match. Always start server from C:/Projects/ExpenseTracker (correct case).
@@ -169,29 +171,37 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 - With Turbo loaded, forms submit via fetch(). Use Promise.all([page.waitForURL(...), page.click(...)]) for Turbo navigation waits in tests.
 - Flash messages are positioned fixed top-right and auto-dismiss after 5s.
 
-## Task Intake: Bugs & New Features
+## Task Intake: "Lets Work" Workflow
 
-Feature requests and bug lists are managed via files on Google Drive.
+All work items are managed via Google Drive at **G:\My Drive\ExpenseTracker** using a Kanban-style folder flow:
 
-### "Review bug list"
-When I say "review bug list", do the following:
-1. Navigate to **G:\My Drive\ExpenseTracker\Bugs Edits Modifications**
-2. Read any files at the **root** of that folder (ignore the "Completed" subfolder — never review anything inside it)
-3. Process every item listed in each file — fix bugs, make edits, apply modifications
-4. After ALL items in a file are complete, move the file into the **Completed** subfolder with the datetime appended to the filename (e.g., `Eli v1 - Completed 2026-02-07 2356.docx`)
+### Folder Structure
+- **Open Items** — bugs (text files) and new features (subfolders) waiting to be worked
+- **In Process** — the single item currently being worked on
+- **Ready for QA** — completed items awaiting user verification
 
-### "Review new features"
-When I say "review new features", do the following:
-1. Navigate to **G:\My Drive\ExpenseTracker\New Features**
-2. Pick a subfolder that is **not** "Completed" — each subfolder represents one feature request
-3. Read all docs and images inside that subfolder to understand the feature
-4. Plan the implementation, then build it
-5. After the feature is fully built, move the **entire subfolder** into the **Completed** subfolder inside New Features
+### When I say "Lets Work"
+1. Navigate to **G:\My Drive\ExpenseTracker\Open Items**
+2. Pick one item (text file or feature folder) to work on
+3. **Move** it from Open Items → **In Process**
+4. **Plan** the implementation
+5. **Build** the changes
+6. **Test locally** with Playwright against both **Safari** and **Chrome** browsers
+7. **Deploy** to production (commit to GitHub, trigger Render deploy)
+8. **Test production** at https://djburrup.com/expensetracker with both accounts:
+   - elijahburrup323@gmail.com / Eli624462!
+   - djburrup@gmail.com / luckydjb
+9. Once all production tests pass, **move** from In Process → **Ready for QA**
+10. Go back to **Open Items** and grab the next item — repeat
+
+### Bug text files
+- Process items that have **no status**, or are marked **NOT FIXED**, **FAILED**, or similar
+- **Skip** items marked **PASSED**, **FIXED**, or similar — they are already done
 
 ### General rules
-- Never review or process anything inside a "Completed" folder
-- Always append a completion datetime to moved files/folders
-- Deploy automatically when changes are ready and tested. Commit to GitHub and trigger Render deploys as needed.
+- Work items one at a time (one item in "In Process" at a time)
+- Deploy automatically when changes are ready and tested
+- Commit to GitHub and trigger Render deploys as needed
 
 ## Pre-Commit Checklist
 Before each git commit, update these two documentation files:
