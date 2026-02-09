@@ -164,6 +164,7 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 14. **Dashboard income integration** — Dashboard Card 4 (Income &amp; Spending) shows Beginning Balance, Income (received entries for budget accounts this month), Expenses, and accounts added this month. Card 1 (Budget Overview) reflects the current balance of all budget accounts.
 15. **Delete guards** — Accounts, spending categories, and spending types cannot be deleted if they have dependent records (payments or child categories). The API returns a 422 error with a descriptive message.
 16. **Resilient payment loading** — The payments index API preloads associations using unscoped queries, so payments with soft-deleted accounts/categories/types still render (showing "[Deleted]" labels) instead of crashing the entire endpoint.
+17. **Dashboard Recent Activity filter** — Card 5 (Recent Activity) excludes payments with future dates (payment_date > today) so scheduled payments don't appear prematurely.
 
 ## Development Notes
 - Windows filesystem is case-insensitive but Rails can fail template lookups if path case doesn't match. Always start server from C:/Projects/ExpenseTracker (correct case).

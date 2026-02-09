@@ -34,7 +34,7 @@ class DashboardController < ApplicationController
                                           .order(:created_at)
     @new_account_balance_total = @new_budget_accounts.sum(:beginning_balance)
 
-    # Card 5: Recent Activity — last 5 payments
-    @recent_payments = current_user.payments.ordered.includes(:account, spending_category: :spending_type).limit(5)
+    # Card 5: Recent Activity — last 5 payments (exclude future dates)
+    @recent_payments = current_user.payments.where("payment_date <= ?", Date.current).ordered.includes(:account, spending_category: :spending_type).limit(5)
   end
 end
