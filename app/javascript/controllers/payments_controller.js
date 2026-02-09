@@ -63,11 +63,10 @@ export default class extends Controller {
   // --- Default Date Range ---
 
   _setDefaultDateRange() {
-    const today = new Date()
-    // Default to start of current month (not 14 days) so payments don't appear to "disappear"
-    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
-    this._defaultStartDate = this._formatDateValue(monthStart)
-    this._defaultEndDate = this._formatDateValue(today)
+    // No default dates — show ALL payments on page load so nothing "disappears"
+    // Users can set date filters manually; Reset button restores current month
+    this._defaultStartDate = ""
+    this._defaultEndDate = ""
   }
 
   _formatDateValue(d) {
@@ -204,36 +203,62 @@ export default class extends Controller {
   }
 
   _applyDefaultDates() {
-    if (!this.filterStartDateTarget.value) this.filterStartDateTarget.value = this._defaultStartDate
-    if (!this.filterEndDateTarget.value) this.filterEndDateTarget.value = this._defaultEndDate
+    // Leave date fields empty on initial load — show all payments
+    // Dates are only set when user manually picks them or clicks Reset
   }
 
   // --- Filtering ---
 
   applyFilters() {
+    if (!this._checkDirtyState()) return
     this.renderTable()
+  }
+
+  _checkDirtyState() {
+    if (this.state !== "adding" && this.state !== "editing") return true
+    // Check if any fields have been filled in
+    const hasData = this._hasUnsavedData()
+    if (!hasData) {
+      this.state = "idle"
+      this.editingId = null
+      return true
+    }
+    if (!confirm("You have unsaved changes. Discard and continue?")) return false
+    this.state = "idle"
+    this.editingId = null
+    return true
+  }
+
+  _hasUnsavedData() {
+    const desc = this.tableBodyTarget.querySelector("input[name='description']")
+    const amt = this.tableBodyTarget.querySelector("input[name='amount']")
+    return (desc && desc.value.trim()) || (amt && amt.value.trim())
   }
 
   searchKeydown(event) {
     if (event.key === "Enter") {
       event.preventDefault()
+      if (!this._checkDirtyState()) return
       this.renderTable()
     }
   }
 
   clearSearch() {
+    if (!this._checkDirtyState()) return
     this.filterSearchTarget.value = ""
     this.filterSearchTarget.focus()
     this.renderTable()
   }
 
   resetFilters() {
-    this.filterStartDateTarget.value = this._defaultStartDate
-    this.filterEndDateTarget.value = this._defaultEndDate
+    if (!this._checkDirtyState()) return
+    // Reset clears ALL filters including dates — shows all payments
+    this.filterStartDateTarget.value = ""
+    this.filterEndDateTarget.value = ""
     this.filterAccountTarget.value = ""
     this.filterCategoryTarget.value = ""
     this.filterTypeTarget.value = ""
-    // Intentionally do NOT clear the search description box
+    this.filterSearchTarget.value = ""
     this.renderTable()
   }
 
@@ -314,6 +339,7 @@ export default class extends Controller {
 
   startAdding() {
     if (this.state === "adding") return
+    if (!this._checkDirtyState()) return
     if (this.state !== "idle") { this.state = "idle"; this.editingId = null }
     this.state = "adding"
     this.renderTable()
@@ -869,11 +895,65 @@ export default class extends Controller {
     if (event.target.value !== "new") return
     const name = event.target.name
     let url = null
-    if (name === "account_id") url = this.accountsPageUrlValue
-    else if (name === "spending_category_id") url = this.categoriesPageUrlValue
-    else if (name === "spending_type_override_id") url = this.typesPageUrlValue
-    if (url) this._openInNewTab(url)
-    // Leave "new" selected so user knows they need to refresh/reselect
+    let label = ""
+    if (name === "account_id") { url = this.accountsPageUrlValue; label = "Account" }
+    else if (name === "spending_category_id") { url = this.categoriesPageUrlValue; label = "Category" }
+    else if (name === "spending_type_override_id") { url = this.typesPageUrlValue; label = "Spending Type" }
+    if (url) {
+      this._openInNewTab(url)
+      alert(`A new tab has been opened to create a ${label}. After creating it, come back here and your payment will still be in progress. The dropdown will refresh automatically.`)
+      // Auto-refresh dropdowns when user returns to this tab
+      this._pendingRefresh = true
+      const onFocus = async () => {
+        if (!this._pendingRefresh) return
+        this._pendingRefresh = false
+        window.removeEventListener("focus", onFocus)
+        await this._refreshDropdownData()
+        // Reset "new" selection to "Select..."
+        event.target.value = ""
+      }
+      window.addEventListener("focus", onFocus)
+    }
+  }
+
+  async _refreshDropdownData() {
+    try {
+      const [accountsRes, categoriesRes, typesRes] = await Promise.all([
+        fetch(this.accountsUrlValue, { headers: { "Accept": "application/json" } }),
+        fetch(this.categoriesUrlValue, { headers: { "Accept": "application/json" } }),
+        fetch(this.typesUrlValue, { headers: { "Accept": "application/json" } })
+      ])
+      if (accountsRes.ok) this.accounts = await accountsRes.json()
+      if (categoriesRes.ok) this.categories = await categoriesRes.json()
+      if (typesRes.ok) this.spendingTypes = await typesRes.json()
+    } catch (e) {}
+    // Rebuild the dropdowns in the add/edit row
+    this._rebuildInlineDropdowns()
+    this._populateFilterDropdowns()
+  }
+
+  _rebuildInlineDropdowns() {
+    const accSelect = this.tableBodyTarget.querySelector("select[name='account_id']")
+    const catSelect = this.tableBodyTarget.querySelector("select[name='spending_category_id']")
+    const typeSelect = this.tableBodyTarget.querySelector("select[name='spending_type_override_id']")
+    if (accSelect) {
+      const currentVal = accSelect.value
+      const newOption = `<option value="">Select...</option><option value="new">— New Account —</option>` + this._buildAccountOptions()
+      accSelect.innerHTML = newOption
+      if (currentVal && currentVal !== "new") accSelect.value = currentVal
+    }
+    if (catSelect) {
+      const currentVal = catSelect.value
+      const newOption = `<option value="">Select...</option><option value="new">— New Category —</option>` + this._buildCategoryOptions()
+      catSelect.innerHTML = newOption
+      if (currentVal && currentVal !== "new") catSelect.value = currentVal
+    }
+    if (typeSelect) {
+      const currentVal = typeSelect.value
+      const newOption = `<option value="">Auto (from category)</option><option value="new">— New Spending Type —</option>` + this._buildTypeOptions()
+      typeSelect.innerHTML = newOption
+      if (currentVal && currentVal !== "new") typeSelect.value = currentVal
+    }
   }
 
   // Safari blocks window.open from non-direct user gestures; anchor click works reliably
