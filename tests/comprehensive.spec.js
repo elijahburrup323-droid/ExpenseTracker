@@ -373,7 +373,7 @@ test.describe.serial("Comprehensive E2E Tests", () => {
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(3000);
 
-    await expect(page.locator("h1.text-2xl")).toHaveText("Income Entries");
+    await expect(page.locator("h1.text-2xl")).toHaveText("Deposits");
   });
 
   // ===== THEME TOGGLE =====

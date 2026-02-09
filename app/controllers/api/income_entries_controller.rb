@@ -4,8 +4,11 @@ module Api
     before_action :generate_due_entries, only: [:index]
 
     def index
-      entries = current_user.income_entries.ordered.includes(:account, :frequency_master, :income_recurring)
-      render json: entries.map { |e| entry_json(e) }
+      entries = current_user.income_entries.ordered.includes(:frequency_master, :income_recurring).to_a
+      # Preload accounts with unscoped to show deleted account names
+      acct_ids = entries.map(&:account_id).compact.uniq
+      accounts_lookup = Account.unscoped.where(id: acct_ids).index_by(&:id)
+      render json: entries.map { |e| entry_json(e, accounts_lookup) }
     end
 
     def create
@@ -139,11 +142,12 @@ module Api
       account.update_column(:balance, account.balance + delta)
     end
 
-    def entry_json(e)
+    def entry_json(e, accounts_lookup = nil)
+      acct = accounts_lookup ? accounts_lookup[e.account_id] : e.account
       e.as_json(only: [:id, :source_name, :description, :entry_date, :amount, :received_flag, :sort_order])
         .merge(
           account_id: e.account_id,
-          account_name: e.account&.name,
+          account_name: acct&.name || "[Deleted]",
           frequency_master_id: e.frequency_master_id,
           frequency_name: e.frequency_master&.name,
           income_recurring_id: e.income_recurring_id

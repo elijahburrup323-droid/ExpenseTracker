@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["tableBody", "addButton", "generateButton", "deleteModal", "deleteModalName"]
+  static targets = ["tableBody", "addButton", "generateButton", "deleteModal", "deleteModalName", "sortHeader"]
   static values = { apiUrl: String, accountsUrl: String, frequenciesUrl: String, recurringsUrl: String, generateUrl: String, csrfToken: String }
 
   connect() {
@@ -11,6 +11,8 @@ export default class extends Controller {
     this.state = "idle" // idle | adding | editing
     this.editingId = null
     this.deletingId = null
+    this.sortColumn = null
+    this.sortDirection = "asc"
     this.fetchAll()
   }
 
@@ -318,6 +320,50 @@ export default class extends Controller {
     }
   }
 
+  // --- Sorting ---
+
+  sort(event) {
+    const key = event.currentTarget.dataset.sortKey
+    if (this.sortColumn === key) {
+      this.sortDirection = this.sortDirection === "asc" ? "desc" : "asc"
+    } else {
+      this.sortColumn = key
+      this.sortDirection = "asc"
+    }
+    this._applySortArrows()
+    this._sortEntries()
+    this.renderTable()
+  }
+
+  _applySortArrows() {
+    this.sortHeaderTargets.forEach(th => {
+      const arrow = th.querySelector("[data-sort-arrow]")
+      if (!arrow) return
+      if (th.dataset.sortKey === this.sortColumn) {
+        arrow.textContent = this.sortDirection === "asc" ? "\u25B2" : "\u25BC"
+      } else {
+        arrow.textContent = ""
+      }
+    })
+  }
+
+  _sortEntries() {
+    if (!this.sortColumn) return
+    const key = this.sortColumn
+    const dir = this.sortDirection === "asc" ? 1 : -1
+    this.entries.sort((a, b) => {
+      let valA = a[key], valB = b[key]
+      if (key === "amount") {
+        return (parseFloat(valA || 0) - parseFloat(valB || 0)) * dir
+      }
+      valA = (valA || "").toString().toLowerCase()
+      valB = (valB || "").toString().toLowerCase()
+      if (valA < valB) return -1 * dir
+      if (valA > valB) return 1 * dir
+      return 0
+    })
+  }
+
   // --- Rendering ---
 
   renderTable() {
@@ -336,7 +382,7 @@ export default class extends Controller {
     }
 
     if (this.entries.length === 0 && this.state !== "adding") {
-      html = `<tr><td colspan="8" class="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">No income entries yet. They will be generated from your Income Sources, or click "Add Income Entry" to create one manually.</td></tr>`
+      html = `<tr><td colspan="8" class="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">No deposits yet. They will be generated from your Recurring Deposits, or click "Add Deposit" to create one manually.</td></tr>`
     }
 
     this.tableBodyTarget.innerHTML = html

@@ -40,7 +40,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 
 ### Layout Structure
 - Collapsible left sidebar (w-56 expanded, w-16 collapsed) with gradient purple background
-- Sidebar groups: Accounts (Account Types), Income Entries (Recurring Income, Frequencies), Payments (Categories, Spending Types), Admin (DBU, Users, Documentation, Frequency Masters — admin only, always at bottom)
+- Sidebar groups: Accounts (Account Types), Deposits (Recurring Deposits, Frequencies), Payments (Categories, Spending Types), Admin (DBU, Users, Documentation, Frequency Masters — admin only, always at bottom)
 - Top header bar showing "Hello {first name}", motivational quote, current date, theme toggle, user avatar, settings link, and sign out button (upper-right corner, always visible)
 - Main content area shifts with sidebar via margin
 - Sidebar state + group collapse state persisted in localStorage
@@ -96,8 +96,8 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 /spending_types ........ Spending Types CRUD screen
 /spending_categories ... Categories CRUD screen
 /payments .............. Payments CRUD screen (with advanced filtering & combination search)
-/income_entries ........ Income Entries CRUD screen (with Generate Data button)
-/income_recurrings ..... Recurring Income CRUD screen
+/income_entries ........ Deposits CRUD screen (with Generate Data button)
+/income_recurrings ..... Recurring Deposits CRUD screen
 /income_user_frequencies Frequencies toggle screen
 /income_frequency_masters Frequency Masters CRUD (admin-only)
 /admin/users ............. Admin user management (admin-only)
@@ -160,11 +160,14 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 10. **Motivational quotes** — Header displays rotating budget quotes from a pool of 100, cycling on each page load, with a toggle button to show/hide (preference stored in localStorage)
 11. **Auto-cancel editing** — Clicking Add/Edit/Delete while another row is being edited auto-cancels the previous edit (no need for explicit cancel)
 12. **Auto-save toggles** — All toggle switches (budget, use_flag, active, admin) save immediately via API without requiring a Save button
-13. **Auto-advance cursor** — Income Entries fields auto-advance focus to the next field in sequence (date → account → source → description → amount → frequency) on change
+13. **Auto-advance cursor** — Deposits fields auto-advance focus to the next field in sequence (date → account → source → description → amount → frequency) on change
 14. **Dashboard income integration** — Dashboard Card 4 (Income &amp; Spending) shows Beginning Balance, Income (received entries for budget accounts this month), Expenses, and accounts added this month. Card 1 (Budget Overview) reflects the current balance of all budget accounts.
 15. **Delete guards** — Accounts, spending categories, and spending types cannot be deleted if they have dependent records (payments or child categories). The API returns a 422 error with a descriptive message.
 16. **Resilient payment loading** — The payments index API preloads associations using unscoped queries, so payments with soft-deleted accounts/categories/types still render (showing "[Deleted]" labels) instead of crashing the entire endpoint.
 17. **Dashboard Recent Activity filter** — Card 5 (Recent Activity) excludes payments with future dates (payment_date > today) so scheduled payments don't appear prematurely.
+18. **Deposits rename** — "Income Entries" renamed to "Deposits" and "Recurring Income" to "Recurring Deposits" across sidebar, page headers, buttons, info text, and documentation.
+19. **Deposits deleted account display** — Deposits API preloads accounts with unscoped queries so deleted account names still display (read-only) instead of blank.
+20. **Deposits column sorting** — Date, Account, Source, Description, and Amount columns are click-to-sort with ASC/DESC toggle and arrow indicators.
 
 ## Development Notes
 - Windows filesystem is case-insensitive but Rails can fail template lookups if path case doesn't match. Always start server from C:/Projects/ExpenseTracker (correct case).
