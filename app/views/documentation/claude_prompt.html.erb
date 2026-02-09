@@ -78,7 +78,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 - **income_frequency_masters** — global lookup table with 59 frequency patterns across 3 types: standard (11), exact_day (29: 1st-28th + Last Day), ordinal_weekday (20: 1st-4th Mon-Fri). Pre-seeded. Agent-editable via Frequency Masters screen.
 - **income_user_frequencies** — user-scoped join to frequency_masters with use_flag toggle
 - **income_recurrings** — user-scoped recurring income sources (name, amount, frequency, next_date, use_flag). Has advance_next_date! to calculate next occurrence.
-- **income_entries** — user-scoped income transactions. Auto-generated from due recurrings via IncomeEntry.generate_due_entries_for(user). Has received_flag toggle.
+- **income_entries** — user-scoped income transactions. Auto-generated from due recurrings via IncomeEntry.generate_due_entries_for(user). Has received_flag toggle. When received_flag is toggled ON, account balance is adjusted (same transactional pattern as payments). Income entries with received_flag=true for budget accounts are summed into Dashboard Card 4 as "Income".
 
 ### Key Relationships
 - User has_many: spending_types, spending_categories, account_types, accounts, payments, income_user_frequencies, income_recurrings, income_entries
@@ -115,7 +115,7 @@ API endpoints (all under /api/):
   /api/income_frequency_masters  CRUD (admin-only)
   /api/income_user_frequencies  index + update (use_flag toggle, filters inactive masters)
   /api/income_recurrings ...... CRUD
-  /api/income_entries ......... CRUD + POST /generate
+  /api/income_entries ......... CRUD + POST /generate (with transactional balance updates on received_flag)
   /api/admin/users ........... index + update (admin toggle, admin-only)
   /api/dbu/tables ............ DBU table catalog (admin-only)
   /api/dbu/users ............. DBU user list (admin-only)
@@ -137,7 +137,7 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 - **income_frequency_masters_controller.js** — CRUD with inline editing, active toggle, sort_order editing (admin-only)
 - **income_user_frequencies_controller.js** — use_flag toggle list (filters out inactive frequency masters)
 - **income_recurrings_controller.js** — CRUD with frequency/account selects, generate dummy data
-- **income_entries_controller.js** — CRUD with received toggle (opens edit on amount), Generate Data button
+- **income_entries_controller.js** — CRUD with received toggle (opens edit on amount), auto-advance cursor between fields on change, Generate Data button
 - **admin_users_controller.js** — Admin user management with search, admin toggle (admin-only)
 - **quotes_controller.js** — Rotating motivational budget quotes in header bar (100 quotes, cycles on page load, toggle to hide via localStorage)
 - **dbu_controller.js** — Database Utility: browse/edit any table via dbu_table_catalogs, search, user filter, record navigation (Prev/Next), dirty state protection, save/delete (admin-only)
@@ -150,16 +150,18 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 ## Key Patterns & Conventions
 1. **Soft delete everywhere** — model.soft_delete!, default_scope { where(deleted_at: nil) }
 2. **User-scoped queries** — always current_user.model.find/build/create
-3. **Transactional balance** — payments adjust account.balance atomically
+3. **Transactional balance** — payments and received income entries adjust account.balance atomically
 4. **State machine UI** — Stimulus controllers track state: idle/adding/editing
 5. **Generate Data buttons** — most screens have a button to create dummy data for testing
 6. **Sort order** — auto-assigned as max(sort_order)+1 on create
 7. **Case-insensitive uniqueness** — name fields use lower() index with deleted_at IS NULL filter
 8. **API error format** — { errors: ["message"] } with 422 status
-9. **Admin gating** — Admin sidebar group (Frequency Masters, Users, Documentation), Generate Data buttons, and admin API endpoints are only visible/accessible to users with budgethq_agent=true
+9. **Admin gating** — Admin sidebar group (DBU, Users, Documentation, Frequency Masters), Generate Data buttons, and admin API endpoints are only visible/accessible to users with budgethq_agent=true
 10. **Motivational quotes** — Header displays rotating budget quotes from a pool of 100, cycling on each page load, with a toggle button to show/hide (preference stored in localStorage)
 11. **Auto-cancel editing** — Clicking Add/Edit/Delete while another row is being edited auto-cancels the previous edit (no need for explicit cancel)
 12. **Auto-save toggles** — All toggle switches (budget, use_flag, active, admin) save immediately via API without requiring a Save button
+13. **Auto-advance cursor** — Income Entries fields auto-advance focus to the next field in sequence (date → account → source → description → amount → frequency) on change
+14. **Dashboard income integration** — Dashboard Card 4 (Income &amp; Spending) shows Beginning Balance, Income (received entries for budget accounts this month), Expenses, and accounts added this month. Card 1 (Budget Overview) reflects the current balance of all budget accounts.
 
 ## Development Notes
 - Windows filesystem is case-insensitive but Rails can fail template lookups if path case doesn't match. Always start server from C:/Projects/ExpenseTracker (correct case).
