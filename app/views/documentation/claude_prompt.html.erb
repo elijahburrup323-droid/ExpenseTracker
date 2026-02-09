@@ -41,7 +41,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 ### Layout Structure
 - Collapsible left sidebar (w-56 expanded, w-16 collapsed) with gradient purple background
 - Sidebar groups: Accounts (Account Types), Deposits (Recurring Deposits, Frequencies), Payments (Categories, Spending Types), Admin (DBU, Users, Documentation, Frequency Masters — admin only, always at bottom)
-- Top header bar showing "Hello {first name}", motivational quote, current date, theme toggle, user avatar, settings link, and sign out button (upper-right corner, always visible)
+- Top header bar showing "Hello {first name}", motivational quote, current date, theme toggle, user avatar, settings link, and sign out button (upper-right corner, always visible, sticky — stays fixed at top when scrolling, z-30)
 - Main content area shifts with sidebar via margin
 - Sidebar state + group collapse state persisted in localStorage
 - Dark/light theme toggle persisted in localStorage
