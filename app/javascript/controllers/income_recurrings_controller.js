@@ -352,7 +352,7 @@ export default class extends Controller {
       <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">${this._esc(rec.frequency_name || "")}</td>
       <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">${rec.next_date || ""}</td>
       <td class="px-4 py-4 text-center">${useToggle}</td>
-      <td class="px-4 py-4 text-right space-x-2">
+      <td class="px-4 py-4 text-right space-x-2 whitespace-nowrap">
         <button type="button"
                 class="inline-flex items-center justify-center w-8 h-8 rounded-md text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800 transition"
                 data-id="${rec.id}"
@@ -418,7 +418,7 @@ export default class extends Controller {
       <td class="px-4 py-3 text-center">
         ${this._renderUseToggle(true)}
       </td>
-      <td class="px-4 py-3 text-right space-x-2">
+      <td class="px-4 py-3 text-right space-x-2 whitespace-nowrap">
         <button type="button"
                 class="inline-flex items-center justify-center w-9 h-9 rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
                 data-action="click->income-recurrings#saveNew"
@@ -491,7 +491,7 @@ export default class extends Controller {
       <td class="px-4 py-3 text-center">
         ${this._renderUseToggle(rec.use_flag)}
       </td>
-      <td class="px-4 py-3 text-right space-x-2">
+      <td class="px-4 py-3 text-right space-x-2 whitespace-nowrap">
         <button type="button"
                 class="inline-flex items-center justify-center w-9 h-9 rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
                 data-action="click->income-recurrings#saveEdit"

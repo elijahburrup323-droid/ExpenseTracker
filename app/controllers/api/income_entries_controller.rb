@@ -11,23 +11,41 @@ module Api
     def create
       entry = current_user.income_entries.build(entry_params)
 
-      if entry.save
-        render json: entry_json(entry), status: :created
-      else
-        render_errors(entry)
+      ActiveRecord::Base.transaction do
+        if entry.save
+          adjust_account_balance(entry.account_id, entry.amount) if entry.received_flag && entry.account_id
+          render json: entry_json(entry), status: :created
+        else
+          render_errors(entry)
+          raise ActiveRecord::Rollback
+        end
       end
     end
 
     def update
-      if @entry.update(entry_params)
-        render json: entry_json(@entry)
-      else
-        render_errors(@entry)
+      old_amount = @entry.amount
+      old_account_id = @entry.account_id
+      old_received = @entry.received_flag
+
+      ActiveRecord::Base.transaction do
+        if @entry.update(entry_params)
+          # Reverse old balance adjustment
+          adjust_account_balance(old_account_id, -old_amount) if old_received && old_account_id
+          # Apply new balance adjustment
+          adjust_account_balance(@entry.account_id, @entry.amount) if @entry.received_flag && @entry.account_id
+          render json: entry_json(@entry)
+        else
+          render_errors(@entry)
+          raise ActiveRecord::Rollback
+        end
       end
     end
 
     def destroy
-      @entry.soft_delete!
+      ActiveRecord::Base.transaction do
+        adjust_account_balance(@entry.account_id, -@entry.amount) if @entry.received_flag && @entry.account_id
+        @entry.soft_delete!
+      end
       head :no_content
     end
 
@@ -112,6 +130,13 @@ module Api
 
     def entry_params
       params.require(:income_entry).permit(:source_name, :description, :entry_date, :amount, :account_id, :frequency_master_id, :income_recurring_id, :received_flag)
+    end
+
+    def adjust_account_balance(account_id, delta)
+      return unless account_id
+      account = current_user.accounts.find_by(id: account_id)
+      return unless account
+      account.update_column(:balance, account.balance + delta)
     end
 
     def entry_json(e)

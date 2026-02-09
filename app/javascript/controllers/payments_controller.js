@@ -720,7 +720,7 @@ export default class extends Controller {
       <td class="px-4 py-3 text-sm">${this._renderTypeBadge(payment.spending_type_color_key, payment.spending_type_name || "")}</td>
       <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">${escapeHtml(payment.description)}</td>
       <td class="px-4 py-3 text-sm text-gray-900 dark:text-white text-right font-mono">${this._formatBalance(payment.amount)}</td>
-      <td class="px-4 py-3 text-right space-x-2">
+      <td class="px-4 py-3 text-right space-x-2 whitespace-nowrap">
         <button type="button"
                 class="inline-flex items-center justify-center w-8 h-8 rounded-md text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800 transition"
                 data-id="${payment.id}"
@@ -790,7 +790,7 @@ export default class extends Controller {
                  data-action="keydown->payments#handleKeydown">
         </div>
       </td>
-      <td class="px-4 py-3 text-right space-x-2">
+      <td class="px-4 py-3 text-right space-x-2 whitespace-nowrap">
         <button type="button"
                 class="inline-flex items-center justify-center w-9 h-9 rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
                 data-action="click->payments#saveNew"
@@ -869,7 +869,7 @@ export default class extends Controller {
                  data-action="keydown->payments#handleKeydown">
         </div>
       </td>
-      <td class="px-4 py-3 text-right space-x-2">
+      <td class="px-4 py-3 text-right space-x-2 whitespace-nowrap">
         <button type="button"
                 class="inline-flex items-center justify-center w-9 h-9 rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
                 data-action="click->payments#saveEdit"

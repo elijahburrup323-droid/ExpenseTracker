@@ -21,6 +21,13 @@ class DashboardController < ApplicationController
     @current_month_payments = current_user.payments.where(account_id: budget_accounts.select(:id)).where(payment_date: @current_month_start..Date.today).sum(:amount)
     @beginning_balance_total = budget_accounts.sum(:beginning_balance)
 
+    # Income entries received this month for budget accounts
+    @current_month_income = current_user.income_entries
+                                        .where(account_id: budget_accounts.select(:id))
+                                        .where(received_flag: true)
+                                        .where(entry_date: @current_month_start..Date.today)
+                                        .sum(:amount)
+
     # Accounts added to budget this month (for "Initial Balance Added" line items)
     @new_budget_accounts = budget_accounts.where(created_at: @current_month_start.beginning_of_day..)
                                           .where.not(beginning_balance: 0)

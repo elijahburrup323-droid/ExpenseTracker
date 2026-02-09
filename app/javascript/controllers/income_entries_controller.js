@@ -287,6 +287,23 @@ export default class extends Controller {
     }
   }
 
+  // --- Field Auto-Advance ---
+
+  // Field sequence for add/edit rows (left to right)
+  get _fieldSequence() {
+    return ["entry_date", "account_id", "source_name", "description", "amount", "frequency_master_id"]
+  }
+
+  advanceField(event) {
+    const name = event.target.name
+    const seq = this._fieldSequence
+    const idx = seq.indexOf(name)
+    if (idx < 0 || idx >= seq.length - 1) return
+    const nextName = seq[idx + 1]
+    const next = this.tableBodyTarget.querySelector(`[name='${nextName}']`)
+    if (next) { next.focus(); if (next.select) next.select() }
+  }
+
   // --- Keyboard Handling ---
 
   handleKeydown(event) {
@@ -343,7 +360,7 @@ export default class extends Controller {
       <td class="px-4 py-4 text-sm text-gray-900 dark:text-white text-right font-mono">${this._formatAmount(entry.amount)}</td>
       <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">${this._esc(entry.frequency_name || "—")}</td>
       <td class="px-4 py-4 text-center">${receivedToggle}</td>
-      <td class="px-4 py-4 text-right space-x-2">
+      <td class="px-4 py-4 text-right space-x-2 whitespace-nowrap">
         <button type="button"
                 class="inline-flex items-center justify-center w-8 h-8 rounded-md text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800 transition"
                 data-id="${entry.id}"
@@ -371,11 +388,12 @@ export default class extends Controller {
       <td class="px-4 py-3">
         <input type="date" name="entry_date" value="${today}"
                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-               data-action="keydown->income-entries#handleKeydown">
+               data-action="keydown->income-entries#handleKeydown change->income-entries#advanceField">
       </td>
       <td class="px-4 py-3">
         <select name="account_id"
-                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5">
+                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+                data-action="change->income-entries#advanceField">
           <option value="">No Account</option>
           ${accOptions}
         </select>
@@ -408,7 +426,7 @@ export default class extends Controller {
       <td class="px-4 py-3 text-center">
         ${this._renderReceivedToggle(true)}
       </td>
-      <td class="px-4 py-3 text-right space-x-2">
+      <td class="px-4 py-3 text-right space-x-2 whitespace-nowrap">
         <button type="button"
                 class="inline-flex items-center justify-center w-9 h-9 rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
                 data-action="click->income-entries#saveNew"
@@ -443,11 +461,12 @@ export default class extends Controller {
       <td class="px-4 py-3">
         <input type="date" name="entry_date" value="${entry.entry_date || ""}"
                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-               data-action="keydown->income-entries#handleKeydown">
+               data-action="keydown->income-entries#handleKeydown change->income-entries#advanceField">
       </td>
       <td class="px-4 py-3">
         <select name="account_id"
-                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5">
+                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
+                data-action="change->income-entries#advanceField">
           <option value="">No Account</option>
           ${accOptions}
         </select>
@@ -480,7 +499,7 @@ export default class extends Controller {
       <td class="px-4 py-3 text-center">
         ${this._renderReceivedToggle(entry.received_flag)}
       </td>
-      <td class="px-4 py-3 text-right space-x-2">
+      <td class="px-4 py-3 text-right space-x-2 whitespace-nowrap">
         <button type="button"
                 class="inline-flex items-center justify-center w-9 h-9 rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
                 data-action="click->income-entries#saveEdit"
