@@ -45,6 +45,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 - Main content area shifts with sidebar via margin
 - Sidebar state + group collapse state persisted in localStorage
 - Dark/light theme toggle persisted in localStorage
+- Global footer on all screens: Contact · Help · Terms · Privacy · © BudgetHQ {year} — centered, single-line, gray text, sticks to bottom via flex layout
 
 ### Pattern: Every CRUD Screen Follows This Architecture
 1. **HTML page controller** (e.g., AccountsController#index) — renders the HTML shell with a Stimulus data-controller div
@@ -206,6 +207,10 @@ All work items are managed via Google Drive at **G:\My Drive\ExpenseTracker** us
 - Work items one at a time (one item in "In Process" at a time)
 - Deploy automatically when changes are ready and tested
 - Commit to GitHub and trigger Render deploys as needed
+
+## Behavior Rules
+- **Never ask for acknowledgement or confirmation to continue.** Just do the work. Do not pause to say "shall I proceed?" or "ready to continue?" — execute each step and move to the next automatically.
+- Do not ask "does this look good?" mid-task. Complete the full workflow, then present results.
 
 ## Pre-Commit Checklist
 Before each git commit, update these two documentation files:

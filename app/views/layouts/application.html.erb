@@ -47,7 +47,7 @@
       <div data-controller="sidebar">
         <%= render "shared/navbar" %>
         <%= render "shared/flash" %>
-        <main class="min-h-screen transition-all duration-300 md:ml-56 pt-14 md:pt-0" data-sidebar-target="mainContent">
+        <main class="min-h-screen flex flex-col transition-all duration-300 md:ml-56 pt-14 md:pt-0" data-sidebar-target="mainContent">
           <%# Top header bar — min-h-14 aligns with sidebar logo border, wraps on mobile %>
           <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 lg:px-8 min-h-[3.5rem] flex items-center" data-controller="quotes">
             <div class="flex-1 flex items-center justify-between">
@@ -111,13 +111,19 @@
               </div>
             </div>
           </div>
-          <%= yield %>
+          <div class="flex-1">
+            <%= yield %>
+          </div>
+          <%= render "shared/footer" %>
         </main>
       </div>
     <% else %>
       <%= render "shared/flash" %>
-      <main>
-        <%= yield %>
+      <main class="min-h-screen flex flex-col">
+        <div class="flex-1">
+          <%= yield %>
+        </div>
+        <%= render "shared/footer" %>
       </main>
     <% end %>
   </body>
