@@ -40,7 +40,8 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 
 ### Layout Structure
 - Collapsible left sidebar (w-56 expanded, w-16 collapsed) with gradient purple background
-- Top header bar showing "Hello {first name}", motivational quote, and current date
+- Sidebar groups: Accounts (Account Types), Income Entries (Recurring Income, Frequencies), Payments (Categories, Spending Types), Admin (DBU, Users, Documentation, Frequency Masters — admin only, always at bottom)
+- Top header bar showing "Hello {first name}", motivational quote, current date, theme toggle, user avatar, settings link, and sign out button (upper-right corner, always visible)
 - Main content area shifts with sidebar via margin
 - Sidebar state + group collapse state persisted in localStorage
 - Dark/light theme toggle persisted in localStorage
@@ -54,7 +55,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 
 ## Admin Role
 - **budgethq_agent** boolean on users table (default false). Only DJ and Elijah have this flag.
-- Admin users see an "Admin" group in the sidebar containing: Frequency Masters, Users, DBU, and Documentation.
+- Admin users see an "Admin" group in the sidebar containing: DBU, Users, Documentation, and Frequency Masters.
 - Admin users also see Generate Data buttons on all CRUD screens.
 - Non-admins see the normal user experience without admin tools.
 - Admin user management screen (/admin/users) lets admins search users and toggle admin status via API.
@@ -96,7 +97,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 /spending_categories ... Categories CRUD screen
 /payments .............. Payments CRUD screen (with advanced filtering & combination search)
 /income_entries ........ Income Entries CRUD screen (with Generate Data button)
-/income_recurrings ..... Income Sources CRUD screen
+/income_recurrings ..... Recurring Income CRUD screen
 /income_user_frequencies Frequencies toggle screen
 /income_frequency_masters Frequency Masters CRUD (admin-only)
 /admin/users ............. Admin user management (admin-only)
