@@ -2,6 +2,7 @@ class Account < ApplicationRecord
   belongs_to :user
   belongs_to :account_type
   has_many :payments
+  has_many :income_entries
 
   default_scope { where(deleted_at: nil) }
 

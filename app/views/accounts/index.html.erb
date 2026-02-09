@@ -3,7 +3,9 @@
      data-accounts-api-url-value="<%= api_accounts_path %>"
      data-accounts-types-url-value="<%= api_account_types_path %>"
      data-accounts-csrf-token-value="<%= form_authenticity_token %>"
-     data-accounts-types-page-url-value="<%= account_types_path %>">
+     data-accounts-types-page-url-value="<%= account_types_path %>"
+     data-accounts-deposits-page-url-value="<%= income_entries_path %>"
+     data-accounts-payments-page-url-value="<%= payments_path %>">
 
   <%# Page Header %>
   <div class="flex items-center justify-between mb-6">
@@ -67,6 +69,31 @@
         Accounts represent your real financial accounts (e.g., Checking at Bank of America, Savings at Ally Bank).
         Toggle "In Budget" to include or exclude an account from your budget overview.
       </p>
+    </div>
+  </div>
+
+  <%# Blocked Delete Modal (deposits/payments exist) %>
+  <div class="hidden fixed inset-0 z-50" data-accounts-target="blockedDeleteModal">
+    <div class="fixed inset-0 bg-gray-500/75 dark:bg-gray-900/80 transition-opacity"></div>
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+        <div class="flex items-start">
+          <div class="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-full bg-yellow-100 dark:bg-yellow-900/30">
+            <svg class="h-5 w-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+            </svg>
+          </div>
+          <div class="ml-4">
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white">Can't delete this account</h3>
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400" data-accounts-target="blockedDeleteBody"></p>
+            <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">
+              <strong>What you can do:</strong> Move those Deposits/Payments to another account, or delete the related Deposits/Payments first, then try again.
+            </p>
+          </div>
+        </div>
+        <div class="mt-6 flex justify-end space-x-3" data-accounts-target="blockedDeleteButtons">
+        </div>
+      </div>
     </div>
   </div>
 

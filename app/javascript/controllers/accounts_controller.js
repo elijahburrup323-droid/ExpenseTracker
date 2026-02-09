@@ -2,8 +2,8 @@ import { Controller } from "@hotwired/stimulus"
 import { ICON_CATALOG, COLOR_OPTIONS, renderIconSvg, defaultIconSvg, iconFor, escapeHtml, escapeAttr } from "controllers/shared/icon_catalog"
 
 export default class extends Controller {
-  static targets = ["tableBody", "addButton", "generateButton", "deleteModal", "deleteModalName"]
-  static values = { apiUrl: String, typesUrl: String, csrfToken: String, typesPageUrl: String }
+  static targets = ["tableBody", "addButton", "generateButton", "deleteModal", "deleteModalName", "blockedDeleteModal", "blockedDeleteBody", "blockedDeleteButtons"]
+  static values = { apiUrl: String, typesUrl: String, csrfToken: String, typesPageUrl: String, depositsPageUrl: String, paymentsPageUrl: String }
 
   connect() {
     this.accounts = []
@@ -285,6 +285,9 @@ export default class extends Controller {
       if (response.ok || response.status === 204) {
         this.accounts = this.accounts.filter(a => a.id !== this.deletingId)
         this.renderTable()
+      } else if (response.status === 409) {
+        const data = await response.json().catch(() => ({}))
+        this._showBlockedDeleteModal(data.has_deposits, data.has_payments)
       } else {
         const data = await response.json().catch(() => ({}))
         alert(data.errors?.[0] || "Failed to delete account")
@@ -295,6 +298,40 @@ export default class extends Controller {
 
     this.deletingId = null
     this.deleteModalTarget.classList.add("hidden")
+    this.addButtonTarget.disabled = false
+  }
+
+  _showBlockedDeleteModal(hasDeposits, hasPayments) {
+    let bodyText = ""
+    if (hasDeposits && hasPayments) {
+      bodyText = "This account can\u2019t be deleted because it has Deposits and Payments recorded on it."
+    } else if (hasDeposits) {
+      bodyText = "This account can\u2019t be deleted because it has Deposits recorded on it."
+    } else {
+      bodyText = "This account can\u2019t be deleted because it has Payments recorded on it."
+    }
+
+    this.blockedDeleteBodyTarget.textContent = bodyText
+
+    let buttonsHtml = ""
+    if (hasDeposits) {
+      buttonsHtml += `<a href="${this.depositsPageUrlValue}"
+        class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg shadow-sm transition">Go to Deposits</a>`
+    }
+    if (hasPayments) {
+      buttonsHtml += `<a href="${this.paymentsPageUrlValue}"
+        class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg shadow-sm transition">Go to Payments</a>`
+    }
+    buttonsHtml += `<button type="button"
+      class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-900 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+      data-action="click->accounts#closeBlockedDelete">Close</button>`
+
+    this.blockedDeleteButtonsTarget.innerHTML = buttonsHtml
+    this.blockedDeleteModalTarget.classList.remove("hidden")
+  }
+
+  closeBlockedDelete() {
+    this.blockedDeleteModalTarget.classList.add("hidden")
     this.addButtonTarget.disabled = false
   }
 
