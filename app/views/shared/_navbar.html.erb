@@ -27,6 +27,16 @@
     <% end %>
   </div>
 
+  <%# Collapse toggle — absolutely positioned at top-right of sidebar %>
+  <button type="button"
+          class="hidden md:flex absolute top-0 right-0 h-14 items-center justify-center w-10 text-white/60 hover:text-white transition z-10"
+          data-action="click->sidebar#toggle"
+          title="Toggle sidebar">
+    <svg class="h-5 w-5 transition-transform duration-300" data-sidebar-target="toggleIcon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+    </svg>
+  </button>
+
   <%# Navigation links %>
   <nav class="flex-1 overflow-y-auto py-3 px-2 space-y-1">
     <%
@@ -123,17 +133,6 @@
     <% end %>
   </nav>
 
-  <%# Bottom: collapse toggle only (desktop) %>
-  <div class="border-t border-white/20 px-3 py-3">
-    <button type="button"
-            class="hidden md:flex items-center justify-center w-full py-1 text-white/60 hover:text-white transition"
-            data-action="click->sidebar#toggle"
-            title="Toggle sidebar">
-      <svg class="h-5 w-5 transition-transform duration-300" data-sidebar-target="toggleIcon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
-      </svg>
-    </button>
-  </div>
 
   <%# Tooltip (positioned via JS, outside nav overflow) %>
   <div data-sidebar-target="tooltip"
