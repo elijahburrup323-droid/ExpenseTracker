@@ -1,5 +1,5 @@
 privacy_content = <<~HTML
-  <%# Section 1: Introduction %>
+
   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 mb-6">
     <h2 id="introduction" data-section="Introduction" class="text-lg font-semibold text-gray-900 dark:text-white mb-4">1. Introduction</h2>
     <p class="text-sm text-gray-700 dark:text-gray-300 mb-3">Welcome to BudgetHQ ("we," "our," or "us"). We are committed to protecting your personal information and your right to privacy. This Privacy Policy explains what information we collect, how we use it, and what rights you have in relation to it.</p>
@@ -10,7 +10,7 @@ privacy_content = <<~HTML
     </div>
   </div>
 
-  <%# Section 2: Information We Collect %>
+
   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 mb-6">
     <h2 id="information-collected" data-section="Information We Collect" class="text-lg font-semibold text-gray-900 dark:text-white mb-4">2. Information We Collect</h2>
 
@@ -90,7 +90,7 @@ privacy_content = <<~HTML
     <p class="text-sm text-gray-700 dark:text-gray-300">If you sign in using a third-party provider, we receive your name, email address, and profile picture. We <strong>never</strong> receive your password from these providers.</p>
   </div>
 
-  <%# Section 3: How We Use Your Information %>
+
   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 mb-6">
     <h2 id="how-we-use" data-section="How We Use Info" class="text-lg font-semibold text-gray-900 dark:text-white mb-4">3. How We Use Your Information</h2>
     <p class="text-sm text-gray-700 dark:text-gray-300 mb-4">We use the information we collect to:</p>
@@ -122,11 +122,11 @@ privacy_content = <<~HTML
     </div>
   </div>
 
-  <%# Section 4: Data Storage and Security %>
+
   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 mb-6">
     <h2 id="data-security" data-section="Data Storage & Security" class="text-lg font-semibold text-gray-900 dark:text-white mb-4">4. Data Storage and Security</h2>
 
-    <%# Security visualization %>
+
     <div class="flex items-center justify-center gap-3 flex-wrap py-4 mb-4">
       <div class="flex flex-col items-center">
         <div class="w-20 h-20 rounded-full bg-green-50 dark:bg-green-900/30 border-2 border-green-400 dark:border-green-600 flex items-center justify-center">
@@ -158,7 +158,6 @@ privacy_content = <<~HTML
     <p class="text-sm text-gray-500 dark:text-gray-400 italic">While we implement commercially reasonable security measures, no method of transmission over the Internet or electronic storage is 100% secure. We cannot guarantee absolute security.</p>
   </div>
 
-  <%# Section 5: Data Sharing %>
   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 mb-6">
     <h2 id="data-sharing" data-section="Data Sharing" class="text-lg font-semibold text-gray-900 dark:text-white mb-4">5. Data Sharing</h2>
     <div class="flex items-center gap-2 mb-4 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
@@ -182,7 +181,6 @@ privacy_content = <<~HTML
     </div>
   </div>
 
-  <%# Section 6: Your Rights %>
   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 mb-6">
     <h2 id="your-rights" data-section="Your Rights" class="text-lg font-semibold text-gray-900 dark:text-white mb-4">6. Your Rights</h2>
     <p class="text-sm text-gray-700 dark:text-gray-300 mb-4">You have the following rights regarding your personal data:</p>
@@ -215,7 +213,6 @@ privacy_content = <<~HTML
     </div>
   </div>
 
-  <%# Section 7: Cookies and Local Storage %>
   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 mb-6">
     <h2 id="cookies" data-section="Cookies & Storage" class="text-lg font-semibold text-gray-900 dark:text-white mb-4">7. Cookies and Local Storage</h2>
     <div class="overflow-x-auto">
@@ -252,19 +249,16 @@ privacy_content = <<~HTML
     </div>
   </div>
 
-  <%# Section 8: Children's Privacy %>
   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 mb-6">
     <h2 id="childrens-privacy" data-section="Children's Privacy" class="text-lg font-semibold text-gray-900 dark:text-white mb-4">8. Children's Privacy</h2>
     <p class="text-sm text-gray-700 dark:text-gray-300">BudgetHQ is not intended for users under the age of 13. We do not knowingly collect personal information from children under 13. If we become aware that we have collected personal data from a child under 13, we will take steps to delete that information promptly.</p>
   </div>
 
-  <%# Section 9: Changes to This Policy %>
   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 mb-6">
     <h2 id="policy-changes" data-section="Policy Changes" class="text-lg font-semibold text-gray-900 dark:text-white mb-4">9. Changes to This Policy</h2>
     <p class="text-sm text-gray-700 dark:text-gray-300">We may update this Privacy Policy from time to time. We will notify you of any significant changes by posting the new policy on this page and updating the "Last updated" date. Your continued use of the Service after changes constitutes acceptance of the updated policy.</p>
   </div>
 
-  <%# Section 10: Contact Us %>
   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6">
     <h2 id="contact" data-section="Contact Us" class="text-lg font-semibold text-gray-900 dark:text-white mb-4">10. Contact Us</h2>
     <p class="text-sm text-gray-700 dark:text-gray-300 mb-3">If you have any questions about this Privacy Policy or our data practices, please contact us:</p>

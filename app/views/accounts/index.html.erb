@@ -7,8 +7,9 @@
      data-accounts-deposits-page-url-value="<%= income_entries_path %>"
      data-accounts-payments-page-url-value="<%= payments_path %>">
 
-  <%# Page Header %>
-  <div class="flex items-center justify-between mb-6">
+  <%# Page Header (sticky) %>
+  <div class="sticky top-14 z-20 bg-gray-50 dark:bg-gray-900 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-2 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
     <div>
       <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Accounts</h1>
       <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Manage the accounts you track to monitor your balances and transactions</p>
@@ -34,6 +35,7 @@
         </svg>
         Add Account
       </button>
+    </div>
     </div>
   </div>
 

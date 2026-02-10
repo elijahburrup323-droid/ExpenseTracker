@@ -3,10 +3,11 @@
      data-income-user-frequencies-api-url-value="<%= api_income_user_frequencies_path %>"
      data-income-user-frequencies-csrf-token-value="<%= form_authenticity_token %>">
 
-  <%# Page Header %>
-  <div class="flex items-center justify-between mb-6">
+  <%# Page Header (sticky) %>
+  <div class="sticky top-14 z-20 bg-gray-50 dark:bg-gray-900 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-2 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
     <div>
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Income Frequencies</h1>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Deposit Frequencies</h1>
       <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Toggle which pay frequencies you want available for your income sources</p>
     </div>
     <div class="flex items-center space-x-3">
@@ -19,6 +20,7 @@
               role="switch" aria-checked="false" title="View all frequencies">
         <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform translate-x-1"></span>
       </button>
+    </div>
     </div>
   </div>
 
@@ -48,7 +50,7 @@
         <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
       </svg>
       <p class="ml-3 text-sm text-blue-700 dark:text-blue-300">
-        Income Frequencies control which pay schedules appear in the Income Sources dropdown.
+        Deposit Frequencies control which pay schedules appear in the Recurring Deposits dropdown.
         Toggle "Use" to show or hide a frequency from your available options.
       </p>
     </div>
