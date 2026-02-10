@@ -1,0 +1,242 @@
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="mb-6">
+    <div class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
+      <%= link_to "Documentation", documentation_path, class: "hover:text-brand-600 dark:hover:text-brand-400 transition" %>
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      <span class="text-gray-900 dark:text-white font-medium">Environment Variables</span>
+    </div>
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Environment Variables</h1>
+    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Every ENV var the application needs, with descriptions. Values are not shown for security.</p>
+  </div>
+
+  <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4 ring-1 ring-yellow-200 dark:ring-yellow-800 mb-6">
+    <div class="flex items-start gap-2">
+      <svg class="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+      <div>
+        <p class="text-sm font-medium text-yellow-800 dark:text-yellow-300">Security Notice</p>
+        <p class="text-xs text-yellow-700 dark:text-yellow-400">Never commit actual values to source control. Use <code class="bg-yellow-100 dark:bg-yellow-900/40 px-1 rounded">.env</code> locally and Render's Environment settings in production. When updating Render env vars via API, always include ALL existing vars (PUT replaces the entire set).</p>
+      </div>
+    </div>
+  </div>
+
+  <%# Database & Connection %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 mb-6">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Database &amp; Connection</h2>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-200 dark:border-gray-700">
+            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Variable</th>
+            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Required</th>
+            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Description</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr>
+            <td class="px-4 py-2 font-mono text-gray-900 dark:text-white">DATABASE_URL</td>
+            <td class="px-4 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">Prod</span></td>
+            <td class="px-4 py-2 text-gray-600 dark:text-gray-400">PostgreSQL connection string. Auto-provided by Render.</td>
+          </tr>
+          <tr>
+            <td class="px-4 py-2 font-mono text-gray-900 dark:text-white">DATABASE_HOST</td>
+            <td class="px-4 py-2"><span class="text-xs bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300 px-1.5 py-0.5 rounded">Dev</span></td>
+            <td class="px-4 py-2 text-gray-600 dark:text-gray-400">Local PostgreSQL host (defaults to localhost)</td>
+          </tr>
+          <tr>
+            <td class="px-4 py-2 font-mono text-gray-900 dark:text-white">DATABASE_USERNAME</td>
+            <td class="px-4 py-2"><span class="text-xs bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300 px-1.5 py-0.5 rounded">Dev</span></td>
+            <td class="px-4 py-2 text-gray-600 dark:text-gray-400">Local PostgreSQL username</td>
+          </tr>
+          <tr>
+            <td class="px-4 py-2 font-mono text-gray-900 dark:text-white">DATABASE_PASSWORD</td>
+            <td class="px-4 py-2"><span class="text-xs bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300 px-1.5 py-0.5 rounded">Dev</span></td>
+            <td class="px-4 py-2 text-gray-600 dark:text-gray-400">Local PostgreSQL password</td>
+          </tr>
+          <tr>
+            <td class="px-4 py-2 font-mono text-gray-900 dark:text-white">REDIS_URL</td>
+            <td class="px-4 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">Optional</span></td>
+            <td class="px-4 py-2 text-gray-600 dark:text-gray-400">Redis connection for caching/Action Cable (if enabled)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <%# Rails Core %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 mb-6">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Rails Core</h2>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-200 dark:border-gray-700">
+            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Variable</th>
+            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Required</th>
+            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Description</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr>
+            <td class="px-4 py-2 font-mono text-gray-900 dark:text-white">SECRET_KEY_BASE</td>
+            <td class="px-4 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">Prod</span></td>
+            <td class="px-4 py-2 text-gray-600 dark:text-gray-400">Rails secret for encrypting sessions and cookies. Generate with <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">rails secret</code></td>
+          </tr>
+          <tr>
+            <td class="px-4 py-2 font-mono text-gray-900 dark:text-white">RAILS_ENV</td>
+            <td class="px-4 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">Prod</span></td>
+            <td class="px-4 py-2 text-gray-600 dark:text-gray-400">Set to <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">production</code> on Render</td>
+          </tr>
+          <tr>
+            <td class="px-4 py-2 font-mono text-gray-900 dark:text-white">APP_HOST</td>
+            <td class="px-4 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">Prod</span></td>
+            <td class="px-4 py-2 text-gray-600 dark:text-gray-400">Production hostname: <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">djburrup.com</code></td>
+          </tr>
+          <tr>
+            <td class="px-4 py-2 font-mono text-gray-900 dark:text-white">PORT</td>
+            <td class="px-4 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">Optional</span></td>
+            <td class="px-4 py-2 text-gray-600 dark:text-gray-400">Server port. Render sets this automatically.</td>
+          </tr>
+          <tr>
+            <td class="px-4 py-2 font-mono text-gray-900 dark:text-white">RAILS_SERVE_STATIC_FILES</td>
+            <td class="px-4 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">Prod</span></td>
+            <td class="px-4 py-2 text-gray-600 dark:text-gray-400">Set to <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">true</code> for Render (no separate Nginx)</td>
+          </tr>
+          <tr>
+            <td class="px-4 py-2 font-mono text-gray-900 dark:text-white">RAILS_MAX_THREADS</td>
+            <td class="px-4 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">Optional</span></td>
+            <td class="px-4 py-2 text-gray-600 dark:text-gray-400">Puma thread count. Default: 5</td>
+          </tr>
+          <tr>
+            <td class="px-4 py-2 font-mono text-gray-900 dark:text-white">WEB_CONCURRENCY</td>
+            <td class="px-4 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">Optional</span></td>
+            <td class="px-4 py-2 text-gray-600 dark:text-gray-400">Puma worker count. Default: 2</td>
+          </tr>
+          <tr>
+            <td class="px-4 py-2 font-mono text-gray-900 dark:text-white">RAILS_LOG_LEVEL</td>
+            <td class="px-4 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">Optional</span></td>
+            <td class="px-4 py-2 text-gray-600 dark:text-gray-400">Log verbosity: debug, info, warn, error. Default: info</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <%# OAuth %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 mb-6">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">OAuth Providers</h2>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-200 dark:border-gray-700">
+            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Variable</th>
+            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Provider</th>
+            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Description</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr>
+            <td class="px-4 py-2 font-mono text-gray-900 dark:text-white">GOOGLE_CLIENT_ID</td>
+            <td class="px-4 py-2"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">Google</span></td>
+            <td class="px-4 py-2 text-gray-600 dark:text-gray-400">OAuth 2.0 client ID from Google Cloud Console</td>
+          </tr>
+          <tr>
+            <td class="px-4 py-2 font-mono text-gray-900 dark:text-white">GOOGLE_CLIENT_SECRET</td>
+            <td class="px-4 py-2"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">Google</span></td>
+            <td class="px-4 py-2 text-gray-600 dark:text-gray-400">OAuth 2.0 client secret</td>
+          </tr>
+          <tr>
+            <td class="px-4 py-2 font-mono text-gray-900 dark:text-white">APPLE_CLIENT_ID</td>
+            <td class="px-4 py-2"><span class="text-xs bg-gray-800 dark:bg-gray-600 text-white px-1.5 py-0.5 rounded">Apple</span></td>
+            <td class="px-4 py-2 text-gray-600 dark:text-gray-400">Service ID from Apple Developer portal</td>
+          </tr>
+          <tr>
+            <td class="px-4 py-2 font-mono text-gray-900 dark:text-white">APPLE_TEAM_ID</td>
+            <td class="px-4 py-2"><span class="text-xs bg-gray-800 dark:bg-gray-600 text-white px-1.5 py-0.5 rounded">Apple</span></td>
+            <td class="px-4 py-2 text-gray-600 dark:text-gray-400">10-character team identifier</td>
+          </tr>
+          <tr>
+            <td class="px-4 py-2 font-mono text-gray-900 dark:text-white">APPLE_KEY_ID</td>
+            <td class="px-4 py-2"><span class="text-xs bg-gray-800 dark:bg-gray-600 text-white px-1.5 py-0.5 rounded">Apple</span></td>
+            <td class="px-4 py-2 text-gray-600 dark:text-gray-400">Key ID for the Sign in with Apple private key</td>
+          </tr>
+          <tr>
+            <td class="px-4 py-2 font-mono text-gray-900 dark:text-white">APPLE_PRIVATE_KEY</td>
+            <td class="px-4 py-2"><span class="text-xs bg-gray-800 dark:bg-gray-600 text-white px-1.5 py-0.5 rounded">Apple</span></td>
+            <td class="px-4 py-2 text-gray-600 dark:text-gray-400">P8 private key contents (multiline). Use <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">\n</code> for newlines in Render.</td>
+          </tr>
+          <tr>
+            <td class="px-4 py-2 font-mono text-gray-900 dark:text-white">MICROSOFT_CLIENT_ID</td>
+            <td class="px-4 py-2"><span class="text-xs bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 px-1.5 py-0.5 rounded">Microsoft</span></td>
+            <td class="px-4 py-2 text-gray-600 dark:text-gray-400">Application (client) ID from Azure AD</td>
+          </tr>
+          <tr>
+            <td class="px-4 py-2 font-mono text-gray-900 dark:text-white">MICROSOFT_CLIENT_SECRET</td>
+            <td class="px-4 py-2"><span class="text-xs bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 px-1.5 py-0.5 rounded">Microsoft</span></td>
+            <td class="px-4 py-2 text-gray-600 dark:text-gray-400">Client secret value from Azure AD</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <%# Email & SMS %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 mb-6">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Email &amp; SMS</h2>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-200 dark:border-gray-700">
+            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Variable</th>
+            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Service</th>
+            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Description</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr>
+            <td class="px-4 py-2 font-mono text-gray-900 dark:text-white">SENDGRID_USERNAME</td>
+            <td class="px-4 py-2"><span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">SendGrid</span></td>
+            <td class="px-4 py-2 text-gray-600 dark:text-gray-400">Always <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">apikey</code> (literal string)</td>
+          </tr>
+          <tr>
+            <td class="px-4 py-2 font-mono text-gray-900 dark:text-white">SENDGRID_PASSWORD</td>
+            <td class="px-4 py-2"><span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">SendGrid</span></td>
+            <td class="px-4 py-2 text-gray-600 dark:text-gray-400">SendGrid API key (starts with <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">SG.</code>). Used for SMTP email delivery.</td>
+          </tr>
+          <tr>
+            <td class="px-4 py-2 font-mono text-gray-900 dark:text-white">TWILIO_ACCOUNT_SID</td>
+            <td class="px-4 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">Twilio</span></td>
+            <td class="px-4 py-2 text-gray-600 dark:text-gray-400">Account SID from Twilio Console. Starts with <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">AC</code></td>
+          </tr>
+          <tr>
+            <td class="px-4 py-2 font-mono text-gray-900 dark:text-white">TWILIO_AUTH_TOKEN</td>
+            <td class="px-4 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">Twilio</span></td>
+            <td class="px-4 py-2 text-gray-600 dark:text-gray-400">Auth token for Twilio API access</td>
+          </tr>
+          <tr>
+            <td class="px-4 py-2 font-mono text-gray-900 dark:text-white">TWILIO_PHONE_NUMBER</td>
+            <td class="px-4 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">Twilio</span></td>
+            <td class="px-4 py-2 text-gray-600 dark:text-gray-400">SMS-capable phone number in E.164 format (+1XXXXXXXXXX). Trial accounts can only send to verified numbers.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <%# Setup Reference %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Setup Reference</h2>
+    <div class="space-y-3 text-sm">
+      <div class="border-b border-gray-100 dark:border-gray-700 pb-3">
+        <p class="font-medium text-gray-900 dark:text-white">Local Development</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Copy <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">.env.example</code> to <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">.env</code> and fill in your local values. The <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">dotenv</code> gem loads these automatically in development.</p>
+      </div>
+      <div class="border-b border-gray-100 dark:border-gray-700 pb-3">
+        <p class="font-medium text-gray-900 dark:text-white">Production (Render)</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Set all variables in Render Dashboard &rarr; Environment. <strong>Critical:</strong> When updating via Render API, use PUT which replaces ALL vars. Always include every existing var when adding new ones.</p>
+      </div>
+      <div>
+        <p class="font-medium text-gray-900 dark:text-white">Secrets Backup</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Use the <a href="https://github.com/elijahburrup323-droid/MySetup" class="text-brand-600 dark:text-brand-400 hover:underline" target="_blank" rel="noopener">MySetup</a> project's <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">secrets/export-secrets.sh</code> to GPG-encrypt and back up .env files.</p>
+      </div>
+    </div>
+  </div>
+</div>

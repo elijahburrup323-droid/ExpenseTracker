@@ -1,0 +1,136 @@
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="mb-6">
+    <div class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
+      <%= link_to "Documentation", documentation_path, class: "hover:text-brand-600 dark:hover:text-brand-400 transition" %>
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      <span class="text-gray-900 dark:text-white font-medium">Deployment Runbook</span>
+    </div>
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Deployment Runbook</h1>
+    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Step-by-step process for deploying BudgetHQ to production</p>
+  </div>
+
+  <%# Pre-Deploy Checklist %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 mb-6">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Pre-Deploy Checklist</h2>
+    <div class="space-y-3">
+      <div class="flex items-start gap-3">
+        <div class="flex-shrink-0 w-6 h-6 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center">
+          <span class="text-xs font-bold text-brand-700 dark:text-brand-300">1</span>
+        </div>
+        <div>
+          <p class="text-sm font-medium text-gray-900 dark:text-white">Run local Playwright tests</p>
+          <code class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded block mt-1 font-mono">npx playwright test tests/your-test.spec.js --project=chromium</code>
+          <code class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded block mt-1 font-mono">npx playwright test tests/your-test.spec.js --project=webkit</code>
+        </div>
+      </div>
+      <div class="flex items-start gap-3">
+        <div class="flex-shrink-0 w-6 h-6 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center">
+          <span class="text-xs font-bold text-brand-700 dark:text-brand-300">2</span>
+        </div>
+        <div>
+          <p class="text-sm font-medium text-gray-900 dark:text-white">Update documentation files</p>
+          <ul class="text-xs text-gray-600 dark:text-gray-400 mt-1 space-y-0.5">
+            <li><code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">database_schema.html.erb</code> &mdash; if schema changed</li>
+            <li><code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">claude_prompt.html.erb</code> &mdash; if architecture or features changed</li>
+            <li>Release Notes &mdash; add entries for features and bug fixes</li>
+          </ul>
+        </div>
+      </div>
+      <div class="flex items-start gap-3">
+        <div class="flex-shrink-0 w-6 h-6 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center">
+          <span class="text-xs font-bold text-brand-700 dark:text-brand-300">3</span>
+        </div>
+        <div>
+          <p class="text-sm font-medium text-gray-900 dark:text-white">Export docs to Google Drive</p>
+          <code class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded block mt-1 font-mono">node export_docs.js</code>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%# Deploy Steps %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 mb-6">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Deploy to Production</h2>
+    <div class="space-y-4">
+      <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+        <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-2">Step 1: Commit and Push</h3>
+        <div class="space-y-1">
+          <code class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded block font-mono">git add [files]</code>
+          <code class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded block font-mono">git commit -m "Descriptive message"</code>
+          <code class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded block font-mono">git push origin main</code>
+        </div>
+      </div>
+
+      <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+        <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-2">Step 2: Wait for Render Deploy</h3>
+        <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+          <li>Render auto-deploys on push to <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">main</code></li>
+          <li>Typical deploy time: <strong class="text-gray-900 dark:text-white">~4 minutes</strong></li>
+          <li>Monitor at <a href="https://dashboard.render.com" class="text-brand-600 dark:text-brand-400 hover:underline" target="_blank" rel="noopener">dashboard.render.com</a></li>
+          <li>Deploy includes: bundle install, asset precompile, db:migrate, server restart</li>
+        </ul>
+      </div>
+
+      <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+        <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-2">Step 3: Run Production Tests</h3>
+        <code class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded block font-mono">npx playwright test tests/prod-*.spec.js --project=chromium</code>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Tests run against both accounts: elijahburrup323@gmail.com and djburrup@gmail.com</p>
+      </div>
+    </div>
+  </div>
+
+  <%# Rollback %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 mb-6">
+    <h2 class="text-lg font-semibold text-red-600 dark:text-red-400 mb-4">Rollback Procedures</h2>
+
+    <div class="space-y-4">
+      <div class="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 border border-red-200 dark:border-red-800">
+        <h3 class="text-sm font-semibold text-red-800 dark:text-red-300 mb-2">Quick Rollback (No Migration)</h3>
+        <p class="text-xs text-red-700 dark:text-red-400 mb-2">If the deploy didn't include database migrations:</p>
+        <div class="space-y-1">
+          <code class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-2 py-1 rounded block font-mono">git revert HEAD</code>
+          <code class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-2 py-1 rounded block font-mono">git push origin main</code>
+        </div>
+        <p class="text-xs text-red-600 dark:text-red-400 mt-2">This creates a new commit that undoes the last change. Render auto-deploys.</p>
+      </div>
+
+      <div class="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 border border-red-200 dark:border-red-800">
+        <h3 class="text-sm font-semibold text-red-800 dark:text-red-300 mb-2">Rollback With Migration</h3>
+        <p class="text-xs text-red-700 dark:text-red-400 mb-2">If the deploy included a migration, you must roll back the migration too:</p>
+        <ol class="text-xs text-red-700 dark:text-red-400 space-y-1 list-decimal list-inside">
+          <li>Roll back migration via Render shell: <code class="bg-red-100 dark:bg-red-900/40 px-1 rounded">rails db:rollback</code></li>
+          <li>Revert the commit locally: <code class="bg-red-100 dark:bg-red-900/40 px-1 rounded">git revert HEAD</code></li>
+          <li>Push to trigger redeploy: <code class="bg-red-100 dark:bg-red-900/40 px-1 rounded">git push origin main</code></li>
+        </ol>
+      </div>
+
+      <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4 border border-yellow-200 dark:border-yellow-800">
+        <h3 class="text-sm font-semibold text-yellow-800 dark:text-yellow-300 mb-2">Render Manual Deploy</h3>
+        <p class="text-xs text-yellow-700 dark:text-yellow-400">If auto-deploy fails, go to Render dashboard &rarr; your service &rarr; Manual Deploy &rarr; select a previous commit to deploy.</p>
+      </div>
+    </div>
+  </div>
+
+  <%# Common Issues %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Common Issues</h2>
+    <div class="space-y-3">
+      <div class="border-b border-gray-100 dark:border-gray-700 pb-3">
+        <p class="text-sm font-medium text-gray-900 dark:text-white">Deploy succeeds but old version still showing</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Wait the full 4 minutes. Clear browser cache. Check Render logs for deploy completion timestamp.</p>
+      </div>
+      <div class="border-b border-gray-100 dark:border-gray-700 pb-3">
+        <p class="text-sm font-medium text-gray-900 dark:text-white">Migration fails on Render</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Check Render logs for the specific error. Common: column already exists, missing dependency. Fix locally, push again.</p>
+      </div>
+      <div class="border-b border-gray-100 dark:border-gray-700 pb-3">
+        <p class="text-sm font-medium text-gray-900 dark:text-white">Asset precompile error</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Usually a syntax error in JS or missing importmap pin. Run <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">rails assets:precompile</code> locally to reproduce.</p>
+      </div>
+      <div>
+        <p class="text-sm font-medium text-gray-900 dark:text-white">Playwright production tests fail after deploy</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Deploy may not be complete yet. Wait 60 more seconds and retry. Check that the test expectations match the deployed code.</p>
+      </div>
+    </div>
+  </div>
+</div>

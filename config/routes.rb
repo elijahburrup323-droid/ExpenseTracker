@@ -119,6 +119,10 @@ Rails.application.routes.draw do
     resources :bug_reports, only: [:index, :create]
   end
   get "documentation/claude-prompt", to: "documentation#claude_prompt", as: :documentation_claude_prompt
+  get "documentation/architecture-overview", to: "documentation#architecture_overview", as: :documentation_architecture_overview
+  get "documentation/deployment-runbook", to: "documentation#deployment_runbook", as: :documentation_deployment_runbook
+  get "documentation/test-coverage", to: "documentation#test_coverage", as: :documentation_test_coverage
+  get "documentation/environment-variables", to: "documentation#environment_variables", as: :documentation_environment_variables
 
   # Legal / static pages
   get "pages/:slug", to: "legal_pages#show", as: :legal_page
