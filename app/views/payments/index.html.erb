@@ -77,6 +77,28 @@
         grid-template-columns: auto auto auto auto auto 1fr auto auto;
       }
     }
+    /* Modal date input — prevent iPad Safari overflow */
+    .modal-date-input {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+    .modal-date-input-wrapper {
+      min-width: 0;
+    }
+    @media (max-width: 1024px) {
+      .modal-date-input {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+      }
+      .modal-date-input-wrapper {
+        min-width: 0;
+        overflow: hidden;
+      }
+    }
     .payments-filter-grid select {
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -215,10 +237,10 @@
           </button>
         </div>
         <div class="px-6 py-4 space-y-4" data-payments-target="addModalBody">
-          <div>
+          <div class="modal-date-input-wrapper">
             <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
             <input type="date" name="payment_date" data-payments-target="modalDate"
-                   class="w-full rounded-lg border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2.5"
+                   class="modal-date-input w-full rounded-lg border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2.5"
                    data-action="keydown->payments#handleModalKeydown change->payments#onModalDateChange">
           </div>
           <div>
