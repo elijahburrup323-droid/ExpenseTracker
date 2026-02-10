@@ -44,7 +44,8 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 - Circular collapse/expand button on right edge of sidebar (absolute positioned, -right-3)
 - Bottom sidebar section: user profile button (name + avatar) — click to expand/collapse dropdown with Theme toggle, Settings link, Sign Out link
 - Top header bar showing "Hello {first name}", motivational quote, current date, and profile dropdown (upper-right corner with avatar, contains Toggle Theme, Settings, Sign Out — always visible, sticky z-30)
-- Stacked sticky headers: On the Payments page, the page toolbar (h1 + Add Payment button) is sticky top-14 z-20, stacking below the Hello DJ bar (sticky top-0 z-30) so both remain visible while scrolling
+- Stacked sticky headers: On the Payments page, the page toolbar (h1 + Add Payment button) is sticky top-14 z-20 with shadow-sm, stacking below the Hello bar (sticky top-0 z-30) so both remain visible while scrolling
+- Responsive filter grid: Payments filters use md:grid-cols-3 (tablet/iPad) and lg:grid-cols-6 (desktop). Date inputs min-width 150px, Account/Category dropdowns min-width 160px, Spending Type min-width 120px / max-width 180px with text truncation. Search row spans columns so Search button aligns under Reset on tablet.
 - Main content area shifts with sidebar via margin
 - Sidebar state + group collapse state persisted in localStorage
 - Dark/light theme toggle persisted in localStorage
@@ -131,7 +132,7 @@ API endpoints (all under /api/):
   /api/accounts ............... CRUD
   /api/payments ............... CRUD (with transactional balance updates)
   /api/income_frequency_masters  CRUD (admin-only)
-  /api/income_user_frequencies  index + update + bulk_update (use_flag toggle, "All" bulk toggle)
+  /api/income_user_frequencies  index + update (use_flag toggle per frequency)
   /api/income_recurrings ...... CRUD
   /api/income_entries ......... CRUD + POST /generate (with transactional balance updates on received_flag)
   /api/admin/users ........... index + update (admin toggle, admin-only)
@@ -155,7 +156,7 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 - **accounts_controller.js** — CRUD with type select, budget toggle, generate dummy data
 - **payments_controller.js** — CRUD with date/account/category/type filters, search, combination sum search, CSV export of filtered/sorted data, generate dummy data
 - **income_frequency_masters_controller.js** — CRUD with inline editing, active toggle, sort_order editing (admin-only)
-- **income_user_frequencies_controller.js** — use_flag toggle list with "All" bulk toggle (enables/disables all frequencies in one API call)
+- **income_user_frequencies_controller.js** — use_flag toggle list with "View All" filter toggle (OFF = show only enabled frequencies, ON = show all master frequencies; purely a view filter, no bulk API call)
 - **income_recurrings_controller.js** — CRUD with frequency/account selects, generate dummy data
 - **income_entries_controller.js** — CRUD with received toggle (opens edit on amount), auto-advance cursor between fields on change, Generate Data button
 - **admin_users_controller.js** — Admin user management with search, admin toggle (admin-only)
@@ -198,6 +199,7 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 - Tailwind is loaded via CDN with JIT — classes must exist in HTML for generation. Dynamic class toggling via JS uses classList.add/remove (not string interpolation).
 - With Turbo loaded, forms submit via fetch(). Use Promise.all([page.waitForURL(...), page.click(...)]) for Turbo navigation waits in tests.
 - Flash messages are positioned fixed top-right and auto-dismiss after 5s.
+- **.gdoc file reading** — Google Drive for Desktop .gdoc files are cloud shortcuts that cannot be read via standard file I/O. Use `read_gdoc.py` (Python script in project root) which looks up the doc ID from DriveFS's metadata_sqlite_db and fetches content via Google Docs API with OAuth. Requires one-time setup: gdoc_credentials.json from Google Cloud Console. .docx files are read via Node.js JSZip (extract word/document.xml, strip XML tags).
 
 ## Task Intake: "Lets Work" Workflow
 
