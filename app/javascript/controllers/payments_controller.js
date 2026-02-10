@@ -63,10 +63,18 @@ export default class extends Controller {
   // --- Default Date Range ---
 
   _setDefaultDateRange() {
-    // No default dates — show ALL payments on page load so nothing "disappears"
-    // Users can set date filters manually; Reset button restores current month
-    this._defaultStartDate = ""
-    this._defaultEndDate = ""
+    // Check URL params for pre-set date filters (e.g. from Dashboard "View Details" link)
+    const params = new URLSearchParams(window.location.search)
+    const urlStart = params.get("start_date")
+    const urlEnd = params.get("end_date")
+    if (urlStart || urlEnd) {
+      this._defaultStartDate = urlStart || ""
+      this._defaultEndDate = urlEnd || ""
+    } else {
+      // No default dates — show ALL payments on page load so nothing "disappears"
+      this._defaultStartDate = ""
+      this._defaultEndDate = ""
+    }
   }
 
   _formatDateValue(d) {
@@ -203,8 +211,9 @@ export default class extends Controller {
   }
 
   _applyDefaultDates() {
-    // Leave date fields empty on initial load — show all payments
-    // Dates are only set when user manually picks them or clicks Reset
+    // Apply URL-based date filters if present (e.g. from Dashboard "View Details")
+    if (this._defaultStartDate) this.filterStartDateTarget.value = this._defaultStartDate
+    if (this._defaultEndDate) this.filterEndDateTarget.value = this._defaultEndDate
   }
 
   // --- Filtering ---

@@ -4,8 +4,12 @@ class DashboardController < ApplicationController
   def index
     @accounts = current_user.accounts.includes(:account_type).ordered
 
-    # Card 1: Budget Overview — sum of balances for accounts with include_in_budget
+    # Card 1: Spending Overview (Tracking-Only mode)
+    # Since bills_master does not exist, all users are in tracking-only mode.
     @budget_total = @accounts.where(include_in_budget: true).sum(:balance)
+    @spent_mtd = current_user.payments
+                             .where(payment_date: Date.today.beginning_of_month..Date.today)
+                             .sum(:amount)
 
     # Card 2: Accounts — all accounts (passed as @accounts)
 

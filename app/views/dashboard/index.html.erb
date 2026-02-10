@@ -3,33 +3,31 @@
   <%# ===== 6-CARD GRID (3 x 2, equal size) ===== %>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-    <%# ===== CARD 1: Budget Overview ===== %>
+    <%# ===== CARD 1: Spending Overview (Tracking-Only Mode) ===== %>
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col">
-      <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">Budget Overview</h2>
+      <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">Spending Overview</h2>
       <div class="flex items-center space-x-4 flex-1">
-        <%# Donut chart SVG %>
-        <% budget_val = @budget_total.to_f %>
-        <% plan_val = 6300.0 %>
-        <% spent_val = [plan_val - budget_val, 0].max %>
-        <% spent_pct = plan_val > 0 ? ((spent_val / plan_val) * 100).clamp(0, 100) : 0 %>
-        <% remaining_pct = 100 - spent_pct %>
+        <%# Donut chart SVG — single-value ring for tracking-only mode %>
+        <% spent_val = @spent_mtd.to_f %>
         <div class="relative w-32 h-32 flex-shrink-0">
           <svg viewBox="0 0 36 36" class="w-full h-full">
             <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#e5e7eb" stroke-width="3" class="dark:opacity-30"/>
             <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#a855f7" stroke-width="3"
-                    stroke-dasharray="<%= spent_pct %> <%= remaining_pct %>" stroke-dashoffset="25" stroke-linecap="round"/>
-            <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#22c55e" stroke-width="3"
-                    stroke-dasharray="<%= remaining_pct %> <%= spent_pct %>" stroke-dashoffset="<%= 25 + spent_pct %>" stroke-linecap="round"/>
+                    stroke-dasharray="100 0" stroke-dashoffset="25" stroke-linecap="round"/>
           </svg>
           <div class="absolute inset-0 flex flex-col items-center justify-center">
-            <span class="text-sm font-bold text-gray-900 dark:text-white"><%= number_to_currency(budget_val, precision: 2) %></span>
-            <span class="text-xs text-gray-500 dark:text-gray-400">left</span>
+            <span class="text-xs text-gray-500 dark:text-gray-400">Spent</span>
+            <span class="text-sm font-bold text-gray-900 dark:text-white"><%= number_to_currency(spent_val, precision: 2) %></span>
           </div>
         </div>
         <div>
-          <p class="text-sm text-gray-600 dark:text-gray-400"><span class="font-semibold text-gray-800 dark:text-gray-200"><%= number_to_currency(spent_val, precision: 2) %></span> spent</p>
-          <p class="text-sm text-gray-500 dark:text-gray-400">of <%= number_to_currency(plan_val, precision: 2) %> plan</p>
-          <a href="#" class="text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium mt-2 inline-block">View Details &rsaquo;</a>
+          <p class="text-lg font-semibold text-gray-800 dark:text-gray-200"><%= number_to_currency(spent_val, precision: 2) %></p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">spent this month</p>
+          <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Month to date</p>
+          <%= link_to payments_path(start_date: Date.today.beginning_of_month.to_s, end_date: Date.today.to_s),
+                class: "text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium mt-2 inline-block" do %>
+            View Details &rsaquo;
+          <% end %>
         </div>
       </div>
     </div>
