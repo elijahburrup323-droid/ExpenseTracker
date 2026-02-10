@@ -101,3 +101,7 @@ if ActiveRecord::Base.connection.adapter_name == "PostgreSQL"
 end
 
 puts "Seeded #{IncomeFrequencyMaster.count} income frequency masters"
+
+# Seed Legal Pages (Privacy Policy, Terms of Service)
+load Rails.root.join("db/seeds/legal_pages.rb")
+puts "Seeded #{LegalPage.count} legal pages"

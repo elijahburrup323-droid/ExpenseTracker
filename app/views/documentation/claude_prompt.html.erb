@@ -88,6 +88,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 
 ### Admin / System Tables
 - **bug_reports** — screen_name, description, processed_date. Displayed on Documentation &gt; Release Notes, paginated by date (5 days per page).
+- **legal_pages** — slug (unique), title, content (HTML), published_at. Stores Privacy Policy, Terms of Service, etc. Accessible at /pages/:slug. Seeded via db/seeds/legal_pages.rb.
 
 ### Key Relationships
 - User has_many: spending_types, spending_categories, account_types, accounts, payments, income_user_frequencies, income_recurrings, income_entries
@@ -116,6 +117,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 /documentation/database-visualization
 /documentation/release-notes
 /documentation/claude-prompt
+/pages/:slug ........... Legal pages (privacy, terms) — no auth required
 
 API endpoints (all under /api/):
   /api/spending_types ......... CRUD

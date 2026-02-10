@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_10_040133) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_10_054231) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -152,6 +152,16 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_10_040133) do
     t.index ["frequency_master_id"], name: "index_income_user_frequencies_on_frequency_master_id"
     t.index ["user_id", "frequency_master_id"], name: "idx_income_user_freq_unique", unique: true
     t.index ["user_id"], name: "index_income_user_frequencies_on_user_id"
+  end
+
+  create_table "legal_pages", force: :cascade do |t|
+    t.string "slug"
+    t.string "title"
+    t.text "content"
+    t.datetime "published_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["slug"], name: "index_legal_pages_on_slug", unique: true
   end
 
   create_table "payments", force: :cascade do |t|

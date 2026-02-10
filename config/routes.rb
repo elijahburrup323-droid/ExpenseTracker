@@ -115,6 +115,9 @@ Rails.application.routes.draw do
   end
   get "documentation/claude-prompt", to: "documentation#claude_prompt", as: :documentation_claude_prompt
 
+  # Legal / static pages
+  get "pages/:slug", to: "legal_pages#show", as: :legal_page
+
   # Static pages
   root "home#index"
 

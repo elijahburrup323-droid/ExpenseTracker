@@ -1,0 +1,11 @@
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-8">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6"><%= @page.title %></h1>
+    <% if @page.published_at.present? %>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Last updated: <%= @page.published_at.strftime("%B %-d, %Y") %></p>
+    <% end %>
+    <div class="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+      <%= @page.content.html_safe %>
+    </div>
+  </div>
+</div>
