@@ -49,67 +49,90 @@
     </div>
   </div>
 
-  <%# Filter Bar — Responsive two-row grid for iPad, single-row on desktop %>
+  <%# Filter Bar — CSS Grid with explicit tablet/desktop breakpoints %>
+  <style>
+    .payments-filter-grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: 1fr;
+      align-items: end;
+    }
+    /* Tablet: <=1279px — 4-column, 2-row layout */
+    @media (min-width: 768px) and (max-width: 1279px) {
+      .payments-filter-grid {
+        grid-template-columns: 1fr 1fr 1fr auto;
+      }
+      .pf-start      { grid-column: 1; grid-row: 1; }
+      .pf-end        { grid-column: 2; grid-row: 1; }
+      .pf-account    { grid-column: 3; grid-row: 1; }
+      .pf-reset      { grid-column: 4; grid-row: 1; }
+      .pf-category   { grid-column: 1; grid-row: 2; }
+      .pf-type       { grid-column: 2; grid-row: 2; max-width: 220px; }
+      .pf-search     { grid-column: 3; grid-row: 2; }
+      .pf-search-btn { grid-column: 4; grid-row: 2; }
+    }
+    /* Desktop: >1279px — single row */
+    @media (min-width: 1280px) {
+      .payments-filter-grid {
+        grid-template-columns: auto auto auto auto auto 1fr auto auto;
+      }
+    }
+    .payments-filter-grid select {
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+  </style>
   <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4 mb-4 ring-1 ring-gray-200 dark:ring-gray-700">
-    <%# Filter row: tablet=3col (2 rows of 3), desktop=6col (1 row) %>
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 items-end">
-      <div class="min-w-0">
+    <div class="payments-filter-grid">
+      <%# Start Date %>
+      <div class="pf-start" style="min-width: 160px;">
         <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Start Date</label>
         <input type="date" data-payments-target="filterStartDate"
                class="w-full h-11 rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2"
-               style="min-width: 150px;"
                data-action="change->payments#applyFilters">
       </div>
-      <div class="min-w-0">
+      <%# End Date %>
+      <div class="pf-end" style="min-width: 160px;">
         <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">End Date</label>
         <input type="date" data-payments-target="filterEndDate"
                class="w-full h-11 rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2"
-               style="min-width: 150px;"
                data-action="change->payments#applyFilters">
       </div>
-      <div class="min-w-0">
+      <%# Account %>
+      <div class="pf-account" style="min-width: 170px;">
         <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Account</label>
         <select data-payments-target="filterAccount"
-                class="w-full h-11 rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2 truncate"
-                style="min-width: 160px;"
+                class="w-full h-11 rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2"
                 data-action="change->payments#applyFilters">
           <option value="">All Accounts</option>
         </select>
       </div>
-      <div class="min-w-0">
+      <%# Category %>
+      <div class="pf-category" style="min-width: 170px;">
         <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Category</label>
         <select data-payments-target="filterCategory"
-                class="w-full h-11 rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2 truncate"
-                style="min-width: 160px;"
+                class="w-full h-11 rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2"
                 data-action="change->payments#applyFilters">
           <option value="">All Categories</option>
         </select>
       </div>
-      <div class="min-w-0">
+      <%# Spending Type %>
+      <div class="pf-type" style="min-width: 120px;">
         <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Spending Type</label>
         <select data-payments-target="filterType"
-                class="w-full h-11 rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2 truncate"
-                style="min-width: 120px; max-width: 180px;"
+                class="w-full h-11 rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2"
                 data-action="change->payments#applyFilters">
           <option value="">All Spending Types</option>
         </select>
       </div>
-      <div class="min-w-0 flex flex-col justify-end">
-        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">&nbsp;</label>
-        <button type="button"
-                class="inline-flex items-center justify-center w-full h-11 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition"
-                data-action="click->payments#resetFilters">
-          Reset
-        </button>
-      </div>
-    </div>
-    <%# Search row: Search button aligns under Reset (same grid) %>
-    <div class="mt-3 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3 items-end">
-      <div class="md:col-span-2 lg:col-span-5">
+      <%# Search Input %>
+      <div class="pf-search">
         <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Search</label>
         <div class="relative">
-          <input type="text" placeholder="Search descriptions or amounts... Use =123.45 or (123.45) to find combinations" data-payments-target="filterSearch"
+          <input type="text" placeholder="Search descriptions or amounts..." data-payments-target="filterSearch"
                  class="w-full h-11 rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2 pr-8"
+                 title="Use =123.45 or (123.45) to find combinations"
                  data-action="keydown->payments#searchKeydown">
           <button type="button"
                   class="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
@@ -119,9 +142,22 @@
           </button>
         </div>
       </div>
-      <div class="min-w-0">
+      <%# Reset Button %>
+      <div class="pf-reset flex flex-col justify-end">
+        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">&nbsp;</label>
+        <button type="button"
+                class="inline-flex items-center justify-center w-full h-11 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition"
+                style="min-width: 100px;"
+                data-action="click->payments#resetFilters">
+          Reset
+        </button>
+      </div>
+      <%# Search Button %>
+      <div class="pf-search-btn flex flex-col justify-end">
+        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">&nbsp;</label>
         <button type="button"
                 class="inline-flex items-center justify-center w-full h-11 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition"
+                style="min-width: 100px;"
                 data-action="click->payments#applyFilters">
           Search
         </button>
