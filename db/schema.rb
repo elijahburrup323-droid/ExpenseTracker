@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_10_033328) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_10_040133) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -228,6 +228,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_10_033328) do
     t.datetime "verified_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "send_count", default: 0, null: false
+    t.datetime "send_count_reset_at"
+    t.integer "verification_attempts", default: 0, null: false
+    t.datetime "locked_until"
     t.index ["user_id", "email"], name: "index_user_emails_on_user_id_and_email", unique: true
     t.index ["user_id"], name: "index_user_emails_on_user_id"
   end
@@ -240,6 +244,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_10_033328) do
     t.datetime "verified_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "send_count", default: 0, null: false
+    t.datetime "send_count_reset_at"
+    t.integer "verification_attempts", default: 0, null: false
+    t.datetime "locked_until"
     t.index ["user_id", "phone_number"], name: "index_user_phones_on_user_id_and_phone_number", unique: true
     t.index ["user_id"], name: "index_user_phones_on_user_id"
   end

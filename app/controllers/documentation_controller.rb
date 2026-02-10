@@ -10,7 +10,7 @@ class DocumentationController < ApplicationController
   def database_visualization
   end
 
-  def bug_reports
+  def release_notes
   end
 
   def claude_prompt

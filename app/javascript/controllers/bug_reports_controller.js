@@ -30,7 +30,7 @@ export default class extends Controller {
 
   render() {
     if (this.reports.length === 0) {
-      this.listTarget.innerHTML = `<p class="text-sm text-gray-400 dark:text-gray-500 py-4 text-center">No bug reports yet.</p>`
+      this.listTarget.innerHTML = `<p class="text-sm text-gray-400 dark:text-gray-500 py-4 text-center">No release notes yet.</p>`
       this.showMoreBtnTarget.classList.add("hidden")
       return
     }

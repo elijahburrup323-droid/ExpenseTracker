@@ -1,4 +1,6 @@
 class UserEmail < ApplicationRecord
+  include RateLimitedVerification
+
   belongs_to :user
 
   validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }

@@ -1,8 +1,12 @@
 class UserPhone < ApplicationRecord
+  include RateLimitedVerification
+
   belongs_to :user
 
   validates :phone_number, presence: true
   validates :phone_number, uniqueness: { scope: :user_id }
+
+  before_validation :normalize_phone_number
 
   scope :verified, -> { where.not(verified_at: nil) }
   scope :unverified, -> { where(verified_at: nil) }
@@ -24,5 +28,13 @@ class UserPhone < ApplicationRecord
     return { success: false, error: "Code expired" } if verification_sent_at < 10.minutes.ago
     update!(verified_at: Time.current, verification_code: nil)
     { success: true }
+  end
+
+  private
+
+  def normalize_phone_number
+    return if phone_number.blank?
+    parsed = Phonelib.parse(phone_number, "US")
+    self.phone_number = parsed.e164 if parsed.valid?
   end
 end

@@ -108,7 +108,7 @@ Rails.application.routes.draw do
   get "documentation", to: "documentation#index", as: :documentation
   get "documentation/database-schema", to: "documentation#database_schema", as: :documentation_database_schema
   get "documentation/database-visualization", to: "documentation#database_visualization", as: :documentation_database_visualization
-  get "documentation/bug-reports", to: "documentation#bug_reports", as: :documentation_bug_reports
+  get "documentation/release-notes", to: "documentation#release_notes", as: :documentation_release_notes
   # Bug Reports API (admin only)
   namespace :api do
     resources :bug_reports, only: [:index, :create]

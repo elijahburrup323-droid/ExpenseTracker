@@ -1,3 +1,5 @@
+require "ostruct"
+
 module TwilioService
   class << self
     def client

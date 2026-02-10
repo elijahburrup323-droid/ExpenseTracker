@@ -63,30 +63,42 @@ test.describe("Multi Screen Updates", () => {
     await page.goto(`${LOCAL_BASE}/dashboard`);
     await page.waitForLoadState("networkidle");
 
-    // Profile dropdown button should show user's name
-    const profileBtn = page.locator('[data-controller="dropdown"] button').first();
+    // Profile dropdown button in top-right header area
+    const headerDropdown = page.locator('main [data-controller="dropdown"]');
+    const profileBtn = headerDropdown.locator("button").first();
     await expect(profileBtn).toBeVisible();
 
     // Click to open dropdown
     await profileBtn.click();
     await page.waitForTimeout(300);
 
-    // Dropdown should show Theme, Settings, Sign Out
-    await expect(page.locator('[data-dropdown-target="menu"]').first()).toBeVisible();
-    await expect(page.locator('text=Toggle Theme').first()).toBeVisible();
-    await expect(page.locator('text=Settings').first()).toBeVisible();
-    await expect(page.locator('text=Sign Out').first()).toBeVisible();
+    // Dropdown should show Toggle Theme, Settings, Sign Out
+    const menu = headerDropdown.locator('[data-dropdown-target="menu"]');
+    await expect(menu).toBeVisible();
+    await expect(menu.locator('text=Toggle Theme')).toBeVisible();
+    await expect(menu.locator('text=Settings')).toBeVisible();
+    await expect(menu.locator('text=Sign Out')).toBeVisible();
   });
 
   test("Bottom sidebar has profile items", async ({ page }) => {
     await page.goto(`${LOCAL_BASE}/dashboard`);
     await page.waitForLoadState("networkidle");
 
-    // Sidebar should have Theme, Settings, Sign Out at bottom
+    // Sidebar profile is a click-to-expand dropdown
     const sidebar = page.locator("aside");
-    await expect(sidebar.locator('text=Theme').first()).toBeVisible();
-    await expect(sidebar.locator('text=Settings').first()).toBeVisible();
-    await expect(sidebar.locator('text=Sign Out').first()).toBeVisible();
+    const sidebarDropdown = sidebar.locator('[data-controller="dropdown"]');
+    await expect(sidebarDropdown).toBeVisible();
+
+    // Click the profile button to expand
+    await sidebarDropdown.locator("button").first().click();
+    await page.waitForTimeout(300);
+
+    // Should now show Theme, Settings, Sign Out
+    const menu = sidebarDropdown.locator('[data-dropdown-target="menu"]');
+    await expect(menu).toBeVisible();
+    await expect(menu.locator('text=Theme')).toBeVisible();
+    await expect(menu.locator('text=Settings')).toBeVisible();
+    await expect(menu.locator('text=Sign Out')).toBeVisible();
   });
 
   test("Documentation pages load", async ({ page }) => {
@@ -96,7 +108,7 @@ test.describe("Multi Screen Updates", () => {
     // Should have 4 documentation cards
     await expect(page.locator("text=Database Schema")).toBeVisible();
     await expect(page.locator("text=Database Visualization")).toBeVisible();
-    await expect(page.locator("text=Bug Reports Log")).toBeVisible();
+    await expect(page.locator("text=Release Notes")).toBeVisible();
     await expect(page.locator("text=Claude.ai Prompt")).toBeVisible();
 
     // Visit database visualization
@@ -107,11 +119,11 @@ test.describe("Multi Screen Updates", () => {
     await page.waitForLoadState("networkidle");
     await expect(page.getByRole("heading", { name: "Database Visualization" })).toBeVisible();
 
-    // Visit bug reports
-    await page.goto(`${LOCAL_BASE}/documentation/bug-reports`);
+    // Visit release notes
+    await page.goto(`${LOCAL_BASE}/documentation/release-notes`);
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(1500);
-    await expect(page.getByRole("heading", { name: "Bug Reports Log" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Release Notes" })).toBeVisible();
   });
 
   test("Settings - Two-factor toggle is in Phone Settings section", async ({ page }) => {

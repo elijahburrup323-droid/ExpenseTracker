@@ -10,7 +10,8 @@ module Api
       phone = current_user.user_phones.build(phone_number: params[:phone_number]&.strip)
       if phone.save
         phone.generate_verification_code!
-        # In production, send SMS via TwilioService. For now, just save the code.
+        phone.record_send!
+        TwilioService.send_verification_code(phone.phone_number, phone.verification_code)
         render json: { id: phone.id, phone_number: phone.phone_number, verified: false, message: "Verification code sent to #{phone.phone_number}" }, status: :created
       else
         render json: { errors: phone.errors.full_messages }, status: :unprocessable_entity
@@ -19,17 +20,27 @@ module Api
 
     def verify
       phone = current_user.user_phones.find(params[:id])
+      unless phone.can_verify?
+        return render json: { errors: ["Too many failed attempts. Try again in 30 minutes."] }, status: :too_many_requests
+      end
       result = phone.verify!(params[:code])
       if result[:success]
+        phone.clear_verification_attempts!
         render json: { id: phone.id, phone_number: phone.phone_number, verified: true }
       else
+        phone.record_failed_verification!
         render json: { errors: [result[:error]] }, status: :unprocessable_entity
       end
     end
 
     def resend_code
       phone = current_user.user_phones.find(params[:id])
+      unless phone.can_send_code?
+        return render json: { errors: ["Too many code requests. Try again later."] }, status: :too_many_requests
+      end
       phone.generate_verification_code!
+      phone.record_send!
+      TwilioService.send_verification_code(phone.phone_number, phone.verification_code)
       render json: { message: "Verification code resent to #{phone.phone_number}" }
     end
 

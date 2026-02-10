@@ -42,7 +42,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 - Collapsible left sidebar (w-56 expanded, w-16 collapsed) with gradient purple background
 - Sidebar groups: Accounts (Account Types), Deposits (Frequencies, Recurring Deposits), Payments (Categories, Spending Types), Admin (DBU, Users, Documentation, Frequency Masters — admin only, always at bottom). Sub-menus sorted alphabetically within each group.
 - Circular collapse/expand button on right edge of sidebar (absolute positioned, -right-3)
-- Bottom sidebar section: user profile info (name), Theme toggle, Settings link, Sign Out link
+- Bottom sidebar section: user profile button (name + avatar) — click to expand/collapse dropdown with Theme toggle, Settings link, Sign Out link
 - Top header bar showing "Hello {first name}", motivational quote, current date, and profile dropdown (upper-right corner with avatar, contains Toggle Theme, Settings, Sign Out — always visible, sticky z-30)
 - Stacked sticky headers: On the Payments page, the page toolbar (h1 + Add Payment button) is sticky top-14 z-20, stacking below the Hello DJ bar (sticky top-0 z-30) so both remain visible while scrolling
 - Main content area shifts with sidebar via margin
@@ -87,7 +87,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 - **income_entries** — user-scoped income transactions. Auto-generated from due recurrings via IncomeEntry.generate_due_entries_for(user). Has received_flag toggle. When received_flag is toggled ON, account balance is adjusted (same transactional pattern as payments). Income entries with received_flag=true for budget accounts are summed into Dashboard Card 4 as "Income".
 
 ### Admin / System Tables
-- **bug_reports** — screen_name, description, processed_date. Displayed on Documentation &gt; Bug Reports Log, paginated by date (5 days per page).
+- **bug_reports** — screen_name, description, processed_date. Displayed on Documentation &gt; Release Notes, paginated by date (5 days per page).
 
 ### Key Relationships
 - User has_many: spending_types, spending_categories, account_types, accounts, payments, income_user_frequencies, income_recurrings, income_entries
@@ -114,7 +114,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 /documentation ......... Documentation index (admin-only sidebar link)
 /documentation/database-schema
 /documentation/database-visualization
-/documentation/bug-reports
+/documentation/release-notes
 /documentation/claude-prompt
 
 API endpoints (all under /api/):
@@ -152,7 +152,7 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 - **income_entries_controller.js** — CRUD with received toggle (opens edit on amount), auto-advance cursor between fields on change, Generate Data button
 - **admin_users_controller.js** — Admin user management with search, admin toggle (admin-only)
 - **quotes_controller.js** — Rotating motivational budget quotes in header bar (100 quotes, cycles on page load, always visible)
-- **bug_reports_controller.js** — Paginated bug reports log grouped by date with "Show More" pagination (5 days per page)
+- **bug_reports_controller.js** — Paginated release notes grouped by date with "Show More" pagination (5 days per page)
 - **dbu_controller.js** — Database Utility: browse/edit any table via dbu_table_catalogs, search, user filter, record navigation (Prev/Next), dirty state protection, save/delete (admin-only)
 
 ## Seeding & Initialization
@@ -225,7 +225,8 @@ All work items are managed via Google Drive at **G:\My Drive\ExpenseTracker** us
 - Do not ask "does this look good?" mid-task. Complete the full workflow, then present results.
 
 ## Pre-Commit Checklist
-Before each git commit, update these two documentation files:
+Before each git commit, update these three items:
 1. app/views/documentation/database_schema.html.erb — reflect any schema changes
-2. app/views/documentation/claude_prompt.html.erb — reflect any architectural/feature changes</div>
+2. app/views/documentation/claude_prompt.html.erb — reflect any architectural/feature changes
+3. Release Notes (bug_reports table) — add entries for features built and bugs fixed, with today's date as processed_date</div>
 </div>
