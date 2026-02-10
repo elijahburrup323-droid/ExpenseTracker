@@ -78,6 +78,7 @@ export default class extends Controller {
 
   _renderCard1(data) {
     const spent = this._currency(data.spent)
+    const paymentsUrl = data.payments_url || "/expensetracker/payments"
     this.card1ContentTarget.innerHTML = `
       <div class="flex items-center space-x-4 flex-1">
         <div class="relative w-32 h-32 flex-shrink-0">
@@ -94,6 +95,10 @@ export default class extends Controller {
         <div>
           <p class="text-lg font-semibold text-gray-800 dark:text-gray-200">${spent}</p>
           <p class="text-sm text-gray-500 dark:text-gray-400">spent this month</p>
+          <a href="${paymentsUrl}?start_date=${this.currentYear}-${String(this.currentMonth).padStart(2,'0')}-01&end_date=${this.currentYear}-${String(this.currentMonth).padStart(2,'0')}-${new Date(this.currentYear, this.currentMonth, 0).getDate()}"
+             class="text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium mt-2 inline-block">
+            View Details &rsaquo;
+          </a>
         </div>
       </div>`
   }

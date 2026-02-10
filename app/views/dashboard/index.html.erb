@@ -22,9 +22,9 @@
         </div>
       </div>
       <div data-dashboard-target="card1Content">
-        <% spent_val = @spent_mtd.to_f %>
         <div class="flex items-center space-x-4 flex-1">
           <%# Donut chart SVG — single-value ring for tracking-only mode %>
+          <% spent_val = @spent_mtd.to_f %>
           <div class="relative w-32 h-32 flex-shrink-0">
             <svg viewBox="0 0 36 36" class="w-full h-full">
               <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#e5e7eb" stroke-width="3" class="dark:opacity-30"/>
@@ -39,6 +39,10 @@
           <div>
             <p class="text-lg font-semibold text-gray-800 dark:text-gray-200"><%= number_to_currency(spent_val, precision: 2) %></p>
             <p class="text-sm text-gray-500 dark:text-gray-400">spent this month</p>
+            <%= link_to payments_path(start_date: Date.today.beginning_of_month.to_s, end_date: Date.today.to_s),
+                  class: "text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium mt-2 inline-block" do %>
+              View Details &rsaquo;
+            <% end %>
           </div>
         </div>
       </div>
