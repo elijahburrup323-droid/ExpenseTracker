@@ -27,7 +27,8 @@ export default class extends Controller {
     this.expandedTables = new Set()
     this.schemaFilter = ""
 
-    this.fetchSchema()
+    // Default: load Record Browser data
+    this.fetchInitialData()
   }
 
   // ==================== TAB SWITCHING ====================
@@ -37,6 +38,8 @@ export default class extends Controller {
     this.tabRecordsTarget.className = "whitespace-nowrap border-b-2 border-transparent py-3 px-1 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300"
     this.schemaPanelTarget.classList.remove("hidden")
     this.recordsPanelTarget.classList.add("hidden")
+    // Lazy-load schema data
+    if (!this.schemaData) this.fetchSchema()
   }
 
   switchToRecords() {
@@ -44,8 +47,6 @@ export default class extends Controller {
     this.tabSchemaTarget.className = "whitespace-nowrap border-b-2 border-transparent py-3 px-1 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300"
     this.recordsPanelTarget.classList.remove("hidden")
     this.schemaPanelTarget.classList.add("hidden")
-    // Lazy-load record browser data
-    if (this.allTables.length === 0) this.fetchInitialData()
   }
 
   // ==================== SCHEMA INSPECTOR ====================

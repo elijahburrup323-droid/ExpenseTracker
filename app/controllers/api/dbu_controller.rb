@@ -117,8 +117,23 @@ module Api
 
     # GET /api/dbu/tables
     def tables
-      catalogs = DbuTableCatalog.active.ordered
-      render json: catalogs.map { |c| { id: c.id, table_name: c.table_name, table_description: c.table_description } }
+      conn = ActiveRecord::Base.connection
+      sql = <<-SQL
+        SELECT table_name
+        FROM information_schema.tables
+        WHERE table_schema = 'public'
+          AND table_type = 'BASE TABLE'
+        ORDER BY table_name
+      SQL
+      result = conn.exec_query(sql)
+
+      # Merge descriptions from catalog where available
+      catalog_map = DbuTableCatalog.active.pluck(:table_name, :table_description).to_h
+
+      render json: result.rows.map { |r|
+        tn = r[0]
+        { table_name: tn, table_description: catalog_map[tn] || tn.tr("_", " ").capitalize }
+      }
     end
 
     # GET /api/dbu/users
@@ -130,10 +145,10 @@ module Api
     # GET /api/dbu/records?table=accounts&user_id=current|all|<id>
     def records
       conn = ActiveRecord::Base.connection
-      table = conn.quote_table_name(@catalog.table_name)
-      pk_cols = conn.primary_keys(@catalog.table_name)
+      table = conn.quote_table_name(@table_name)
+      pk_cols = conn.primary_keys(@table_name)
       pk_cols = ["id"] if pk_cols.empty?
-      columns = conn.columns(@catalog.table_name)
+      columns = conn.columns(@table_name)
       has_user_id = columns.any? { |c| c.name == "user_id" }
 
       conditions = []
@@ -169,8 +184,8 @@ module Api
     # GET /api/dbu/records/:record_id?table=accounts
     def show_record
       conn = ActiveRecord::Base.connection
-      table = conn.quote_table_name(@catalog.table_name)
-      pk_cols = conn.primary_keys(@catalog.table_name)
+      table = conn.quote_table_name(@table_name)
+      pk_cols = conn.primary_keys(@table_name)
       pk_cols = ["id"] if pk_cols.empty?
 
       record_id = params[:record_id]
@@ -190,10 +205,10 @@ module Api
     # PUT /api/dbu/records/:record_id?table=accounts
     def update_record
       conn = ActiveRecord::Base.connection
-      table = conn.quote_table_name(@catalog.table_name)
-      pk_cols = conn.primary_keys(@catalog.table_name)
+      table = conn.quote_table_name(@table_name)
+      pk_cols = conn.primary_keys(@table_name)
       pk_cols = ["id"] if pk_cols.empty?
-      columns = conn.columns(@catalog.table_name)
+      columns = conn.columns(@table_name)
       column_names = columns.map(&:name)
 
       record_id = params[:record_id]
@@ -224,10 +239,10 @@ module Api
     # DELETE /api/dbu/records/:record_id?table=accounts
     def destroy_record
       conn = ActiveRecord::Base.connection
-      table = conn.quote_table_name(@catalog.table_name)
-      pk_cols = conn.primary_keys(@catalog.table_name)
+      table = conn.quote_table_name(@table_name)
+      pk_cols = conn.primary_keys(@table_name)
       pk_cols = ["id"] if pk_cols.empty?
-      columns = conn.columns(@catalog.table_name)
+      columns = conn.columns(@table_name)
       has_deleted_at = columns.any? { |c| c.name == "deleted_at" }
 
       record_id = params[:record_id]
@@ -252,9 +267,16 @@ module Api
     end
 
     def load_catalog_entry
-      @catalog = DbuTableCatalog.active.find_by(table_name: params[:table])
-      unless @catalog
-        render json: { error: "Table not found in catalog" }, status: :not_found
+      table_name = params[:table].to_s
+      conn = ActiveRecord::Base.connection
+      exists = conn.exec_query(
+        "SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = #{conn.quote(table_name)} LIMIT 1"
+      ).rows.any?
+
+      if exists
+        @table_name = table_name
+      else
+        render json: { error: "Table not found" }, status: :not_found
       end
     end
   end

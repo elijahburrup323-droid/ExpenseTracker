@@ -15,21 +15,21 @@
   <%# Tab Bar %>
   <div class="mb-4 border-b border-gray-200 dark:border-gray-700">
     <nav class="-mb-px flex space-x-6" aria-label="Tabs">
-      <button type="button" data-dbu-target="tabSchema"
-              class="whitespace-nowrap border-b-2 border-brand-600 py-3 px-1 text-sm font-medium text-brand-600 dark:text-brand-400"
-              data-action="click->dbu#switchToSchema">
-        Schema Inspector
-      </button>
       <button type="button" data-dbu-target="tabRecords"
-              class="whitespace-nowrap border-b-2 border-transparent py-3 px-1 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300"
+              class="whitespace-nowrap border-b-2 border-brand-600 py-3 px-1 text-sm font-medium text-brand-600 dark:text-brand-400"
               data-action="click->dbu#switchToRecords">
         Record Browser
+      </button>
+      <button type="button" data-dbu-target="tabSchema"
+              class="whitespace-nowrap border-b-2 border-transparent py-3 px-1 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300"
+              data-action="click->dbu#switchToSchema">
+        Schema Inspector
       </button>
     </nav>
   </div>
 
   <%# ========== SCHEMA INSPECTOR TAB ========== %>
-  <div data-dbu-target="schemaPanel">
+  <div data-dbu-target="schemaPanel" class="hidden">
     <%# Schema toolbar %>
     <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4 mb-4 ring-1 ring-gray-200 dark:ring-gray-700">
       <div class="flex flex-wrap gap-3 items-center">
@@ -86,7 +86,7 @@
   </div>
 
   <%# ========== RECORD BROWSER TAB ========== %>
-  <div data-dbu-target="recordsPanel" class="hidden">
+  <div data-dbu-target="recordsPanel">
     <%# Filter Row %>
     <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4 mb-4 ring-1 ring-gray-200 dark:ring-gray-700">
       <div class="flex flex-wrap gap-3 items-end">
