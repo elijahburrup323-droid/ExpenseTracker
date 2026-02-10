@@ -352,11 +352,14 @@ export default class extends Controller {
     if (this.state !== "idle") { this.state = "idle"; this.editingId = null }
     this.state = "adding"
     this.renderTable()
-    const dateInput = this.tableBodyTarget.querySelector("input[name='payment_date']")
-    if (dateInput) {
-      dateInput.focus()
-      try { dateInput.showPicker() } catch (e) { /* browser may not support showPicker */ }
-    }
+    // Defer focus for Safari compatibility — Safari needs the DOM to settle before accepting focus
+    setTimeout(() => {
+      const dateInput = this.tableBodyTarget.querySelector("input[name='payment_date']")
+      if (dateInput) {
+        dateInput.focus()
+        try { dateInput.showPicker() } catch (e) { /* browser may not support showPicker */ }
+      }
+    }, 50)
   }
 
   cancelAdding() {
@@ -981,16 +984,22 @@ export default class extends Controller {
 
   onAddDateChange() {
     if (this.state !== "adding") return
-    const accSelect = this.tableBodyTarget.querySelector("select[name='account_id']")
-    if (accSelect) accSelect.focus()
+    // Defer focus for Safari — native date picker needs time to fully close
+    setTimeout(() => {
+      const accSelect = this.tableBodyTarget.querySelector("select[name='account_id']")
+      if (accSelect) accSelect.focus()
+    }, 50)
   }
 
   onAddAccountChange(event) {
     if (this.state !== "adding") return
     const val = event.target.value
     if (val && val !== "" && val !== "new") {
-      const catSelect = this.tableBodyTarget.querySelector("select[name='spending_category_id']")
-      if (catSelect) catSelect.focus()
+      // Defer focus for Safari — native select dropdown needs time to fully close
+      setTimeout(() => {
+        const catSelect = this.tableBodyTarget.querySelector("select[name='spending_category_id']")
+        if (catSelect) catSelect.focus()
+      }, 50)
     }
   }
 
@@ -1005,9 +1014,11 @@ export default class extends Controller {
         const typeSelect = this.tableBodyTarget.querySelector("select[name='spending_type_override_id']")
         if (typeSelect) typeSelect.value = String(cat.spending_type_id)
       }
-      // Move cursor to description field
-      const descInput = this.tableBodyTarget.querySelector("input[name='description']")
-      if (descInput) descInput.focus()
+      // Defer focus for Safari — native select dropdown needs time to fully close
+      setTimeout(() => {
+        const descInput = this.tableBodyTarget.querySelector("input[name='description']")
+        if (descInput) descInput.focus()
+      }, 50)
     }
 
     const autoTypeEl = this.element.querySelector("[data-payments-target='autoType']")
