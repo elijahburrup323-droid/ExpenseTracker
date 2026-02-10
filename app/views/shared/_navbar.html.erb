@@ -27,16 +27,6 @@
     <% end %>
   </div>
 
-  <%# Collapse/Expand toggle — circular button on right edge of sidebar %>
-  <button type="button"
-          class="hidden md:flex absolute top-16 -right-3 z-50 items-center justify-center w-6 h-6 rounded-full bg-brand-700 border-2 border-white/30 text-white shadow-md hover:bg-brand-800 hover:border-white/50 transition"
-          data-action="click->sidebar#toggle"
-          title="Toggle sidebar">
-    <svg class="h-3.5 w-3.5 transition-transform duration-300" data-sidebar-target="toggleIcon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
-    </svg>
-  </button>
-
   <%# Navigation links %>
   <nav class="flex-1 overflow-y-auto py-3 px-2 space-y-1">
     <%
@@ -135,16 +125,28 @@
 
   <%# Bottom profile section — click name to expand/collapse %>
   <div class="border-t border-white/20 px-2 py-3" data-controller="dropdown">
-    <%# User name button — toggles the menu %>
-    <button type="button"
-            class="w-full flex items-center space-x-3 px-3 py-1.5 text-white/80 hover:bg-white/10 rounded-lg transition"
-            data-action="click->dropdown#toggle">
-      <div class="h-6 w-6 rounded-full bg-white/20 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-        <%= current_user.first_name&.first&.upcase || current_user.email.first.upcase %>
-      </div>
-      <span data-sidebar-label class="text-sm font-medium truncate"><%= current_user.first_name || current_user.email %></span>
-      <svg class="h-4 w-4 text-white/50 ml-auto flex-shrink-0" data-sidebar-label fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>
-    </button>
+    <%# User name + collapse toggle row %>
+    <div class="flex items-center">
+      <%# User name button — toggles the dropdown menu %>
+      <button type="button"
+              class="flex-1 flex items-center space-x-3 px-3 py-1.5 text-white/80 hover:bg-white/10 rounded-lg transition min-w-0"
+              data-action="click->dropdown#toggle">
+        <div class="h-6 w-6 rounded-full bg-white/20 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+          <%= current_user.first_name&.first&.upcase || current_user.email.first.upcase %>
+        </div>
+        <span data-sidebar-label class="text-sm font-medium truncate"><%= current_user.first_name || current_user.email %></span>
+        <svg class="h-4 w-4 text-white/50 ml-auto flex-shrink-0" data-sidebar-label fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>
+      </button>
+      <%# Collapse/Expand sidebar toggle — next to profile name %>
+      <button type="button"
+              class="hidden md:flex items-center justify-center w-7 h-7 rounded-full bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition ml-1 flex-shrink-0"
+              data-action="click->sidebar#toggle"
+              title="Toggle sidebar">
+        <svg class="h-3.5 w-3.5 transition-transform duration-300" data-sidebar-target="toggleIcon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+    </div>
     <%# Collapsible menu items %>
     <div class="hidden mt-1 space-y-1" data-dropdown-target="menu">
       <%# Theme toggle %>

@@ -41,7 +41,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 ### Layout Structure
 - Collapsible left sidebar (w-56 expanded, w-16 collapsed) with gradient purple background
 - Sidebar groups: Accounts (Account Types), Deposits (Frequencies, Recurring Deposits), Payments (Categories, Spending Types), Admin (DBU, Users, Documentation, Frequency Masters — admin only, always at bottom). Sub-menus sorted alphabetically within each group.
-- Circular collapse/expand button on right edge of sidebar (absolute positioned, -right-3)
+- Collapse/expand toggle button at bottom of sidebar, next to profile name (circular, bg-white/10)
 - Bottom sidebar section: user profile button (name + avatar) — click to expand/collapse dropdown with Theme toggle, Settings link, Sign Out link
 - Top header bar showing "Hello {first name}", motivational quote, current date, and profile dropdown (upper-right corner with avatar, contains Toggle Theme, Settings, Sign Out — always visible, sticky z-30)
 - Stacked sticky headers: On the Payments page, the page toolbar (h1 + Add Payment button) is sticky top-14 z-20 with shadow-sm, stacking below the Hello bar (sticky top-0 z-30) so both remain visible while scrolling
