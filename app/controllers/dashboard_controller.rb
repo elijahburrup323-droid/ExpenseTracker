@@ -15,7 +15,7 @@ class DashboardController < ApplicationController
 
     # Card 3: Net Worth — sum of all account balances + historical snapshots
     @net_worth = @accounts.sum(:balance)
-    @net_worth_snapshots = current_user.net_worth_snapshots.recent(6).order(snapshot_date: :asc).to_a
+    @net_worth_snapshots = current_user.net_worth_snapshots.recent(6).to_a.sort_by(&:snapshot_date)
     if @net_worth_snapshots.size >= 2
       prev_amount = @net_worth_snapshots[-2].amount
       @net_worth_change = @net_worth - prev_amount

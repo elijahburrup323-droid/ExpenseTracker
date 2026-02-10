@@ -83,6 +83,10 @@ Rails.application.routes.draw do
         post :populate
       end
     end
+    # Dashboard API
+    scope :dashboard, controller: "dashboard", as: :dashboard do
+      get "card_data", action: :card_data
+    end
   end
 
   # Admin

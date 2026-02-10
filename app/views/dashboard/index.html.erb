@@ -1,40 +1,55 @@
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
+     data-controller="dashboard"
+     data-dashboard-api-url-value="<%= api_dashboard_card_data_path %>"
+     data-dashboard-month-value="<%= Date.today.month %>"
+     data-dashboard-year-value="<%= Date.today.year %>">
 
   <%# ===== 6-CARD GRID (3 x 2, equal size) ===== %>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
     <%# ===== CARD 1: Spending Overview (Tracking-Only Mode) ===== %>
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col">
-      <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">Spending Overview</h2>
-      <div class="flex items-center space-x-4 flex-1">
-        <%# Donut chart SVG — single-value ring for tracking-only mode %>
-        <% spent_val = @spent_mtd.to_f %>
-        <div class="relative w-32 h-32 flex-shrink-0">
-          <svg viewBox="0 0 36 36" class="w-full h-full">
-            <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#e5e7eb" stroke-width="3" class="dark:opacity-30"/>
-            <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#a855f7" stroke-width="3"
-                    stroke-dasharray="100 0" stroke-dashoffset="25" stroke-linecap="round"/>
-          </svg>
-          <div class="absolute inset-0 flex flex-col items-center justify-center">
-            <span class="text-xs text-gray-500 dark:text-gray-400">Spent</span>
-            <span class="text-sm font-bold text-gray-900 dark:text-white"><%= number_to_currency(spent_val, precision: 2) %></span>
-          </div>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Spending Overview</h2>
+        <div class="flex items-center space-x-2">
+          <button type="button" data-action="click->dashboard#prevMonth" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <span class="text-xs text-gray-500 dark:text-gray-400 min-w-[5.5rem] text-center" data-dashboard-target="monthLabel"><%= Date.today.strftime("%B %Y") %></span>
+          <button type="button" data-action="click->dashboard#nextMonth" data-dashboard-target="nextBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </button>
         </div>
-        <div>
-          <p class="text-lg font-semibold text-gray-800 dark:text-gray-200"><%= number_to_currency(spent_val, precision: 2) %></p>
-          <p class="text-sm text-gray-500 dark:text-gray-400">spent this month</p>
-          <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Month to date</p>
-          <%= link_to payments_path(start_date: Date.today.beginning_of_month.to_s, end_date: Date.today.to_s),
-                class: "text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium mt-2 inline-block" do %>
-            View Details &rsaquo;
-          <% end %>
+      </div>
+      <div data-dashboard-target="card1Content">
+        <% spent_val = @spent_mtd.to_f %>
+        <div class="flex items-center space-x-4 flex-1">
+          <%# Donut chart SVG — single-value ring for tracking-only mode %>
+          <div class="relative w-32 h-32 flex-shrink-0">
+            <svg viewBox="0 0 36 36" class="w-full h-full">
+              <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#e5e7eb" stroke-width="3" class="dark:opacity-30"/>
+              <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#a855f7" stroke-width="3"
+                      stroke-dasharray="100 0" stroke-dashoffset="25" stroke-linecap="round"/>
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <span class="text-xs text-gray-500 dark:text-gray-400">Spent</span>
+              <span class="text-sm font-bold text-gray-900 dark:text-white"><%= number_to_currency(spent_val, precision: 2) %></span>
+            </div>
+          </div>
+          <div>
+            <p class="text-lg font-semibold text-gray-800 dark:text-gray-200"><%= number_to_currency(spent_val, precision: 2) %></p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">spent this month</p>
+          </div>
         </div>
       </div>
     </div>
 
     <%# ===== CARD 2: Accounts ===== %>
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col">
-      <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">Accounts</h2>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Accounts</h2>
+        <span class="text-sm font-semibold text-gray-900 dark:text-white">Total: <%= number_to_currency(@accounts.sum(:balance)) %></span>
+      </div>
       <ul class="space-y-3 flex-1">
         <% color_cycle = %w[blue green purple amber sky red] %>
         <% @accounts.each_with_index do |account, i| %>
@@ -96,7 +111,7 @@
           <span><%= snapshots.first.snapshot_date.strftime("%b %Y") %></span>
         </div>
       <% else %>
-        <%# Multi-month line chart %>
+        <%# Multi-month line chart — chronological left to right %>
         <%
           amounts = snapshots.map { |s| s.amount.to_f }
           min_val = amounts.min
@@ -168,9 +183,17 @@
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Income & Spending</h2>
-        <span class="text-xs text-gray-500 dark:text-gray-400"><%= Date.today.strftime("%B %Y") %></span>
+        <div class="flex items-center space-x-2">
+          <button type="button" data-action="click->dashboard#prevMonth" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <span class="text-xs text-gray-500 dark:text-gray-400 min-w-[5.5rem] text-center" data-dashboard-target="monthLabel"><%= Date.today.strftime("%B %Y") %></span>
+          <button type="button" data-action="click->dashboard#nextMonth" data-dashboard-target="nextBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
       </div>
-      <div class="space-y-3 flex-1">
+      <div class="space-y-3 flex-1" data-dashboard-target="card4Content">
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-2">
             <span class="w-6 h-6 rounded bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
@@ -240,8 +263,19 @@
 
     <%# ===== CARD 5: Recent Activity ===== %>
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col">
-      <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">Recent Activity</h2>
-      <ul class="space-y-3 flex-1">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Recent Activity</h2>
+        <div class="flex items-center space-x-2">
+          <button type="button" data-action="click->dashboard#prevMonth" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <span class="text-xs text-gray-500 dark:text-gray-400 min-w-[5.5rem] text-center" data-dashboard-target="monthLabel"><%= Date.today.strftime("%B %Y") %></span>
+          <button type="button" data-action="click->dashboard#nextMonth" data-dashboard-target="nextBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+      <ul class="space-y-3 flex-1" data-dashboard-target="card5Content">
         <% activity_colors = %w[blue green purple amber sky] %>
         <% @recent_payments.each_with_index do |payment, i| %>
           <% c = activity_colors[i % activity_colors.length] %>
