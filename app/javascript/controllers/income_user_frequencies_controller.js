@@ -6,6 +6,7 @@ export default class extends Controller {
 
   connect() {
     this.frequencies = []
+    this._viewAll = false
     this.fetchAll()
   }
 
@@ -18,53 +19,25 @@ export default class extends Controller {
     } catch (e) {
       // silently fail
     }
-    this._syncAllToggle()
+    this._syncViewAllToggle()
     this.renderTable()
   }
 
-  // --- All Toggle (bulk enable/disable) ---
+  // --- View All Toggle (filter: show all vs show enabled only) ---
 
-  _syncAllToggle() {
-    const allOn = this.frequencies.length > 0 && this.frequencies.every(f => f.use_flag)
+  _syncViewAllToggle() {
     const btn = this.toggleAllButtonTarget
-    btn.dataset.checked = String(allOn)
-    btn.setAttribute("aria-checked", String(allOn))
-    btn.className = btn.className.replace(allOn ? "bg-gray-300" : "bg-purple-600", allOn ? "bg-purple-600" : "bg-gray-300")
+    btn.dataset.checked = String(this._viewAll)
+    btn.setAttribute("aria-checked", String(this._viewAll))
+    btn.className = btn.className.replace(this._viewAll ? "bg-gray-300" : "bg-purple-600", this._viewAll ? "bg-purple-600" : "bg-gray-300")
     const knob = btn.querySelector("span")
-    knob.className = knob.className.replace(allOn ? "translate-x-1" : "translate-x-7", allOn ? "translate-x-7" : "translate-x-1")
+    knob.className = knob.className.replace(this._viewAll ? "translate-x-1" : "translate-x-7", this._viewAll ? "translate-x-7" : "translate-x-1")
   }
 
-  async toggleViewAll() {
-    const allOn = this.frequencies.length > 0 && this.frequencies.every(f => f.use_flag)
-    const newFlag = !allOn
-
-    // Update visual state immediately
-    const btn = this.toggleAllButtonTarget
-    btn.dataset.checked = String(newFlag)
-    btn.setAttribute("aria-checked", String(newFlag))
-    btn.className = btn.className.replace(newFlag ? "bg-gray-300" : "bg-purple-600", newFlag ? "bg-purple-600" : "bg-gray-300")
-    const knob = btn.querySelector("span")
-    knob.className = knob.className.replace(newFlag ? "translate-x-1" : "translate-x-7", newFlag ? "translate-x-7" : "translate-x-1")
-
-    // Update all local data immediately for snappy UI
-    this.frequencies.forEach(f => f.use_flag = newFlag)
+  toggleViewAll() {
+    this._viewAll = !this._viewAll
+    this._syncViewAllToggle()
     this.renderTable()
-
-    // Single bulk API call
-    try {
-      await fetch(`${this.apiUrlValue}/bulk_update`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-          "X-CSRF-Token": this.csrfTokenValue
-        },
-        body: JSON.stringify({ use_flag: newFlag })
-      })
-    } catch (e) {
-      // Revert on error
-      this.fetchAll()
-    }
   }
 
   // --- Use Toggle ---
@@ -98,6 +71,13 @@ export default class extends Controller {
 
     const freqId = btn.dataset.id
     const masterId = btn.dataset.masterId
+
+    // Update local data
+    const idx = this.frequencies.findIndex(f =>
+      f.frequency_master_id === Number(masterId) || (freqId && f.id === Number(freqId))
+    )
+    if (idx !== -1) this.frequencies[idx].use_flag = nowOn
+
     try {
       let url, body
       if (freqId) {
@@ -119,13 +99,14 @@ export default class extends Controller {
       })
       if (response.ok) {
         const updated = await response.json()
-        const idx = this.frequencies.findIndex(f =>
+        const uidx = this.frequencies.findIndex(f =>
           f.frequency_master_id === (updated.frequency_master_id || Number(masterId))
         )
-        if (idx !== -1) this.frequencies[idx] = updated
+        if (uidx !== -1) this.frequencies[uidx] = updated
       }
     } catch (e) {
       // Revert on error
+      if (idx !== -1) this.frequencies[idx].use_flag = wasOn
       btn.dataset.checked = String(wasOn)
       btn.setAttribute("aria-checked", String(wasOn))
       btn.title = wasOn ? "Use: Yes" : "Use: No"
@@ -166,13 +147,21 @@ export default class extends Controller {
   // --- Rendering ---
 
   renderTable() {
-    if (this.frequencies.length === 0) {
-      this.tableBodyTarget.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-sm text-gray-400 dark:text-gray-500">No frequencies available.</td></tr>`
+    // Filter based on View All toggle
+    const visible = this._viewAll
+      ? this.frequencies
+      : this.frequencies.filter(f => f.use_flag)
+
+    if (visible.length === 0) {
+      const msg = this._viewAll
+        ? "No frequencies available."
+        : "No frequencies enabled. Toggle \"View All\" to see all available frequencies."
+      this.tableBodyTarget.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-sm text-gray-400 dark:text-gray-500">${msg}</td></tr>`
       return
     }
 
     let html = ""
-    for (const freq of this.frequencies) {
+    for (const freq of visible) {
       const escName = this._escapeHtml(freq.name)
       html += `<tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
         <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">${escName}</td>
