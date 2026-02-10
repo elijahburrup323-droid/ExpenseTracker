@@ -22,6 +22,7 @@ import SettingsPhonesController from "controllers/settings_phones_controller"
 import BugReportsController from "controllers/bug_reports_controller"
 import NetWorthPopulateController from "controllers/net_worth_populate_controller"
 import DashboardController from "controllers/dashboard_controller"
+import LegalTocController from "controllers/legal_toc_controller"
 
 application.register("flash", FlashController)
 application.register("dropdown", DropdownController)
@@ -45,3 +46,4 @@ application.register("settings-phones", SettingsPhonesController)
 application.register("bug-reports", BugReportsController)
 application.register("net-worth-populate", NetWorthPopulateController)
 application.register("dashboard", DashboardController)
+application.register("legal-toc", LegalTocController)
