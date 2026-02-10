@@ -117,15 +117,18 @@
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">Phone Settings</h2>
         <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Manage your phone numbers. SMS-capable cell numbers only.</p>
 
-        <% if resource.phone_number.present? %>
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Primary Phone</label>
-            <p class="mt-1 text-sm text-gray-900 dark:text-white"><%= resource.phone_number %></p>
+        <div class="space-y-4">
+          <div>
+            <%= f.label :phone_number, "Primary Phone", class: "block text-sm font-medium text-gray-700 dark:text-gray-300" %>
+            <%= f.telephone_field :phone_number, autocomplete: "tel",
+                class: "mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent",
+                placeholder: "+1 (555) 123-4567" %>
           </div>
-        <% end %>
+        </div>
 
         <%# Alternate Phones (Stimulus-managed) %>
-        <div data-controller="settings-phones"
+        <div class="mt-5 pt-5 border-t border-gray-200 dark:border-gray-700"
+             data-controller="settings-phones"
              data-settings-phones-api-url-value="<%= api_user_phones_path %>"
              data-settings-phones-csrf-token-value="<%= form_authenticity_token %>">
           <div class="flex items-center justify-between mb-3">
@@ -149,14 +152,19 @@
         </div>
 
         <%# Two-Factor Notifications (under phone settings) %>
+        <% has_verified_phone = resource.phone_number.present? || resource.user_phones.verified.exists? %>
         <div class="mt-5 pt-5 border-t border-gray-200 dark:border-gray-700">
           <div class="flex items-center justify-between">
             <div>
               <label for="user_two_factor_enabled" class="text-sm font-medium text-gray-700 dark:text-gray-300">Two-Factor Notifications</label>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">When enabled, you will receive a code to verify your identity when signing in or making sensitive changes.</p>
+              <% if has_verified_phone %>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">When enabled, you will receive a code to verify your identity when signing in or making sensitive changes.</p>
+              <% else %>
+                <p class="text-xs text-red-500 dark:text-red-400 mt-0.5">Add and verify a phone number to enable two-factor notifications.</p>
+              <% end %>
             </div>
-            <label class="relative inline-flex items-center cursor-pointer ml-4 flex-shrink-0">
-              <%= f.check_box :two_factor_enabled, class: "sr-only peer" %>
+            <label class="relative inline-flex items-center <%= has_verified_phone ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed' %> ml-4 flex-shrink-0">
+              <%= f.check_box :two_factor_enabled, class: "sr-only peer", disabled: !has_verified_phone %>
               <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-500 dark:peer-focus:ring-brand-400 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:border-gray-500 peer-checked:bg-brand-600"></div>
             </label>
           </div>

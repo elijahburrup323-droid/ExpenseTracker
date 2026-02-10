@@ -38,7 +38,7 @@ class Users::RegistrationsController < Devise::RegistrationsController
   end
 
   def configure_account_update_params
-    devise_parameter_sanitizer.permit(:account_update, keys: [:first_name, :last_name, :avatar_url, :secondary_email, :two_factor_enabled])
+    devise_parameter_sanitizer.permit(:account_update, keys: [:first_name, :last_name, :phone_number, :avatar_url, :secondary_email, :two_factor_enabled])
   end
 
   def update_resource(resource, params)
