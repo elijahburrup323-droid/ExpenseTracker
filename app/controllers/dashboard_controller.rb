@@ -13,11 +13,18 @@ class DashboardController < ApplicationController
 
     # Card 2: Accounts — all accounts (passed as @accounts)
 
-    # Card 3: Net Worth — sum of all account balances
+    # Card 3: Net Worth — sum of all account balances + historical snapshots
     @net_worth = @accounts.sum(:balance)
-    @beginning_total = @accounts.sum(:beginning_balance)
-    @net_worth_change = @net_worth - @beginning_total
-    @net_worth_pct = @beginning_total != 0 ? ((@net_worth_change / @beginning_total) * 100).round(1) : 0
+    @net_worth_snapshots = current_user.net_worth_snapshots.recent(6).order(snapshot_date: :asc).to_a
+    if @net_worth_snapshots.size >= 2
+      prev_amount = @net_worth_snapshots[-2].amount
+      @net_worth_change = @net_worth - prev_amount
+      @net_worth_pct = prev_amount != 0 ? ((@net_worth_change / prev_amount) * 100).round(1) : 0
+    else
+      @beginning_total = @accounts.sum(:beginning_balance)
+      @net_worth_change = @net_worth - @beginning_total
+      @net_worth_pct = @beginning_total != 0 ? ((@net_worth_change / @beginning_total) * 100).round(1) : 0
+    end
 
     # Card 4: Income & Spending — current month payments
     @current_month_start = Date.today.beginning_of_month

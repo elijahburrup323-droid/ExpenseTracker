@@ -78,6 +78,11 @@ Rails.application.routes.draw do
         post :resend_code
       end
     end
+    resources :net_worth_snapshots, only: [:index] do
+      collection do
+        post :populate
+      end
+    end
   end
 
   # Admin

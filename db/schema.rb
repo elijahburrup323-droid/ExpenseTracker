@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_10_070855) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_10_080122) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -164,6 +164,16 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_10_070855) do
     t.index ["slug"], name: "index_legal_pages_on_slug", unique: true
   end
 
+  create_table "net_worth_snapshots", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.date "snapshot_date", null: false
+    t.decimal "amount", precision: 12, scale: 2, default: "0.0", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "snapshot_date"], name: "index_net_worth_snapshots_on_user_id_and_snapshot_date", unique: true
+    t.index ["user_id"], name: "index_net_worth_snapshots_on_user_id"
+  end
+
   create_table "payments", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "account_id", null: false
@@ -313,6 +323,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_10_070855) do
   add_foreign_key "income_recurrings", "users"
   add_foreign_key "income_user_frequencies", "income_frequency_masters", column: "frequency_master_id"
   add_foreign_key "income_user_frequencies", "users"
+  add_foreign_key "net_worth_snapshots", "users"
   add_foreign_key "payments", "accounts"
   add_foreign_key "payments", "spending_categories"
   add_foreign_key "payments", "spending_types", column: "spending_type_override_id", on_delete: :nullify
