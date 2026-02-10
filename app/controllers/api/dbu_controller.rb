@@ -4,6 +4,117 @@ module Api
     before_action :require_admin!
     before_action :load_catalog_entry, only: [:records, :show_record, :update_record, :destroy_record]
 
+    # GET /api/dbu/schema
+    def schema
+      conn = ActiveRecord::Base.connection
+      db_name = conn.current_database
+
+      tables_sql = <<-SQL
+        SELECT table_schema, table_name, table_type
+        FROM information_schema.tables
+        WHERE table_schema = 'public'
+          AND table_type IN ('BASE TABLE', 'VIEW')
+        ORDER BY table_schema, table_name
+      SQL
+
+      columns_sql = <<-SQL
+        SELECT table_name, ordinal_position, column_name,
+               data_type, is_nullable, column_default,
+               character_maximum_length, numeric_precision
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+        ORDER BY table_name, ordinal_position
+      SQL
+
+      pk_sql = <<-SQL
+        SELECT tc.table_name, kcu.column_name
+        FROM information_schema.table_constraints tc
+        JOIN information_schema.key_column_usage kcu
+          ON tc.constraint_name = kcu.constraint_name
+          AND tc.table_schema = kcu.table_schema
+        WHERE tc.constraint_type = 'PRIMARY KEY'
+          AND tc.table_schema = 'public'
+      SQL
+
+      fk_sql = <<-SQL
+        SELECT kcu.table_name, kcu.column_name,
+               ccu.table_name AS foreign_table, ccu.column_name AS foreign_column
+        FROM information_schema.table_constraints tc
+        JOIN information_schema.key_column_usage kcu
+          ON tc.constraint_name = kcu.constraint_name
+          AND tc.table_schema = kcu.table_schema
+        JOIN information_schema.constraint_column_usage ccu
+          ON ccu.constraint_name = tc.constraint_name
+          AND ccu.table_schema = tc.table_schema
+        WHERE tc.constraint_type = 'FOREIGN KEY'
+          AND tc.table_schema = 'public'
+      SQL
+
+      unique_sql = <<-SQL
+        SELECT tc.table_name, kcu.column_name
+        FROM information_schema.table_constraints tc
+        JOIN information_schema.key_column_usage kcu
+          ON tc.constraint_name = kcu.constraint_name
+          AND tc.table_schema = kcu.table_schema
+        WHERE tc.constraint_type = 'UNIQUE'
+          AND tc.table_schema = 'public'
+      SQL
+
+      tables_result = conn.exec_query(tables_sql)
+      columns_result = conn.exec_query(columns_sql)
+      pk_result = conn.exec_query(pk_sql)
+      fk_result = conn.exec_query(fk_sql)
+      unique_result = conn.exec_query(unique_sql)
+
+      pk_set = Set.new
+      pk_result.each { |r| pk_set.add("#{r['table_name']}.#{r['column_name']}") }
+
+      unique_set = Set.new
+      unique_result.each { |r| unique_set.add("#{r['table_name']}.#{r['column_name']}") }
+
+      fk_map = {}
+      fk_result.each do |r|
+        fk_map["#{r['table_name']}.#{r['column_name']}"] = {
+          table: r["foreign_table"], column: r["foreign_column"]
+        }
+      end
+
+      cols_by_table = {}
+      columns_result.each do |r|
+        tn = r["table_name"]
+        cols_by_table[tn] ||= []
+        key = "#{tn}.#{r['column_name']}"
+        cols_by_table[tn] << {
+          ordinal_position: r["ordinal_position"],
+          column_name: r["column_name"],
+          data_type: r["data_type"],
+          is_nullable: r["is_nullable"],
+          column_default: r["column_default"],
+          max_length: r["character_maximum_length"],
+          numeric_precision: r["numeric_precision"],
+          is_pk: pk_set.include?(key),
+          is_unique: unique_set.include?(key),
+          foreign_key: fk_map[key]
+        }
+      end
+
+      tables = tables_result.map do |r|
+        {
+          table_name: r["table_name"],
+          table_type: r["table_type"],
+          column_count: (cols_by_table[r["table_name"]] || []).length,
+          columns: cols_by_table[r["table_name"]] || []
+        }
+      end
+
+      render json: {
+        database_name: db_name,
+        refreshed_at: Time.current.iso8601,
+        table_count: tables.length,
+        tables: tables
+      }
+    end
+
     # GET /api/dbu/tables
     def tables
       catalogs = DbuTableCatalog.active.ordered

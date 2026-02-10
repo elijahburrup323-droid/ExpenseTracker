@@ -3,68 +3,145 @@
      data-dbu-tables-url-value="<%= api_dbu_tables_path %>"
      data-dbu-users-url-value="<%= api_dbu_users_path %>"
      data-dbu-records-url-value="<%= api_dbu_records_path %>"
+     data-dbu-schema-url-value="<%= api_dbu_schema_path %>"
      data-dbu-csrf-token-value="<%= form_authenticity_token %>">
 
   <%# Header %>
   <div class="mb-6">
     <h1 class="text-2xl font-bold text-gray-900 dark:text-white">DBU</h1>
-    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Search and maintain database tables.</p>
+    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Database Utility — inspect schema and maintain records.</p>
   </div>
 
-  <%# Filter Row %>
-  <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4 mb-4 ring-1 ring-gray-200 dark:ring-gray-700">
-    <div class="flex flex-wrap gap-3 items-end">
-      <div class="flex-shrink-0 w-48">
-        <input type="text" placeholder="Search tables..." data-dbu-target="searchInput"
-               class="w-full h-9 rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2"
-               data-action="keydown->dbu#searchKeydown">
-      </div>
-      <div class="flex-shrink-0">
+  <%# Tab Bar %>
+  <div class="mb-4 border-b border-gray-200 dark:border-gray-700">
+    <nav class="-mb-px flex space-x-6" aria-label="Tabs">
+      <button type="button" data-dbu-target="tabSchema"
+              class="whitespace-nowrap border-b-2 border-brand-600 py-3 px-1 text-sm font-medium text-brand-600 dark:text-brand-400"
+              data-action="click->dbu#switchToSchema">
+        Schema Inspector
+      </button>
+      <button type="button" data-dbu-target="tabRecords"
+              class="whitespace-nowrap border-b-2 border-transparent py-3 px-1 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300"
+              data-action="click->dbu#switchToRecords">
+        Record Browser
+      </button>
+    </nav>
+  </div>
+
+  <%# ========== SCHEMA INSPECTOR TAB ========== %>
+  <div data-dbu-target="schemaPanel">
+    <%# Schema toolbar %>
+    <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4 mb-4 ring-1 ring-gray-200 dark:ring-gray-700">
+      <div class="flex flex-wrap gap-3 items-center">
+        <div class="flex-shrink-0 w-64">
+          <input type="text" placeholder="Filter by table or column name..." data-dbu-target="schemaSearch"
+                 class="w-full h-9 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2"
+                 data-action="input->dbu#filterSchema">
+        </div>
         <button type="button"
-                class="h-9 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition"
-                data-action="click->dbu#search">
-          Search
+                class="h-9 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 transition"
+                data-action="click->dbu#refreshSchema">
+          <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Refresh DBU
         </button>
-      </div>
-      <div class="flex-shrink-0">
-        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">User</label>
-        <select data-dbu-target="userSelect"
-                class="h-9 rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2"
-                data-action="change->dbu#onUserChange">
-          <option value="current">Current User</option>
-          <option value="all">All Users</option>
-        </select>
-      </div>
-      <div class="flex-shrink-0 min-w-[10rem]">
-        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Table Name</label>
-        <select data-dbu-target="tableNameSelect"
-                class="w-full h-9 rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2"
-                data-action="change->dbu#onTableNameChange">
-          <option value="">Select Table...</option>
-        </select>
-      </div>
-      <div class="flex-shrink-0 min-w-[10rem]">
-        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Table Description</label>
-        <select data-dbu-target="tableDescSelect"
-                class="w-full h-9 rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2"
-                data-action="change->dbu#onTableDescChange">
-          <option value="">Select Description...</option>
-        </select>
-      </div>
-      <div class="flex-shrink-0 ml-auto">
         <button type="button"
-                class="text-sm text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium"
-                data-action="click->dbu#resetFilters">
-          Reset Filters
+                class="h-9 inline-flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition"
+                data-action="click->dbu#expandAll">
+          Expand All
         </button>
+        <button type="button"
+                class="h-9 inline-flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition"
+                data-action="click->dbu#collapseAll">
+          Collapse All
+        </button>
+        <div class="flex-shrink-0 ml-auto flex items-center gap-2">
+          <button type="button"
+                  class="h-9 inline-flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition"
+                  data-action="click->dbu#exportCSV">
+            <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            CSV
+          </button>
+          <button type="button"
+                  class="h-9 inline-flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition"
+                  data-action="click->dbu#exportJSON">
+            <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            JSON
+          </button>
+        </div>
+      </div>
+      <%# Meta info bar %>
+      <div class="mt-3 flex flex-wrap gap-4 text-xs text-gray-500 dark:text-gray-400" data-dbu-target="schemaMeta">
+      </div>
+    </div>
+
+    <%# Schema content %>
+    <div data-dbu-target="schemaContent" class="space-y-2">
+      <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg ring-1 ring-gray-200 dark:ring-gray-700 flex items-center justify-center h-64">
+        <div class="text-center">
+          <svg class="mx-auto h-8 w-8 text-gray-400 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
+          <p class="mt-2 text-sm text-gray-400 dark:text-gray-500">Loading schema...</p>
+        </div>
       </div>
     </div>
   </div>
 
-  <%# Record Panel %>
-  <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg ring-1 ring-gray-200 dark:ring-gray-700 min-h-[300px]" data-dbu-target="recordPanel">
-    <div class="flex items-center justify-center h-64">
-      <p class="text-sm text-gray-400 dark:text-gray-500" data-dbu-target="emptyMessage">No tables match your criteria.</p>
+  <%# ========== RECORD BROWSER TAB ========== %>
+  <div data-dbu-target="recordsPanel" class="hidden">
+    <%# Filter Row %>
+    <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4 mb-4 ring-1 ring-gray-200 dark:ring-gray-700">
+      <div class="flex flex-wrap gap-3 items-end">
+        <div class="flex-shrink-0 w-48">
+          <input type="text" placeholder="Search tables..." data-dbu-target="searchInput"
+                 class="w-full h-9 rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2"
+                 data-action="keydown->dbu#searchKeydown">
+        </div>
+        <div class="flex-shrink-0">
+          <button type="button"
+                  class="h-9 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition"
+                  data-action="click->dbu#search">
+            Search
+          </button>
+        </div>
+        <div class="flex-shrink-0">
+          <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">User</label>
+          <select data-dbu-target="userSelect"
+                  class="h-9 rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2"
+                  data-action="change->dbu#onUserChange">
+            <option value="current">Current User</option>
+            <option value="all">All Users</option>
+          </select>
+        </div>
+        <div class="flex-shrink-0 min-w-[10rem]">
+          <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Table Name</label>
+          <select data-dbu-target="tableNameSelect"
+                  class="w-full h-9 rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2"
+                  data-action="change->dbu#onTableNameChange">
+            <option value="">Select Table...</option>
+          </select>
+        </div>
+        <div class="flex-shrink-0 min-w-[10rem]">
+          <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Table Description</label>
+          <select data-dbu-target="tableDescSelect"
+                  class="w-full h-9 rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2"
+                  data-action="change->dbu#onTableDescChange">
+            <option value="">Select Description...</option>
+          </select>
+        </div>
+        <div class="flex-shrink-0 ml-auto">
+          <button type="button"
+                  class="text-sm text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium"
+                  data-action="click->dbu#resetFilters">
+            Reset Filters
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <%# Record Panel %>
+    <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg ring-1 ring-gray-200 dark:ring-gray-700 min-h-[300px]" data-dbu-target="recordPanel">
+      <div class="flex items-center justify-center h-64">
+        <p class="text-sm text-gray-400 dark:text-gray-500" data-dbu-target="emptyMessage">Select a table to browse records.</p>
+      </div>
     </div>
   </div>
 </div>

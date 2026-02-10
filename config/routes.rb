@@ -97,6 +97,7 @@ Rails.application.routes.draw do
     end
     # DBU API (admin only)
     scope :dbu, controller: "dbu", as: :dbu do
+      get "schema", action: :schema
       get "tables", action: :tables
       get "users", action: :users_list
       get "records", action: :records

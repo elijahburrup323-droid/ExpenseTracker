@@ -136,7 +136,8 @@ API endpoints (all under /api/):
   /api/income_recurrings ...... CRUD
   /api/income_entries ......... CRUD + POST /generate (with transactional balance updates on received_flag)
   /api/admin/users ........... index + update (admin toggle, admin-only)
-  /api/dbu/tables ............ DBU table catalog (admin-only)
+  /api/dbu/schema ............ DBU schema inspector — queries information_schema for all tables/columns/keys (admin-only)
+  /api/dbu/tables ............ DBU table catalog for record browser (admin-only)
   /api/dbu/users ............. DBU user list (admin-only)
   /api/dbu/records ........... DBU record list/show/update/delete (admin-only)
   /api/bug_reports ........... index (paginated by date) + create
@@ -164,7 +165,7 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 - **bug_reports_controller.js** — Paginated release notes grouped by date with "Show More" pagination (5 days per page)
 - **settings_emails_controller.js** — Alternate emails management: fetch, render with verified/unverified badges, inline 6-digit code verify, resend, remove with confirm
 - **settings_phones_controller.js** — Alternate phones management: fetch, render with verified/unverified badges, inline 6-digit SMS code verify, resend, remove with confirm (parallel implementation to emails)
-- **dbu_controller.js** — Database Utility: browse/edit any table via dbu_table_catalogs, search, user filter, record navigation (Prev/Next), dirty state protection, save/delete (admin-only)
+- **dbu_controller.js** — Database Utility with two tabs: (1) Schema Inspector — queries information_schema to list ALL tables and ALL columns with data type, nullability, default, PK/FK/UQ badges, expand/collapse per table, filter by table/column name, Expand All/Collapse All, Refresh DBU, Export CSV/JSON, Last Refreshed timestamp and database name; (2) Record Browser — browse/edit records via dbu_table_catalogs, search, user filter, record navigation (Prev/Next), dirty state protection, save/delete. Admin-only.
 
 ## Seeding & Initialization
 - db/seeds.rb creates test user (test@example.com / password123) and 40+ IncomeFrequencyMaster records

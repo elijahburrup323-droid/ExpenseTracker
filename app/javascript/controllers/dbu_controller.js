@@ -3,11 +3,14 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = [
     "searchInput", "userSelect", "tableNameSelect", "tableDescSelect",
-    "recordPanel", "emptyMessage"
+    "recordPanel", "emptyMessage",
+    "tabSchema", "tabRecords", "schemaPanel", "recordsPanel",
+    "schemaSearch", "schemaMeta", "schemaContent"
   ]
-  static values = { tablesUrl: String, usersUrl: String, recordsUrl: String, csrfToken: String }
+  static values = { tablesUrl: String, usersUrl: String, recordsUrl: String, schemaUrl: String, csrfToken: String }
 
   connect() {
+    // Record browser state
     this.allTables = []
     this.filteredTables = []
     this.users = []
@@ -18,10 +21,251 @@ export default class extends Controller {
     this.hasUserId = false
     this.isDirty = false
     this.selectedTable = null
-    this.fetchInitialData()
+
+    // Schema inspector state
+    this.schemaData = null
+    this.expandedTables = new Set()
+    this.schemaFilter = ""
+
+    this.fetchSchema()
   }
 
-  // --- Data Fetching ---
+  // ==================== TAB SWITCHING ====================
+
+  switchToSchema() {
+    this.tabSchemaTarget.className = "whitespace-nowrap border-b-2 border-brand-600 py-3 px-1 text-sm font-medium text-brand-600 dark:text-brand-400"
+    this.tabRecordsTarget.className = "whitespace-nowrap border-b-2 border-transparent py-3 px-1 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300"
+    this.schemaPanelTarget.classList.remove("hidden")
+    this.recordsPanelTarget.classList.add("hidden")
+  }
+
+  switchToRecords() {
+    this.tabRecordsTarget.className = "whitespace-nowrap border-b-2 border-brand-600 py-3 px-1 text-sm font-medium text-brand-600 dark:text-brand-400"
+    this.tabSchemaTarget.className = "whitespace-nowrap border-b-2 border-transparent py-3 px-1 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300"
+    this.recordsPanelTarget.classList.remove("hidden")
+    this.schemaPanelTarget.classList.add("hidden")
+    // Lazy-load record browser data
+    if (this.allTables.length === 0) this.fetchInitialData()
+  }
+
+  // ==================== SCHEMA INSPECTOR ====================
+
+  async fetchSchema() {
+    this.schemaContentTarget.innerHTML = `
+      <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg ring-1 ring-gray-200 dark:ring-gray-700 flex items-center justify-center h-64">
+        <div class="text-center">
+          <svg class="mx-auto h-8 w-8 text-gray-400 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
+          <p class="mt-2 text-sm text-gray-400 dark:text-gray-500">Loading schema...</p>
+        </div>
+      </div>`
+    try {
+      const res = await fetch(this.schemaUrlValue, { headers: { "Accept": "application/json" } })
+      if (res.ok) {
+        this.schemaData = await res.json()
+        this._renderSchemaMeta()
+        this._renderSchemaContent()
+      } else {
+        this.schemaContentTarget.innerHTML = `<div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg ring-1 ring-gray-200 dark:ring-gray-700 flex items-center justify-center h-64"><p class="text-sm text-red-500">Failed to load schema.</p></div>`
+      }
+    } catch (e) {
+      this.schemaContentTarget.innerHTML = `<div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg ring-1 ring-gray-200 dark:ring-gray-700 flex items-center justify-center h-64"><p class="text-sm text-red-500">Network error loading schema.</p></div>`
+    }
+  }
+
+  refreshSchema() {
+    this.expandedTables.clear()
+    this.fetchSchema()
+  }
+
+  filterSchema() {
+    this.schemaFilter = this.schemaSearchTarget.value.trim().toLowerCase()
+    this._renderSchemaContent()
+  }
+
+  expandAll() {
+    if (!this.schemaData) return
+    const tables = this._filteredSchemaTables()
+    tables.forEach(t => this.expandedTables.add(t.table_name))
+    this._renderSchemaContent()
+  }
+
+  collapseAll() {
+    this.expandedTables.clear()
+    this._renderSchemaContent()
+  }
+
+  toggleTable(event) {
+    const tableName = event.currentTarget.dataset.tableName
+    if (this.expandedTables.has(tableName)) {
+      this.expandedTables.delete(tableName)
+    } else {
+      this.expandedTables.add(tableName)
+    }
+    this._renderSchemaContent()
+  }
+
+  _filteredSchemaTables() {
+    if (!this.schemaData) return []
+    const q = this.schemaFilter
+    if (!q) return this.schemaData.tables
+    return this.schemaData.tables.filter(t => {
+      if (t.table_name.toLowerCase().includes(q)) return true
+      return t.columns.some(c => c.column_name.toLowerCase().includes(q))
+    })
+  }
+
+  _renderSchemaMeta() {
+    const d = this.schemaData
+    const ts = new Date(d.refreshed_at).toLocaleString()
+    this.schemaMetaTarget.innerHTML = `
+      <span><strong>Database:</strong> ${this._esc(d.database_name)}</span>
+      <span><strong>Tables:</strong> ${d.table_count}</span>
+      <span><strong>Last Refreshed:</strong> ${this._esc(ts)}</span>`
+  }
+
+  _renderSchemaContent() {
+    const tables = this._filteredSchemaTables()
+    if (tables.length === 0) {
+      this.schemaContentTarget.innerHTML = `
+        <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg ring-1 ring-gray-200 dark:ring-gray-700 flex items-center justify-center h-32">
+          <p class="text-sm text-gray-400 dark:text-gray-500">No tables match your filter.</p>
+        </div>`
+      return
+    }
+
+    let html = ""
+    for (const table of tables) {
+      const isExpanded = this.expandedTables.has(table.table_name)
+      const chevron = isExpanded
+        ? `<svg class="h-5 w-5 text-gray-400 transition-transform rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>`
+        : `<svg class="h-5 w-5 text-gray-400 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>`
+      const typeBadge = table.table_type === "VIEW"
+        ? `<span class="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300">View</span>`
+        : ""
+
+      html += `<div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg ring-1 ring-gray-200 dark:ring-gray-700 overflow-hidden">`
+      html += `<button type="button" class="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
+                       data-action="click->dbu#toggleTable" data-table-name="${this._escAttr(table.table_name)}">
+        <div class="flex items-center">
+          ${chevron}
+          <span class="ml-2 text-sm font-semibold text-gray-900 dark:text-white">${this._esc(table.table_name)}</span>
+          ${typeBadge}
+        </div>
+        <span class="text-xs text-gray-500 dark:text-gray-400">${table.column_count} columns</span>
+      </button>`
+
+      if (isExpanded) {
+        html += `<div class="border-t border-gray-200 dark:border-gray-700">
+          <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+            <thead class="bg-gray-50 dark:bg-gray-800/50">
+              <tr>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase w-8">#</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Column</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Type</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Nullable</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Default</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Keys</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 dark:divide-gray-700">`
+
+        for (const col of table.columns) {
+          const highlight = this.schemaFilter && col.column_name.toLowerCase().includes(this.schemaFilter)
+            ? "bg-yellow-50 dark:bg-yellow-900/20" : ""
+          const typeStr = this._formatDataType(col)
+          const nullable = col.is_nullable === "YES"
+            ? `<span class="text-green-600 dark:text-green-400">Yes</span>`
+            : `<span class="text-red-600 dark:text-red-400">No</span>`
+          const defaultVal = col.column_default ? `<code class="text-xs bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded">${this._esc(this._truncate(col.column_default, 40))}</code>` : `<span class="text-gray-300 dark:text-gray-600">—</span>`
+
+          let keys = ""
+          if (col.is_pk) keys += `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-brand-600 text-white mr-1">PK</span>`
+          if (col.foreign_key) keys += `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 mr-1" title="${this._escAttr(col.foreign_key.table)}.${this._escAttr(col.foreign_key.column)}">FK → ${this._esc(col.foreign_key.table)}</span>`
+          if (col.is_unique && !col.is_pk) keys += `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300">UQ</span>`
+          if (!keys) keys = `<span class="text-gray-300 dark:text-gray-600">—</span>`
+
+          html += `<tr class="${highlight}">
+            <td class="px-4 py-2 text-gray-400 dark:text-gray-500">${col.ordinal_position}</td>
+            <td class="px-4 py-2 font-medium text-gray-900 dark:text-white">${this._esc(col.column_name)}</td>
+            <td class="px-4 py-2 text-gray-600 dark:text-gray-300">${this._esc(typeStr)}</td>
+            <td class="px-4 py-2">${nullable}</td>
+            <td class="px-4 py-2">${defaultVal}</td>
+            <td class="px-4 py-2">${keys}</td>
+          </tr>`
+        }
+        html += `</tbody></table></div>`
+      }
+      html += `</div>`
+    }
+    this.schemaContentTarget.innerHTML = html
+  }
+
+  _formatDataType(col) {
+    let type = col.data_type
+    if (col.max_length) type += `(${col.max_length})`
+    else if (col.numeric_precision && col.data_type === "numeric") type += `(${col.numeric_precision})`
+    return type
+  }
+
+  _truncate(str, len) {
+    if (!str) return ""
+    return str.length > len ? str.substring(0, len) + "..." : str
+  }
+
+  // --- Export ---
+
+  exportCSV() {
+    if (!this.schemaData) return
+    const tables = this._filteredSchemaTables()
+    let csv = "table_name,ordinal_position,column_name,data_type,is_nullable,column_default,is_pk,is_unique,fk_table,fk_column\n"
+    for (const t of tables) {
+      for (const c of t.columns) {
+        csv += [
+          this._csvEsc(t.table_name),
+          c.ordinal_position,
+          this._csvEsc(c.column_name),
+          this._csvEsc(this._formatDataType(c)),
+          c.is_nullable,
+          this._csvEsc(c.column_default || ""),
+          c.is_pk,
+          c.is_unique,
+          this._csvEsc(c.foreign_key ? c.foreign_key.table : ""),
+          this._csvEsc(c.foreign_key ? c.foreign_key.column : "")
+        ].join(",") + "\n"
+      }
+    }
+    this._downloadFile(csv, "dbu_schema.csv", "text/csv")
+  }
+
+  exportJSON() {
+    if (!this.schemaData) return
+    const tables = this._filteredSchemaTables()
+    const data = { ...this.schemaData, tables, table_count: tables.length }
+    this._downloadFile(JSON.stringify(data, null, 2), "dbu_schema.json", "application/json")
+  }
+
+  _csvEsc(val) {
+    if (!val) return ""
+    const str = String(val)
+    if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+      return '"' + str.replace(/"/g, '""') + '"'
+    }
+    return str
+  }
+
+  _downloadFile(content, filename, mimeType) {
+    const blob = new Blob([content], { type: mimeType })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  // ==================== RECORD BROWSER (existing) ====================
 
   async fetchInitialData() {
     try {
@@ -69,7 +313,6 @@ export default class extends Controller {
       )
     }
 
-    // Check if current selection still exists
     const currentName = this.tableNameSelectTarget.value
     const stillExists = currentName && this.filteredTables.some(t => t.table_name === currentName)
 
@@ -103,14 +346,13 @@ export default class extends Controller {
     this.selectedTable = null
     this.recordIds = []
     this.currentIndex = -1
-    this._showEmpty("No tables match your criteria.")
+    this._showEmpty("Select a table to browse records.")
   }
 
   // --- Table Selection ---
 
   onTableNameChange() {
     if (!this._checkDirty()) {
-      // Revert selection
       this.tableNameSelectTarget.value = this.selectedTable || ""
       this.tableDescSelectTarget.value = this.selectedTable || ""
       return
@@ -122,7 +364,7 @@ export default class extends Controller {
       this._loadRecords()
     } else {
       this.selectedTable = null
-      this._showEmpty("No tables match your criteria.")
+      this._showEmpty("Select a table to browse records.")
     }
   }
 
@@ -139,7 +381,7 @@ export default class extends Controller {
       this._loadRecords()
     } else {
       this.selectedTable = null
-      this._showEmpty("No tables match your criteria.")
+      this._showEmpty("Select a table to browse records.")
     }
   }
 
@@ -306,13 +548,11 @@ export default class extends Controller {
     const prevDisabled = this.currentIndex <= 0 ? "disabled" : ""
     const nextDisabled = this.currentIndex >= total - 1 ? "disabled" : ""
 
-    // Find description-like column to show at top
     const descCol = this.columns.find(c => c.name === "description" || c.name === "table_description")
 
     let fieldsHtml = ""
     const orderedCols = [...this.columns]
 
-    // Move description to top if exists
     if (descCol) {
       const idx = orderedCols.indexOf(descCol)
       if (idx > -1) {
@@ -329,7 +569,6 @@ export default class extends Controller {
       const pkBadge = isPk ? `<span class="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-brand-600 text-white">PK</span>` : ""
       const readOnly = isPk
 
-      // Show user_id as read-only when viewing All Users
       const isUserField = col.name === "user_id" && this.userSelectTarget.value === "all"
       const fieldReadOnly = readOnly || isUserField
 
