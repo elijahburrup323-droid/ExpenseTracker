@@ -14,7 +14,9 @@ export default class extends Controller {
   static targets = [
     "tableBody", "tableHead", "addButton", "generateButton", "deleteModal", "deleteModalName",
     "filterStartDate", "filterEndDate", "filterAccount", "filterCategory", "filterType", "filterSearch",
-    "filterCount"
+    "filterCount",
+    "addModal", "addModalBody", "modalDate", "modalAccount", "modalCategory", "modalType",
+    "modalDescription", "modalAmount", "modalError"
   ]
   static values = {
     apiUrl: String, accountsUrl: String, categoriesUrl: String, typesUrl: String, csrfToken: String,
@@ -228,17 +230,22 @@ export default class extends Controller {
     // Check if any fields have been filled in
     const hasData = this._hasUnsavedData()
     if (!hasData) {
+      if (this.state === "adding") this.addModalTarget.classList.add("hidden")
       this.state = "idle"
       this.editingId = null
       return true
     }
     if (!confirm("You have unsaved changes. Discard and continue?")) return false
+    if (this.state === "adding") this.addModalTarget.classList.add("hidden")
     this.state = "idle"
     this.editingId = null
     return true
   }
 
   _hasUnsavedData() {
+    if (this.state === "adding") {
+      return (this.modalDescriptionTarget.value.trim()) || (this.modalAmountTarget.value.trim())
+    }
     const desc = this.tableBodyTarget.querySelector("input[name='description']")
     const amt = this.tableBodyTarget.querySelector("input[name='amount']")
     return (desc && desc.value.trim()) || (amt && amt.value.trim())
@@ -349,46 +356,33 @@ export default class extends Controller {
   startAdding() {
     if (this.state === "adding") return
     if (!this._checkDirtyState()) return
-    if (this.state !== "idle") { this.state = "idle"; this.editingId = null }
+    if (this.state !== "idle") { this.state = "idle"; this.editingId = null; this.renderTable() }
     this.state = "adding"
-    this.renderTable()
-    // Defer focus for Safari compatibility — Safari needs the DOM to settle before accepting focus
-    setTimeout(() => {
-      const dateInput = this.tableBodyTarget.querySelector("input[name='payment_date']")
-      if (dateInput) {
-        dateInput.focus()
-        try { dateInput.showPicker() } catch (e) { /* browser may not support showPicker */ }
-      }
-    }, 50)
+    this._openAddModal()
   }
 
   cancelAdding() {
     this.state = "idle"
-    this.renderTable()
+    this.addModalTarget.classList.add("hidden")
+    if (this._modalEscapeHandler) {
+      document.removeEventListener("keydown", this._modalEscapeHandler)
+      this._modalEscapeHandler = null
+    }
   }
 
   async saveNew() {
-    const dateInput = this.tableBodyTarget.querySelector("input[name='payment_date']")
-    const accSelect = this.tableBodyTarget.querySelector("select[name='account_id']")
-    const catSelect = this.tableBodyTarget.querySelector("select[name='spending_category_id']")
-    const typeOverrideSelect = this.tableBodyTarget.querySelector("select[name='spending_type_override_id']")
-    const descInput = this.tableBodyTarget.querySelector("input[name='description']")
-    const amtInput = this.tableBodyTarget.querySelector("input[name='amount']")
-    const notesInput = this.tableBodyTarget.querySelector("input[name='notes']")
+    const payment_date = this.modalDateTarget.value
+    const account_id = this.modalAccountTarget.value
+    const spending_category_id = this.modalCategoryTarget.value
+    const spending_type_override_id = (this.modalTypeTarget.value && this.modalTypeTarget.value !== "new") ? this.modalTypeTarget.value : null
+    const description = this.modalDescriptionTarget.value.trim()
+    const amount = this.modalAmountTarget.value.trim() || "0"
 
-    const payment_date = dateInput?.value
-    const account_id = accSelect?.value
-    const spending_category_id = catSelect?.value
-    const spending_type_override_id = (typeOverrideSelect?.value && typeOverrideSelect.value !== "new") ? typeOverrideSelect.value : null
-    const description = descInput?.value?.trim()
-    const amount = amtInput?.value?.trim() || "0"
-    const notes = notesInput?.value?.trim()
-
-    if (!payment_date) { this.showRowError("Date is required"); dateInput?.focus(); return }
-    if (!account_id || account_id === "new") { this.showRowError("Account is required — select an existing account or refresh after creating one"); accSelect?.focus(); return }
-    if (!spending_category_id || spending_category_id === "new") { this.showRowError("Category is required — select an existing category or refresh after creating one"); catSelect?.focus(); return }
-    if (!description) { this.showRowError("Description is required"); descInput?.focus(); return }
-    if (!amount || parseFloat(amount) === 0) { this.showRowError("Amount is required"); amtInput?.focus(); return }
+    if (!payment_date) { this._showModalError("Date is required"); this.modalDateTarget.focus(); return }
+    if (!account_id || account_id === "new") { this._showModalError("Account is required"); this.modalAccountTarget.focus(); return }
+    if (!spending_category_id || spending_category_id === "new") { this._showModalError("Category is required"); this.modalCategoryTarget.focus(); return }
+    if (!description) { this._showModalError("Description is required"); this.modalDescriptionTarget.focus(); return }
+    if (!amount || parseFloat(amount) === 0) { this._showModalError("Amount is required"); this.modalAmountTarget.focus(); return }
 
     try {
       const response = await fetch(this.apiUrlValue, {
@@ -398,7 +392,7 @@ export default class extends Controller {
           "Accept": "application/json",
           "X-CSRF-Token": this.csrfTokenValue
         },
-        body: JSON.stringify({ payment: { account_id, spending_category_id, spending_type_override_id, payment_date, description, notes, amount } })
+        body: JSON.stringify({ payment: { account_id, spending_category_id, spending_type_override_id, payment_date, description, amount } })
       })
 
       if (response.ok) {
@@ -406,6 +400,11 @@ export default class extends Controller {
         this.payments.unshift(newPayment)
         this._adjustLocalAccountBalance(Number(account_id), -parseFloat(amount))
         this.state = "idle"
+        this.addModalTarget.classList.add("hidden")
+        if (this._modalEscapeHandler) {
+          document.removeEventListener("keydown", this._modalEscapeHandler)
+          this._modalEscapeHandler = null
+        }
         this.renderTable()
         // Check if saved date falls outside the current filter range
         const endFilter = this.filterEndDateTarget.value
@@ -415,10 +414,10 @@ export default class extends Controller {
         }
       } else {
         const data = await response.json()
-        this.showRowError(data.errors?.[0] || "Failed to save")
+        this._showModalError(data.errors?.[0] || "Failed to save")
       }
     } catch (e) {
-      this.showRowError("Network error")
+      this._showModalError("Network error")
     }
   }
 
@@ -631,10 +630,6 @@ export default class extends Controller {
 
     let html = ""
 
-    if (this.state === "adding") {
-      html += this._renderAddRow()
-    }
-
     for (const payment of filtered) {
       if (this.state === "editing" && payment.id === this.editingId) {
         html += this._renderEditRow(payment)
@@ -748,84 +743,6 @@ export default class extends Controller {
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
         </button>
       </td>
-    </tr>`
-  }
-
-  _renderAddRow() {
-    const today = this._formatDateValue(new Date())
-    const accountOptions = this._buildAccountOptions()
-    const categoryOptions = this._buildCategoryOptions()
-
-    return `<tr class="bg-brand-50/40 dark:bg-brand-900/20">
-      <td class="px-4 py-3">
-        <input type="date" name="payment_date" value="${today}"
-               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
-               data-action="keydown->payments#handleKeydown change->payments#onAddDateChange">
-      </td>
-      <td class="px-4 py-3">
-        <select name="account_id"
-                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
-                data-action="keydown->payments#handleKeydown change->payments#handleNewDropdown change->payments#onAddAccountChange">
-          <option value="">Select...</option>
-          <option value="new">— New Account —</option>
-          ${accountOptions}
-        </select>
-      </td>
-      <td class="px-4 py-3">
-        <select name="spending_category_id"
-                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
-                data-action="keydown->payments#handleKeydown change->payments#handleNewDropdown change->payments#onCategoryChange">
-          <option value="">Select...</option>
-          <option value="new">— New Category —</option>
-          ${categoryOptions}
-        </select>
-      </td>
-      <td class="px-4 py-3">
-        <select name="spending_type_override_id"
-                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
-                data-action="keydown->payments#handleKeydown change->payments#handleNewDropdown">
-          <option value="">Auto (from category)</option>
-          <option value="new">— New Spending Type —</option>
-          ${this._buildTypeOptions()}
-        </select>
-      </td>
-      <td class="px-4 py-3">
-        <input type="text" name="description" value="" placeholder="Description" maxlength="255"
-               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
-               data-action="keydown->payments#handleKeydown">
-      </td>
-      <td class="px-4 py-3">
-        <div class="flex items-center">
-          <span class="text-sm text-gray-500 dark:text-gray-400 mr-1">$</span>
-          <input type="number" name="amount" value="" placeholder="0.00" step="0.01"
-                 class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5 text-right"
-                 data-action="keydown->payments#handleKeydown">
-        </div>
-      </td>
-      <td class="px-4 py-3 text-right space-x-2 whitespace-nowrap">
-        <button type="button"
-                class="inline-flex items-center justify-center w-9 h-9 rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
-                data-action="click->payments#saveNew"
-                title="Save">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 21v-8H7v8"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 3v5h8"/></svg>
-        </button>
-        <button type="button"
-                class="inline-flex items-center justify-center w-9 h-9 rounded-md text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 transition"
-                data-action="click->payments#cancelAdding"
-                title="Cancel">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        </button>
-      </td>
-    </tr>
-    <tr class="hidden">
-      <td colspan="7" class="px-4 py-3">
-        <input type="text" name="notes" value="" placeholder="Notes (optional)" maxlength="500"
-               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-2 py-1.5"
-               data-action="keydown->payments#handleKeydown">
-      </td>
-    </tr>
-    <tr class="hidden" data-payments-target="rowError">
-      <td colspan="7" class="px-4 py-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30"></td>
     </tr>`
   }
 
@@ -945,6 +862,20 @@ export default class extends Controller {
   }
 
   _rebuildInlineDropdowns() {
+    // Rebuild modal dropdowns if adding, or inline edit dropdowns
+    if (this.state === "adding") {
+      const currentAcc = this.modalAccountTarget.value
+      const currentCat = this.modalCategoryTarget.value
+      const currentType = this.modalTypeTarget.value
+      this.modalAccountTarget.innerHTML = `<option value="">Select account...</option><option value="new">— New Account —</option>` + this._buildAccountOptions()
+      this.modalCategoryTarget.innerHTML = `<option value="">Select category...</option><option value="new">— New Category —</option>` + this._buildCategoryOptions()
+      this.modalTypeTarget.innerHTML = `<option value="">Auto (from category)</option><option value="new">— New Spending Type —</option>` + this._buildTypeOptions()
+      if (currentAcc && currentAcc !== "new") this.modalAccountTarget.value = currentAcc
+      if (currentCat && currentCat !== "new") this.modalCategoryTarget.value = currentCat
+      if (currentType && currentType !== "new") this.modalTypeTarget.value = currentType
+      return
+    }
+
     const accSelect = this.tableBodyTarget.querySelector("select[name='account_id']")
     const catSelect = this.tableBodyTarget.querySelector("select[name='spending_category_id']")
     const typeSelect = this.tableBodyTarget.querySelector("select[name='spending_type_override_id']")
@@ -980,56 +911,94 @@ export default class extends Controller {
     document.body.removeChild(a)
   }
 
-  // --- Add Row Cursor Flow (Date → Account → Category → Description) ---
+  // --- Add Modal Helpers ---
 
-  onAddDateChange() {
-    if (this.state !== "adding") return
-    // Defer focus for Safari — native date picker needs time to fully close
+  _openAddModal() {
+    // Populate dropdowns
+    this.modalAccountTarget.innerHTML = `<option value="">Select account...</option><option value="new">— New Account —</option>` + this._buildAccountOptions()
+    this.modalCategoryTarget.innerHTML = `<option value="">Select category...</option><option value="new">— New Category —</option>` + this._buildCategoryOptions()
+    this.modalTypeTarget.innerHTML = `<option value="">Auto (from category)</option><option value="new">— New Spending Type —</option>` + this._buildTypeOptions()
+
+    // Reset fields
+    this.modalDateTarget.value = this._formatDateValue(new Date())
+    this.modalAccountTarget.value = ""
+    this.modalCategoryTarget.value = ""
+    this.modalTypeTarget.value = ""
+    this.modalDescriptionTarget.value = ""
+    this.modalAmountTarget.value = ""
+    this.modalErrorTarget.classList.add("hidden")
+    this.modalErrorTarget.textContent = ""
+
+    // Show modal
+    this.addModalTarget.classList.remove("hidden")
+
+    // Global Escape handler for the modal
+    this._modalEscapeHandler = (e) => {
+      if (e.key === "Escape") { e.preventDefault(); this.cancelAdding() }
+    }
+    document.addEventListener("keydown", this._modalEscapeHandler)
+
+    // Focus date field
     setTimeout(() => {
-      const accSelect = this.tableBodyTarget.querySelector("select[name='account_id']")
-      if (accSelect) accSelect.focus()
+      this.modalDateTarget.focus()
+      try { this.modalDateTarget.showPicker() } catch (e) {}
     }, 50)
   }
 
-  onAddAccountChange(event) {
-    if (this.state !== "adding") return
-    const val = event.target.value
-    if (val && val !== "" && val !== "new") {
-      // Defer focus for Safari — native select dropdown needs time to fully close
-      setTimeout(() => {
-        const catSelect = this.tableBodyTarget.querySelector("select[name='spending_category_id']")
-        if (catSelect) catSelect.focus()
-      }, 50)
+  _showModalError(message) {
+    this.modalErrorTarget.textContent = message
+    this.modalErrorTarget.classList.remove("hidden")
+  }
+
+  handleModalKeydown(event) {
+    if (event.key === "Enter") {
+      event.preventDefault()
+      this.saveNew()
+    } else if (event.key === "Escape") {
+      event.preventDefault()
+      this.cancelAdding()
     }
   }
 
-  // --- Category Change (Auto-type) ---
+  onModalDateChange() {
+    if (this.state !== "adding") return
+    setTimeout(() => this.modalAccountTarget.focus(), 50)
+  }
 
-  onCategoryChange(event) {
+  onModalAccountChange(event) {
+    if (this.state !== "adding") return
+    const val = event.target.value
+    if (val && val !== "" && val !== "new") {
+      setTimeout(() => this.modalCategoryTarget.focus(), 50)
+    }
+  }
+
+  onModalCategoryChange(event) {
     const categoryId = event.target.value
     if (categoryId && categoryId !== "new") {
       // Auto-select the matching spending type
       const cat = this.categories.find(c => c.id === Number(categoryId))
       if (cat && cat.spending_type_id) {
+        this.modalTypeTarget.value = String(cat.spending_type_id)
+      }
+      setTimeout(() => this.modalDescriptionTarget.focus(), 50)
+    }
+  }
+
+  // --- Category Change (Edit row auto-type) ---
+
+  onCategoryChange(event) {
+    const categoryId = event.target.value
+    if (categoryId && categoryId !== "new") {
+      const cat = this.categories.find(c => c.id === Number(categoryId))
+      if (cat && cat.spending_type_id) {
         const typeSelect = this.tableBodyTarget.querySelector("select[name='spending_type_override_id']")
         if (typeSelect) typeSelect.value = String(cat.spending_type_id)
       }
-      // Defer focus for Safari — native select dropdown needs time to fully close
       setTimeout(() => {
         const descInput = this.tableBodyTarget.querySelector("input[name='description']")
         if (descInput) descInput.focus()
       }, 50)
-    }
-
-    const autoTypeEl = this.element.querySelector("[data-payments-target='autoType']")
-    if (autoTypeEl) {
-      if (categoryId) {
-        const typeName = this._getAutoTypeName(categoryId)
-        const colorKey = this._getAutoTypeColorKey(categoryId)
-        autoTypeEl.innerHTML = typeName ? this._renderTypeBadge(colorKey, typeName) : `<span class="text-xs text-gray-400 dark:text-gray-500 italic">Auto</span>`
-      } else {
-        autoTypeEl.innerHTML = `<span class="text-xs text-gray-400 dark:text-gray-500 italic">Auto</span>`
-      }
     }
   }
 

@@ -162,6 +162,84 @@
     </div>
   </div>
 
+  <%# Add Payment Modal %>
+  <div class="hidden fixed inset-0 z-50" data-payments-target="addModal">
+    <div class="fixed inset-0 bg-gray-500/75 transition-opacity" data-action="click->payments#cancelAdding"></div>
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-lg shadow-xl max-w-lg w-full">
+        <div class="flex items-center justify-between px-6 pt-5 pb-0">
+          <h3 class="text-lg font-semibold text-gray-900">Add Payment</h3>
+          <button type="button" class="text-gray-400 hover:text-gray-600 transition" data-action="click->payments#cancelAdding" title="Close">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="px-6 py-4 space-y-4" data-payments-target="addModalBody">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+            <input type="date" name="payment_date" data-payments-target="modalDate"
+                   class="w-full rounded-lg border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2.5"
+                   data-action="keydown->payments#handleModalKeydown change->payments#onModalDateChange">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Account <span class="text-red-500">*</span></label>
+            <select name="account_id" data-payments-target="modalAccount"
+                    class="w-full rounded-lg border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2.5"
+                    data-action="keydown->payments#handleModalKeydown change->payments#handleNewDropdown change->payments#onModalAccountChange">
+              <option value="">Select account...</option>
+              <option value="new">— New Account —</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Category <span class="text-red-500">*</span></label>
+            <select name="spending_category_id" data-payments-target="modalCategory"
+                    class="w-full rounded-lg border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2.5"
+                    data-action="keydown->payments#handleModalKeydown change->payments#handleNewDropdown change->payments#onModalCategoryChange">
+              <option value="">Select category...</option>
+              <option value="new">— New Category —</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Spending Type</label>
+            <select name="spending_type_override_id" data-payments-target="modalType"
+                    class="w-full rounded-lg border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2.5"
+                    data-action="keydown->payments#handleModalKeydown change->payments#handleNewDropdown">
+              <option value="">Auto (from category)</option>
+              <option value="new">— New Spending Type —</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Description <span class="text-red-500">*</span></label>
+            <input type="text" name="description" placeholder="What was this payment for?" maxlength="255" data-payments-target="modalDescription"
+                   class="w-full rounded-lg border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2.5"
+                   data-action="keydown->payments#handleModalKeydown">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Payment Amount <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500 text-sm">$</span>
+              <input type="number" name="amount" placeholder="0.00" step="0.01" data-payments-target="modalAmount"
+                     class="w-full rounded-lg border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 pl-7 pr-3 py-2.5 text-right"
+                     data-action="keydown->payments#handleModalKeydown">
+            </div>
+          </div>
+          <div class="hidden rounded-lg bg-red-50 p-3 text-sm text-red-600" data-payments-target="modalError"></div>
+        </div>
+        <div class="flex justify-end space-x-3 px-6 pb-5 pt-2">
+          <button type="button"
+                  class="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition"
+                  data-action="click->payments#cancelAdding">
+            Cancel
+          </button>
+          <button type="button"
+                  class="px-4 py-2.5 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition"
+                  data-action="click->payments#saveNew">
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <%# Delete Confirmation Modal %>
   <div class="hidden fixed inset-0 z-50" data-payments-target="deleteModal">
     <div class="fixed inset-0 bg-gray-500/75 dark:bg-gray-900/80 transition-opacity"></div>

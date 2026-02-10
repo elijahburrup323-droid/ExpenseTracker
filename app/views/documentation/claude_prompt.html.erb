@@ -54,7 +54,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 1. **HTML page controller** (e.g., AccountsController#index) — renders the HTML shell with a Stimulus data-controller div
 2. **API controller** (e.g., Api::AccountsController) — JSON CRUD endpoints (index, create, update, destroy)
 3. **Stimulus controller** (e.g., accounts_controller.js) — fetches data on connect(), renders table rows as innerHTML, manages add/edit/delete state machine (idle → adding → editing)
-4. **Inline editing** — add row appears at top of table, edit row replaces display row, Enter saves, Escape cancels
+4. **Inline editing** — edit row replaces display row, Enter saves, Escape cancels. Payments uses a modal for Add (all other screens use inline add row).
 5. **Soft delete** — all models use deleted_at timestamp, default_scope excludes deleted records
 
 ## Admin Role
