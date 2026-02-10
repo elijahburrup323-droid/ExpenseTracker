@@ -19,6 +19,34 @@
       </div>
     <% end %>
 
+    <%= link_to documentation_database_visualization_path, class: "group block bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 hover:ring-brand-300 hover:shadow-md transition" do %>
+      <div class="flex items-start space-x-4">
+        <div class="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-lg bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 group-hover:bg-brand-100 dark:group-hover:bg-brand-900/50 transition">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-brand-700 dark:group-hover:text-brand-400 transition">Database Visualization</h2>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Visual entity relationship diagram</p>
+        </div>
+      </div>
+    <% end %>
+
+    <%= link_to documentation_bug_reports_path, class: "group block bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 hover:ring-brand-300 hover:shadow-md transition" do %>
+      <div class="flex items-start space-x-4">
+        <div class="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-lg bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 group-hover:bg-brand-100 dark:group-hover:bg-brand-900/50 transition">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-brand-700 dark:group-hover:text-brand-400 transition">Bug Reports Log</h2>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">History of corrected issues, grouped by date</p>
+        </div>
+      </div>
+    <% end %>
+
     <%= link_to documentation_claude_prompt_path, class: "group block bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 hover:ring-brand-300 hover:shadow-md transition" do %>
       <div class="flex items-start space-x-4">
         <div class="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-lg bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 group-hover:bg-brand-100 dark:group-hover:bg-brand-900/50 transition">

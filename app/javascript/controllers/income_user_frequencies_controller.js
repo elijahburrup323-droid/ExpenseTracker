@@ -6,7 +6,6 @@ export default class extends Controller {
 
   connect() {
     this.frequencies = []
-    this.viewAll = false
     this.fetchAll()
   }
 
@@ -14,28 +13,58 @@ export default class extends Controller {
 
   async fetchAll() {
     try {
-      const url = this.viewAll ? `${this.apiUrlValue}?view_all=true` : this.apiUrlValue
-      const response = await fetch(url, { headers: { "Accept": "application/json" } })
+      const response = await fetch(this.apiUrlValue, { headers: { "Accept": "application/json" } })
       if (response.ok) this.frequencies = await response.json()
     } catch (e) {
       // silently fail
     }
+    this._syncAllToggle()
     this.renderTable()
   }
 
-  // --- View All Toggle ---
+  // --- All Toggle (bulk enable/disable) ---
 
-  toggleViewAll() {
-    this.viewAll = !this.viewAll
-
+  _syncAllToggle() {
+    const allOn = this.frequencies.length > 0 && this.frequencies.every(f => f.use_flag)
     const btn = this.toggleAllButtonTarget
-    btn.dataset.checked = String(this.viewAll)
-    btn.setAttribute("aria-checked", String(this.viewAll))
-    btn.className = btn.className.replace(this.viewAll ? "bg-gray-300" : "bg-purple-600", this.viewAll ? "bg-purple-600" : "bg-gray-300")
+    btn.dataset.checked = String(allOn)
+    btn.setAttribute("aria-checked", String(allOn))
+    btn.className = btn.className.replace(allOn ? "bg-gray-300" : "bg-purple-600", allOn ? "bg-purple-600" : "bg-gray-300")
     const knob = btn.querySelector("span")
-    knob.className = knob.className.replace(this.viewAll ? "translate-x-1" : "translate-x-7", this.viewAll ? "translate-x-7" : "translate-x-1")
+    knob.className = knob.className.replace(allOn ? "translate-x-1" : "translate-x-7", allOn ? "translate-x-7" : "translate-x-1")
+  }
 
-    this.fetchAll()
+  async toggleViewAll() {
+    const allOn = this.frequencies.length > 0 && this.frequencies.every(f => f.use_flag)
+    const newFlag = !allOn
+
+    // Update visual state immediately
+    const btn = this.toggleAllButtonTarget
+    btn.dataset.checked = String(newFlag)
+    btn.setAttribute("aria-checked", String(newFlag))
+    btn.className = btn.className.replace(newFlag ? "bg-gray-300" : "bg-purple-600", newFlag ? "bg-purple-600" : "bg-gray-300")
+    const knob = btn.querySelector("span")
+    knob.className = knob.className.replace(newFlag ? "translate-x-1" : "translate-x-7", newFlag ? "translate-x-7" : "translate-x-1")
+
+    // Update all local data immediately for snappy UI
+    this.frequencies.forEach(f => f.use_flag = newFlag)
+    this.renderTable()
+
+    // Single bulk API call
+    try {
+      await fetch(`${this.apiUrlValue}/bulk_update`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "X-CSRF-Token": this.csrfTokenValue
+        },
+        body: JSON.stringify({ use_flag: newFlag })
+      })
+    } catch (e) {
+      // Revert on error
+      this.fetchAll()
+    }
   }
 
   // --- Use Toggle ---

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_09_233948) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_10_033328) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -50,6 +50,14 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_09_233948) do
     t.index ["account_type_id"], name: "index_accounts_on_account_type_id"
     t.index ["user_id", "sort_order"], name: "index_accounts_on_user_id_and_sort_order"
     t.index ["user_id"], name: "index_accounts_on_user_id"
+  end
+
+  create_table "bug_reports", force: :cascade do |t|
+    t.string "screen_name"
+    t.text "description"
+    t.date "processed_date"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "dbu_table_catalogs", force: :cascade do |t|

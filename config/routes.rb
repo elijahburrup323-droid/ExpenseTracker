@@ -55,7 +55,11 @@ Rails.application.routes.draw do
     resources :accounts, only: [:index, :create, :update, :destroy]
     resources :payments, only: [:index, :create, :update, :destroy]
     resources :income_frequency_masters, only: [:index, :create, :update, :destroy]
-    resources :income_user_frequencies, only: [:index, :update]
+    resources :income_user_frequencies, only: [:index, :update] do
+      collection do
+        put :bulk_update
+      end
+    end
     resources :income_recurrings, only: [:index, :create, :update, :destroy]
     resources :income_entries, only: [:index, :create, :update, :destroy] do
       collection do
@@ -103,6 +107,12 @@ Rails.application.routes.draw do
   # Documentation
   get "documentation", to: "documentation#index", as: :documentation
   get "documentation/database-schema", to: "documentation#database_schema", as: :documentation_database_schema
+  get "documentation/database-visualization", to: "documentation#database_visualization", as: :documentation_database_visualization
+  get "documentation/bug-reports", to: "documentation#bug_reports", as: :documentation_bug_reports
+  # Bug Reports API (admin only)
+  namespace :api do
+    resources :bug_reports, only: [:index, :create]
+  end
   get "documentation/claude-prompt", to: "documentation#claude_prompt", as: :documentation_claude_prompt
 
   # Static pages

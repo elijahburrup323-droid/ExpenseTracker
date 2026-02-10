@@ -7,6 +7,12 @@ class DocumentationController < ApplicationController
   def database_schema
   end
 
+  def database_visualization
+  end
+
+  def bug_reports
+  end
+
   def claude_prompt
   end
 end

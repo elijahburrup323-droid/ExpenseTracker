@@ -40,8 +40,10 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 
 ### Layout Structure
 - Collapsible left sidebar (w-56 expanded, w-16 collapsed) with gradient purple background
-- Sidebar groups: Accounts (Account Types), Deposits (Recurring Deposits, Frequencies), Payments (Categories, Spending Types), Admin (DBU, Users, Documentation, Frequency Masters — admin only, always at bottom)
-- Top header bar showing "Hello {first name}", motivational quote, current date, theme toggle, user avatar, settings link, and sign out button (upper-right corner, always visible, sticky — stays fixed at top when scrolling, z-30)
+- Sidebar groups: Accounts (Account Types), Deposits (Frequencies, Recurring Deposits), Payments (Categories, Spending Types), Admin (DBU, Users, Documentation, Frequency Masters — admin only, always at bottom). Sub-menus sorted alphabetically within each group.
+- Circular collapse/expand button on right edge of sidebar (absolute positioned, -right-3)
+- Bottom sidebar section: user profile info (name), Theme toggle, Settings link, Sign Out link
+- Top header bar showing "Hello {first name}", motivational quote, current date, and profile dropdown (upper-right corner with avatar, contains Toggle Theme, Settings, Sign Out — always visible, sticky z-30)
 - Stacked sticky headers: On the Payments page, the page toolbar (h1 + Add Payment button) is sticky top-14 z-20, stacking below the Hello DJ bar (sticky top-0 z-30) so both remain visible while scrolling
 - Main content area shifts with sidebar via margin
 - Sidebar state + group collapse state persisted in localStorage
@@ -60,7 +62,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 - Admin users see an "Admin" group in the sidebar containing: DBU, Users, Documentation, and Frequency Masters.
 - Admin users also see Generate Data buttons on all CRUD screens.
 - Non-admins see the normal user experience without admin tools.
-- Admin user management screen (/admin/users) lets admins search users and toggle admin status via API.
+- Admin user management screen (/admin/users, titled "Admin Users") lets admins search users and toggle admin status via API.
 
 ## Database Tables
 
@@ -83,6 +85,9 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 - **income_user_frequencies** — user-scoped join to frequency_masters with use_flag toggle
 - **income_recurrings** — user-scoped recurring income sources (name, amount, frequency, next_date, use_flag). Has advance_next_date! to calculate next occurrence.
 - **income_entries** — user-scoped income transactions. Auto-generated from due recurrings via IncomeEntry.generate_due_entries_for(user). Has received_flag toggle. When received_flag is toggled ON, account balance is adjusted (same transactional pattern as payments). Income entries with received_flag=true for budget accounts are summed into Dashboard Card 4 as "Income".
+
+### Admin / System Tables
+- **bug_reports** — screen_name, description, processed_date. Displayed on Documentation &gt; Bug Reports Log, paginated by date (5 days per page).
 
 ### Key Relationships
 - User has_many: spending_types, spending_categories, account_types, accounts, payments, income_user_frequencies, income_recurrings, income_entries
@@ -108,6 +113,8 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 /dbu .................. Database Utility admin tool (admin-only)
 /documentation ......... Documentation index (admin-only sidebar link)
 /documentation/database-schema
+/documentation/database-visualization
+/documentation/bug-reports
 /documentation/claude-prompt
 
 API endpoints (all under /api/):
@@ -117,13 +124,14 @@ API endpoints (all under /api/):
   /api/accounts ............... CRUD
   /api/payments ............... CRUD (with transactional balance updates)
   /api/income_frequency_masters  CRUD (admin-only)
-  /api/income_user_frequencies  index + update (use_flag toggle, filters inactive masters)
+  /api/income_user_frequencies  index + update + bulk_update (use_flag toggle, "All" bulk toggle)
   /api/income_recurrings ...... CRUD
   /api/income_entries ......... CRUD + POST /generate (with transactional balance updates on received_flag)
   /api/admin/users ........... index + update (admin toggle, admin-only)
   /api/dbu/tables ............ DBU table catalog (admin-only)
   /api/dbu/users ............. DBU user list (admin-only)
   /api/dbu/records ........... DBU record list/show/update/delete (admin-only)
+  /api/bug_reports ........... index (paginated by date) + create
 ```
 
 ## Stimulus Controllers
@@ -139,11 +147,12 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 - **accounts_controller.js** — CRUD with type select, budget toggle, generate dummy data
 - **payments_controller.js** — CRUD with date/account/category/type filters, search, combination sum search, generate dummy data
 - **income_frequency_masters_controller.js** — CRUD with inline editing, active toggle, sort_order editing (admin-only)
-- **income_user_frequencies_controller.js** — use_flag toggle list (filters out inactive frequency masters)
+- **income_user_frequencies_controller.js** — use_flag toggle list with "All" bulk toggle (enables/disables all frequencies in one API call)
 - **income_recurrings_controller.js** — CRUD with frequency/account selects, generate dummy data
 - **income_entries_controller.js** — CRUD with received toggle (opens edit on amount), auto-advance cursor between fields on change, Generate Data button
 - **admin_users_controller.js** — Admin user management with search, admin toggle (admin-only)
-- **quotes_controller.js** — Rotating motivational budget quotes in header bar (100 quotes, cycles on page load, toggle to hide via localStorage)
+- **quotes_controller.js** — Rotating motivational budget quotes in header bar (100 quotes, cycles on page load, always visible)
+- **bug_reports_controller.js** — Paginated bug reports log grouped by date with "Show More" pagination (5 days per page)
 - **dbu_controller.js** — Database Utility: browse/edit any table via dbu_table_catalogs, search, user filter, record navigation (Prev/Next), dirty state protection, save/delete (admin-only)
 
 ## Seeding & Initialization
@@ -161,7 +170,7 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 7. **Case-insensitive uniqueness** — name fields use lower() index with deleted_at IS NULL filter
 8. **API error format** — { errors: ["message"] } with 422 status
 9. **Admin gating** — Admin sidebar group (DBU, Users, Documentation, Frequency Masters), Generate Data buttons, and admin API endpoints are only visible/accessible to users with budgethq_agent=true
-10. **Motivational quotes** — Header displays rotating budget quotes from a pool of 100, cycling on each page load, with a toggle button to show/hide (preference stored in localStorage)
+10. **Motivational quotes** — Header displays rotating budget quotes from a pool of 100, cycling on each page load (always visible, no toggle)
 11. **Auto-cancel editing** — Clicking Add/Edit/Delete while another row is being edited auto-cancels the previous edit (no need for explicit cancel)
 12. **Auto-save toggles** — All toggle switches (budget, use_flag, active, admin) save immediately via API without requiring a Save button
 13. **Auto-advance cursor** — Deposits fields auto-advance focus to the next field in sequence (date → account → source → description → amount → frequency) on change. Payments add-row also auto-advances: Date → Account → Category → (auto-populate Spending Type) → Description

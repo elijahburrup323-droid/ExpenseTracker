@@ -1,0 +1,174 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="mb-6">
+    <div class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
+      <%= link_to "Documentation", documentation_path, class: "hover:text-brand-600 dark:hover:text-brand-400 transition" %>
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      <span class="text-gray-900 dark:text-white font-medium">Database Visualization</span>
+    </div>
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Database Visualization</h1>
+    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Entity relationship diagram showing table relationships</p>
+  </div>
+
+  <%# Legend %>
+  <div class="mb-6 flex flex-wrap items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+    <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-blue-500"></span> Core User</div>
+    <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-green-500"></span> Spending</div>
+    <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-purple-500"></span> Income</div>
+    <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-yellow-500"></span> Authentication</div>
+    <div class="flex items-center gap-1.5">
+      <svg class="w-6 h-2"><line x1="0" y1="1" x2="24" y2="1" stroke="currentColor" stroke-width="2"/></svg> belongs_to
+    </div>
+    <div class="flex items-center gap-1.5">
+      <svg class="w-6 h-2"><line x1="0" y1="1" x2="24" y2="1" stroke="currentColor" stroke-width="2" stroke-dasharray="4 2"/></svg> has_many
+    </div>
+  </div>
+
+  <%# ERD Diagram - using CSS grid with table cards %>
+  <div class="overflow-x-auto pb-4">
+    <div class="inline-grid grid-cols-4 gap-8 min-w-[900px]">
+
+      <%# Row 1: Users (center), Auth tables %>
+      <div></div>
+      <%# Users table - center %>
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-2 ring-blue-300 dark:ring-blue-700 overflow-hidden col-span-2">
+        <div class="bg-blue-500 text-white px-4 py-2 text-sm font-bold flex items-center gap-2">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+          users
+        </div>
+        <div class="px-4 py-2 text-xs space-y-0.5">
+          <div class="flex justify-between"><span class="font-mono text-gray-700 dark:text-gray-300">id</span><span class="text-gray-400">PK</span></div>
+          <div class="flex justify-between"><span class="font-mono text-gray-700 dark:text-gray-300">email, first_name, last_name</span></div>
+          <div class="flex justify-between"><span class="font-mono text-gray-700 dark:text-gray-300">phone_number, avatar_url</span></div>
+          <div class="flex justify-between"><span class="font-mono text-gray-700 dark:text-gray-300">budgethq_agent, two_factor_enabled</span></div>
+          <div class="flex justify-between"><span class="font-mono text-gray-700 dark:text-gray-300">subscription_active, subscription_*_date</span></div>
+        </div>
+      </div>
+      <div></div>
+
+      <%# Row 2: Auth + Account Types %>
+      <%# Identities %>
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-2 ring-yellow-300 dark:ring-yellow-700 overflow-hidden">
+        <div class="bg-yellow-500 text-white px-4 py-2 text-sm font-bold">identities</div>
+        <div class="px-4 py-2 text-xs space-y-0.5">
+          <div class="font-mono text-gray-700 dark:text-gray-300">user_id <span class="text-gray-400">FK</span></div>
+          <div class="font-mono text-gray-700 dark:text-gray-300">provider, uid, tokens</div>
+        </div>
+      </div>
+      <%# Account Types %>
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-2 ring-green-300 dark:ring-green-700 overflow-hidden">
+        <div class="bg-green-500 text-white px-4 py-2 text-sm font-bold">account_types</div>
+        <div class="px-4 py-2 text-xs space-y-0.5">
+          <div class="font-mono text-gray-700 dark:text-gray-300">user_id <span class="text-gray-400">FK</span></div>
+          <div class="font-mono text-gray-700 dark:text-gray-300">name, icon, color_key</div>
+        </div>
+      </div>
+      <%# Spending Types %>
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-2 ring-green-300 dark:ring-green-700 overflow-hidden">
+        <div class="bg-green-500 text-white px-4 py-2 text-sm font-bold">spending_types</div>
+        <div class="px-4 py-2 text-xs space-y-0.5">
+          <div class="font-mono text-gray-700 dark:text-gray-300">user_id <span class="text-gray-400">FK</span></div>
+          <div class="font-mono text-gray-700 dark:text-gray-300">name, description, icon, color_key</div>
+        </div>
+      </div>
+      <%# Frequency Masters %>
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-2 ring-purple-300 dark:ring-purple-700 overflow-hidden">
+        <div class="bg-purple-500 text-white px-4 py-2 text-sm font-bold">income_frequency_masters</div>
+        <div class="px-4 py-2 text-xs space-y-0.5">
+          <div class="font-mono text-gray-700 dark:text-gray-300">name, frequency_type</div>
+          <div class="font-mono text-gray-700 dark:text-gray-300">interval_days, day_of_month</div>
+          <div class="font-mono text-gray-700 dark:text-gray-300">weekday, ordinal, active</div>
+        </div>
+      </div>
+
+      <%# Row 3: Accounts, Spending Categories, User Frequencies %>
+      <div></div>
+      <%# Accounts %>
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-2 ring-green-300 dark:ring-green-700 overflow-hidden">
+        <div class="bg-green-500 text-white px-4 py-2 text-sm font-bold">accounts</div>
+        <div class="px-4 py-2 text-xs space-y-0.5">
+          <div class="font-mono text-gray-700 dark:text-gray-300">user_id <span class="text-gray-400">FK</span></div>
+          <div class="font-mono text-gray-700 dark:text-gray-300">account_type_id <span class="text-gray-400">FK</span></div>
+          <div class="font-mono text-gray-700 dark:text-gray-300">name, balance, include_in_budget</div>
+        </div>
+      </div>
+      <%# Spending Categories %>
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-2 ring-green-300 dark:ring-green-700 overflow-hidden">
+        <div class="bg-green-500 text-white px-4 py-2 text-sm font-bold">spending_categories</div>
+        <div class="px-4 py-2 text-xs space-y-0.5">
+          <div class="font-mono text-gray-700 dark:text-gray-300">user_id <span class="text-gray-400">FK</span></div>
+          <div class="font-mono text-gray-700 dark:text-gray-300">spending_type_id <span class="text-gray-400">FK</span></div>
+          <div class="font-mono text-gray-700 dark:text-gray-300">name, is_debt</div>
+        </div>
+      </div>
+      <%# User Frequencies %>
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-2 ring-purple-300 dark:ring-purple-700 overflow-hidden">
+        <div class="bg-purple-500 text-white px-4 py-2 text-sm font-bold">income_user_frequencies</div>
+        <div class="px-4 py-2 text-xs space-y-0.5">
+          <div class="font-mono text-gray-700 dark:text-gray-300">user_id <span class="text-gray-400">FK</span></div>
+          <div class="font-mono text-gray-700 dark:text-gray-300">frequency_master_id <span class="text-gray-400">FK</span></div>
+          <div class="font-mono text-gray-700 dark:text-gray-300">use_flag</div>
+        </div>
+      </div>
+
+      <%# Row 4: Payments, Income Recurrings %>
+      <div></div>
+      <%# Payments %>
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-2 ring-green-300 dark:ring-green-700 overflow-hidden">
+        <div class="bg-green-600 text-white px-4 py-2 text-sm font-bold flex items-center gap-2">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a5 5 0 00-10 0v2"/></svg>
+          payments
+        </div>
+        <div class="px-4 py-2 text-xs space-y-0.5">
+          <div class="font-mono text-gray-700 dark:text-gray-300">user_id <span class="text-gray-400">FK</span></div>
+          <div class="font-mono text-gray-700 dark:text-gray-300">account_id <span class="text-gray-400">FK</span></div>
+          <div class="font-mono text-gray-700 dark:text-gray-300">spending_category_id <span class="text-gray-400">FK</span></div>
+          <div class="font-mono text-gray-700 dark:text-gray-300">payment_date, description, amount</div>
+          <div class="font-mono text-gray-700 dark:text-gray-300">notes, deleted_at</div>
+        </div>
+      </div>
+      <%# Income Recurrings %>
+      <div></div>
+      <%# Income Recurrings %>
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-2 ring-purple-300 dark:ring-purple-700 overflow-hidden">
+        <div class="bg-purple-600 text-white px-4 py-2 text-sm font-bold">income_recurrings</div>
+        <div class="px-4 py-2 text-xs space-y-0.5">
+          <div class="font-mono text-gray-700 dark:text-gray-300">user_id <span class="text-gray-400">FK</span></div>
+          <div class="font-mono text-gray-700 dark:text-gray-300">frequency_master_id <span class="text-gray-400">FK</span></div>
+          <div class="font-mono text-gray-700 dark:text-gray-300">account_id <span class="text-gray-400">FK</span></div>
+          <div class="font-mono text-gray-700 dark:text-gray-300">name, amount, next_date, use_flag</div>
+        </div>
+      </div>
+
+      <%# Row 5: Income Entries %>
+      <div></div>
+      <div></div>
+      <div></div>
+      <%# Income Entries %>
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-2 ring-purple-300 dark:ring-purple-700 overflow-hidden">
+        <div class="bg-purple-600 text-white px-4 py-2 text-sm font-bold">income_entries</div>
+        <div class="px-4 py-2 text-xs space-y-0.5">
+          <div class="font-mono text-gray-700 dark:text-gray-300">user_id <span class="text-gray-400">FK</span></div>
+          <div class="font-mono text-gray-700 dark:text-gray-300">income_recurring_id <span class="text-gray-400">FK</span></div>
+          <div class="font-mono text-gray-700 dark:text-gray-300">account_id <span class="text-gray-400">FK</span></div>
+          <div class="font-mono text-gray-700 dark:text-gray-300">entry_date, amount, received_flag</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <%# Relationships summary %>
+  <div class="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Key Relationships</h2>
+    <div class="grid sm:grid-cols-2 gap-3 text-sm text-gray-600 dark:text-gray-400">
+      <div><span class="font-mono text-gray-900 dark:text-white">User</span> has_many accounts, payments, spending_types, spending_categories</div>
+      <div><span class="font-mono text-gray-900 dark:text-white">User</span> has_many income_recurrings, income_entries, income_user_frequencies</div>
+      <div><span class="font-mono text-gray-900 dark:text-white">AccountType</span> has_many accounts</div>
+      <div><span class="font-mono text-gray-900 dark:text-white">Account</span> has_many payments, income_entries</div>
+      <div><span class="font-mono text-gray-900 dark:text-white">SpendingType</span> has_many spending_categories</div>
+      <div><span class="font-mono text-gray-900 dark:text-white">SpendingCategory</span> has_many payments</div>
+      <div><span class="font-mono text-gray-900 dark:text-white">IncomeFrequencyMaster</span> has_many income_user_frequencies, income_recurrings</div>
+      <div><span class="font-mono text-gray-900 dark:text-white">IncomeRecurring</span> has_many income_entries</div>
+    </div>
+  </div>
+</div>

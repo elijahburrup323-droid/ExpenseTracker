@@ -27,12 +27,12 @@
     <% end %>
   </div>
 
-  <%# Collapse toggle — absolutely positioned at top-right of sidebar %>
+  <%# Collapse/Expand toggle — circular button on right edge of sidebar %>
   <button type="button"
-          class="hidden md:flex absolute top-0 right-0 h-14 items-center justify-center w-10 text-white/60 hover:text-white transition z-10"
+          class="hidden md:flex absolute top-16 -right-3 z-50 items-center justify-center w-6 h-6 rounded-full bg-brand-700 border-2 border-white/30 text-white shadow-md hover:bg-brand-800 hover:border-white/50 transition"
           data-action="click->sidebar#toggle"
           title="Toggle sidebar">
-    <svg class="h-5 w-5 transition-transform duration-300" data-sidebar-target="toggleIcon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <svg class="h-3.5 w-3.5 transition-transform duration-300" data-sidebar-target="toggleIcon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
       <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
     </svg>
   </button>
@@ -54,8 +54,8 @@
           path: income_entries_path,
           icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>',
           children: [
-            { path: income_recurrings_path, label: "Recurring Deposits", icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>' },
             { path: income_user_frequencies_path, label: "Frequencies", icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>' },
+            { path: income_recurrings_path, label: "Recurring Deposits", icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>' },
           ]
         },
         {
@@ -76,7 +76,6 @@
           icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>',
           children: [
             { path: dbu_path, label: "DBU", icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>' },
-            { path: admin_users_path, label: "Users", icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>' },
             { path: documentation_path, label: "Documentation", icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>' },
             { path: income_frequency_masters_path, label: "Frequency Masters", icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>' },
           ]
@@ -133,6 +132,46 @@
     <% end %>
   </nav>
 
+
+  <%# Bottom profile section (Theme, Settings, Logout) %>
+  <div class="border-t border-white/20 px-2 py-3 space-y-1">
+    <%# User info %>
+    <div class="flex items-center space-x-3 px-3 py-1.5 text-white/80">
+      <div class="h-6 w-6 rounded-full bg-white/20 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+        <%= current_user.first_name&.first&.upcase || current_user.email.first.upcase %>
+      </div>
+      <span data-sidebar-label class="text-sm font-medium truncate"><%= current_user.first_name || current_user.email %></span>
+    </div>
+    <%# Theme toggle %>
+    <div data-controller="theme">
+      <button type="button"
+              class="w-full flex items-center space-x-3 px-3 py-1.5 rounded-lg text-sm text-white/70 hover:bg-white/10 hover:text-white transition"
+              data-action="click->theme#toggle">
+        <svg data-theme-target="moonIcon" class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+        </svg>
+        <svg data-theme-target="sunIcon" class="h-4 w-4 flex-shrink-0 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+        </svg>
+        <span data-sidebar-label>Theme</span>
+      </button>
+    </div>
+    <%# Settings %>
+    <%= link_to edit_user_registration_path, class: "flex items-center space-x-3 px-3 py-1.5 rounded-lg text-sm text-white/70 hover:bg-white/10 hover:text-white transition" do %>
+      <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+      </svg>
+      <span data-sidebar-label>Settings</span>
+    <% end %>
+    <%# Sign out %>
+    <%= button_to destroy_user_session_path, method: :delete, class: "w-full flex items-center space-x-3 px-3 py-1.5 rounded-lg text-sm text-white/70 hover:bg-white/10 hover:text-white transition" do %>
+      <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+      </svg>
+      <span data-sidebar-label>Sign Out</span>
+    <% end %>
+  </div>
 
   <%# Tooltip (positioned via JS, outside nav overflow) %>
   <div data-sidebar-target="tooltip"

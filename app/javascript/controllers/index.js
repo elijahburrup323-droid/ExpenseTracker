@@ -19,6 +19,7 @@ import QuotesController from "controllers/quotes_controller"
 import DbuController from "controllers/dbu_controller"
 import SettingsEmailsController from "controllers/settings_emails_controller"
 import SettingsPhonesController from "controllers/settings_phones_controller"
+import BugReportsController from "controllers/bug_reports_controller"
 
 application.register("flash", FlashController)
 application.register("dropdown", DropdownController)
@@ -39,3 +40,4 @@ application.register("quotes", QuotesController)
 application.register("dbu", DbuController)
 application.register("settings-emails", SettingsEmailsController)
 application.register("settings-phones", SettingsPhonesController)
+application.register("bug-reports", BugReportsController)
