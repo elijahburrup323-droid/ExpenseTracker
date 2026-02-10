@@ -1033,6 +1033,54 @@ export default class extends Controller {
     }
   }
 
+  // --- CSV Export ---
+
+  exportCSV() {
+    let filtered = this._getFilteredPayments()
+    filtered = this._sortColumn ? this._sortPayments(filtered) : filtered.sort((a, b) => (a.payment_date || "").localeCompare(b.payment_date || ""))
+
+    if (filtered.length === 0) {
+      alert("No payments to export. Adjust your filters and try again.")
+      return
+    }
+
+    const headers = ["Date", "Account", "Category", "Spending Type", "Description", "Amount"]
+    const csvRows = [headers.join(",")]
+
+    for (const p of filtered) {
+      const row = [
+        p.payment_date || "",
+        this._csvEscape(p.account_name || ""),
+        this._csvEscape(p.spending_category_name || ""),
+        this._csvEscape(p.spending_type_name || ""),
+        this._csvEscape(p.description || ""),
+        parseFloat(p.amount || 0).toFixed(2)
+      ]
+      csvRows.push(row.join(","))
+    }
+
+    const csvContent = csvRows.join("\n")
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+
+    const today = this._formatDateValue(new Date())
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `payments_${today}.csv`
+    a.style.display = "none"
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  _csvEscape(value) {
+    if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+      return `"${value.replace(/"/g, '""')}"`
+    }
+    return value
+  }
+
   // --- Error Display ---
 
   showRowError(message) {
