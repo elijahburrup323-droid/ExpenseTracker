@@ -17,6 +17,8 @@ import SidebarController from "controllers/sidebar_controller"
 import AdminUsersController from "controllers/admin_users_controller"
 import QuotesController from "controllers/quotes_controller"
 import DbuController from "controllers/dbu_controller"
+import SettingsEmailsController from "controllers/settings_emails_controller"
+import SettingsPhonesController from "controllers/settings_phones_controller"
 
 application.register("flash", FlashController)
 application.register("dropdown", DropdownController)
@@ -35,3 +37,5 @@ application.register("sidebar", SidebarController)
 application.register("admin-users", AdminUsersController)
 application.register("quotes", QuotesController)
 application.register("dbu", DbuController)
+application.register("settings-emails", SettingsEmailsController)
+application.register("settings-phones", SettingsPhonesController)

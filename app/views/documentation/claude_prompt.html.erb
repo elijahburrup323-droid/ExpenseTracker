@@ -64,8 +64,10 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 ## Database Tables
 
 ### Core User Data
-- **users** — Devise fields + first_name, last_name, avatar_url, phone_number, secondary_email, budgethq_agent
+- **users** — Devise fields + first_name, last_name, avatar_url, phone_number, secondary_email, budgethq_agent, two_factor_enabled, subscription_active, subscription_start_date, subscription_expiration_date
 - **identities** — OmniAuth provider linkage (provider, uid, tokens)
+- **user_emails** — Alternate email addresses with verification (user_id, email, verification_code, verified_at)
+- **user_phones** — Alternate phone numbers with SMS verification (user_id, phone_number, verification_code, verified_at)
 - **phone_verifications** — SMS verification codes
 
 ### Spending Side

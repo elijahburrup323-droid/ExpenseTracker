@@ -12,6 +12,8 @@ class User < ApplicationRecord
   has_many :income_user_frequencies, dependent: :destroy
   has_many :income_recurrings, dependent: :destroy
   has_many :income_entries, dependent: :destroy
+  has_many :user_emails, dependent: :destroy
+  has_many :user_phones, dependent: :destroy
 
   validates :email, presence: true, uniqueness: true, unless: :phone_only_user?
   validates :phone_number, uniqueness: true, allow_blank: true

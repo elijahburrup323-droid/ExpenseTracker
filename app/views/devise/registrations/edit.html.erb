@@ -2,7 +2,7 @@
   <div class="max-w-2xl mx-auto">
     <div class="mb-8">
       <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Account Settings</h1>
-      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Manage your profile, email, and password.</p>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Manage your profile, subscription, email, phone, and password.</p>
     </div>
 
     <%= form_for(resource, as: resource_name, url: registration_path(resource_name), html: { method: :put, class: "space-y-6" }) do |f| %>
@@ -27,12 +27,69 @@
                 placeholder: "Doe" %>
           </div>
         </div>
+
+        <%# Two-Factor Notifications %>
+        <div class="mt-5 pt-5 border-t border-gray-200 dark:border-gray-700">
+          <div class="flex items-center justify-between">
+            <div>
+              <label for="user_two_factor_enabled" class="text-sm font-medium text-gray-700 dark:text-gray-300">Two-Factor Notifications</label>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">When enabled, you will receive a code to verify your identity when signing in or making sensitive changes.</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer ml-4 flex-shrink-0">
+              <%= f.check_box :two_factor_enabled, class: "sr-only peer" %>
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-500 dark:peer-focus:ring-brand-400 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:border-gray-500 peer-checked:bg-brand-600"></div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <%# Subscription Information %>
+      <div class="bg-white dark:bg-gray-800 shadow rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">Subscription Information</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Your current subscription status and details.</p>
+
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Active Subscriber</span>
+            <% if resource.subscription_active? %>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300">Yes</span>
+            <% else %>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300">No</span>
+            <% end %>
+          </div>
+
+          <% if resource.subscription_active? %>
+            <% if resource.subscription_start_date.present? %>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-500 dark:text-gray-400">Start Date</span>
+                <span class="text-sm font-medium text-gray-900 dark:text-white"><%= resource.subscription_start_date.strftime("%b %-d, %Y") %></span>
+              </div>
+            <% end %>
+
+            <% if resource.subscription_expiration_date.present? %>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-500 dark:text-gray-400">Expiration Date</span>
+                <span class="text-sm font-medium text-gray-900 dark:text-white"><%= resource.subscription_expiration_date.strftime("%b %-d, %Y") %></span>
+              </div>
+
+              <% if resource.subscription_expiration_date <= Date.today + 20 %>
+                <button type="button" class="w-full py-2.5 px-4 border border-brand-600 rounded-lg text-sm font-medium text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition">
+                  Renew Subscription
+                </button>
+              <% end %>
+            <% end %>
+          <% else %>
+            <button type="button" class="w-full py-2.5 px-4 bg-brand-600 hover:bg-brand-700 rounded-lg text-sm font-medium text-white transition shadow-sm">
+              Subscribe
+            </button>
+          <% end %>
+        </div>
       </div>
 
       <%# Email Settings %>
       <div class="bg-white dark:bg-gray-800 shadow rounded-xl border border-gray-200 dark:border-gray-700 p-6">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">Email Settings</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Changing your email requires your current password below.</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Changing your primary email requires your current password below.</p>
 
         <div class="space-y-4">
           <div>
@@ -40,13 +97,67 @@
             <%= f.email_field :email, autocomplete: "email",
                 class: "mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent" %>
           </div>
+        </div>
 
-          <div>
-            <%= f.label :secondary_email, "Secondary Email", class: "block text-sm font-medium text-gray-700 dark:text-gray-300" %>
-            <%= f.email_field :secondary_email, autocomplete: "email",
-                class: "mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent",
-                placeholder: "optional-alt@example.com" %>
-            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">You can use this email to sign in as an alternative to your primary email.</p>
+        <%# Alternate Emails (Stimulus-managed) %>
+        <div class="mt-5 pt-5 border-t border-gray-200 dark:border-gray-700"
+             data-controller="settings-emails"
+             data-settings-emails-api-url-value="<%= api_user_emails_path %>"
+             data-settings-emails-csrf-token-value="<%= form_authenticity_token %>">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Alternate Emails</h3>
+            <button type="button" class="text-sm font-medium text-brand-600 dark:text-brand-400 hover:underline transition"
+                    data-action="click->settings-emails#showAddForm">+ Add Email</button>
+          </div>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Each alternate email must be verified before it can be used.</p>
+
+          <div data-settings-emails-target="list"></div>
+
+          <div class="hidden mt-3 flex items-center gap-2" data-settings-emails-target="addForm">
+            <input type="email" placeholder="newemail@example.com"
+                   class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                   data-action="keydown->settings-emails#addFormKeydown">
+            <button type="button" class="px-4 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg transition"
+                    data-action="click->settings-emails#addEmail">Add</button>
+            <button type="button" class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition"
+                    data-action="click->settings-emails#hideAddForm">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <%# Phone Settings %>
+      <div class="bg-white dark:bg-gray-800 shadow rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">Phone Settings</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Manage your phone numbers. SMS-capable cell numbers only.</p>
+
+        <% if resource.phone_number.present? %>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Primary Phone</label>
+            <p class="mt-1 text-sm text-gray-900 dark:text-white"><%= resource.phone_number %></p>
+          </div>
+        <% end %>
+
+        <%# Alternate Phones (Stimulus-managed) %>
+        <div data-controller="settings-phones"
+             data-settings-phones-api-url-value="<%= api_user_phones_path %>"
+             data-settings-phones-csrf-token-value="<%= form_authenticity_token %>">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Alternate Phones</h3>
+            <button type="button" class="text-sm font-medium text-brand-600 dark:text-brand-400 hover:underline transition"
+                    data-action="click->settings-phones#showAddForm">+ Add Phone</button>
+          </div>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Each phone number must be verified via SMS before it can be used.</p>
+
+          <div data-settings-phones-target="list"></div>
+
+          <div class="hidden mt-3 flex items-center gap-2" data-settings-phones-target="addForm">
+            <input type="tel" placeholder="+1 (555) 123-4567"
+                   class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                   data-action="keydown->settings-phones#addFormKeydown">
+            <button type="button" class="px-4 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg transition"
+                    data-action="click->settings-phones#addPhone">Add</button>
+            <button type="button" class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition"
+                    data-action="click->settings-phones#hideAddForm">Cancel</button>
           </div>
         </div>
       </div>

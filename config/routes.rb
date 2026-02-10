@@ -62,6 +62,18 @@ Rails.application.routes.draw do
         post :generate
       end
     end
+    resources :user_emails, only: [:index, :create, :destroy] do
+      member do
+        post :verify
+        post :resend_code
+      end
+    end
+    resources :user_phones, only: [:index, :create, :destroy] do
+      member do
+        post :verify
+        post :resend_code
+      end
+    end
   end
 
   # Admin
