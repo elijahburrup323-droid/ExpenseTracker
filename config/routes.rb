@@ -32,6 +32,9 @@ Rails.application.routes.draw do
   # Accounts (HTML page)
   resources :accounts, only: [:index]
 
+  # Transfers (HTML page)
+  resources :transfer_masters, only: [:index]
+
   # Payments (HTML page)
   resources :payments, only: [:index]
 
@@ -53,6 +56,7 @@ Rails.application.routes.draw do
     resources :spending_categories, only: [:index, :create, :update, :destroy]
     resources :account_types, only: [:index, :create, :update, :destroy]
     resources :accounts, only: [:index, :create, :update, :destroy]
+    resources :transfer_masters, only: [:index, :create, :update, :destroy]
     resources :payments, only: [:index, :create, :update, :destroy]
     resources :income_frequency_masters, only: [:index, :create, :update, :destroy]
     resources :income_user_frequencies, only: [:index, :update] do

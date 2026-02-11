@@ -90,12 +90,13 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 ### Admin / System Tables
 - **bug_reports** — screen_name, description, processed_date. Displayed on Documentation &gt; Release Notes, paginated by date (5 days per page).
 - **legal_pages** — slug (unique), title, content (HTML), published_at. Stores Privacy Policy, Terms of Service, etc. Accessible at /pages/:slug. Seeded via db/seeds/legal_pages.rb. Content uses card-based layout with data-section attributes for dynamic TOC generation.
+- **transfer_masters** — user_id (FK), transfer_date (date), from_account_id (FK → accounts), to_account_id (FK → accounts), amount (decimal 12,2), memo (varchar, optional). Account-to-account transfers. Adjusts account balances on create/update/delete. Transfers do NOT count as payments or income, do NOT appear in Recent Activity or Category Spending.
 - **net_worth_snapshots** — user_id (FK), snapshot_date (date, unique per user), amount (decimal 12,2). Stores monthly net worth history for the dashboard chart. Shows up to 6 months. Admin can populate test data via POST /api/net_worth_snapshots/populate.
 
 ### Key Relationships
-- User has_many: spending_types, spending_categories, account_types, accounts, payments, income_user_frequencies, income_recurrings, income_entries
+- User has_many: spending_types, spending_categories, account_types, accounts, payments, income_user_frequencies, income_recurrings, income_entries, transfer_masters
 - SpendingType has_many spending_categories; SpendingCategory has_many payments
-- AccountType has_many accounts; Account has_many payments
+- AccountType has_many accounts; Account has_many payments, transfers_from, transfers_to
 - IncomeRecurring has_many income_entries; both link to frequency_master and optional account
 - All user-owned models use soft delete (deleted_at) with default_scope
 
@@ -104,6 +105,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 / ...................... Landing page (redirects to dashboard if signed in)
 /dashboard ............. Dashboard with 6 cards (budget, accounts, net worth, income/spending, recent activity, buckets)
 /accounts .............. Accounts CRUD screen
+/transfer_masters ...... Account Transfers CRUD screen (modal-based add/edit/delete)
 /account_types ......... Account Types CRUD screen
 /spending_types ........ Spending Types CRUD screen
 /spending_categories ... Categories CRUD screen
@@ -130,6 +132,7 @@ API endpoints (all under /api/):
   /api/spending_categories .... CRUD
   /api/account_types .......... CRUD
   /api/accounts ............... CRUD
+  /api/transfer_masters ....... CRUD (with transactional balance updates on both from/to accounts)
   /api/payments ............... CRUD (with transactional balance updates)
   /api/income_frequency_masters  CRUD (admin-only)
   /api/income_user_frequencies  index + update (use_flag toggle per frequency)

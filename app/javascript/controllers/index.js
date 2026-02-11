@@ -23,6 +23,7 @@ import BugReportsController from "controllers/bug_reports_controller"
 import NetWorthPopulateController from "controllers/net_worth_populate_controller"
 import DashboardController from "controllers/dashboard_controller"
 import LegalTocController from "controllers/legal_toc_controller"
+import TransferMastersController from "controllers/transfer_masters_controller"
 
 application.register("flash", FlashController)
 application.register("dropdown", DropdownController)
@@ -47,3 +48,4 @@ application.register("bug-reports", BugReportsController)
 application.register("net-worth-populate", NetWorthPopulateController)
 application.register("dashboard", DashboardController)
 application.register("legal-toc", LegalTocController)
+application.register("transfer-masters", TransferMastersController)

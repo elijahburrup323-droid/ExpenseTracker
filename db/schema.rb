@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_10_214153) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_10_235412) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -240,6 +240,21 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_10_214153) do
     t.index ["user_id"], name: "index_spending_types_on_user_id"
   end
 
+  create_table "transfer_masters", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.date "transfer_date", null: false
+    t.bigint "from_account_id", null: false
+    t.bigint "to_account_id", null: false
+    t.decimal "amount", precision: 12, scale: 2, null: false
+    t.string "memo"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["from_account_id"], name: "index_transfer_masters_on_from_account_id"
+    t.index ["to_account_id"], name: "index_transfer_masters_on_to_account_id"
+    t.index ["transfer_date"], name: "index_transfer_masters_on_transfer_date"
+    t.index ["user_id"], name: "index_transfer_masters_on_user_id"
+  end
+
   create_table "user_emails", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "email", null: false
@@ -331,6 +346,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_10_214153) do
   add_foreign_key "spending_categories", "spending_types"
   add_foreign_key "spending_categories", "users"
   add_foreign_key "spending_types", "users"
+  add_foreign_key "transfer_masters", "accounts", column: "from_account_id"
+  add_foreign_key "transfer_masters", "accounts", column: "to_account_id"
+  add_foreign_key "transfer_masters", "users"
   add_foreign_key "user_emails", "users"
   add_foreign_key "user_phones", "users"
 end
