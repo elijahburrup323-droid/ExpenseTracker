@@ -1,8 +1,9 @@
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
      data-controller="dashboard"
      data-dashboard-api-url-value="<%= api_dashboard_card_data_path %>"
-     data-dashboard-month-value="<%= Date.today.month %>"
-     data-dashboard-year-value="<%= Date.today.year %>">
+     data-dashboard-open-month-url-value="<%= api_open_month_master_path %>"
+     data-dashboard-month-value="<%= @open_month.current_month %>"
+     data-dashboard-year-value="<%= @open_month.current_year %>">
 
   <%# ===== 6-CARD GRID (3 x 2, equal size) ===== %>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -15,7 +16,7 @@
           <button type="button" data-action="click->dashboard#prevMonth" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
           </button>
-          <span class="text-xs text-gray-500 dark:text-gray-400 min-w-[5.5rem] text-center" data-dashboard-target="monthLabel"><%= Date.today.strftime("%B %Y") %></span>
+          <span class="text-xs text-gray-500 dark:text-gray-400 min-w-[5.5rem] text-center" data-dashboard-target="monthLabel"><%= Date.new(@open_month.current_year, @open_month.current_month, 1).strftime("%B %Y") %></span>
           <button type="button" data-action="click->dashboard#nextMonth" data-dashboard-target="nextBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
           </button>
@@ -191,7 +192,7 @@
           <button type="button" data-action="click->dashboard#prevMonth" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
           </button>
-          <span class="text-xs text-gray-500 dark:text-gray-400 min-w-[5.5rem] text-center" data-dashboard-target="monthLabel"><%= Date.today.strftime("%B %Y") %></span>
+          <span class="text-xs text-gray-500 dark:text-gray-400 min-w-[5.5rem] text-center" data-dashboard-target="monthLabel"><%= Date.new(@open_month.current_year, @open_month.current_month, 1).strftime("%B %Y") %></span>
           <button type="button" data-action="click->dashboard#nextMonth" data-dashboard-target="nextBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
           </button>
@@ -273,7 +274,7 @@
           <button type="button" data-action="click->dashboard#prevMonth" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
           </button>
-          <span class="text-xs text-gray-500 dark:text-gray-400 min-w-[5.5rem] text-center" data-dashboard-target="monthLabel"><%= Date.today.strftime("%B %Y") %></span>
+          <span class="text-xs text-gray-500 dark:text-gray-400 min-w-[5.5rem] text-center" data-dashboard-target="monthLabel"><%= Date.new(@open_month.current_year, @open_month.current_month, 1).strftime("%B %Y") %></span>
           <button type="button" data-action="click->dashboard#nextMonth" data-dashboard-target="nextBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
           </button>

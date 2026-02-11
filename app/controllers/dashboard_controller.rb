@@ -2,6 +2,7 @@ class DashboardController < ApplicationController
   before_action :authenticate_user!
 
   def index
+    @open_month = OpenMonthMaster.for_user(current_user)
     @accounts = current_user.accounts.includes(:account_type).ordered
 
     # Card 1: Spending Overview (Tracking-Only mode)

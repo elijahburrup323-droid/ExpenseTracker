@@ -5,12 +5,18 @@ export default class extends Controller {
     "monthLabel", "prevBtn", "nextBtn",
     "card1Content", "card4Content", "card5Content"
   ]
-  static values = { apiUrl: String, month: Number, year: Number }
+  static values = { apiUrl: String, openMonthUrl: String, month: Number, year: Number }
 
   connect() {
     this.currentMonth = this.monthValue
     this.currentYear = this.yearValue
     this._updateArrowState()
+
+    // If the persisted month differs from current real month, fetch the correct data
+    const now = new Date()
+    if (this.currentMonth !== now.getMonth() + 1 || this.currentYear !== now.getFullYear()) {
+      this._fetchAndRender()
+    }
   }
 
   prevMonth() {
@@ -19,6 +25,7 @@ export default class extends Controller {
       this.currentMonth = 12
       this.currentYear--
     }
+    this._persistMonth()
     this._fetchAndRender()
   }
 
@@ -36,7 +43,26 @@ export default class extends Controller {
       this.currentMonth = 1
       this.currentYear++
     }
+    this._persistMonth()
     this._fetchAndRender()
+  }
+
+  async _persistMonth() {
+    if (!this.openMonthUrlValue) return
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
+    try {
+      await fetch(this.openMonthUrlValue, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "X-CSRF-Token": csrfToken
+        },
+        body: JSON.stringify({ open_month_master: { current_year: this.currentYear, current_month: this.currentMonth } })
+      })
+    } catch (e) {
+      // silently fail
+    }
   }
 
   async _fetchAndRender() {

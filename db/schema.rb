@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_11_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_11_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -173,6 +173,20 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_11_120000) do
     t.datetime "updated_at", null: false
     t.index ["user_id", "snapshot_date"], name: "index_net_worth_snapshots_on_user_id_and_snapshot_date", unique: true
     t.index ["user_id"], name: "index_net_worth_snapshots_on_user_id"
+  end
+
+  create_table "open_month_masters", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.integer "current_year", null: false
+    t.integer "current_month", null: false
+    t.boolean "is_closed", default: false, null: false
+    t.datetime "locked_at"
+    t.bigint "locked_by_user_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["locked_by_user_id"], name: "index_open_month_masters_on_locked_by_user_id"
+    t.index ["user_id", "current_year", "current_month"], name: "idx_open_month_period"
+    t.index ["user_id"], name: "idx_open_month_user", unique: true
   end
 
   create_table "payments", force: :cascade do |t|
@@ -340,6 +354,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_11_120000) do
   add_foreign_key "income_user_frequencies", "income_frequency_masters", column: "frequency_master_id"
   add_foreign_key "income_user_frequencies", "users"
   add_foreign_key "net_worth_snapshots", "users"
+  add_foreign_key "open_month_masters", "users"
+  add_foreign_key "open_month_masters", "users", column: "locked_by_user_id"
   add_foreign_key "payments", "accounts"
   add_foreign_key "payments", "spending_categories"
   add_foreign_key "payments", "spending_types", column: "spending_type_override_id", on_delete: :nullify
