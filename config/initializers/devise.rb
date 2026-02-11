@@ -1,5 +1,5 @@
 Devise.setup do |config|
-  config.mailer_sender = "noreply@expensetracker.com"
+  config.mailer_sender = "dj@accreditationnow.com"
 
   require "devise/orm/active_record"
 
