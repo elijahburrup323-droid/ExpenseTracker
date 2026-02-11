@@ -11,8 +11,13 @@ module Api
       if phone.save
         phone.generate_verification_code!
         phone.record_send!
-        TwilioService.send_verification_code(phone.phone_number, phone.verification_code)
-        render json: { id: phone.id, phone_number: phone.phone_number, verified: false, message: "Verification code sent to #{phone.phone_number}" }, status: :created
+        begin
+          TwilioService.send_verification_code(phone.phone_number, phone.verification_code)
+          render json: { id: phone.id, phone_number: phone.phone_number, verified: false, message: "Verification code sent to #{phone.phone_number}" }, status: :created
+        rescue => e
+          Rails.logger.error "SMS SEND FAILED: #{e.class} — #{e.message}"
+          render json: { id: phone.id, phone_number: phone.phone_number, verified: false, message: "Phone saved but SMS failed: #{e.message}" }, status: :created
+        end
       else
         render json: { errors: phone.errors.full_messages }, status: :unprocessable_entity
       end
@@ -40,8 +45,13 @@ module Api
       end
       phone.generate_verification_code!
       phone.record_send!
-      TwilioService.send_verification_code(phone.phone_number, phone.verification_code)
-      render json: { message: "Verification code resent to #{phone.phone_number}" }
+      begin
+        TwilioService.send_verification_code(phone.phone_number, phone.verification_code)
+        render json: { message: "Verification code resent to #{phone.phone_number}" }
+      rescue => e
+        Rails.logger.error "SMS RESEND FAILED: #{e.class} — #{e.message}"
+        render json: { message: "Resend failed: #{e.message}" }, status: :unprocessable_entity
+      end
     end
 
     def destroy

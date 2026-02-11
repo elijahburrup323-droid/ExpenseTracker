@@ -11,8 +11,13 @@ module Api
       if email.save
         email.generate_verification_code!
         email.record_send!
-        UserMailer.verification_code_email(email).deliver_later
-        render json: { id: email.id, email: email.email, verified: false, message: "Verification code sent to #{email.email}" }, status: :created
+        begin
+          UserMailer.verification_code_email(email).deliver_now
+          render json: { id: email.id, email: email.email, verified: false, message: "Verification code sent to #{email.email}" }, status: :created
+        rescue => e
+          Rails.logger.error "EMAIL SEND FAILED: #{e.class} — #{e.message}"
+          render json: { id: email.id, email: email.email, verified: false, message: "Email saved but delivery failed: #{e.message}" }, status: :created
+        end
       else
         render json: { errors: email.errors.full_messages }, status: :unprocessable_entity
       end
@@ -40,8 +45,13 @@ module Api
       end
       email.generate_verification_code!
       email.record_send!
-      UserMailer.verification_code_email(email).deliver_later
-      render json: { message: "Verification code resent to #{email.email}" }
+      begin
+        UserMailer.verification_code_email(email).deliver_now
+        render json: { message: "Verification code resent to #{email.email}" }
+      rescue => e
+        Rails.logger.error "EMAIL RESEND FAILED: #{e.class} — #{e.message}"
+        render json: { message: "Resend failed: #{e.message}" }, status: :unprocessable_entity
+      end
     end
 
     def destroy
