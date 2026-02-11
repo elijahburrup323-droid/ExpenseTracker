@@ -6,21 +6,29 @@
       <span class="text-gray-900 dark:text-white font-medium">Release Notes</span>
     </div>
     <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Release Notes</h1>
-    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Changes and fixes, sorted newest to oldest. Showing 5 days at a time.</p>
+    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Version history and changes, newest first.</p>
   </div>
 
-  <div data-controller="bug-reports"
-       data-bug-reports-api-url-value="<%= api_bug_reports_path %>">
-    <div data-bug-reports-target="list">
-      <p class="text-sm text-gray-400 dark:text-gray-500 py-4 text-center">Loading...</p>
-    </div>
-
-    <div class="mt-4 text-center hidden" data-bug-reports-target="showMoreBtn">
-      <button type="button"
-              class="inline-flex items-center px-6 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
-              data-action="click->bug-reports#showMore">
-        Show More
-      </button>
-    </div>
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <% APP_VERSIONS.each_with_index do |release, idx| %>
+      <% if idx > 0 %>
+        <div class="border-t border-gray-200 dark:border-gray-700"></div>
+      <% end %>
+      <div class="px-6 py-5">
+        <h3 class="text-base font-semibold <%= idx == 0 ? 'text-brand-600 dark:text-brand-400' : 'text-gray-700 dark:text-gray-300' %> mb-3">
+          v<%= release[:version] %><%= idx == 0 ? ' — Latest' : '' %>
+        </h3>
+        <ul class="space-y-2">
+          <% release[:changes].each do |item| %>
+            <li class="flex items-start space-x-2.5 text-sm <%= idx == 0 ? 'text-gray-700 dark:text-gray-300' : 'text-gray-500 dark:text-gray-400' %>">
+              <svg class="w-4 h-4 flex-shrink-0 mt-0.5 <%= idx == 0 ? 'text-brand-500' : 'text-gray-300 dark:text-gray-600' %>" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span><%= item %></span>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
   </div>
 </div>

@@ -1,8 +1,15 @@
-APP_VERSION = "1.0.7"
+APP_VERSION = "1.0.8"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 
 # Latest version's changes listed first; keep last 5 versions
 APP_VERSIONS = [
+  {
+    version: "1.0.8",
+    changes: [
+      "QA Mode banner enlarged and sticky on scroll",
+      "Release Notes page now matches What's New popup format",
+    ]
+  },
   {
     version: "1.0.7",
     changes: [
@@ -29,13 +36,6 @@ APP_VERSIONS = [
     version: "1.0.4",
     changes: [
       "Added admin diagnostic endpoint for email/SMS troubleshooting",
-    ]
-  },
-  {
-    version: "1.0.3",
-    changes: [
-      "What's New popup on first visit after deploy",
-      "Version number displayed in footer",
     ]
   },
 ]
