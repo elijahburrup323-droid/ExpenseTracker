@@ -1,4 +1,4 @@
-APP_VERSION = "1.0.3"
+APP_VERSION = "1.0.4"
 
 APP_CHANGELOG = [
   "Card 2 pie chart now shows account name, balance, and percentage",
