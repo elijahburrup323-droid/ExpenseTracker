@@ -58,7 +58,7 @@
       if card2_total > 0
         @accounts.each_with_index do |account, i|
           pct = (account.balance.to_f / card2_total * 100)
-          pie_slices << { name: account.name, pct: pct, color: pie_colors_hex[i % pie_colors_hex.length] }
+          pie_slices << { name: account.name, balance: account.balance.to_f, pct: pct, color: pie_colors_hex[i % pie_colors_hex.length] }
         end
       end
     %>
@@ -139,12 +139,9 @@
               </svg>
               <div class="mt-2 w-full space-y-1 overflow-y-auto" style="max-height: 5.5rem;">
                 <% pie_slices.each do |slice| %>
-                  <div class="flex items-center justify-between text-xs px-1">
-                    <div class="flex items-center space-x-1.5 min-w-0">
-                      <span class="w-2 h-2 rounded-full flex-shrink-0" style="background:<%= slice[:color] %>"></span>
-                      <span class="text-gray-700 dark:text-gray-300 truncate"><%= slice[:name] %></span>
-                    </div>
-                    <span class="text-gray-500 dark:text-gray-400 flex-shrink-0 ml-2"><%= slice[:pct].round(0) %>%</span>
+                  <div class="flex items-center text-xs px-1">
+                    <span class="w-2 h-2 rounded-full flex-shrink-0" style="background:<%= slice[:color] %>"></span>
+                    <span class="text-gray-700 dark:text-gray-300 truncate ml-1.5"><%= slice[:name] %> &mdash; <%= number_to_currency(slice[:balance]) %> &mdash; <%= slice[:pct].round(0) %>%</span>
                   </div>
                 <% end %>
               </div>

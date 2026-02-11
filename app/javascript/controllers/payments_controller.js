@@ -406,6 +406,8 @@ export default class extends Controller {
           this._modalEscapeHandler = null
         }
         this.renderTable()
+        window.scrollTo({ top: 0, behavior: "smooth" })
+        this._refreshAccountBalances()
         // Check if saved date falls outside the current filter range
         const endFilter = this.filterEndDateTarget.value
         const startFilter = this.filterStartDateTarget.value
@@ -485,6 +487,7 @@ export default class extends Controller {
         this.state = "idle"
         this.editingId = null
         this.renderTable()
+        this._refreshAccountBalances()
       } else {
         const data = await response.json()
         this.showRowError(data.errors?.[0] || "Failed to save")
@@ -521,10 +524,10 @@ export default class extends Controller {
       })
       if (response.ok || response.status === 204) {
         this.payments = this.payments.filter(p => p.id !== this.deletingId)
-        if (payment) {
-          this._adjustLocalAccountBalance(payment.account_id, parseFloat(payment.amount))
-        }
+        this._adjustLocalAccountBalance(payment.account_id, parseFloat(payment.amount))
         this.renderTable()
+        // Re-fetch accounts to sync balances with the server
+        this._refreshAccountBalances()
       }
     } catch (e) {}
 
@@ -540,6 +543,16 @@ export default class extends Controller {
     if (acc) {
       acc.balance = (parseFloat(acc.balance) + delta).toFixed(2)
     }
+  }
+
+  async _refreshAccountBalances() {
+    try {
+      const res = await fetch(this.accountsUrlValue, { headers: { "Accept": "application/json" } })
+      if (res.ok) {
+        this.accounts = await res.json()
+        this._populateFilterDropdowns()
+      }
+    } catch (e) {}
   }
 
   // --- Keyboard Handling ---
