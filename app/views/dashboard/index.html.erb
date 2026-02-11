@@ -54,9 +54,10 @@
       color_cycle = %w[blue green purple amber sky red]
       pie_colors_hex = %w[#3b82f6 #22c55e #a855f7 #f59e0b #0ea5e9 #ef4444]
       card2_total = @accounts.sum(:balance).to_f
+      sorted_accounts = @accounts.sort_by { |a| -a.balance.to_f }
       pie_slices = []
       if card2_total > 0
-        @accounts.each_with_index do |account, i|
+        sorted_accounts.each_with_index do |account, i|
           pct = (account.balance.to_f / card2_total * 100)
           pie_slices << { name: account.name, balance: account.balance.to_f, pct: pct, color: pie_colors_hex[i % pie_colors_hex.length] }
         end
@@ -71,7 +72,7 @@
             <span class="text-sm font-semibold text-gray-900 dark:text-white">Total: <%= number_to_currency(card2_total) %></span>
           </div>
           <ul class="space-y-3 flex-1">
-            <% @accounts.each_with_index do |account, i| %>
+            <% sorted_accounts.each_with_index do |account, i| %>
               <% c = color_cycle[i % color_cycle.length] %>
               <li class="flex items-center justify-between">
                 <div class="flex items-center space-x-2">

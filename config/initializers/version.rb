@@ -1,7 +1,16 @@
-APP_VERSION = "1.0.6"
+APP_VERSION = "1.0.7"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 
 # Latest version's changes listed first; keep last 5 versions
 APP_VERSIONS = [
+  {
+    version: "1.0.7",
+    changes: [
+      "Pie chart accounts sorted by descending balance",
+      "Month/year text bolded in header bar",
+      "QA Mode banner for production testing",
+    ]
+  },
   {
     version: "1.0.6",
     changes: [
@@ -27,13 +36,6 @@ APP_VERSIONS = [
     changes: [
       "What's New popup on first visit after deploy",
       "Version number displayed in footer",
-    ]
-  },
-  {
-    version: "1.0.2",
-    changes: [
-      "Email sender updated to verified SendGrid address",
-      "Error handling added to email and SMS verification",
     ]
   },
 ]
