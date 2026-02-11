@@ -1,0 +1,160 @@
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  <div class="sticky top-14 z-20 bg-gray-50 dark:bg-gray-900 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-4 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+    <h1 class="text-xl font-bold text-gray-900 dark:text-white">Diagnostics</h1>
+    <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Test email and SMS delivery</p>
+  </div>
+
+  <%# === EMAIL TEST === %>
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">Email Test</h2>
+    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Send a test email via SendGrid to verify delivery is working.</p>
+
+    <div class="flex items-end gap-3">
+      <div class="flex-1">
+        <label for="testEmail" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Test Email Address</label>
+        <input type="email" id="testEmail" value="<%= current_user.email %>"
+               class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2"
+               placeholder="you@example.com">
+      </div>
+      <button type="button" id="testEmailBtn" onclick="runEmailTest()"
+              class="px-4 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg shadow-sm transition whitespace-nowrap">
+        Send Test Email
+      </button>
+    </div>
+
+    <div id="emailResult" class="mt-4 hidden">
+      <div class="rounded-lg border p-4 text-sm font-mono overflow-x-auto" id="emailResultBox"></div>
+    </div>
+  </div>
+
+  <%# === SMS TEST === %>
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">SMS Test</h2>
+    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Send a test SMS via Twilio to verify delivery is working.</p>
+
+    <div class="flex items-end gap-3">
+      <div class="flex-1">
+        <label for="testPhone" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Test Phone Number (E.164 format)</label>
+        <input type="tel" id="testPhone"
+               class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2"
+               placeholder="+19185551234">
+      </div>
+      <button type="button" id="testSmsBtn" onclick="runSmsTest()"
+              class="px-4 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg shadow-sm transition whitespace-nowrap">
+        Send Test SMS
+      </button>
+    </div>
+
+    <div id="smsResult" class="mt-4 hidden">
+      <div class="rounded-lg border p-4 text-sm font-mono overflow-x-auto" id="smsResultBox"></div>
+    </div>
+  </div>
+
+  <%# === CONFIG INFO === %>
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">Configuration</h2>
+    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">View current email and SMS configuration (loaded on test).</p>
+    <div id="configResult" class="hidden">
+      <div class="rounded-lg border p-4 text-sm font-mono overflow-x-auto" id="configResultBox"></div>
+    </div>
+    <p id="configPlaceholder" class="text-sm text-gray-400 dark:text-gray-500">Run either test above to load configuration details.</p>
+  </div>
+</div>
+
+<script>
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+  const baseUrl = "<%= api_diagnose_send_path %>";
+
+  function setLoading(btnId, loading) {
+    const btn = document.getElementById(btnId);
+    if (loading) {
+      btn.disabled = true;
+      btn.dataset.originalText = btn.textContent;
+      btn.innerHTML = '<svg class="animate-spin h-4 w-4 inline mr-1.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>Testing...';
+    } else {
+      btn.disabled = false;
+      btn.textContent = btn.dataset.originalText;
+    }
+  }
+
+  function showResult(containerId, boxId, data, isSuccess) {
+    const container = document.getElementById(containerId);
+    const box = document.getElementById(boxId);
+    container.classList.remove("hidden");
+    const borderColor = isSuccess
+      ? "border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20"
+      : "border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20";
+    box.className = `rounded-lg border p-4 text-sm font-mono overflow-x-auto whitespace-pre-wrap ${borderColor}`;
+    box.textContent = typeof data === "string" ? data : JSON.stringify(data, null, 2);
+  }
+
+  function showConfig(data) {
+    document.getElementById("configPlaceholder").classList.add("hidden");
+    const container = document.getElementById("configResult");
+    const box = document.getElementById("configResultBox");
+    container.classList.remove("hidden");
+    box.className = "rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30 p-4 text-sm font-mono overflow-x-auto whitespace-pre-wrap text-gray-700 dark:text-gray-300";
+
+    const config = {};
+    if (data.email) {
+      const { send_result, ...emailConfig } = data.email;
+      config.email = emailConfig;
+    }
+    if (data.sms) {
+      const { send_result, manual_send_result, test_phone, manual_phone, ...smsConfig } = data.sms;
+      config.sms = smsConfig;
+    }
+    config.version = data.version;
+    box.textContent = JSON.stringify(config, null, 2);
+  }
+
+  async function runEmailTest() {
+    const email = document.getElementById("testEmail").value.trim();
+    if (!email || !email.includes("@")) {
+      alert("Please enter a valid email address.");
+      return;
+    }
+
+    setLoading("testEmailBtn", true);
+    try {
+      const url = `${baseUrl}?email=${encodeURIComponent(email)}`;
+      const res = await fetch(url, { headers: { "Accept": "application/json" } });
+      const data = await res.json();
+      const success = data.email?.send_result?.startsWith("SUCCESS");
+      showResult("emailResult", "emailResultBox", data.email?.send_result || "No result", success);
+      showConfig(data);
+    } catch (e) {
+      showResult("emailResult", "emailResultBox", "Request failed: " + e.message, false);
+    }
+    setLoading("testEmailBtn", false);
+  }
+
+  async function runSmsTest() {
+    let phone = document.getElementById("testPhone").value.trim();
+    if (!phone) {
+      alert("Please enter a phone number in E.164 format (e.g. +19185551234).");
+      return;
+    }
+    if (!phone.startsWith("+")) {
+      phone = "+" + phone.replace(/\D/g, "");
+    }
+    if (phone.length < 11) {
+      alert("Phone number must be in E.164 format (e.g. +19185551234).");
+      return;
+    }
+
+    setLoading("testSmsBtn", true);
+    try {
+      const url = `${baseUrl}?phone=${encodeURIComponent(phone)}`;
+      const res = await fetch(url, { headers: { "Accept": "application/json" } });
+      const data = await res.json();
+      const smsResult = data.sms?.manual_send_result || data.sms?.send_result || "No result";
+      const success = smsResult.startsWith("SUCCESS");
+      showResult("smsResult", "smsResultBox", smsResult, success);
+      showConfig(data);
+    } catch (e) {
+      showResult("smsResult", "smsResultBox", "Request failed: " + e.message, false);
+    }
+    setLoading("testSmsBtn", false);
+  }
+</script>

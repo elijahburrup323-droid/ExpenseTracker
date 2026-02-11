@@ -53,6 +53,9 @@ Rails.application.routes.draw do
   # Quotes (HTML page, admin-only)
   resources :quotes, only: [:index]
 
+  # Diagnostics (HTML page, admin-only)
+  get "diagnostics", to: "diagnostics#index", as: :diagnostics
+
   # API endpoints
   namespace :api do
     resources :spending_types, only: [:index, :create, :update, :destroy]

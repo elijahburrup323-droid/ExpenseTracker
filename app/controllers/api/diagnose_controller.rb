@@ -25,12 +25,16 @@ module Api
         results[:email] = { config_error: "#{e.class}: #{e.message}" }
       end
 
-      # Try sending via real ApplicationMailer subclass
-      begin
-        TestMailer.test_email(current_user.email).deliver_now
-        results[:email][:send_result] = "SUCCESS — check #{current_user.email}"
-      rescue => e
-        results[:email][:send_result] = "FAILED: #{e.class} — #{e.message}"
+      # Try sending email if email param provided
+      if params[:email].present?
+        begin
+          TestMailer.test_email(params[:email]).deliver_now
+          results[:email][:send_result] = "SUCCESS — sent to #{params[:email]}"
+        rescue => e
+          results[:email][:send_result] = "FAILED: #{e.class} — #{e.message}"
+        end
+      else
+        results[:email][:send_result] = "SKIPPED — no email param"
       end
 
       # Twilio config
@@ -46,15 +50,17 @@ module Api
 
       # Try sending SMS if phone param provided
       if params[:phone].present?
+        phone = params[:phone].strip
+        phone = "+#{phone.gsub(/\D/, '')}" unless phone.start_with?("+")
         begin
-          sms_result = TwilioService.send_verification_code(params[:phone], "000000")
+          sms_result = TwilioService.send_verification_code(phone, "000000")
           results[:sms][:send_result] = "SUCCESS — SID: #{sms_result.sid}, status: #{sms_result.status}"
         rescue => e
           results[:sms][:send_result] = "FAILED: #{e.class} — #{e.message}"
         end
-        results[:sms][:test_phone] = params[:phone]
+        results[:sms][:test_phone] = phone
       else
-        results[:sms][:send_result] = "SKIPPED — add ?phone=+1XXXXXXXXXX to test"
+        results[:sms][:send_result] = "SKIPPED — no phone param"
       end
 
       results[:version] = APP_VERSION
