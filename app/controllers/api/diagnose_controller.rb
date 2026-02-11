@@ -7,9 +7,9 @@ module Api
 
       # Email config
       begin
-        smtp = ActionMailer::Base.smtp_settings || {}
+        smtp = Rails.application.config.action_mailer.smtp_settings || {}
         results[:email] = {
-          delivery_method: ActionMailer::Base.delivery_method.to_s,
+          delivery_method: Rails.application.config.action_mailer.delivery_method.to_s,
           address: smtp[:address],
           port: smtp[:port],
           domain: smtp[:domain],
@@ -17,23 +17,18 @@ module Api
           password_present: smtp[:password].present?,
           password_preview: smtp[:password].to_s[0..5] + "...",
           default_from: ApplicationMailer.default[:from],
-          devise_from: Devise.mailer_sender
+          devise_from: Devise.mailer_sender,
+          sendgrid_username_env: ENV["SENDGRID_USERNAME"].present? ? ENV["SENDGRID_USERNAME"] : "MISSING",
+          sendgrid_password_env: ENV["SENDGRID_PASSWORD"].present? ? "set (#{ENV['SENDGRID_PASSWORD'].length} chars)" : "MISSING"
         }
       rescue => e
         results[:email] = { config_error: "#{e.class}: #{e.message}" }
       end
 
-      # Try sending a real test email
+      # Try sending via real ApplicationMailer subclass
       begin
-        mail = ActionMailer::Base.mail(
-          from: ApplicationMailer.default[:from],
-          to: current_user.email,
-          subject: "BudgetHQ Test Email — v#{APP_VERSION}",
-          body: "If you received this, email delivery is working."
-        )
-        mail.delivery_method(ActionMailer::Base.delivery_method)
-        mail.deliver_now
-        results[:email][:send_result] = "SUCCESS"
+        TestMailer.test_email(current_user.email).deliver_now
+        results[:email][:send_result] = "SUCCESS — check #{current_user.email}"
       rescue => e
         results[:email][:send_result] = "FAILED: #{e.class} — #{e.message}"
       end
