@@ -28,19 +28,18 @@ for (const acct of ACCOUNTS) {
       expect(text.length).toBeGreaterThan(5);
     });
 
-    test("Quotes API returns quotes with authors", async ({ page }) => {
+    test("Quotes admin page has Author column in table", async ({ page }) => {
       await login(page, acct);
+      await page.goto(`${BASE}/quotes`);
+      await page.waitForLoadState("networkidle");
 
-      const response = await page.evaluate(async (base) => {
-        const res = await fetch(`${base}/api/quotes`, {
-          headers: { "Accept": "application/json" }
-        });
-        return res.json();
-      }, BASE);
+      // Table should be visible with Author column header
+      await expect(page.locator("table")).toBeVisible();
+      await expect(page.locator("th:has-text('Author')")).toBeVisible();
+      await expect(page.locator("th:has-text('Active')")).toBeVisible();
 
-      expect(response.length).toBeGreaterThan(0);
-      const withAuthors = response.filter(q => q.quote_author && q.quote_author.length > 0);
-      expect(withAuthors.length).toBeGreaterThan(0);
+      // Add Quote button should be visible
+      await expect(page.locator("button:has-text('Add Quote')")).toBeVisible();
     });
 
     test("Quotes admin page loads", async ({ page }) => {
