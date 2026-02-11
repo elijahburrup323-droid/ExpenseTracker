@@ -4,7 +4,7 @@ module Api
 
     def index
       account_types = current_user.account_types.ordered
-      render json: account_types.as_json(only: [:id, :name, :description, :icon_key, :color_key, :sort_order, :is_system, :is_active])
+      render json: account_types.as_json(only: [:id, :name, :description, :icon_key, :color_key, :sort_order, :is_system, :is_active, :use_flag])
     end
 
     def create
@@ -13,7 +13,7 @@ module Api
       account_type.sort_order = max_sort + 1
 
       if account_type.save
-        render json: account_type.as_json(only: [:id, :name, :description, :icon_key, :color_key, :sort_order, :is_system, :is_active]), status: :created
+        render json: account_type.as_json(only: [:id, :name, :description, :icon_key, :color_key, :sort_order, :is_system, :is_active, :use_flag]), status: :created
       else
         render_errors(account_type)
       end
@@ -21,7 +21,7 @@ module Api
 
     def update
       if @account_type.update(account_type_params)
-        render json: @account_type.as_json(only: [:id, :name, :description, :icon_key, :color_key, :sort_order, :is_system, :is_active])
+        render json: @account_type.as_json(only: [:id, :name, :description, :icon_key, :color_key, :sort_order, :is_system, :is_active, :use_flag])
       else
         render_errors(@account_type)
       end
@@ -40,7 +40,7 @@ module Api
     end
 
     def account_type_params
-      params.require(:account_type).permit(:name, :description, :icon_key, :color_key)
+      params.require(:account_type).permit(:name, :description, :icon_key, :color_key, :use_flag)
     end
   end
 end

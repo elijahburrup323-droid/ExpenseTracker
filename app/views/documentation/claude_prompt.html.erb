@@ -77,7 +77,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 ### Spending Side
 - **spending_types** — user-scoped categories of spending (Need, Want, Savings — seeded as system defaults)
 - **spending_categories** — user-scoped, belongs_to spending_type (Groceries, Dining, Mortgage — seeded)
-- **account_types** — user-scoped (Checking, Savings, Venmo — seeded as system defaults)
+- **account_types** — user-scoped (Checking, Savings, Venmo — seeded as system defaults). Has use_flag boolean toggle — when ON, appears in account type dropdowns; when OFF, hidden from dropdowns.
 - **accounts** — user-scoped, belongs_to account_type (balance, beginning_balance, include_in_budget flag)
 - **payments** — user-scoped, belongs_to account + spending_category, optional spending_type_override. Payment create/update/destroy adjusts account balance in a transaction.
 

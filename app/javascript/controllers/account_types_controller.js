@@ -366,6 +366,60 @@ export default class extends Controller {
       </div>`
   }
 
+  // --- Use Toggle ---
+
+  _renderUseToggle(isOn, atId = null) {
+    const bg = isOn ? "bg-brand-600" : "bg-gray-300"
+    const knobTranslate = isOn ? "translate-x-7" : "translate-x-1"
+    const dataId = atId ? `data-id="${atId}"` : ""
+    return `<button type="button"
+      class="use-toggle relative inline-flex h-7 w-14 items-center rounded-full transition-colors ${bg} focus:outline-none focus:ring-2 focus:ring-brand-300"
+      data-checked="${isOn}" ${dataId}
+      data-action="click->account-types#toggleUse"
+      role="switch" aria-checked="${isOn}" title="${isOn ? 'In Use: Yes' : 'In Use: No'}">
+      <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${knobTranslate}"></span>
+    </button>`
+  }
+
+  async toggleUse(event) {
+    const btn = event.currentTarget
+    const wasOn = btn.dataset.checked === "true"
+    const nowOn = !wasOn
+
+    btn.dataset.checked = String(nowOn)
+    btn.setAttribute("aria-checked", String(nowOn))
+    btn.title = nowOn ? "In Use: Yes" : "In Use: No"
+    btn.className = btn.className.replace(nowOn ? "bg-gray-300" : "bg-brand-600", nowOn ? "bg-brand-600" : "bg-gray-300")
+    const knob = btn.querySelector("span")
+    knob.className = knob.className.replace(nowOn ? "translate-x-1" : "translate-x-7", nowOn ? "translate-x-7" : "translate-x-1")
+
+    const atId = btn.dataset.id
+    if (atId && this.state === "idle") {
+      try {
+        const response = await fetch(`${this.apiUrlValue}/${atId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "X-CSRF-Token": this.csrfTokenValue
+          },
+          body: JSON.stringify({ account_type: { use_flag: nowOn } })
+        })
+        if (response.ok) {
+          const updated = await response.json()
+          const idx = this.accountTypes.findIndex(a => a.id === Number(atId))
+          if (idx !== -1) this.accountTypes[idx] = updated
+        }
+      } catch (e) {
+        btn.dataset.checked = String(wasOn)
+        btn.setAttribute("aria-checked", String(wasOn))
+        btn.title = wasOn ? "In Use: Yes" : "In Use: No"
+        btn.className = btn.className.replace(wasOn ? "bg-gray-300" : "bg-brand-600", wasOn ? "bg-brand-600" : "bg-gray-300")
+        knob.className = knob.className.replace(wasOn ? "translate-x-1" : "translate-x-7", wasOn ? "translate-x-7" : "translate-x-1")
+      }
+    }
+  }
+
   // --- Keyboard Handling ---
 
   handleKeydown(event) {
@@ -401,17 +455,19 @@ export default class extends Controller {
     }
 
     if (this.accountTypes.length === 0 && this.state !== "adding") {
-      html = `<tr><td colspan="4" class="px-6 py-8 text-center text-sm text-gray-400 dark:text-gray-500">No account types yet. Click "Add Account Type" to create one.</td></tr>`
+      html = `<tr><td colspan="5" class="px-6 py-8 text-center text-sm text-gray-400 dark:text-gray-500">No account types yet. Click "Add Account Type" to create one.</td></tr>`
     }
 
     this.tableBodyTarget.innerHTML = html
   }
 
   renderDisplayRow(at) {
+    const useToggle = this._renderUseToggle(at.use_flag, at.id)
     return `<tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
       <td class="px-6 py-4">${iconFor(at.icon_key, at.color_key)}</td>
       <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">${escapeHtml(at.name)}</td>
       <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">${escapeHtml(at.description || "")}</td>
+      <td class="px-6 py-4 text-center">${useToggle}</td>
       <td class="px-6 py-4 text-right space-x-2">
         <button type="button"
                 class="inline-flex items-center justify-center w-8 h-8 rounded-md text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800 transition"
@@ -462,6 +518,9 @@ export default class extends Controller {
                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
                data-action="keydown->account-types#handleKeydown">
       </td>
+      <td class="px-6 py-3 text-center">
+        ${this._renderUseToggle(true)}
+      </td>
       <td class="px-6 py-3 text-right space-x-2">
         <button type="button"
                 class="inline-flex items-center justify-center w-9 h-9 rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
@@ -478,7 +537,7 @@ export default class extends Controller {
       </td>
     </tr>
     <tr class="hidden" data-account-types-target="rowError">
-      <td colspan="4" class="px-6 py-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30"></td>
+      <td colspan="5" class="px-6 py-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30"></td>
     </tr>`
   }
 
