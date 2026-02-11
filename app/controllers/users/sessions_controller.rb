@@ -1,5 +1,6 @@
 class Users::SessionsController < Devise::SessionsController
   def new
+    @sign_in_quote = Quote.random_active rescue nil
     self.resource = resource_class.new(sign_in_params)
     clean_up_passwords(resource)
     yield resource if block_given?

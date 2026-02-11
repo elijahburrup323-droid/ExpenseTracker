@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_11_130000) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_11_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -218,6 +218,15 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_11_130000) do
     t.datetime "updated_at", null: false
     t.index ["phone_number", "code"], name: "index_phone_verifications_on_phone_number_and_code"
     t.index ["phone_number"], name: "index_phone_verifications_on_phone_number"
+  end
+
+  create_table "quotes", force: :cascade do |t|
+    t.text "quote_text", null: false
+    t.string "quote_author", limit: 120
+    t.boolean "is_active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["is_active"], name: "index_quotes_on_is_active"
   end
 
   create_table "spending_categories", force: :cascade do |t|

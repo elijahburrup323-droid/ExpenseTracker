@@ -93,6 +93,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 - **transfer_masters** — user_id (FK), transfer_date (date), from_account_id (FK → accounts), to_account_id (FK → accounts), amount (decimal 12,2), memo (varchar, optional). Account-to-account transfers. Adjusts account balances on create/update/delete. Transfers do NOT count as payments or income, do NOT appear in Recent Activity or Category Spending.
 - **net_worth_snapshots** — user_id (FK), snapshot_date (date, unique per user), amount (decimal 12,2). Stores monthly net worth history for the dashboard chart. Shows up to 6 months. Admin can populate test data via POST /api/net_worth_snapshots/populate.
 - **open_month_masters** — user_id (FK, unique), current_year (int), current_month (int 1-12), is_closed (boolean, default false), locked_at (datetime, nullable), locked_by_user_id (FK nullable). Tracks the user's currently selected operating month. One row per user, updated when navigating months on the dashboard. is_closed will be derived from a future month_close table.
+- **quotes** — quote_text (text, NOT NULL), quote_author (varchar 120, nullable), is_active (boolean, default true). System-wide inspirational quotes displayed on sign-in page and in the header bar. Not user-scoped. Admin-only CRUD via /quotes screen. Random active quote shown on sign-in; daily quote cached in session for header bar display.
 
 ### Key Relationships
 - User has_many: spending_types, spending_categories, account_types, accounts, payments, income_user_frequencies, income_recurrings, income_entries, transfer_masters; has_one: open_month_master
@@ -115,6 +116,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 /income_recurrings ..... Recurring Deposits CRUD screen
 /income_user_frequencies Frequencies toggle screen
 /income_frequency_masters Frequency Masters CRUD (admin-only)
+/quotes ................. Quotes CRUD screen (admin-only)
 /admin/users ............. Admin user management (admin-only)
 /dbu .................. Database Utility admin tool (admin-only)
 /documentation ......... Documentation index (admin-only sidebar link)
@@ -148,6 +150,7 @@ API endpoints (all under /api/):
   /api/bug_reports ........... index (paginated by date) + create
   /api/net_worth_snapshots ... index (recent 6) + POST /populate (admin-only, generates test history)
   /api/open_month_master .... GET show + PUT update (singular resource, one per user)
+  /api/quotes .............. CRUD (admin-only, system-wide quotes for sign-in display)
 ```
 
 ## Stimulus Controllers
@@ -167,7 +170,7 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 - **income_recurrings_controller.js** — CRUD with frequency/account selects, generate dummy data
 - **income_entries_controller.js** — CRUD with received toggle (opens edit on amount), auto-advance cursor between fields on change, Generate Data button
 - **admin_users_controller.js** — Admin user management with search, admin toggle (admin-only)
-- **quotes_controller.js** — Rotating motivational budget quotes in header bar (100 quotes, cycles on page load, always visible)
+- **quotes_controller.js** — Admin CRUD for system quotes (add, edit, delete, active toggle). Quotes are displayed on sign-in page (random active) and in header bar (daily quote cached in session). Replaces the former hardcoded 200-quote rotation.
 - **bug_reports_controller.js** — Paginated release notes grouped by date with "Show More" pagination (5 days per page)
 - **settings_emails_controller.js** — Alternate emails management: fetch, render with verified/unverified badges, inline 6-digit code verify, resend, remove with confirm
 - **settings_phones_controller.js** — Alternate phones management: fetch, render with verified/unverified badges, inline 6-digit SMS code verify, resend, remove with confirm (parallel implementation to emails)
@@ -189,8 +192,8 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 6. **Sort order** — auto-assigned as max(sort_order)+1 on create
 7. **Case-insensitive uniqueness** — name fields use lower() index with deleted_at IS NULL filter
 8. **API error format** — { errors: ["message"] } with 422 status
-9. **Admin gating** — Admin sidebar group (DBU, Users, Documentation, Frequency Masters), Generate Data buttons, and admin API endpoints are only visible/accessible to users with budgethq_agent=true
-10. **Motivational quotes** — Header displays rotating budget quotes from a pool of 100, cycling on each page load (always visible, no toggle)
+9. **Admin gating** — Admin sidebar group (DBU, Users, Documentation, Frequency Masters, Quotes), Generate Data buttons, and admin API endpoints are only visible/accessible to users with budgethq_agent=true
+10. **Motivational quotes** — Random active quote from the `quotes` table shown on sign-in page; daily quote cached in session and displayed in header bar. Admin CRUD screen at /quotes for managing quotes. Seeded with 200 financial quotes.
 11. **Auto-cancel editing** — Clicking Add/Edit/Delete while another row is being edited auto-cancels the previous edit (no need for explicit cancel)
 12. **Auto-save toggles** — All toggle switches (budget, use_flag, active, admin) save immediately via API without requiring a Save button
 13. **Auto-advance cursor** — Deposits fields auto-advance focus to the next field in sequence (date → account → source → description → amount → frequency) on change. Payments add-row also auto-advances: Date → Account → Category → (auto-populate Spending Type) → Description

@@ -7,7 +7,16 @@
         </svg>
       </div>
       <h2 class="mt-4 text-3xl font-extrabold text-gray-900 dark:text-white">Welcome back</h2>
-      <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Sign in to your account</p>
+      <% if @sign_in_quote %>
+        <p class="mt-3 text-sm italic text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
+          &ldquo;<%= @sign_in_quote.quote_text %>&rdquo;
+          <% if @sign_in_quote.quote_author.present? %>
+            <span class="block mt-1 text-xs text-gray-400 dark:text-gray-500">&mdash; <%= @sign_in_quote.quote_author %></span>
+          <% end %>
+        </p>
+      <% else %>
+        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Sign in to your account</p>
+      <% end %>
     </div>
 
     <div class="bg-white dark:bg-gray-800 py-8 px-6 shadow-lg rounded-xl border border-gray-200 dark:border-gray-700">

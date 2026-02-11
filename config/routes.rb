@@ -50,6 +50,9 @@ Rails.application.routes.draw do
   # Income Entries (HTML page)
   resources :income_entries, only: [:index]
 
+  # Quotes (HTML page, admin-only)
+  resources :quotes, only: [:index]
+
   # API endpoints
   namespace :api do
     resources :spending_types, only: [:index, :create, :update, :destroy]
@@ -83,6 +86,7 @@ Rails.application.routes.draw do
       end
     end
     resource :open_month_master, only: [:show, :update]
+    resources :quotes, only: [:index, :create, :update, :destroy]
     resources :net_worth_snapshots, only: [:index] do
       collection do
         post :populate
