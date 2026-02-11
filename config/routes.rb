@@ -92,6 +92,9 @@ Rails.application.routes.draw do
         post :populate
       end
     end
+    # Diagnostic endpoint (admin only)
+    get "diagnose_send", to: "diagnose#test_send"
+
     # Dashboard API
     scope :dashboard, controller: "dashboard", as: :dashboard do
       get "card_data", action: :card_data
