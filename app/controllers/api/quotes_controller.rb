@@ -2,6 +2,7 @@ module Api
   class QuotesController < BaseController
     before_action :require_admin!
     before_action :set_quote, only: [:update, :destroy]
+    after_action :invalidate_quote_cache, only: [:create, :update, :destroy]
 
     def index
       quotes = Quote.order(created_at: :desc)
@@ -46,6 +47,10 @@ module Api
 
     def quote_params
       params.require(:quote).permit(:quote_text, :quote_author, :is_active)
+    end
+
+    def invalidate_quote_cache
+      Quote.invalidate_cache!
     end
   end
 end

@@ -6,4 +6,12 @@ class Quote < ApplicationRecord
   def self.random_active
     active.order(Arel.sql("RANDOM()")).first
   end
+
+  def self.cache_version
+    Rails.cache.fetch("quotes_cache_version") { Time.current.to_i }
+  end
+
+  def self.invalidate_cache!
+    Rails.cache.write("quotes_cache_version", Time.current.to_i)
+  end
 end

@@ -8,7 +8,7 @@ export default class extends Controller {
     "schemaSearch", "schemaMeta", "schemaContent",
     "recordsMeta"
   ]
-  static values = { tablesUrl: String, usersUrl: String, recordsUrl: String, schemaUrl: String, csrfToken: String }
+  static values = { tablesUrl: String, usersUrl: String, recordsUrl: String, schemaUrl: String, csrfToken: String, createUrl: String }
 
   connect() {
     // Record browser state
@@ -647,6 +647,106 @@ export default class extends Controller {
           ${fieldsHtml}
         </div>
       </div>`
+  }
+
+  // --- Add Record ---
+
+  addRecord() {
+    if (!this.selectedTable) {
+      alert("Select a table before adding a record.")
+      return
+    }
+    if (!this._checkDirty()) return
+    this.isAdding = true
+    this._renderAddForm()
+  }
+
+  _renderAddForm() {
+    const tableLabel = this._esc(this.selectedTable)
+    let fieldsHtml = ""
+    for (const col of this.columns) {
+      const isPk = this.pkColumns.includes(col.name)
+      if (isPk) continue // Skip PK fields (auto-generated)
+      const label = this._humanize(col.name)
+      fieldsHtml += `
+        <div class="grid grid-cols-3 gap-4 items-center py-2 border-b border-gray-100 dark:border-gray-700">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">${this._esc(label)}</label>
+          <div class="col-span-2">
+            <input type="text" value="" data-add-field="${this._escAttr(col.name)}"
+                   class="w-full h-9 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2">
+          </div>
+        </div>`
+    }
+
+    this.recordPanelTarget.innerHTML = `
+      <div class="p-4">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">New Record — ${tableLabel}</h3>
+          <div class="flex items-center space-x-2">
+            <button type="button"
+                    class="h-8 inline-flex items-center px-3 text-sm font-medium rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
+                    data-action="click->dbu#saveNewRecord">
+              Save
+            </button>
+            <button type="button"
+                    class="h-8 inline-flex items-center px-3 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition"
+                    data-action="click->dbu#cancelAdd">
+              Cancel
+            </button>
+          </div>
+        </div>
+        <div class="divide-y divide-gray-100 dark:divide-gray-700">
+          ${fieldsHtml}
+        </div>
+      </div>`
+  }
+
+  async saveNewRecord() {
+    const fields = {}
+    this.columns.forEach(col => {
+      if (this.pkColumns.includes(col.name)) return
+      const input = this.recordPanelTarget.querySelector(`[data-add-field="${col.name}"]`)
+      if (input) {
+        fields[col.name] = input.value === "" ? null : input.value
+      }
+    })
+
+    const url = `${this.createUrlValue}?table=${encodeURIComponent(this.selectedTable)}`
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "X-CSRF-Token": this.csrfTokenValue
+        },
+        body: JSON.stringify({ fields })
+      })
+      if (res.ok) {
+        this.isAdding = false
+        // Reload records for the table to show the new one
+        await this._loadRecords()
+        // Navigate to the last record (newly created)
+        if (this.recordIds.length > 0) {
+          this.currentIndex = this.recordIds.length - 1
+          this._loadCurrentRecord()
+        }
+      } else {
+        const err = await res.json()
+        alert(err.error || "Failed to create record")
+      }
+    } catch (e) {
+      alert("Network error")
+    }
+  }
+
+  cancelAdd() {
+    this.isAdding = false
+    if (this.recordIds.length > 0 && this.currentIndex >= 0) {
+      this._loadCurrentRecord()
+    } else {
+      this._showEmpty("Select a table to browse records.")
+    }
   }
 
   _showEmpty(message) {

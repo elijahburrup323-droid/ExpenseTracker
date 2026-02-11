@@ -2,7 +2,7 @@ module Api
   class DbuController < ApplicationController
     before_action :authenticate_user!
     before_action :require_admin!
-    before_action :load_catalog_entry, only: [:records, :show_record, :update_record, :destroy_record]
+    before_action :load_catalog_entry, only: [:records, :create_record, :show_record, :update_record, :destroy_record]
 
     # GET /api/dbu/schema
     def schema
@@ -180,6 +180,42 @@ module Api
         has_user_id: has_user_id,
         total: result.rows.length
       }
+    end
+
+    # POST /api/dbu/records?table=accounts
+    def create_record
+      conn = ActiveRecord::Base.connection
+      table = conn.quote_table_name(@table_name)
+      columns = conn.columns(@table_name)
+      column_names = columns.map(&:name)
+      pk_cols = conn.primary_keys(@table_name)
+      pk_cols = ["id"] if pk_cols.empty?
+
+      fields = params[:fields]&.to_unsafe_h || {}
+
+      # Build column/value pairs for non-PK fields that exist in the table
+      insert_cols = []
+      insert_vals = []
+      fields.each do |key, value|
+        next unless column_names.include?(key.to_s)
+        next if pk_cols.include?(key.to_s) # skip PK (auto-generated)
+        insert_cols << conn.quote_column_name(key.to_s)
+        insert_vals << (value.nil? || value == "" ? "NULL" : conn.quote(value))
+      end
+
+      if insert_cols.empty?
+        return render json: { error: "No valid fields provided" }, status: :unprocessable_entity
+      end
+
+      sql = "INSERT INTO #{table} (#{insert_cols.join(', ')}) VALUES (#{insert_vals.join(', ')}) RETURNING #{pk_cols.map { |c| conn.quote_column_name(c) }.join(', ')}"
+      result = conn.exec_query(sql, "DBU")
+
+      if result.rows.any?
+        new_id = result.rows.first.length == 1 ? result.rows.first.first : result.rows.first
+        render json: { record_id: new_id }, status: :created
+      else
+        render json: { error: "Insert failed" }, status: :unprocessable_entity
+      end
     end
 
     # GET /api/dbu/records/:record_id?table=accounts

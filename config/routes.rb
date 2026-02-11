@@ -114,6 +114,7 @@ Rails.application.routes.draw do
       get "tables", action: :tables
       get "users", action: :users_list
       get "records", action: :records
+      post "records", action: :create_record, as: :create_record
       get "records/:record_id", action: :show_record, as: :show_record
       put "records/:record_id", action: :update_record, as: :update_record
       delete "records/:record_id", action: :destroy_record, as: :destroy_record

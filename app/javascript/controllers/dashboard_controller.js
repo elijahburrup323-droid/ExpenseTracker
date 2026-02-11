@@ -3,7 +3,7 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = [
     "monthLabel", "prevBtn", "nextBtn",
-    "card1Content", "card4Content", "card5Content"
+    "card1Content", "card2Flipper", "card4Content", "card5Content"
   ]
   static values = { apiUrl: String, openMonthUrl: String, month: Number, year: Number }
 
@@ -98,6 +98,20 @@ export default class extends Controller {
         btn.classList.remove("opacity-30", "cursor-not-allowed")
       }
     })
+  }
+
+  // --- Card 2: Flip ---
+
+  flipCard2() {
+    if (this.hasCard2FlipperTarget) {
+      this.card2FlipperTarget.style.transform = "rotateY(180deg)"
+    }
+  }
+
+  flipCard2Back() {
+    if (this.hasCard2FlipperTarget) {
+      this.card2FlipperTarget.style.transform = "rotateY(0deg)"
+    }
   }
 
   // --- Card 1: Spending Overview ---
