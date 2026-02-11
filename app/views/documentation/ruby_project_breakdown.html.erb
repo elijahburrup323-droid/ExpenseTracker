@@ -1,0 +1,497 @@
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="mb-6">
+    <div class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
+      <%= link_to "Documentation", documentation_path, class: "hover:text-brand-600 dark:hover:text-brand-400 transition" %>
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      <span class="text-gray-900 dark:text-white font-medium">Ruby Project Breakdown</span>
+    </div>
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Ruby Project Breakdown and Training Outline</h1>
+    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Understand the project structure, then learn to modify it yourself</p>
+  </div>
+
+  <%# ═══════════════════════════════════════════════════════ %>
+  <%# PART 1: PROJECT FOLDER MAP                            %>
+  <%# ═══════════════════════════════════════════════════════ %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 mb-6">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-1">Part 1 &mdash; Project Folder Map</h2>
+    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Every folder in BudgetHQ and what lives inside it</p>
+
+    <div class="text-sm font-mono text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto mb-4">
+      <pre class="whitespace-pre">ExpenseTracker/
+├── app/                 <span class="text-brand-600 dark:text-brand-400">&larr; 95% of your work happens here</span>
+│   ├── assets/          CSS & images (we use Tailwind CDN instead)
+│   ├── controllers/     Ruby classes that handle web requests
+│   │   ├── api/         JSON API endpoints (the "back end")
+│   │   └── *.rb         Page controllers (just render HTML)
+│   ├── javascript/
+│   │   └── controllers/ Stimulus JS controllers (the "front end")
+│   │       ├── shared/  Shared utilities (icon_catalog.js)
+│   │       └── index.js Master registry — every controller registered here
+│   ├── models/          Ruby classes that talk to the database
+│   ├── views/
+│   │   ├── layouts/     application.html.erb (the outer shell)
+│   │   ├── shared/      _navbar.html.erb (the sidebar)
+│   │   └── [screen]/    index.html.erb for each feature screen
+│   ├── helpers/         Reusable view helper methods
+│   ├── mailers/         Email templates
+│   └── jobs/            Background tasks
+├── config/
+│   ├── routes.rb        <span class="text-brand-600 dark:text-brand-400">&larr; URL &rarr; Controller mapping (you edit this often)</span>
+│   ├── database.yml     PostgreSQL connection settings
+│   └── environments/    dev / test / production config
+├── db/
+│   ├── migrate/         Database change scripts (run in order)
+│   ├── schema.rb        Auto-generated snapshot of current DB structure
+│   └── seeds/           Default data loaded into DB (legal pages, etc.)
+├── tests/               Playwright browser tests (.spec.js files)
+├── public/              Static files served directly (favicon, 404.html)
+├── Gemfile              <span class="text-brand-600 dark:text-brand-400">&larr; Ruby library list (like package.json for Ruby)</span>
+├── package.json         Node.js library list (Stimulus, esbuild)
+└── render-build.sh      Render.com deployment script</pre>
+    </div>
+  </div>
+
+  <%# ═══════════════════════════════════════════════════════ %>
+  <%# PART 2: THE THREE LAYERS                              %>
+  <%# ═══════════════════════════════════════════════════════ %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 mb-6">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-1">Part 2 &mdash; The Three Layers</h2>
+    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Every screen in BudgetHQ is built from exactly three files working together</p>
+
+    <div class="space-y-4">
+      <%# Layer 1 — Model %>
+      <div class="rounded-lg border-2 border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20 p-4">
+        <div class="flex items-center space-x-2 mb-2">
+          <span class="inline-flex items-center justify-center h-7 w-7 rounded-full bg-blue-600 text-white text-xs font-bold">1</span>
+          <h3 class="font-bold text-blue-800 dark:text-blue-300">Model &mdash; <code class="text-sm">app/models/transfer_master.rb</code></h3>
+        </div>
+        <p class="text-sm text-blue-700 dark:text-blue-300 mb-2">Defines the database table as a Ruby class. Think of it like a PowerBuilder DataWindow definition.</p>
+        <ul class="text-sm text-blue-700 dark:text-blue-300 space-y-1 ml-4 list-disc">
+          <li><strong>belongs_to / has_many</strong> &mdash; declares relationships between tables (like foreign key joins)</li>
+          <li><strong>validates</strong> &mdash; rules the data must follow before saving (presence, numericality, uniqueness)</li>
+          <li><strong>scope</strong> &mdash; named queries you can chain (e.g., <code>ordered</code>, <code>active</code>)</li>
+        </ul>
+        <div class="mt-3 bg-white dark:bg-gray-800 rounded p-3 text-xs font-mono text-gray-700 dark:text-gray-300 overflow-x-auto">
+<pre>class TransferMaster < ApplicationRecord
+  belongs_to :user
+  belongs_to :from_account, class_name: "Account"
+  validates :amount, numericality: { greater_than: 0 }
+  scope :ordered, -> { order(transfer_date: :desc) }
+end</pre>
+        </div>
+      </div>
+
+      <%# Layer 2 — Controller %>
+      <div class="rounded-lg border-2 border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20 p-4">
+        <div class="flex items-center space-x-2 mb-2">
+          <span class="inline-flex items-center justify-center h-7 w-7 rounded-full bg-green-600 text-white text-xs font-bold">2</span>
+          <h3 class="font-bold text-green-800 dark:text-green-300">Controller &mdash; <code class="text-sm">app/controllers/api/transfer_masters_controller.rb</code></h3>
+        </div>
+        <p class="text-sm text-green-700 dark:text-green-300 mb-2">Handles HTTP requests. The page controller just renders HTML. The API controller does the real work &mdash; create, update, delete records, adjust balances.</p>
+        <ul class="text-sm text-green-700 dark:text-green-300 space-y-1 ml-4 list-disc">
+          <li><strong>index</strong> &mdash; GET request, returns list of records as JSON</li>
+          <li><strong>create</strong> &mdash; POST request, inserts a new record</li>
+          <li><strong>update</strong> &mdash; PUT request, modifies an existing record</li>
+          <li><strong>destroy</strong> &mdash; DELETE request, removes a record</li>
+          <li><strong>ActiveRecord::Base.transaction</strong> &mdash; wraps multiple DB changes so they all succeed or all fail</li>
+        </ul>
+        <div class="mt-3 bg-white dark:bg-gray-800 rounded p-3 text-xs font-mono text-gray-700 dark:text-gray-300 overflow-x-auto">
+<pre># When a transfer is created:
+ActiveRecord::Base.transaction do
+  transfer.save!
+  from_account.balance -= amount   # debit
+  to_account.balance   += amount   # credit
+end</pre>
+        </div>
+      </div>
+
+      <%# Layer 3 — View + Stimulus %>
+      <div class="rounded-lg border-2 border-yellow-300 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-900/20 p-4">
+        <div class="flex items-center space-x-2 mb-2">
+          <span class="inline-flex items-center justify-center h-7 w-7 rounded-full bg-yellow-600 text-white text-xs font-bold">3</span>
+          <h3 class="font-bold text-yellow-800 dark:text-yellow-300">View + Stimulus &mdash; <code class="text-sm">index.html.erb</code> + <code class="text-sm">*_controller.js</code></h3>
+        </div>
+        <p class="text-sm text-yellow-700 dark:text-yellow-300 mb-2">The ERB template defines the HTML skeleton (table headers, modals, buttons). The Stimulus JS controller brings it to life &mdash; fetches data, renders rows, handles clicks.</p>
+        <ul class="text-sm text-yellow-700 dark:text-yellow-300 space-y-1 ml-4 list-disc">
+          <li><strong>ERB (.html.erb)</strong> &mdash; HTML with embedded Ruby. <code>&lt;%= ... %&gt;</code> outputs a value, <code>&lt;% ... %&gt;</code> runs Ruby code</li>
+          <li><strong>data-controller</strong> &mdash; connects the HTML element to a Stimulus JS controller</li>
+          <li><strong>data-target</strong> &mdash; names an element so JS can find it (like PowerBuilder DataWindow column names)</li>
+          <li><strong>data-action</strong> &mdash; wires a user event (click, keydown) to a JS method</li>
+          <li><strong>Tailwind CSS</strong> &mdash; utility classes applied directly in HTML (no separate CSS files to edit)</li>
+        </ul>
+        <div class="mt-3 bg-white dark:bg-gray-800 rounded p-3 text-xs font-mono text-gray-700 dark:text-gray-300 overflow-x-auto">
+<pre>&lt;button data-action="click->transfer-masters#openAddModal"&gt;
+  + Transfer
+&lt;/button&gt;
+
+&lt;tbody data-transfer-masters-target="tableBody"&gt;
+  &lt;!-- JS fills this in dynamically --&gt;
+&lt;/tbody&gt;</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%# ═══════════════════════════════════════════════════════ %>
+  <%# PART 3: HOW FILES MAP TO EACH SCREEN                  %>
+  <%# ═══════════════════════════════════════════════════════ %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 mb-6">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-1">Part 3 &mdash; File Map Per Screen</h2>
+    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">For any screen you want to change, these are the files to open</p>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-200 dark:border-gray-700">
+            <th class="px-4 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">Screen</th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">Model</th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">API Controller</th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">View (HTML)</th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">Stimulus (JS)</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700 font-mono text-xs">
+          <tr><td class="px-4 py-2 text-gray-900 dark:text-white font-sans text-sm">Accounts</td><td class="px-4 py-2">account.rb</td><td class="px-4 py-2">api/accounts_controller.rb</td><td class="px-4 py-2">accounts/index.html.erb</td><td class="px-4 py-2">accounts_controller.js</td></tr>
+          <tr><td class="px-4 py-2 text-gray-900 dark:text-white font-sans text-sm">Transfers</td><td class="px-4 py-2">transfer_master.rb</td><td class="px-4 py-2">api/transfer_masters_controller.rb</td><td class="px-4 py-2">transfer_masters/index.html.erb</td><td class="px-4 py-2">transfer_masters_controller.js</td></tr>
+          <tr><td class="px-4 py-2 text-gray-900 dark:text-white font-sans text-sm">Payments</td><td class="px-4 py-2">payment.rb</td><td class="px-4 py-2">api/payments_controller.rb</td><td class="px-4 py-2">payments/index.html.erb</td><td class="px-4 py-2">payments_controller.js</td></tr>
+          <tr><td class="px-4 py-2 text-gray-900 dark:text-white font-sans text-sm">Deposits</td><td class="px-4 py-2">income_entry.rb</td><td class="px-4 py-2">api/income_entries_controller.rb</td><td class="px-4 py-2">income_entries/index.html.erb</td><td class="px-4 py-2">income_entries_controller.js</td></tr>
+          <tr><td class="px-4 py-2 text-gray-900 dark:text-white font-sans text-sm">Recurring Deposits</td><td class="px-4 py-2">income_recurring.rb</td><td class="px-4 py-2">api/income_recurrings_controller.rb</td><td class="px-4 py-2">income_recurrings/index.html.erb</td><td class="px-4 py-2">income_recurrings_controller.js</td></tr>
+          <tr><td class="px-4 py-2 text-gray-900 dark:text-white font-sans text-sm">Categories</td><td class="px-4 py-2">spending_category.rb</td><td class="px-4 py-2">api/spending_categories_controller.rb</td><td class="px-4 py-2">spending_categories/index.html.erb</td><td class="px-4 py-2">spending_categories_controller.js</td></tr>
+          <tr><td class="px-4 py-2 text-gray-900 dark:text-white font-sans text-sm">Dashboard</td><td class="px-4 py-2">(multiple models)</td><td class="px-4 py-2">api/dashboard_controller.rb</td><td class="px-4 py-2">dashboard/index.html.erb</td><td class="px-4 py-2">dashboard_controller.js</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <%# ═══════════════════════════════════════════════════════ %>
+  <%# PART 4: CSS & TAILWIND FOR IPAD / SAFARI / DESKTOP    %>
+  <%# ═══════════════════════════════════════════════════════ %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 mb-6">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-1">Part 4 &mdash; CSS / Tailwind for iPad, Safari, and Desktop</h2>
+    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">BudgetHQ uses Tailwind CSS utility classes. No separate .css files to edit &mdash; all styling is in the HTML.</p>
+
+    <%# Breakpoint Reference %>
+    <h3 class="font-semibold text-gray-900 dark:text-white mt-4 mb-2">Tailwind Breakpoints (Mobile-First)</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Tailwind builds <strong>mobile-first</strong>. Classes without a prefix apply to all sizes. Prefixed classes apply at that width <em>and up</em>.</p>
+    <div class="overflow-x-auto mb-4">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-200 dark:border-gray-700">
+            <th class="px-4 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">Prefix</th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">Min Width</th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">Device</th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">Example</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr><td class="px-4 py-2 font-mono text-gray-900 dark:text-white">(none)</td><td class="px-4 py-2">0px</td><td class="px-4 py-2">Phone</td><td class="px-4 py-2 font-mono text-xs">text-sm</td></tr>
+          <tr><td class="px-4 py-2 font-mono text-gray-900 dark:text-white">sm:</td><td class="px-4 py-2">640px</td><td class="px-4 py-2">Large phone / small tablet</td><td class="px-4 py-2 font-mono text-xs">sm:text-base</td></tr>
+          <tr><td class="px-4 py-2 font-mono text-gray-900 dark:text-white">md:</td><td class="px-4 py-2">768px</td><td class="px-4 py-2">iPad Portrait</td><td class="px-4 py-2 font-mono text-xs">md:grid-cols-2</td></tr>
+          <tr><td class="px-4 py-2 font-mono text-gray-900 dark:text-white">lg:</td><td class="px-4 py-2">1024px</td><td class="px-4 py-2">iPad Landscape / small laptop</td><td class="px-4 py-2 font-mono text-xs">lg:px-8</td></tr>
+          <tr><td class="px-4 py-2 font-mono text-gray-900 dark:text-white">xl:</td><td class="px-4 py-2">1280px</td><td class="px-4 py-2">Desktop</td><td class="px-4 py-2 font-mono text-xs">xl:grid-cols-4</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <%# Common Patterns %>
+    <h3 class="font-semibold text-gray-900 dark:text-white mt-6 mb-2">Common Patterns in BudgetHQ</h3>
+    <div class="space-y-3">
+      <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-3">
+        <p class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">Sticky header (stays visible when scrolling)</p>
+        <code class="text-xs font-mono text-brand-600 dark:text-brand-400">sticky top-14 z-20 bg-gray-50 dark:bg-gray-900</code>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">top-14 = below the Hello DJ bar (3.5rem). NEVER put overflow-x-hidden on a parent &mdash; it breaks sticky in Safari.</p>
+      </div>
+      <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-3">
+        <p class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">Responsive grid that stacks on phone</p>
+        <code class="text-xs font-mono text-brand-600 dark:text-brand-400">grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4</code>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">1 column on phone, 2 on tablet, 3 on desktop.</p>
+      </div>
+      <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-3">
+        <p class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">Hide on phone, show on tablet+</p>
+        <code class="text-xs font-mono text-brand-600 dark:text-brand-400">hidden md:flex</code>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Element is hidden below 768px, visible (as flex) at 768px and up.</p>
+      </div>
+      <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-3">
+        <p class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">Dark mode support</p>
+        <code class="text-xs font-mono text-brand-600 dark:text-brand-400">bg-white dark:bg-gray-800 text-gray-900 dark:text-white</code>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Always pair light and dark variants. The dark: prefix activates when the user's system is in dark mode.</p>
+      </div>
+    </div>
+
+    <%# Safari Gotchas %>
+    <h3 class="font-semibold text-gray-900 dark:text-white mt-6 mb-2">Safari / iPad Gotchas</h3>
+    <div class="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
+      <ul class="text-sm text-red-700 dark:text-red-300 space-y-2">
+        <li><strong>overflow-x-hidden breaks position:sticky</strong> &mdash; If a parent has <code>overflow-x-hidden</code>, Safari ignores <code>sticky</code> on children. This is our #1 Safari bug.</li>
+        <li><strong>100vh is wrong on iOS</strong> &mdash; Safari counts the address bar in <code>100vh</code>. Use <code>100dvh</code> (dynamic viewport height) or avoid vh units.</li>
+        <li><strong>Date inputs</strong> &mdash; Safari renders date pickers differently. Test date fields on both Chrome and Safari.</li>
+        <li><strong>Scroll momentum</strong> &mdash; iPad uses "rubber band" scrolling. Make sure fixed/sticky elements don't jump.</li>
+        <li><strong>Focus behavior</strong> &mdash; Safari won't focus a button on click like Chrome does. Use <code>tabindex="0"</code> if needed.</li>
+      </ul>
+    </div>
+
+    <%# How to test CSS changes %>
+    <h3 class="font-semibold text-gray-900 dark:text-white mt-6 mb-2">How to Test CSS Changes</h3>
+    <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 text-sm text-gray-700 dark:text-gray-300 space-y-2">
+      <p><strong>1. Browser DevTools</strong> &mdash; Right-click any element &rarr; Inspect. You can live-edit Tailwind classes in the browser. Once it looks right, copy the class list back to the .html.erb file.</p>
+      <p><strong>2. Responsive mode</strong> &mdash; In Chrome DevTools, click the phone/tablet icon to simulate iPad (1024&times;768) or iPhone (375&times;812).</p>
+      <p><strong>3. Playwright tests</strong> &mdash; We run tests on both Chromium and WebKit (Safari's engine). Run: <code>npx playwright test tests/your-test.spec.js --project=webkit</code></p>
+      <p><strong>4. Real device</strong> &mdash; Load <code>https://djburrup.com/expensetracker</code> on your iPad to verify. Safari on iPad is where most layout bugs appear.</p>
+    </div>
+  </div>
+
+  <%# ═══════════════════════════════════════════════════════ %>
+  <%# PART 5: KEY FILES EXPLAINED                           %>
+  <%# ═══════════════════════════════════════════════════════ %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 mb-6">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-1">Part 5 &mdash; Key Files You Should Know</h2>
+    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">The files you are most likely to read or modify</p>
+
+    <div class="space-y-3">
+      <div class="flex items-start space-x-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+        <span class="inline-flex items-center justify-center h-6 w-6 rounded bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 text-xs font-bold flex-shrink-0 mt-0.5">R</span>
+        <div>
+          <p class="font-mono text-sm font-semibold text-gray-900 dark:text-white">config/routes.rb</p>
+          <p class="text-sm text-gray-600 dark:text-gray-400">The "address book" of the app. Maps every URL to a controller action. When you add a new page, you add a line here first.</p>
+        </div>
+      </div>
+      <div class="flex items-start space-x-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+        <span class="inline-flex items-center justify-center h-6 w-6 rounded bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 text-xs font-bold flex-shrink-0 mt-0.5">G</span>
+        <div>
+          <p class="font-mono text-sm font-semibold text-gray-900 dark:text-white">Gemfile</p>
+          <p class="text-sm text-gray-600 dark:text-gray-400">Lists every Ruby library (gem) the project uses. <code>bundle install</code> reads this file. Similar to <code>package.json</code> for Node.</p>
+        </div>
+      </div>
+      <div class="flex items-start space-x-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+        <span class="inline-flex items-center justify-center h-6 w-6 rounded bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 text-xs font-bold flex-shrink-0 mt-0.5">M</span>
+        <div>
+          <p class="font-mono text-sm font-semibold text-gray-900 dark:text-white">db/migrate/*.rb</p>
+          <p class="text-sm text-gray-600 dark:text-gray-400">Migration files. Each one is a database change script (create table, add column, etc.). They run in timestamp order. Never edit a migration that has already been deployed &mdash; create a new one instead.</p>
+        </div>
+      </div>
+      <div class="flex items-start space-x-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+        <span class="inline-flex items-center justify-center h-6 w-6 rounded bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 text-xs font-bold flex-shrink-0 mt-0.5">N</span>
+        <div>
+          <p class="font-mono text-sm font-semibold text-gray-900 dark:text-white">app/views/shared/_navbar.html.erb</p>
+          <p class="text-sm text-gray-600 dark:text-gray-400">The purple sidebar navigation. To add a new menu item, add an entry to the <code>nav_groups</code> array at the top of the file.</p>
+        </div>
+      </div>
+      <div class="flex items-start space-x-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+        <span class="inline-flex items-center justify-center h-6 w-6 rounded bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 text-xs font-bold flex-shrink-0 mt-0.5">I</span>
+        <div>
+          <p class="font-mono text-sm font-semibold text-gray-900 dark:text-white">app/javascript/controllers/index.js</p>
+          <p class="text-sm text-gray-600 dark:text-gray-400">The master registry for all Stimulus controllers. Every new JS controller must be imported and registered here or it won't work.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%# ═══════════════════════════════════════════════════════ %>
+  <%# PART 6: RUBY CONCEPTS FOR C++/PB DEVELOPERS           %>
+  <%# ═══════════════════════════════════════════════════════ %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 mb-6">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-1">Part 6 &mdash; Ruby Concepts (C++ / PowerBuilder Translation)</h2>
+    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">If you know C++ or PowerBuilder, here is how Ruby concepts map to what you already know</p>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-200 dark:border-gray-700">
+            <th class="px-4 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">Ruby / Rails</th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">C++ Equivalent</th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">PowerBuilder Equivalent</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr><td class="px-4 py-2 text-gray-900 dark:text-white">class User &lt; ApplicationRecord</td><td class="px-4 py-2">class User : public ActiveRecord</td><td class="px-4 py-2">Inheriting from a DataWindow ancestor</td></tr>
+          <tr><td class="px-4 py-2 text-gray-900 dark:text-white">has_many :payments</td><td class="px-4 py-2">vector&lt;Payment*&gt; payments</td><td class="px-4 py-2">DataWindow child relationship / FK join</td></tr>
+          <tr><td class="px-4 py-2 text-gray-900 dark:text-white">validates :name, presence: true</td><td class="px-4 py-2">if (name.empty()) throw error</td><td class="px-4 py-2">ItemChanged validation event</td></tr>
+          <tr><td class="px-4 py-2 text-gray-900 dark:text-white">@account = Account.find(id)</td><td class="px-4 py-2">SELECT * FROM accounts WHERE id=?</td><td class="px-4 py-2">dw.Retrieve(id)</td></tr>
+          <tr><td class="px-4 py-2 text-gray-900 dark:text-white">account.save!</td><td class="px-4 py-2">db.execute(INSERT/UPDATE)</td><td class="px-4 py-2">dw.Update()</td></tr>
+          <tr><td class="px-4 py-2 text-gray-900 dark:text-white">before_action :authenticate_user!</td><td class="px-4 py-2">Middleware / guard function</td><td class="px-4 py-2">Open event security check</td></tr>
+          <tr><td class="px-4 py-2 text-gray-900 dark:text-white">render json: data</td><td class="px-4 py-2">cout &lt;&lt; json_serialize(data)</td><td class="px-4 py-2">Return string from web service</td></tr>
+          <tr><td class="px-4 py-2 text-gray-900 dark:text-white">scope :ordered, -> { order(:name) }</td><td class="px-4 py-2">Named query function</td><td class="px-4 py-2">Sort specification on DataWindow</td></tr>
+          <tr><td class="px-4 py-2 text-gray-900 dark:text-white">Gemfile (bundler)</td><td class="px-4 py-2">#include / CMakeLists.txt</td><td class="px-4 py-2">PBL search path / PBD references</td></tr>
+          <tr><td class="px-4 py-2 text-gray-900 dark:text-white">db/migrate/</td><td class="px-4 py-2">SQL DDL scripts</td><td class="px-4 py-2">ALTER TABLE scripts</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <%# ═══════════════════════════════════════════════════════ %>
+  <%# PART 7: TRAINING REGIMEN                               %>
+  <%# ═══════════════════════════════════════════════════════ %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 mb-6">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-1">Part 7 &mdash; Recommended Training Regimen</h2>
+    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Priority-ordered from "start here today" to "eventually useful." Each phase builds on the previous one.</p>
+
+    <%# Phase 1 %>
+    <div class="mb-6">
+      <div class="flex items-center space-x-2 mb-3">
+        <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-green-600 text-white text-sm font-bold">1</span>
+        <div>
+          <h3 class="font-bold text-gray-900 dark:text-white">Phase 1 &mdash; Read the Code You Already Have (Week 1)</h3>
+          <p class="text-xs text-green-600 dark:text-green-400 font-semibold">HIGHEST PRIORITY &mdash; No tutorials needed, just read</p>
+        </div>
+      </div>
+      <div class="ml-10 space-y-2 text-sm text-gray-700 dark:text-gray-300">
+        <p>Open each of these files and read them top to bottom. You don't need to understand every line &mdash; just get the shape:</p>
+        <ol class="list-decimal ml-5 space-y-1">
+          <li><code>app/models/account.rb</code> &mdash; simplest model, ~25 lines. Read the validations and relationships.</li>
+          <li><code>app/controllers/api/accounts_controller.rb</code> &mdash; see how index/create/update/destroy map to HTTP verbs.</li>
+          <li><code>app/views/accounts/index.html.erb</code> &mdash; see how HTML + Tailwind classes + data- attributes work together.</li>
+          <li><code>app/javascript/controllers/accounts_controller.js</code> &mdash; see how fetchAll, renderTable, and the state machine work.</li>
+          <li><code>config/routes.rb</code> &mdash; see how URLs map to controllers.</li>
+        </ol>
+        <p class="mt-2"><strong>Goal:</strong> Be able to answer "if I wanted to change the Accounts table headers, which file do I open?"</p>
+      </div>
+    </div>
+
+    <%# Phase 2 %>
+    <div class="mb-6">
+      <div class="flex items-center space-x-2 mb-3">
+        <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-600 text-white text-sm font-bold">2</span>
+        <div>
+          <h3 class="font-bold text-gray-900 dark:text-white">Phase 2 &mdash; Tailwind CSS & Responsive Design (Week 2)</h3>
+          <p class="text-xs text-blue-600 dark:text-blue-400 font-semibold">Lets you fix layout / iPad / Safari issues yourself</p>
+        </div>
+      </div>
+      <div class="ml-10 space-y-2 text-sm text-gray-700 dark:text-gray-300">
+        <ol class="list-decimal ml-5 space-y-1">
+          <li><strong>Tailwind Docs &mdash; Core Concepts</strong> &mdash; <span class="text-brand-600">tailwindcss.com/docs/utility-first</span> (30 min)</li>
+          <li><strong>Tailwind Docs &mdash; Responsive Design</strong> &mdash; <span class="text-brand-600">tailwindcss.com/docs/responsive-design</span> (20 min)</li>
+          <li><strong>Practice:</strong> Open any BudgetHQ page in Chrome DevTools, resize to iPad width (768px), and try changing Tailwind classes live.</li>
+          <li><strong>Flexbox guide</strong> &mdash; <span class="text-brand-600">css-tricks.com/snippets/css/a-guide-to-flexbox</span> (the one-page reference everyone uses)</li>
+          <li><strong>CSS Grid guide</strong> &mdash; <span class="text-brand-600">css-tricks.com/snippets/css/complete-guide-grid</span> (used in Payments filter layout)</li>
+        </ol>
+        <p class="mt-2"><strong>Goal:</strong> Be able to change a layout from 2 columns to 3 columns on desktop, or fix an element that overlaps on iPad.</p>
+      </div>
+    </div>
+
+    <%# Phase 3 %>
+    <div class="mb-6">
+      <div class="flex items-center space-x-2 mb-3">
+        <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-yellow-600 text-white text-sm font-bold">3</span>
+        <div>
+          <h3 class="font-bold text-gray-900 dark:text-white">Phase 3 &mdash; Ruby Language Basics (Weeks 3&ndash;4)</h3>
+          <p class="text-xs text-yellow-600 dark:text-yellow-400 font-semibold">Understand the language behind the models and controllers</p>
+        </div>
+      </div>
+      <div class="ml-10 space-y-2 text-sm text-gray-700 dark:text-gray-300">
+        <ol class="list-decimal ml-5 space-y-1">
+          <li><strong>Try Ruby</strong> &mdash; <span class="text-brand-600">try.ruby-lang.org</span> (interactive browser-based, 30 min)</li>
+          <li><strong>Ruby in 20 Minutes</strong> &mdash; <span class="text-brand-600">ruby-lang.org/en/documentation/quickstart</span></li>
+          <li><strong>Key differences from C++:</strong> No semicolons, no braces (use <code>do...end</code>), no explicit types, everything is an object (even numbers), <code>nil</code> instead of <code>NULL</code>.</li>
+          <li><strong>Focus on:</strong> variables, strings, arrays, hashes (like C++ maps), if/unless, each loops, classes, methods, symbols (:name)</li>
+          <li><strong>Skip for now:</strong> metaprogramming, blocks/procs/lambdas (you'll encounter them but don't need to write them yet)</li>
+        </ol>
+        <p class="mt-2"><strong>Goal:</strong> Read a model file and understand what every line does.</p>
+      </div>
+    </div>
+
+    <%# Phase 4 %>
+    <div class="mb-6">
+      <div class="flex items-center space-x-2 mb-3">
+        <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-purple-600 text-white text-sm font-bold">4</span>
+        <div>
+          <h3 class="font-bold text-gray-900 dark:text-white">Phase 4 &mdash; Rails Framework Basics (Weeks 5&ndash;6)</h3>
+          <p class="text-xs text-purple-600 dark:text-purple-400 font-semibold">Understand how Ruby becomes a web app</p>
+        </div>
+      </div>
+      <div class="ml-10 space-y-2 text-sm text-gray-700 dark:text-gray-300">
+        <ol class="list-decimal ml-5 space-y-1">
+          <li><strong>Rails Getting Started Guide</strong> &mdash; <span class="text-brand-600">guides.rubyonrails.org/getting_started.html</span> (official, excellent)</li>
+          <li><strong>Focus on:</strong> MVC pattern, routes, controllers, models (ActiveRecord), migrations, validations</li>
+          <li><strong>Rails Console practice:</strong> Run <code>bundle exec rails console</code> and try: <code>User.count</code>, <code>Account.first</code>, <code>TransferMaster.where(user_id: 1)</code></li>
+          <li><strong>Skip for now:</strong> ActionCable, ActiveJob, ActionMailer, Asset Pipeline (we use esbuild instead)</li>
+        </ol>
+        <p class="mt-2"><strong>Goal:</strong> Create a simple new model with a migration and test it in the Rails console.</p>
+      </div>
+    </div>
+
+    <%# Phase 5 %>
+    <div class="mb-6">
+      <div class="flex items-center space-x-2 mb-3">
+        <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-red-600 text-white text-sm font-bold">5</span>
+        <div>
+          <h3 class="font-bold text-gray-900 dark:text-white">Phase 5 &mdash; JavaScript & Stimulus (Weeks 7&ndash;8)</h3>
+          <p class="text-xs text-red-600 dark:text-red-400 font-semibold">Understand the front-end interactivity layer</p>
+        </div>
+      </div>
+      <div class="ml-10 space-y-2 text-sm text-gray-700 dark:text-gray-300">
+        <ol class="list-decimal ml-5 space-y-1">
+          <li><strong>JavaScript refresher</strong> &mdash; <span class="text-brand-600">javascript.info</span> (modern tutorial, do chapters 1&ndash;5)</li>
+          <li><strong>Stimulus Handbook</strong> &mdash; <span class="text-brand-600">stimulus.hotwired.dev/handbook/introduction</span> (official guide, 45 min)</li>
+          <li><strong>Focus on:</strong> controllers, targets, actions, values, connect/disconnect lifecycle</li>
+          <li><strong>fetch() API</strong> &mdash; how our JS controllers talk to our Ruby API controllers</li>
+          <li><strong>Practice:</strong> Add a small feature to an existing Stimulus controller (e.g., add a tooltip, change a sort order)</li>
+        </ol>
+        <p class="mt-2"><strong>Goal:</strong> Modify a Stimulus controller to add a new column to an existing table, or change how a modal field behaves.</p>
+      </div>
+    </div>
+
+    <%# Phase 6 %>
+    <div class="mb-6">
+      <div class="flex items-center space-x-2 mb-3">
+        <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-gray-600 text-white text-sm font-bold">6</span>
+        <div>
+          <h3 class="font-bold text-gray-900 dark:text-white">Phase 6 &mdash; Testing & Deployment (Ongoing)</h3>
+          <p class="text-xs text-gray-600 dark:text-gray-400 font-semibold">Safety net &mdash; learn as you go</p>
+        </div>
+      </div>
+      <div class="ml-10 space-y-2 text-sm text-gray-700 dark:text-gray-300">
+        <ol class="list-decimal ml-5 space-y-1">
+          <li><strong>Playwright docs</strong> &mdash; <span class="text-brand-600">playwright.dev/docs/writing-tests</span> (we use this for all browser testing)</li>
+          <li><strong>Git basics</strong> &mdash; <code>git add</code>, <code>git commit</code>, <code>git push</code>, <code>git status</code>, <code>git log</code></li>
+          <li><strong>Read our Deployment Runbook</strong> &mdash; in this same Documentation section</li>
+        </ol>
+        <p class="mt-2"><strong>Goal:</strong> Write a simple Playwright test that logs in, navigates to a page, and checks that a heading is visible.</p>
+      </div>
+    </div>
+  </div>
+
+  <%# ═══════════════════════════════════════════════════════ %>
+  <%# PART 8: QUICK REFERENCE COMMANDS                       %>
+  <%# ═══════════════════════════════════════════════════════ %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 mb-6">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-1">Part 8 &mdash; Quick Reference Commands</h2>
+    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Commands you'll use every day, run from <code>C:/Projects/ExpenseTracker</code></p>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-200 dark:border-gray-700">
+            <th class="px-4 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">What</th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">Command</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700 font-mono text-xs">
+          <tr><td class="px-4 py-2 font-sans text-sm text-gray-900 dark:text-white">Start the local server</td><td class="px-4 py-2">bin/dev</td></tr>
+          <tr><td class="px-4 py-2 font-sans text-sm text-gray-900 dark:text-white">Open Rails console (run Ruby interactively)</td><td class="px-4 py-2">bundle exec rails console</td></tr>
+          <tr><td class="px-4 py-2 font-sans text-sm text-gray-900 dark:text-white">Run database migrations</td><td class="px-4 py-2">bundle exec rails db:migrate</td></tr>
+          <tr><td class="px-4 py-2 font-sans text-sm text-gray-900 dark:text-white">Seed the database with default data</td><td class="px-4 py-2">bundle exec rails db:seed</td></tr>
+          <tr><td class="px-4 py-2 font-sans text-sm text-gray-900 dark:text-white">List all routes</td><td class="px-4 py-2">bundle exec rails routes</td></tr>
+          <tr><td class="px-4 py-2 font-sans text-sm text-gray-900 dark:text-white">Generate a new migration</td><td class="px-4 py-2">bundle exec rails generate migration AddFieldToTable</td></tr>
+          <tr><td class="px-4 py-2 font-sans text-sm text-gray-900 dark:text-white">Run all Playwright tests (Chromium)</td><td class="px-4 py-2">npx playwright test --project=chromium</td></tr>
+          <tr><td class="px-4 py-2 font-sans text-sm text-gray-900 dark:text-white">Run a specific test file</td><td class="px-4 py-2">npx playwright test tests/my-test.spec.js</td></tr>
+          <tr><td class="px-4 py-2 font-sans text-sm text-gray-900 dark:text-white">Check git status</td><td class="px-4 py-2">git status</td></tr>
+          <tr><td class="px-4 py-2 font-sans text-sm text-gray-900 dark:text-white">View recent commits</td><td class="px-4 py-2">git log --oneline -10</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <%# ═══════════════════════════════════════════════════════ %>
+  <%# FOOTER INFO                                            %>
+  <%# ═══════════════════════════════════════════════════════ %>
+  <div class="rounded-lg bg-blue-50 dark:bg-blue-900/30 p-4 ring-1 ring-blue-200 dark:ring-blue-800">
+    <div class="flex">
+      <svg class="h-5 w-5 text-blue-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+      </svg>
+      <p class="ml-3 text-sm text-blue-700 dark:text-blue-300">
+        This guide reflects the BudgetHQ codebase as of February 2026. The project uses Ruby 3.2, Rails 7.1, PostgreSQL, Hotwired (Turbo + Stimulus), and Tailwind CSS (CDN). Deployed on Render.com.
+      </p>
+    </div>
+  </div>
+</div>

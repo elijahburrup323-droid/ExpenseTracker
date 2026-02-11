@@ -132,6 +132,7 @@ Rails.application.routes.draw do
   get "documentation/deployment-runbook", to: "documentation#deployment_runbook", as: :documentation_deployment_runbook
   get "documentation/test-coverage", to: "documentation#test_coverage", as: :documentation_test_coverage
   get "documentation/environment-variables", to: "documentation#environment_variables", as: :documentation_environment_variables
+  get "documentation/ruby-project-breakdown", to: "documentation#ruby_project_breakdown", as: :documentation_ruby_project_breakdown
 
   # Legal / static pages
   get "pages/:slug", to: "legal_pages#show", as: :legal_page

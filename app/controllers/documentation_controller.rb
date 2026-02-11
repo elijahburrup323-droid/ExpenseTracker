@@ -29,6 +29,9 @@ class DocumentationController < ApplicationController
   def environment_variables
   end
 
+  def ruby_project_breakdown
+  end
+
   private
 
   def scan_test_files
