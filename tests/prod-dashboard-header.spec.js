@@ -15,6 +15,12 @@ async function login(page, acct) {
     page.waitForURL(`${BASE}/dashboard`),
     page.getByRole("button", { name: "Sign in", exact: true }).click(),
   ]);
+  // Dismiss What's New popup if visible
+  const gotIt = page.locator('#whatsNewOverlay button:has-text("Got it")');
+  if (await gotIt.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await gotIt.click();
+    await page.waitForTimeout(300);
+  }
 }
 
 for (const acct of ACCOUNTS) {
@@ -39,11 +45,12 @@ for (const acct of ACCOUNTS) {
       await login(page, acct);
       await page.waitForLoadState("networkidle");
 
-      const quote = page.locator(".sticky.top-0 p.italic");
+      const header = page.locator("main .sticky.top-0.z-30").first();
+      const quote = header.locator("p.italic");
       const isVisible = await quote.isVisible();
       if (isVisible) {
         const quoteBox = await quote.boundingBox();
-        const headerBox = await page.locator(".sticky.top-0").boundingBox();
+        const headerBox = await header.boundingBox();
         expect(quoteBox.x + quoteBox.width).toBeLessThanOrEqual(headerBox.x + headerBox.width + 5);
       }
     });

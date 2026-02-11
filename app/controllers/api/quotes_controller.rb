@@ -32,6 +32,25 @@ module Api
       head :no_content
     end
 
+    def populate
+      seed_file = Rails.root.join("db", "seeds", "quotes_seed.rb")
+      unless File.exist?(seed_file)
+        return render json: { error: "Seed data not found" }, status: :unprocessable_entity
+      end
+
+      # Load the seed constant if not already defined
+      require seed_file unless defined?(QUOTES_WITH_AUTHORS)
+
+      created = 0
+      QUOTES_WITH_AUTHORS.each do |text, author|
+        next if Quote.exists?(quote_text: text)
+        Quote.create!(quote_text: text, quote_author: author.presence || "Unknown", is_active: true)
+        created += 1
+      end
+      Quote.invalidate_cache!
+      render json: { message: "Populated #{created} new quotes (#{Quote.count} total)" }, status: :created
+    end
+
     private
 
     def require_admin!

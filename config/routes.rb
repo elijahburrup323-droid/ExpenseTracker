@@ -89,7 +89,11 @@ Rails.application.routes.draw do
       end
     end
     resource :open_month_master, only: [:show, :update]
-    resources :quotes, only: [:index, :create, :update, :destroy]
+    resources :quotes, only: [:index, :create, :update, :destroy] do
+      collection do
+        post :populate
+      end
+    end
     resources :net_worth_snapshots, only: [:index] do
       collection do
         post :populate

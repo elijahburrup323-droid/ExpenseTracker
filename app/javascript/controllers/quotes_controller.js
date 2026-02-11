@@ -11,7 +11,7 @@ function escapeAttr(str) {
 }
 
 export default class extends Controller {
-  static targets = ["tableBody", "addButton", "deleteModal", "deleteModalName"]
+  static targets = ["tableBody", "addButton", "populateButton", "deleteModal", "deleteModalName"]
   static values = { apiUrl: String, csrfToken: String }
 
   connect() {
@@ -36,6 +36,28 @@ export default class extends Controller {
       // silently fail
     }
     this.renderTable()
+  }
+
+  async populate() {
+    const btn = this.populateButtonTarget
+    btn.disabled = true
+    btn.innerHTML = '<svg class="animate-spin h-4 w-4 inline mr-1.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>Populating...'
+    try {
+      const response = await fetch(`${this.apiUrlValue}/populate`, {
+        method: "POST",
+        headers: { "Accept": "application/json", "X-CSRF-Token": this.csrfTokenValue }
+      })
+      const data = await response.json()
+      if (response.ok) {
+        await this.fetchAll()
+        btn.textContent = data.message
+      } else {
+        btn.textContent = data.error || "Failed"
+      }
+    } catch (e) {
+      btn.textContent = "Network error"
+    }
+    setTimeout(() => { btn.disabled = false; btn.innerHTML = 'Populate Quotes' }, 3000)
   }
 
   // --- State Transitions ---

@@ -1,8 +1,17 @@
-APP_VERSION = "1.0.9"
+APP_VERSION = "1.1.0"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.1.0",
+    changes: [
+      "Quotes populate button seeds 201 quotes with authors from database",
+      "All documentation pages exported to local folder on deploy",
+      "Workflow updated: batch up to 5 items before deploy",
+      "Production tests fixed to dismiss What's New popup",
+    ]
+  },
   {
     version: "1.0.9",
     changes: [

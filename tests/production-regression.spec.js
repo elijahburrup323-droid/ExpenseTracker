@@ -12,6 +12,12 @@ async function login(page) {
     page.waitForURL(/dashboard|expensetracker\/?$/),
     page.getByRole("button", { name: "Sign in", exact: true }).click(),
   ]);
+  // Dismiss What's New popup if visible
+  const gotIt = page.locator('#whatsNewOverlay button:has-text("Got it")');
+  if (await gotIt.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await gotIt.click();
+    await page.waitForTimeout(300);
+  }
 }
 
 // Collect console errors and network failures
@@ -35,7 +41,7 @@ test.describe("Production Regression", () => {
   test("login and dashboard loads", async ({ page }) => {
     const issues = setupMonitoring(page);
     await login(page);
-    await expect(page.locator("h2").filter({ hasText: "Budget Overview" })).toBeVisible();
+    await expect(page.locator("h2").filter({ hasText: "Spending Overview" })).toBeVisible();
     console.log("Dashboard API calls:", JSON.stringify(issues.apiResponses, null, 2));
     console.log("JS errors:", issues.jsErrors);
     console.log("Network errors:", issues.networkErrors);

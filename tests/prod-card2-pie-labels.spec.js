@@ -15,6 +15,12 @@ async function login(page, acct) {
     page.waitForURL(`${BASE}/dashboard`),
     page.getByRole("button", { name: "Sign in", exact: true }).click(),
   ]);
+  // Dismiss What's New popup if visible
+  const gotIt = page.locator('#whatsNewOverlay button:has-text("Got it")');
+  if (await gotIt.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await gotIt.click();
+    await page.waitForTimeout(300);
+  }
 }
 
 for (const acct of ACCOUNTS) {

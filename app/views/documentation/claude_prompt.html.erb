@@ -227,17 +227,26 @@ All work items are managed via Google Drive at **G:\My Drive\ExpenseTracker** us
 
 ### When I say "Lets Work"
 1. Navigate to **G:\My Drive\ExpenseTracker\Open Items**
-2. Pick one item (text file or feature folder) to work on
-3. **Move** it from Open Items → **In Process**
-4. **Plan** the implementation
-5. **Build** the changes
-6. **Test locally** with Playwright against both **Safari** and **Chrome** browsers
-7. **Deploy** to production (commit to GitHub, trigger Render deploy)
-8. **Test production** at https://djburrup.com/expensetracker with both accounts:
+2. Pick up to **5 items** (text files or feature folders) to work on
+3. For each item:
+   a. **Move** it from Open Items → **In Process**
+   b. **Plan** the implementation
+   c. **Build** the changes
+   d. **Test locally** with Playwright against both **Safari** and **Chrome** browsers
+   e. Repeat for the next item (up to 5 items before deploying)
+4. After processing up to 5 items, **deploy** to production:
+   a. Set `QA_MODE = true` in `config/initializers/version.rb`
+   b. Bump `APP_VERSION` and add changelog entry to `APP_ALL_VERSIONS`
+   c. Update all documentation pages (database_schema, claude_prompt, etc.)
+   d. Commit to GitHub, trigger Render deploy
+   e. Run `node export_docs.js` to export ALL documentation pages to Google Drive and `C:\Projects\ExpenseTracker\documentation`
+5. **Test production** at https://djburrup.com/expensetracker with both accounts:
    - elijahburrup323@gmail.com / Eli624462!
    - djburrup@gmail.com / luckydjb
-9. Once all production tests pass, **move** from In Process → **Ready for QA**
-10. Go back to **Open Items** and grab the next item — repeat
+6. Once all production tests pass:
+   a. Set `QA_MODE = false` in version.rb, commit and push
+   b. **Move** all processed items from In Process → **Ready for QA**
+7. Go back to **Open Items** and grab the next batch — repeat
 
 ### Bug text files
 - Process items that have **no status**, or are marked **NOT FIXED**, **FAILED**, or similar
@@ -253,8 +262,12 @@ All work items are managed via Google Drive at **G:\My Drive\ExpenseTracker** us
 - Do not ask "does this look good?" mid-task. Complete the full workflow, then present results.
 
 ## Pre-Commit Checklist
-Before each git commit, update these three items:
+Before each git commit, update these items:
 1. app/views/documentation/database_schema.html.erb — reflect any schema changes
 2. app/views/documentation/claude_prompt.html.erb — reflect any architectural/feature changes
-3. Release Notes (bug_reports table) — add entries for features built and bugs fixed, with today's date as processed_date</div>
+3. config/initializers/version.rb — bump APP_VERSION, add changelog to APP_ALL_VERSIONS
+
+## Post-Deploy Checklist
+After each deploy, run:
+1. `node export_docs.js` — exports ALL documentation pages as .docx to Google Drive AND to C:\Projects\ExpenseTracker\documentation</div>
 </div>
