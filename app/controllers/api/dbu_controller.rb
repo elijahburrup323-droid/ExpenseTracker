@@ -119,7 +119,7 @@ module Api
     def tables
       conn = ActiveRecord::Base.connection
       sql = <<-SQL
-        SELECT table_name
+        SELECT table_name, table_type
         FROM information_schema.tables
         WHERE table_schema = 'public'
           AND table_type IN ('BASE TABLE', 'VIEW')
@@ -132,7 +132,8 @@ module Api
 
       render json: result.rows.map { |r|
         tn = r[0]
-        { table_name: tn, table_description: catalog_map[tn] || tn.tr("_", " ").capitalize }
+        tt = r[1]
+        { table_name: tn, table_type: tt, table_description: catalog_map[tn] || tn.tr("_", " ").capitalize }
       }
     end
 

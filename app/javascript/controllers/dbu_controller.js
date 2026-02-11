@@ -5,7 +5,8 @@ export default class extends Controller {
     "searchInput", "userSelect", "tableNameSelect", "tableDescSelect",
     "recordPanel", "emptyMessage",
     "tabSchema", "tabRecords", "schemaPanel", "recordsPanel",
-    "schemaSearch", "schemaMeta", "schemaContent"
+    "schemaSearch", "schemaMeta", "schemaContent",
+    "recordsMeta"
   ]
   static values = { tablesUrl: String, usersUrl: String, recordsUrl: String, schemaUrl: String, csrfToken: String }
 
@@ -282,6 +283,34 @@ export default class extends Controller {
     this.filteredTables = [...this.allTables]
     this._populateDropdowns()
     this._populateUserDropdown()
+    this._renderRecordsMeta()
+  }
+
+  async refreshRecords() {
+    if (!this._checkDirty()) return
+    this.allTables = []
+    this.filteredTables = []
+    this.selectedTable = null
+    this.recordIds = []
+    this.currentIndex = -1
+    this.searchInputTarget.value = ""
+    // Also invalidate schema cache so it re-fetches if user switches tab
+    this.schemaData = null
+    await this.fetchInitialData()
+    this._showEmpty("Select a table to browse records.")
+  }
+
+  _renderRecordsMeta() {
+    if (this.hasRecordsMetaTarget) {
+      const total = this.allTables.length
+      const filtered = this.filteredTables.length
+      const countText = filtered === total
+        ? `<strong>Tables:</strong> ${total}`
+        : `<strong>Tables:</strong> ${filtered} of ${total}`
+      this.recordsMetaTarget.innerHTML = `
+        <span><strong>Schema:</strong> public</span>
+        <span>${countText}</span>`
+    }
   }
 
   // --- Dropdowns ---
@@ -318,6 +347,7 @@ export default class extends Controller {
     const stillExists = currentName && this.filteredTables.some(t => t.table_name === currentName)
 
     this._populateDropdowns()
+    this._renderRecordsMeta()
 
     if (stillExists) {
       this.tableNameSelectTarget.value = currentName
@@ -344,6 +374,7 @@ export default class extends Controller {
     this.searchInputTarget.value = ""
     this.filteredTables = [...this.allTables]
     this._populateDropdowns()
+    this._renderRecordsMeta()
     this.selectedTable = null
     this.recordIds = []
     this.currentIndex = -1
