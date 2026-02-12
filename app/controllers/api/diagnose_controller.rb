@@ -47,8 +47,18 @@ module Api
 
       # Try sending SMS if phone param provided
       if params[:phone].present?
-        phone = params[:phone].strip
-        phone = "+#{phone.gsub(/\D/, '')}" unless phone.start_with?("+")
+        raw = params[:phone].strip
+        # Normalize to E.164: if 10 digits (US without country code), prepend +1
+        digits = raw.gsub(/\D/, "")
+        phone = if raw.start_with?("+")
+                  raw
+                elsif digits.length == 10
+                  "+1#{digits}"
+                elsif digits.length == 11 && digits.start_with?("1")
+                  "+#{digits}"
+                else
+                  "+#{digits}"
+                end
         begin
           sms_result = TwilioService.send_verification_code(phone, "000000")
           results[:sms][:send_result] = "SUCCESS — SID: #{sms_result.sid}, status: #{sms_result.status}"

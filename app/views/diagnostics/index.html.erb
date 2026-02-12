@@ -135,10 +135,14 @@
       alert("Please enter a phone number in E.164 format (e.g. +19185551234).");
       return;
     }
-    if (!phone.startsWith("+")) {
-      phone = "+" + phone.replace(/\D/g, "");
+    // Normalize to E.164
+    const digits = phone.replace(/\D/g, "");
+    if (digits.length === 10) {
+      phone = "+1" + digits;  // US number without country code
+    } else if (!phone.startsWith("+")) {
+      phone = "+" + digits;
     }
-    if (phone.length < 11) {
+    if (phone.length < 12) {
       alert("Phone number must be in E.164 format (e.g. +19185551234).");
       return;
     }
