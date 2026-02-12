@@ -25,8 +25,15 @@ module Api
       # Try sending email if email param provided
       if params[:email].present?
         begin
-          TestMailer.test_email(params[:email]).deliver_now
-          results[:email][:send_result] = "SUCCESS — sent to #{params[:email]}"
+          if params[:notify].present? && params[:notify_body].present?
+            params[:email].split(",").each do |addr|
+              TestMailer.kanban_notify(addr.strip, params[:notify], params[:notify_body]).deliver_now
+            end
+            results[:email][:send_result] = "SUCCESS — notification sent to #{params[:email]}"
+          else
+            TestMailer.test_email(params[:email]).deliver_now
+            results[:email][:send_result] = "SUCCESS — sent to #{params[:email]}"
+          end
         rescue => e
           results[:email][:send_result] = "FAILED: #{e.class} — #{e.message}"
         end
