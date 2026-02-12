@@ -26,11 +26,8 @@ Rails.application.configure do
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.default_url_options = { host: ENV.fetch("APP_HOST", "djburrup.com"), protocol: "https" }
   # Use SendGrid Web API (Render blocks outbound SMTP ports)
-  require_relative "../../lib/sendgrid_web_delivery"
+  # Delivery method registered in config/initializers/sendgrid.rb
   config.action_mailer.delivery_method = :sendgrid_web
-  config.action_mailer.sendgrid_web_settings = {
-    api_key: ENV["SENDGRID_PASSWORD"]
-  }
 
   config.i18n.fallbacks = true
   config.active_support.report_deprecations = false
