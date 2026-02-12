@@ -1,8 +1,16 @@
-APP_VERSION = "1.1.0"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+APP_VERSION = "1.1.1"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.1.1",
+    changes: [
+      "Payments header shows filtered total",
+      "Accounts header shows in-budget balance total",
+      "Deposits header shows total of all deposits",
+    ]
+  },
   {
     version: "1.1.0",
     changes: [

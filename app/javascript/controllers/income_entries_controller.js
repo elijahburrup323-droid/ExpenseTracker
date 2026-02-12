@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["tableBody", "addButton", "generateButton", "deleteModal", "deleteModalName", "sortHeader"]
+  static targets = ["tableBody", "addButton", "generateButton", "deleteModal", "deleteModalName", "sortHeader", "total"]
   static values = { apiUrl: String, accountsUrl: String, frequenciesUrl: String, recurringsUrl: String, generateUrl: String, csrfToken: String }
 
   connect() {
@@ -386,6 +386,13 @@ export default class extends Controller {
     }
 
     this.tableBodyTarget.innerHTML = html
+    this._updateTotal()
+  }
+
+  _updateTotal() {
+    if (!this.hasTotalTarget) return
+    const sum = this.entries.reduce((acc, e) => acc + parseFloat(e.amount || 0), 0)
+    this.totalTarget.textContent = `— Total: ${sum.toLocaleString("en-US", { style: "currency", currency: "USD" })}`
   }
 
   _formatAmount(amount) {

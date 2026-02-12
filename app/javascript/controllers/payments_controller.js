@@ -14,7 +14,7 @@ export default class extends Controller {
   static targets = [
     "tableBody", "tableHead", "addButton", "generateButton", "deleteModal", "deleteModalName",
     "filterStartDate", "filterEndDate", "filterAccount", "filterCategory", "filterType", "filterSearch",
-    "filterCount",
+    "filterCount", "total",
     "addModal", "addModalBody", "modalDate", "modalAccount", "modalCategory", "modalType",
     "modalDescription", "modalAmount", "modalError"
   ]
@@ -658,6 +658,13 @@ export default class extends Controller {
     this.tableBodyTarget.innerHTML = html
     this._updateSortHeaders()
     this._updateFilterCount(filtered.length)
+    this._updateTotal(filtered)
+  }
+
+  _updateTotal(filtered) {
+    if (!this.hasTotalTarget) return
+    const sum = filtered.reduce((acc, p) => acc + parseFloat(p.amount || 0), 0)
+    this.totalTarget.textContent = `— Total: ${sum.toLocaleString("en-US", { style: "currency", currency: "USD" })}`
   }
 
   _updateFilterCount(visibleCount) {

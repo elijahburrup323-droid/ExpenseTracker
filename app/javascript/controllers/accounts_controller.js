@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 import { ICON_CATALOG, COLOR_OPTIONS, renderIconSvg, defaultIconSvg, iconFor, escapeHtml, escapeAttr } from "controllers/shared/icon_catalog"
 
 export default class extends Controller {
-  static targets = ["tableBody", "addButton", "generateButton", "deleteModal", "deleteModalName", "blockedDeleteModal", "blockedDeleteBody", "blockedDeleteButtons"]
+  static targets = ["tableBody", "addButton", "generateButton", "deleteModal", "deleteModalName", "blockedDeleteModal", "blockedDeleteBody", "blockedDeleteButtons", "total"]
   static values = { apiUrl: String, typesUrl: String, csrfToken: String, typesPageUrl: String, depositsPageUrl: String, paymentsPageUrl: String }
 
   connect() {
@@ -520,6 +520,15 @@ export default class extends Controller {
     }
 
     this.tableBodyTarget.innerHTML = html
+    this._updateTotal()
+  }
+
+  _updateTotal() {
+    if (!this.hasTotalTarget) return
+    const sum = this.accounts
+      .filter(a => a.include_in_budget)
+      .reduce((acc, a) => acc + parseFloat(a.balance || 0), 0)
+    this.totalTarget.textContent = `— Total: ${sum.toLocaleString("en-US", { style: "currency", currency: "USD" })}`
   }
 
   _formatBalance(balance) {
