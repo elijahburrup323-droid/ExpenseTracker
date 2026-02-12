@@ -91,7 +91,10 @@ Rails.application.routes.draw do
         post :resend_code
       end
     end
-    resource :open_month_master, only: [:show, :update]
+    resource :open_month_master, only: [:show, :update] do
+      post :close
+      post :reopen
+    end
     resources :quotes, only: [:index, :create, :update, :destroy] do
       collection do
         post :populate

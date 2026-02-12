@@ -17,6 +17,7 @@ module Api
       ActiveRecord::Base.transaction do
         if entry.save
           adjust_account_balance(entry.account_id, entry.amount) if entry.received_flag && entry.account_id
+          flag_open_month_has_data(entry.entry_date, "deposit")
           render json: entry_json(entry), status: :created
         else
           render_errors(entry)
@@ -140,6 +141,17 @@ module Api
       account = current_user.accounts.find_by(id: account_id)
       return unless account
       account.update_column(:balance, account.balance + delta)
+    end
+
+    def flag_open_month_has_data(record_date, source)
+      return unless record_date
+      om = OpenMonthMaster.for_user(current_user)
+      d = record_date.is_a?(String) ? Date.parse(record_date) : record_date
+      if d.year == om.current_year && d.month == om.current_month
+        om.mark_has_data!(source)
+      end
+    rescue => e
+      Rails.logger.warn("flag_open_month_has_data error: #{e.message}")
     end
 
     def entry_json(e, accounts_lookup = nil)

@@ -22,6 +22,7 @@ module Api
           to_acct.balance += transfer.amount
           to_acct.save!
 
+          flag_open_month_has_data(transfer.transfer_date, "transfer")
           render json: transfer_json(transfer), status: :created
         else
           render_errors(transfer)
@@ -84,6 +85,17 @@ module Api
 
     def transfer_params
       params.require(:transfer_master).permit(:transfer_date, :from_account_id, :to_account_id, :amount, :memo)
+    end
+
+    def flag_open_month_has_data(record_date, source)
+      return unless record_date
+      om = OpenMonthMaster.for_user(current_user)
+      d = record_date.is_a?(String) ? Date.parse(record_date) : record_date
+      if d.year == om.current_year && d.month == om.current_month
+        om.mark_has_data!(source)
+      end
+    rescue => e
+      Rails.logger.warn("flag_open_month_has_data error: #{e.message}")
     end
 
     def transfer_json(t, accounts_lookup = nil)

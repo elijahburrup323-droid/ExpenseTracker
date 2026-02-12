@@ -5,13 +5,15 @@ export default class extends Controller {
   static targets = [
     "tableBody", "paginationInfo", "addButton",
     "modal", "modalTitle", "modalFrom", "modalTo", "modalDate", "modalAmount", "modalMemo", "modalError", "modalSaveButton",
-    "deleteModal"
+    "deleteModal",
+    "dateWarningModal", "dateWarningMessage", "deleteBlockedModal", "deleteBlockedMessage"
   ]
 
   static values = {
     apiUrl: String,
     accountsUrl: String,
-    csrfToken: String
+    csrfToken: String,
+    openMonthUrl: String
   }
 
   transfers = []
@@ -20,6 +22,9 @@ export default class extends Controller {
   deletingId = null
   page = 1
   perPage = 10
+
+  _skipDateValidation = false
+  _pendingSave = null
 
   connect() {
     this.fetchAll()
@@ -179,6 +184,12 @@ export default class extends Controller {
     if (!date) return this.showModalError("Please select a date.")
     if (!amount || amount <= 0) return this.showModalError("Amount must be greater than $0.00.")
 
+    if (!this._skipDateValidation) {
+      const dateOk = await this._validateTransferDate(date)
+      if (!dateOk) return
+    }
+    this._skipDateValidation = false
+
     const body = {
       transfer_master: {
         from_account_id: fromId,
@@ -218,9 +229,38 @@ export default class extends Controller {
 
   // ── Delete ──
 
-  confirmDelete(event) {
-    this.deletingId = parseInt(event.currentTarget.dataset.id)
+  async confirmDelete(event) {
+    const id = parseInt(event.currentTarget.dataset.id)
+    const transfer = this.transfers.find(t => t.id === id)
+    if (!transfer) return
+
+    // Check if transfer date falls outside the open month
+    if (this.openMonthUrlValue && transfer.transfer_date) {
+      try {
+        const res = await fetch(this.openMonthUrlValue, { headers: { "Accept": "application/json" } })
+        if (res.ok) {
+          const openMonth = await res.json()
+          const [year, month] = transfer.transfer_date.split("-").map(Number)
+          if (year !== openMonth.current_year || month !== openMonth.current_month) {
+            const monthName = new Date(year, month - 1).toLocaleString("en-US", { month: "long" })
+            const openMonthName = new Date(openMonth.current_year, openMonth.current_month - 1).toLocaleString("en-US", { month: "long" })
+            this.deleteBlockedMessageTarget.innerHTML =
+              `This transfer is dated <strong class="text-gray-900 dark:text-white">${monthName} ${year}</strong>, which is outside the current open month <strong class="text-gray-900 dark:text-white">${openMonthName} ${openMonth.current_year}</strong>. You can only delete transfers within the open month.`
+            this.deleteBlockedModalTarget.classList.remove("hidden")
+            return
+          }
+        }
+      } catch (e) {
+        // If check fails, allow delete to proceed
+      }
+    }
+
+    this.deletingId = id
     this.deleteModalTarget.classList.remove("hidden")
+  }
+
+  closeDeleteBlocked() {
+    this.deleteBlockedModalTarget.classList.add("hidden")
   }
 
   cancelDelete() {
@@ -250,6 +290,54 @@ export default class extends Controller {
     } catch (e) {
       alert("Network error. Please try again.")
     }
+  }
+
+  // ── Date Validation Against Open Month ──
+
+  async _validateTransferDate(transferDate) {
+    if (!this.openMonthUrlValue) return true
+    try {
+      const res = await fetch(this.openMonthUrlValue, { headers: { "Accept": "application/json" } })
+      if (!res.ok) return true
+      const openMonth = await res.json()
+      const [year, month] = transferDate.split("-").map(Number)
+      if (year === openMonth.current_year && month === openMonth.current_month) return true
+
+      const monthName = new Date(year, month - 1).toLocaleString("en-US", { month: "long" })
+      const openMonthName = new Date(openMonth.current_year, openMonth.current_month - 1).toLocaleString("en-US", { month: "long" })
+      this._pendingTransferDate = transferDate
+      this.dateWarningMessageTarget.innerHTML =
+        `The transfer date <strong class="text-gray-900 dark:text-white">${monthName} ${year}</strong> falls outside the current open month <strong class="text-gray-900 dark:text-white">${openMonthName} ${openMonth.current_year}</strong>.<br><br>Would you like to close the current month and advance to <strong class="text-gray-900 dark:text-white">${monthName} ${year}</strong>?`
+      this.dateWarningModalTarget.classList.remove("hidden")
+      return false
+    } catch (e) {
+      return true
+    }
+  }
+
+  async proceedDateWarning() {
+    this.dateWarningModalTarget.classList.add("hidden")
+    const [year, month] = this._pendingTransferDate.split("-").map(Number)
+    try {
+      await fetch(this.openMonthUrlValue, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "X-CSRF-Token": this.csrfTokenValue
+        },
+        body: JSON.stringify({ open_month_master: { current_year: year, current_month: month } })
+      })
+    } catch (e) {
+      // If month advance fails, still try to save
+    }
+    this._skipDateValidation = true
+    this.saveTransfer()
+  }
+
+  cancelDateWarning() {
+    this.dateWarningModalTarget.classList.add("hidden")
+    this._pendingTransferDate = null
   }
 
   // ── Formatting ──

@@ -17,7 +17,8 @@ export default class extends Controller {
     "filterCount", "total",
     "addModal", "addModalBody", "modalDate", "modalAccount", "modalCategory", "modalType",
     "modalDescription", "modalAmount", "modalError",
-    "dateWarningModal", "dateWarningMessage"
+    "dateWarningModal", "dateWarningMessage",
+    "deleteBlockedModal", "deleteBlockedMessage"
   ]
   static values = {
     apiUrl: String, accountsUrl: String, categoriesUrl: String, typesUrl: String, csrfToken: String,
@@ -512,16 +513,41 @@ export default class extends Controller {
     }
   }
 
-  confirmDelete(event) {
+  async confirmDelete(event) {
     if (this.state !== "idle") { this.state = "idle"; this.editingId = null; this.renderTable() }
     const id = Number(event.currentTarget.dataset.id)
     const payment = this.payments.find(p => p.id === id)
     if (!payment) return
 
+    // Check if payment date falls outside the open month
+    if (this.openMonthUrlValue && payment.payment_date) {
+      try {
+        const res = await fetch(this.openMonthUrlValue, { headers: { "Accept": "application/json" } })
+        if (res.ok) {
+          const openMonth = await res.json()
+          const [year, month] = payment.payment_date.split("-").map(Number)
+          if (year !== openMonth.current_year || month !== openMonth.current_month) {
+            const monthName = new Date(year, month - 1).toLocaleString("en-US", { month: "long" })
+            const openMonthName = new Date(openMonth.current_year, openMonth.current_month - 1).toLocaleString("en-US", { month: "long" })
+            this.deleteBlockedMessageTarget.innerHTML =
+              `This payment is dated <strong class="text-gray-900 dark:text-white">${monthName} ${year}</strong>, which is outside the current open month <strong class="text-gray-900 dark:text-white">${openMonthName} ${openMonth.current_year}</strong>. You can only delete payments within the open month.`
+            this.deleteBlockedModalTarget.classList.remove("hidden")
+            return
+          }
+        }
+      } catch (e) {
+        // If check fails, allow delete to proceed
+      }
+    }
+
     this.deletingId = id
     this.deleteModalNameTarget.textContent = payment.description
     this.deleteModalTarget.classList.remove("hidden")
     this.addButtonTarget.disabled = true
+  }
+
+  closeDeleteBlocked() {
+    this.deleteBlockedModalTarget.classList.add("hidden")
   }
 
   cancelDelete() {

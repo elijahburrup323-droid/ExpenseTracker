@@ -10,9 +10,23 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_11_140000) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_12_150000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "account_month_snapshots", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.integer "year", null: false
+    t.integer "month", null: false
+    t.bigint "account_id", null: false
+    t.decimal "beginning_balance", precision: 12, scale: 2, default: "0.0", null: false
+    t.decimal "ending_balance", precision: 12, scale: 2, default: "0.0", null: false
+    t.boolean "is_stale", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "year", "month", "account_id"], name: "idx_acct_month_snap_unique", unique: true
+    t.index ["user_id", "year", "month"], name: "idx_acct_month_snap_period"
+  end
 
   create_table "account_types", force: :cascade do |t|
     t.bigint "user_id", null: false
@@ -59,6 +73,21 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_11_140000) do
     t.date "processed_date"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "dashboard_month_snapshots", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.integer "year", null: false
+    t.integer "month", null: false
+    t.decimal "total_spent", precision: 12, scale: 2, default: "0.0", null: false
+    t.decimal "total_income", precision: 12, scale: 2, default: "0.0", null: false
+    t.decimal "beginning_balance", precision: 12, scale: 2, default: "0.0", null: false
+    t.decimal "ending_balance", precision: 12, scale: 2, default: "0.0", null: false
+    t.decimal "net_worth", precision: 12, scale: 2, default: "0.0", null: false
+    t.boolean "is_stale", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "year", "month"], name: "idx_dash_month_snap_unique", unique: true
   end
 
   create_table "dbu_table_catalogs", force: :cascade do |t|
@@ -184,6 +213,13 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_11_140000) do
     t.bigint "locked_by_user_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "has_data", default: false, null: false
+    t.datetime "first_data_at"
+    t.text "first_data_source"
+    t.integer "reopen_count", default: 0, null: false
+    t.datetime "last_reopened_at"
+    t.bigint "last_reopened_by_user_id"
+    t.index ["last_reopened_by_user_id"], name: "index_open_month_masters_on_last_reopened_by"
     t.index ["locked_by_user_id"], name: "index_open_month_masters_on_locked_by_user_id"
     t.index ["user_id", "current_year", "current_month"], name: "idx_open_month_period"
     t.index ["user_id"], name: "idx_open_month_user", unique: true
@@ -349,9 +385,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_11_140000) do
     t.index ["unlock_token"], name: "index_users_on_unlock_token", unique: true
   end
 
+  add_foreign_key "account_month_snapshots", "accounts"
+  add_foreign_key "account_month_snapshots", "users"
   add_foreign_key "account_types", "users"
   add_foreign_key "accounts", "account_types"
   add_foreign_key "accounts", "users"
+  add_foreign_key "dashboard_month_snapshots", "users"
   add_foreign_key "identities", "users"
   add_foreign_key "income_entries", "accounts"
   add_foreign_key "income_entries", "income_frequency_masters", column: "frequency_master_id"

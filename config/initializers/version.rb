@@ -1,8 +1,21 @@
-APP_VERSION = "1.1.7"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+APP_VERSION = "1.1.8"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.1.8",
+    changes: [
+      "Payments delete validation against open month — blocks deleting payments outside current month",
+      "Deposits total enlarged, date validation on Add/Edit, delete validation against open month",
+      "Accounts open month gating — blocks Add/Edit/Delete when month is closed",
+      "Transfers date validation on Add/Edit save, delete validation against open month",
+      "Soft Close architecture: has_data flag on open month tracks first data entry per month",
+      "Reopen previous month endpoint with has_data eligibility gating",
+      "Account and Dashboard month snapshots generated on month close/advance",
+      "Snapshot tables marked stale on reopen (Option A)",
+    ]
+  },
   {
     version: "1.1.7",
     changes: [

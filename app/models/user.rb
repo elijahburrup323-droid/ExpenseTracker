@@ -17,6 +17,8 @@ class User < ApplicationRecord
   has_many :net_worth_snapshots, dependent: :destroy
   has_many :transfer_masters, dependent: :destroy
   has_one :open_month_master, dependent: :destroy
+  has_many :account_month_snapshots, dependent: :destroy
+  has_many :dashboard_month_snapshots, dependent: :destroy
 
   validates :email, presence: true, uniqueness: true, unless: :phone_only_user?
   validates :phone_number, uniqueness: true, allow_blank: true

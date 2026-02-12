@@ -2,8 +2,12 @@ import { Controller } from "@hotwired/stimulus"
 import { ICON_CATALOG, COLOR_OPTIONS, renderIconSvg, defaultIconSvg, iconFor, escapeHtml, escapeAttr } from "controllers/shared/icon_catalog"
 
 export default class extends Controller {
-  static targets = ["tableBody", "addButton", "generateButton", "deleteModal", "deleteModalName", "blockedDeleteModal", "blockedDeleteBody", "blockedDeleteButtons", "total"]
-  static values = { apiUrl: String, typesUrl: String, csrfToken: String, typesPageUrl: String, depositsPageUrl: String, paymentsPageUrl: String }
+  static targets = [
+    "tableBody", "addButton", "generateButton", "deleteModal", "deleteModalName",
+    "blockedDeleteModal", "blockedDeleteBody", "blockedDeleteButtons", "total",
+    "monthClosedModal", "monthClosedMessage"
+  ]
+  static values = { apiUrl: String, typesUrl: String, csrfToken: String, typesPageUrl: String, depositsPageUrl: String, paymentsPageUrl: String, openMonthUrl: String }
 
   connect() {
     this.accounts = []
@@ -115,9 +119,14 @@ export default class extends Controller {
 
   // --- State Transitions ---
 
-  startAdding() {
+  async startAdding() {
     if (this.state === "adding") return
     if (this.state !== "idle") { this.state = "idle"; this.editingId = null; this.iconPickerOpen = false }
+
+    // Check if month is closed
+    const closed = await this._checkMonthClosed()
+    if (closed) return
+
     this.state = "adding"
     this.selectedIconKey = null
     this.selectedColorKey = "blue"
@@ -184,8 +193,13 @@ export default class extends Controller {
     }
   }
 
-  startEditing(event) {
+  async startEditing(event) {
     if (this.state !== "idle") { this.state = "idle"; this.editingId = null; this.iconPickerOpen = false }
+
+    // Check if month is closed
+    const closed = await this._checkMonthClosed()
+    if (closed) return
+
     const id = Number(event.currentTarget.dataset.id)
     const acc = this.accounts.find(a => a.id === id)
     this.state = "editing"
@@ -258,11 +272,15 @@ export default class extends Controller {
     }
   }
 
-  confirmDelete(event) {
+  async confirmDelete(event) {
     if (this.state !== "idle") { this.state = "idle"; this.editingId = null; this.iconPickerOpen = false; this.renderTable() }
     const id = Number(event.currentTarget.dataset.id)
     const acc = this.accounts.find(a => a.id === id)
     if (!acc) return
+
+    // Check if month is closed
+    const closed = await this._checkMonthClosed()
+    if (closed) return
 
     this.deletingId = id
     this.deleteModalNameTarget.textContent = acc.name
@@ -730,6 +748,31 @@ export default class extends Controller {
       a.click()
       document.body.removeChild(a)
     }
+  }
+
+  // --- Month Closed Check ---
+
+  async _checkMonthClosed() {
+    if (!this.openMonthUrlValue) return false
+    try {
+      const res = await fetch(this.openMonthUrlValue, { headers: { "Accept": "application/json" } })
+      if (!res.ok) return false
+      const openMonth = await res.json()
+      if (openMonth.is_closed) {
+        const monthName = new Date(openMonth.current_year, openMonth.current_month - 1).toLocaleString("en-US", { month: "long" })
+        this.monthClosedMessageTarget.innerHTML =
+          `The current month <strong class="text-gray-900 dark:text-white">${monthName} ${openMonth.current_year}</strong> is closed. You cannot add, edit, or delete accounts while the month is closed.`
+        this.monthClosedModalTarget.classList.remove("hidden")
+        return true
+      }
+      return false
+    } catch (e) {
+      return false
+    }
+  }
+
+  closeMonthClosed() {
+    this.monthClosedModalTarget.classList.add("hidden")
   }
 
   // --- Error Display ---

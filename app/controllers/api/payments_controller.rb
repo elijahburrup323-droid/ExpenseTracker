@@ -16,6 +16,7 @@ module Api
           account = payment.account
           account.balance -= payment.amount
           account.save!
+          flag_open_month_has_data(payment.payment_date, "payment")
           render json: payment_json(payment), status: :created
         else
           render_errors(payment)
@@ -64,6 +65,17 @@ module Api
 
     def payment_params
       params.require(:payment).permit(:account_id, :spending_category_id, :payment_date, :description, :notes, :amount, :spending_type_override_id)
+    end
+
+    def flag_open_month_has_data(record_date, source)
+      return unless record_date
+      om = OpenMonthMaster.for_user(current_user)
+      d = record_date.is_a?(String) ? Date.parse(record_date) : record_date
+      if d.year == om.current_year && d.month == om.current_month
+        om.mark_has_data!(source)
+      end
+    rescue => e
+      Rails.logger.warn("flag_open_month_has_data error: #{e.message}")
     end
 
     def payment_json(p, lookup = nil)

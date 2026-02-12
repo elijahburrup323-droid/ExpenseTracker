@@ -1,8 +1,11 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["tableBody", "addButton", "generateButton", "deleteModal", "deleteModalName", "sortHeader", "total"]
-  static values = { apiUrl: String, accountsUrl: String, frequenciesUrl: String, recurringsUrl: String, generateUrl: String, csrfToken: String }
+  static targets = [
+    "tableBody", "addButton", "generateButton", "deleteModal", "deleteModalName", "sortHeader", "total",
+    "dateWarningModal", "dateWarningMessage", "deleteBlockedModal", "deleteBlockedMessage"
+  ]
+  static values = { apiUrl: String, accountsUrl: String, frequenciesUrl: String, recurringsUrl: String, generateUrl: String, csrfToken: String, openMonthUrl: String }
 
   connect() {
     this.entries = []
@@ -11,6 +14,8 @@ export default class extends Controller {
     this.state = "idle" // idle | adding | editing
     this.editingId = null
     this.deletingId = null
+    this._skipDateValidation = false
+    this._pendingSave = null
     this.sortColumn = null
     this.sortDirection = "asc"
     this.fetchAll()
@@ -100,6 +105,12 @@ export default class extends Controller {
     if (!source_name) { this.showRowError("Source Name is required"); return }
     if (!entry_date) { this.showRowError("Date is required"); return }
 
+    if (!this._skipDateValidation) {
+      const dateOk = await this._validateEntryDate(entry_date, "new")
+      if (!dateOk) return
+    }
+    this._skipDateValidation = false
+
     try {
       const response = await fetch(this.apiUrlValue, {
         method: "POST",
@@ -166,6 +177,12 @@ export default class extends Controller {
     if (!source_name) { this.showRowError("Source Name is required"); return }
     if (!entry_date) { this.showRowError("Date is required"); return }
 
+    if (!this._skipDateValidation) {
+      const dateOk = await this._validateEntryDate(entry_date, "edit")
+      if (!dateOk) return
+    }
+    this._skipDateValidation = false
+
     try {
       const response = await fetch(`${this.apiUrlValue}/${this.editingId}`, {
         method: "PUT",
@@ -193,16 +210,41 @@ export default class extends Controller {
     }
   }
 
-  confirmDelete(event) {
+  async confirmDelete(event) {
     if (this.state !== "idle") { this.state = "idle"; this.editingId = null; this.renderTable() }
     const id = Number(event.currentTarget.dataset.id)
     const entry = this.entries.find(e => e.id === id)
     if (!entry) return
 
+    // Check if entry date falls outside the open month
+    if (this.openMonthUrlValue && entry.entry_date) {
+      try {
+        const res = await fetch(this.openMonthUrlValue, { headers: { "Accept": "application/json" } })
+        if (res.ok) {
+          const openMonth = await res.json()
+          const [year, month] = entry.entry_date.split("-").map(Number)
+          if (year !== openMonth.current_year || month !== openMonth.current_month) {
+            const monthName = new Date(year, month - 1).toLocaleString("en-US", { month: "long" })
+            const openMonthName = new Date(openMonth.current_year, openMonth.current_month - 1).toLocaleString("en-US", { month: "long" })
+            this.deleteBlockedMessageTarget.innerHTML =
+              `This deposit is dated <strong class="text-gray-900 dark:text-white">${monthName} ${year}</strong>, which is outside the current open month <strong class="text-gray-900 dark:text-white">${openMonthName} ${openMonth.current_year}</strong>. You can only delete deposits within the open month.`
+            this.deleteBlockedModalTarget.classList.remove("hidden")
+            return
+          }
+        }
+      } catch (e) {
+        // If check fails, allow delete to proceed
+      }
+    }
+
     this.deletingId = id
     this.deleteModalNameTarget.textContent = entry.source_name
     this.deleteModalTarget.classList.remove("hidden")
     this.addButtonTarget.disabled = true
+  }
+
+  closeDeleteBlocked() {
+    this.deleteBlockedModalTarget.classList.add("hidden")
   }
 
   cancelDelete() {
@@ -570,6 +612,57 @@ export default class extends Controller {
     <tr class="hidden" data-income-entries-target="rowError">
       <td colspan="8" class="px-4 py-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30"></td>
     </tr>`
+  }
+
+  // --- Date Validation Against Open Month ---
+
+  async _validateEntryDate(entryDate, saveType) {
+    if (!this.openMonthUrlValue) return true
+    try {
+      const res = await fetch(this.openMonthUrlValue, { headers: { "Accept": "application/json" } })
+      if (!res.ok) return true
+      const openMonth = await res.json()
+      const [year, month] = entryDate.split("-").map(Number)
+      if (year === openMonth.current_year && month === openMonth.current_month) return true
+
+      const monthName = new Date(year, month - 1).toLocaleString("en-US", { month: "long" })
+      const openMonthName = new Date(openMonth.current_year, openMonth.current_month - 1).toLocaleString("en-US", { month: "long" })
+      this._pendingSave = saveType
+      this._pendingEntryDate = entryDate
+      this.dateWarningMessageTarget.innerHTML =
+        `The deposit date <strong class="text-gray-900 dark:text-white">${monthName} ${year}</strong> falls outside the current open month <strong class="text-gray-900 dark:text-white">${openMonthName} ${openMonth.current_year}</strong>.<br><br>Would you like to close the current month and advance to <strong class="text-gray-900 dark:text-white">${monthName} ${year}</strong>?`
+      this.dateWarningModalTarget.classList.remove("hidden")
+      return false
+    } catch (e) {
+      return true
+    }
+  }
+
+  async proceedDateWarning() {
+    this.dateWarningModalTarget.classList.add("hidden")
+    const [year, month] = this._pendingEntryDate.split("-").map(Number)
+    try {
+      await fetch(this.openMonthUrlValue, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "X-CSRF-Token": this.csrfTokenValue
+        },
+        body: JSON.stringify({ open_month_master: { current_year: year, current_month: month } })
+      })
+    } catch (e) {
+      // If month advance fails, still try to save
+    }
+    this._skipDateValidation = true
+    if (this._pendingSave === "new") this.saveNew()
+    else this.saveEdit()
+  }
+
+  cancelDateWarning() {
+    this.dateWarningModalTarget.classList.add("hidden")
+    this._pendingSave = null
+    this._pendingEntryDate = null
   }
 
   // --- Helpers ---
