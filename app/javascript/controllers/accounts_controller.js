@@ -526,7 +526,6 @@ export default class extends Controller {
   _updateTotal() {
     if (!this.hasTotalTarget) return
     const sum = this.accounts
-      .filter(a => a.include_in_budget)
       .reduce((acc, a) => acc + parseFloat(a.balance || 0), 0)
     this.totalTarget.textContent = `— Total: ${sum.toLocaleString("en-US", { style: "currency", currency: "USD" })}`
   }

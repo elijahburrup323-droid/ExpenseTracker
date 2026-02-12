@@ -1,8 +1,16 @@
-APP_VERSION = "1.1.3"
+APP_VERSION = "1.1.4"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.1.4",
+    changes: [
+      "Accounts total now sums ALL accounts regardless of In Budget toggle",
+      "Sidebar toggle button added to header bar (always accessible on desktop/tablet)",
+      "Sidebar height fixed for iPad Safari (dynamic viewport height)",
+    ]
+  },
   {
     version: "1.1.3",
     changes: [
