@@ -19,6 +19,18 @@
     </div>
     <div class="flex items-center space-x-2">
       <% if current_user.budgethq_agent? %>
+      <%= render "shared/upload_modal",
+            entity: "account",
+            api_url: api_accounts_path,
+            fields_json: [
+              { key: "name", label: "Name", required: true, type: "text", max: 80 },
+              { key: "account_type", label: "Account Type", required: true, type: "lookup", lookupKey: "account_type_id" },
+              { key: "institution", label: "Institution", required: false, type: "text", max: 80 },
+              { key: "balance", label: "Balance", required: true, type: "number" },
+              { key: "include_in_budget", label: "In Budget", required: false, type: "boolean" }
+            ].to_json,
+            lookups_json: { account_type: api_account_types_path }.to_json,
+            csrf_token: form_authenticity_token %>
       <button type="button"
               class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
               data-accounts-target="generateButton"

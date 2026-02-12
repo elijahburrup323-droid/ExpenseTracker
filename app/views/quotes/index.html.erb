@@ -11,6 +11,16 @@
       <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Manage inspirational quotes displayed on sign-in</p>
     </div>
     <div class="flex items-center space-x-2">
+      <%= render "shared/upload_modal",
+            entity: "quote",
+            api_url: api_quotes_path,
+            fields_json: [
+              { key: "quote_text", label: "Quote Text", required: true, type: "text" },
+              { key: "quote_author", label: "Author", required: false, type: "text", max: 120 },
+              { key: "is_active", label: "Active", required: false, type: "boolean" }
+            ].to_json,
+            lookups_json: {}.to_json,
+            csrf_token: form_authenticity_token %>
       <button type="button"
               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-brand-600 hover:bg-brand-700 transition"
               data-quotes-target="populateButton"

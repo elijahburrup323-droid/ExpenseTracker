@@ -1,8 +1,29 @@
-APP_VERSION = "1.1.4"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+APP_VERSION = "1.1.6"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.1.6",
+    changes: [
+      "Subscription pricing page with 3 tiers: Free, Paid ($3.99/mo or $25/yr), Advanced ($5.99/mo or $35/yr)",
+      "Monthly/Annual billing toggle with dynamic price and savings display",
+      "Upgrade menu item added to profile dropdown (header + sidebar)",
+      "Subscribe and Renew buttons on Settings page now link to pricing page",
+      "CSV Upload/Import feature on all 9 data screens (admin only)",
+      "Payments Print button generates print-friendly report with BudgetHQ header",
+      "Template download format selection: CSV or Excel with localStorage persistence",
+    ]
+  },
+  {
+    version: "1.1.5",
+    changes: [
+      "CSV Upload/Import feature on all 9 data screens (admin only)",
+      "Download template, upload CSV, validate inline, batch import via API",
+      "Payments Print button generates print-friendly report with BudgetHQ header",
+      "Print mirrors current filters, sorting, and shows totals",
+    ]
+  },
   {
     version: "1.1.4",
     changes: [

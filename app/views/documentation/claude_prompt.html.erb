@@ -108,6 +108,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 ```
 / ...................... Landing page (redirects to dashboard if signed in)
 /dashboard ............. Dashboard with 6 cards (budget, accounts, net worth, income/spending, recent activity, buckets)
+/pricing ............... Subscription pricing page (3 tiers: Free, Paid, Advanced) with monthly/annual toggle
 /accounts .............. Accounts CRUD screen
 /transfer_masters ...... Account Transfers CRUD screen (modal-based add/edit/delete)
 /account_types ......... Account Types CRUD screen
@@ -166,7 +167,9 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 - **spending_categories_controller.js** — CRUD with type select, debt toggle
 - **account_types_controller.js** — CRUD with icon/color picker, generate dummy data
 - **accounts_controller.js** — CRUD with type select, budget toggle, generate dummy data
-- **payments_controller.js** — CRUD with date/account/category/type filters, search, combination sum search, CSV export of filtered/sorted data, generate dummy data. After adding a payment, the list refreshes in the current sort order and scrolls to the top. After add/edit/delete, account balances are re-fetched from the server to stay in sync.
+- **payments_controller.js** — CRUD with date/account/category/type filters, search, combination sum search, CSV export of filtered/sorted data, print-friendly report with BudgetHQ header (mirrors filters/sorting), generate dummy data. After adding a payment, the list refreshes in the current sort order and scrolls to the top. After add/edit/delete, account balances are re-fetched from the server to stay in sync.
+- **upload_controller.js** — Reusable CSV upload/import controller. Workflow: download template → upload CSV → validation grid with inline editing → batch import via existing API create endpoints. Used on all 9 data screens (admin only). Config passed via HTML data attributes (fields, lookups, API URL).
+- **pricing_controller.js** — Billing toggle (monthly/annual) on the pricing page. Dynamically updates price displays and savings badges for Paid ($3.99/mo or $25/year) and Advanced ($5.99/mo or $35/year) tiers. Free tier always $0.
 - **income_frequency_masters_controller.js** — CRUD with inline editing, active toggle, sort_order editing (admin-only)
 - **income_user_frequencies_controller.js** — use_flag toggle list with "View All" filter toggle (OFF = show only enabled frequencies, ON = show all master frequencies; purely a view filter, no bulk API call)
 - **income_recurrings_controller.js** — CRUD with frequency/account selects, generate dummy data

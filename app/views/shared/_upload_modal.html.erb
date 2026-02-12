@@ -1,0 +1,139 @@
+<%# Upload CSV Modal — shared partial
+   Required locals: entity, api_url, fields_json, lookups_json, csrf_token
+%>
+<div data-controller="upload"
+     data-upload-api-url-value="<%= api_url %>"
+     data-upload-entity-value="<%= entity %>"
+     data-upload-fields-value="<%= fields_json %>"
+     data-upload-lookups-value="<%= lookups_json %>"
+     data-upload-csrf-token-value="<%= csrf_token %>">
+
+  <%# Upload Button %>
+  <button type="button"
+          class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition"
+          data-action="click->upload#open">
+    <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+    </svg>
+    Upload
+  </button>
+
+  <%# Modal Overlay %>
+  <div class="hidden fixed inset-0 z-50" data-upload-modal>
+    <div class="fixed inset-0 bg-gray-500/75 dark:bg-gray-900/80 transition-opacity" data-action="click->upload#close"></div>
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+
+        <%# Header %>
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Upload <%= entity.titleize.pluralize %></h3>
+          <button type="button" data-action="click->upload#close" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <%# Body (scrollable) %>
+        <div class="flex-1 overflow-y-auto px-6 py-4">
+
+          <%# Phase 1: Upload %>
+          <div data-upload-phase="upload">
+            <div class="space-y-4">
+              <div>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">Download a template, fill in your data, then upload as CSV.</p>
+
+                <%# Format radio buttons %>
+                <div class="flex flex-wrap items-center gap-4 mb-3" data-upload-format-radios>
+                  <label class="inline-flex items-center cursor-pointer group">
+                    <input type="radio" name="template_format" value="csv" data-action="change->upload#formatChanged"
+                           class="h-4 w-4 text-brand-600 border-gray-300 dark:border-gray-600 focus:ring-brand-500">
+                    <span class="ml-1.5 text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">CSV</span>
+                  </label>
+                  <label class="inline-flex items-center cursor-pointer group">
+                    <input type="radio" name="template_format" value="excel" data-action="change->upload#formatChanged"
+                           class="h-4 w-4 text-brand-600 border-gray-300 dark:border-gray-600 focus:ring-brand-500">
+                    <span class="ml-1.5 text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">Excel</span>
+                  </label>
+                </div>
+
+                <button type="button"
+                        data-action="click->upload#downloadTemplate"
+                        class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                  <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                  </svg>
+                  Download Template
+                </button>
+              </div>
+
+              <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center">
+                <svg class="mx-auto h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+                </svg>
+                <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Select a CSV file to upload</p>
+                <input type="file" accept=".csv" data-upload-file-input data-action="change->upload#fileSelected"
+                       class="mt-3 block mx-auto text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 dark:file:bg-brand-900/30 dark:file:text-brand-300"/>
+                <p class="hidden mt-2 text-sm text-red-600 dark:text-red-400" data-upload-file-error></p>
+              </div>
+            </div>
+
+            <%# Validating spinner (shown during parse) %>
+            <div class="hidden flex items-center justify-center py-8" data-upload-spinner>
+              <svg class="animate-spin h-6 w-6 text-brand-600" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+              </svg>
+              <span class="ml-2 text-sm text-gray-500 dark:text-gray-400">Parsing file...</span>
+            </div>
+          </div>
+
+          <%# Phase 2: Validation Grid %>
+          <div class="hidden" data-upload-phase="grid">
+            <div data-upload-error-summary class="mb-3"></div>
+            <div data-upload-grid></div>
+          </div>
+
+          <%# Phase 3: Importing %>
+          <div class="hidden" data-upload-phase="importing">
+            <div class="text-center py-8">
+              <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">Importing records...</p>
+              <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mb-2">
+                <div data-upload-progress-bar class="bg-brand-600 h-3 rounded-full transition-all duration-200" style="width: 0%"></div>
+              </div>
+              <p class="text-sm text-gray-500 dark:text-gray-400" data-upload-progress-text>0 of 0</p>
+            </div>
+          </div>
+
+          <%# Phase 4: Done %>
+          <div class="hidden" data-upload-phase="done">
+            <div class="text-center py-8">
+              <svg class="mx-auto h-12 w-12 text-green-500 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <div data-upload-summary class="text-sm"></div>
+            </div>
+          </div>
+
+        </div>
+
+        <%# Footer %>
+        <div class="flex justify-end space-x-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+          <button type="button" data-action="click->upload#close"
+                  class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+            Cancel
+          </button>
+          <%# Import button (only visible on grid phase) %>
+          <button type="button" data-action="click->upload#startImport" data-upload-import-btn
+                  class="hidden px-4 py-2 text-sm font-medium text-white bg-brand-600 border border-transparent rounded-lg hover:bg-brand-700 transition">
+            Import
+          </button>
+          <%# Done button (only visible on done phase) %>
+          <button type="button" data-action="click->upload#finishImport" data-upload-done-btn
+                  class="hidden px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 transition">
+            Done
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>

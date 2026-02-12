@@ -20,6 +20,9 @@ Rails.application.routes.draw do
   # Dashboard/Home
   get "dashboard", to: "dashboard#index", as: :dashboard
 
+  # Pricing / Upgrade
+  get "pricing", to: "pricing#index", as: :pricing
+
   # Spending Types (HTML page)
   resources :spending_types, only: [:index]
 

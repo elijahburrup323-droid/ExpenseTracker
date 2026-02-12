@@ -1022,6 +1022,156 @@ export default class extends Controller {
     }
   }
 
+  // --- Print View ---
+
+  printView() {
+    let filtered = this._getFilteredPayments()
+    filtered = this._sortColumn ? this._sortPayments(filtered) : filtered.sort((a, b) => (a.payment_date || "").localeCompare(b.payment_date || ""))
+
+    if (filtered.length === 0) {
+      alert("No payments to print. Adjust your filters and try again.")
+      return
+    }
+
+    const total = filtered.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0)
+    const totalFormatted = total.toLocaleString("en-US", { style: "currency", currency: "USD" })
+
+    // Build active filter summary
+    const filterParts = []
+    const startDate = this.filterStartDateTarget.value
+    const endDate = this.filterEndDateTarget.value
+    const accountId = this.filterAccountTarget.value
+    const categoryId = this.filterCategoryTarget.value
+    const typeName = this.filterTypeTarget.value
+    const search = this.filterSearchTarget.value.trim()
+
+    if (startDate || endDate) {
+      const s = startDate ? this._formatDate(startDate) : "Beginning"
+      const e = endDate ? this._formatDate(endDate) : "Present"
+      filterParts.push(`Date: ${s} – ${e}`)
+    }
+    if (accountId) {
+      const acc = this.accounts.find(a => a.id === Number(accountId))
+      if (acc) filterParts.push(`Account: ${acc.name}`)
+    }
+    if (categoryId) {
+      const cat = this.categories.find(c => c.id === Number(categoryId))
+      if (cat) filterParts.push(`Category: ${cat.name}`)
+    }
+    if (typeName) filterParts.push(`Type: ${typeName}`)
+    if (search) filterParts.push(`Search: "${search}"`)
+
+    const sortLabel = {
+      payment_date: "Date", account: "Account", category: "Category",
+      type: "Spending Type", description: "Description", amount: "Amount"
+    }[this._sortColumn] || "Date"
+    const sortDir = this._sortDirection === "asc" ? "Ascending" : "Descending"
+
+    const filterSummary = filterParts.length > 0
+      ? filterParts.join(" | ")
+      : "All Payments (no filters applied)"
+
+    // Build table rows
+    let tableRows = ""
+    for (const p of filtered) {
+      tableRows += `<tr>
+        <td>${this._escapeHtmlPrint(this._formatDate(p.payment_date))}</td>
+        <td>${this._escapeHtmlPrint(p.account_name || "")}</td>
+        <td>${this._escapeHtmlPrint(p.spending_category_name || "")}</td>
+        <td>${this._escapeHtmlPrint(p.spending_type_name || "")}</td>
+        <td>${this._escapeHtmlPrint(p.description || "")}</td>
+        <td style="text-align:right;font-family:monospace;">$${parseFloat(p.amount || 0).toFixed(2)}</td>
+      </tr>`
+    }
+
+    const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>BudgetHQ – Payments Report</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #111; padding: 32px; font-size: 11px; }
+    .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #2563eb; padding-bottom: 12px; margin-bottom: 16px; }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .logo { width: 36px; height: 36px; background: #2563eb; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 16px; }
+    .brand { font-size: 22px; font-weight: 700; color: #2563eb; }
+    .brand span { color: #6b7280; font-weight: 400; font-size: 14px; margin-left: 6px; }
+    .date-printed { font-size: 11px; color: #6b7280; text-align: right; }
+    .meta { margin-bottom: 16px; }
+    .meta p { font-size: 11px; color: #4b5563; margin-bottom: 2px; }
+    .meta strong { color: #111; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th { background: #f3f4f6; text-align: left; padding: 6px 8px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; border-bottom: 2px solid #d1d5db; }
+    td { padding: 5px 8px; border-bottom: 1px solid #e5e7eb; font-size: 11px; }
+    tr:nth-child(even) { background: #f9fafb; }
+    .total-row { border-top: 2px solid #111; font-weight: 700; font-size: 12px; }
+    .total-row td { padding-top: 8px; }
+    .footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid #d1d5db; font-size: 10px; color: #9ca3af; text-align: center; }
+    @media print {
+      body { padding: 0; }
+      @page { margin: 0.5in; size: landscape; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-left">
+      <div class="logo">B</div>
+      <div>
+        <div class="brand">BudgetHQ <span>Payments Report</span></div>
+      </div>
+    </div>
+    <div class="date-printed">Printed ${this._escapeHtmlPrint(today)}</div>
+  </div>
+
+  <div class="meta">
+    <p><strong>Filters:</strong> ${this._escapeHtmlPrint(filterSummary)}</p>
+    <p><strong>Sorted by:</strong> ${this._escapeHtmlPrint(sortLabel)} (${this._escapeHtmlPrint(sortDir)})</p>
+    <p><strong>Records:</strong> ${filtered.length} payments &nbsp;|&nbsp; <strong>Total:</strong> ${this._escapeHtmlPrint(totalFormatted)}</p>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Account</th>
+        <th>Category</th>
+        <th>Spending Type</th>
+        <th>Description</th>
+        <th style="text-align:right;">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${tableRows}
+      <tr class="total-row">
+        <td colspan="5" style="text-align:right;">Total</td>
+        <td style="text-align:right;font-family:monospace;">${this._escapeHtmlPrint(totalFormatted)}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="footer">BudgetHQ &mdash; Generated on ${this._escapeHtmlPrint(today)}</div>
+
+  <script>window.onload = function() { window.print(); }<\/script>
+</body>
+</html>`
+
+    const printWindow = window.open("", "_blank")
+    if (printWindow) {
+      printWindow.document.write(html)
+      printWindow.document.close()
+    }
+  }
+
+  _escapeHtmlPrint(str) {
+    const div = document.createElement("div")
+    div.textContent = str || ""
+    return div.innerHTML
+  }
+
   // --- CSV Export ---
 
   exportCSV() {

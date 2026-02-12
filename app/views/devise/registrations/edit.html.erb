@@ -60,15 +60,15 @@
               </div>
 
               <% if resource.subscription_expiration_date <= Date.today + 20 %>
-                <button type="button" class="w-full py-2.5 px-4 border border-brand-600 rounded-lg text-sm font-medium text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition">
+                <%= link_to pricing_path, class: "block w-full py-2.5 px-4 border border-brand-600 rounded-lg text-sm font-medium text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition text-center" do %>
                   Renew Subscription
-                </button>
+                <% end %>
               <% end %>
             <% end %>
           <% else %>
-            <button type="button" class="w-full py-2.5 px-4 bg-brand-600 hover:bg-brand-700 rounded-lg text-sm font-medium text-white transition shadow-sm">
+            <%= link_to pricing_path, class: "block w-full py-2.5 px-4 bg-brand-600 hover:bg-brand-700 rounded-lg text-sm font-medium text-white transition shadow-sm text-center" do %>
               Subscribe
-            </button>
+            <% end %>
           <% end %>
         </div>
       </div>

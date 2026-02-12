@@ -121,6 +121,15 @@
                         <span>Settings</span>
                       <% end %>
                     </div>
+                    <%# Upgrade %>
+                    <div class="px-1">
+                      <%= link_to pricing_path, class: "flex items-center space-x-3 px-3 py-2 text-sm text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded-md transition" do %>
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M5 3l7 4 7-4v11a2 2 0 01-1.03 1.75L12 19l-5.97-3.25A2 2 0 015 14V3z"/>
+                        </svg>
+                        <span>Upgrade</span>
+                      <% end %>
+                    </div>
                     <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
                     <%# Sign out %>
                     <div class="px-1">
