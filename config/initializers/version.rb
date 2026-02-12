@@ -1,8 +1,14 @@
-APP_VERSION = "1.1.1"
+APP_VERSION = "1.1.2"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.1.2",
+    changes: [
+      "Email switched from SMTP to SendGrid Web API (fixes Render timeout)",
+    ]
+  },
   {
     version: "1.1.1",
     changes: [

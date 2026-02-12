@@ -29,6 +29,8 @@
 - Tailwind CSS via CDN (with custom brand purple color palette and dark mode)
 - Importmap for JavaScript module loading (no webpack/esbuild)
 - Deployed on Render.com at https://djburrup.com/expensetracker (relative_url_root = "/expensetracker")
+- Email delivery via SendGrid Web API (sendgrid-ruby gem) — Render blocks outbound SMTP ports, so we use the HTTP API instead of SMTP. API key stored in SENDGRID_PASSWORD env var.
+- SMS delivery via Twilio REST API (twilio-ruby gem) — phone number auto-normalized to E.164 format
 
 ## Project Location
 - Local path: C:/Projects/ExpenseTracker

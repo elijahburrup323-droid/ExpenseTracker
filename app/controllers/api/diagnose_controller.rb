@@ -7,20 +7,17 @@ module Api
 
       # Email config
       begin
-        smtp = Rails.application.config.action_mailer.smtp_settings || {}
+        delivery = Rails.application.config.action_mailer.delivery_method.to_s
         results[:email] = {
-          delivery_method: Rails.application.config.action_mailer.delivery_method.to_s,
-          address: smtp[:address],
-          port: smtp[:port],
-          domain: smtp[:domain],
-          user_name: smtp[:user_name],
-          password_present: smtp[:password].present?,
-          password_preview: smtp[:password].to_s[0..5] + "...",
+          delivery_method: delivery,
           default_from: ApplicationMailer.default[:from],
           devise_from: Devise.mailer_sender,
-          sendgrid_username_env: ENV["SENDGRID_USERNAME"].present? ? ENV["SENDGRID_USERNAME"] : "MISSING",
-          sendgrid_password_env: ENV["SENDGRID_PASSWORD"].present? ? "set (#{ENV['SENDGRID_PASSWORD'].length} chars)" : "MISSING"
+          sendgrid_api_key: ENV["SENDGRID_PASSWORD"].present? ? "set (#{ENV['SENDGRID_PASSWORD'].length} chars, starts: #{ENV['SENDGRID_PASSWORD'][0..5]}...)" : "MISSING"
         }
+        if delivery == "smtp"
+          smtp = Rails.application.config.action_mailer.smtp_settings || {}
+          results[:email].merge!(address: smtp[:address], port: smtp[:port])
+        end
       rescue => e
         results[:email] = { config_error: "#{e.class}: #{e.message}" }
       end

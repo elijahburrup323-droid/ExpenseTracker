@@ -25,15 +25,11 @@ Rails.application.configure do
   config.action_mailer.perform_caching = false
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.default_url_options = { host: ENV.fetch("APP_HOST", "djburrup.com"), protocol: "https" }
-  config.action_mailer.delivery_method = :smtp
-  config.action_mailer.smtp_settings = {
-    address: "smtp.sendgrid.net",
-    port: 587,
-    domain: "djburrup.com",
-    user_name: ENV["SENDGRID_USERNAME"],
-    password: ENV["SENDGRID_PASSWORD"],
-    authentication: :plain,
-    enable_starttls_auto: true
+  # Use SendGrid Web API (Render blocks outbound SMTP ports)
+  require_relative "../../lib/sendgrid_web_delivery"
+  config.action_mailer.delivery_method = :sendgrid_web
+  config.action_mailer.sendgrid_web_settings = {
+    api_key: ENV["SENDGRID_PASSWORD"]
   }
 
   config.i18n.fallbacks = true

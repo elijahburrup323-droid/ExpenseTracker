@@ -32,6 +32,9 @@ gem "omniauth-google-oauth2", "~> 1.1"
 gem "omniauth-apple", "~> 1.3"
 gem "omniauth-microsoft_graph", "~> 1.0"
 
+# Email delivery (Web API — Render blocks SMTP ports)
+gem "sendgrid-ruby", "~> 6.7"
+
 # Phone authentication
 gem "twilio-ruby", "~> 6.0"
 gem "phonelib", "~> 0.8"
