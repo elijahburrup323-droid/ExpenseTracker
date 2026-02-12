@@ -1,8 +1,17 @@
-APP_VERSION = "1.1.6"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+APP_VERSION = "1.1.7"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.1.7",
+    changes: [
+      "Payments Total text enlarged to 75% of heading size (text-lg font-semibold) for visual emphasis",
+      "Payment date validation against current open month on Add and Edit",
+      "Date warning modal when payment date falls outside open month with Cancel/Proceed options",
+      "Proceed advances open month to match payment date and saves the payment",
+    ]
+  },
   {
     version: "1.1.6",
     changes: [

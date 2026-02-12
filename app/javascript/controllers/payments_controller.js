@@ -16,11 +16,12 @@ export default class extends Controller {
     "filterStartDate", "filterEndDate", "filterAccount", "filterCategory", "filterType", "filterSearch",
     "filterCount", "total",
     "addModal", "addModalBody", "modalDate", "modalAccount", "modalCategory", "modalType",
-    "modalDescription", "modalAmount", "modalError"
+    "modalDescription", "modalAmount", "modalError",
+    "dateWarningModal", "dateWarningMessage"
   ]
   static values = {
     apiUrl: String, accountsUrl: String, categoriesUrl: String, typesUrl: String, csrfToken: String,
-    accountsPageUrl: String, categoriesPageUrl: String, typesPageUrl: String
+    accountsPageUrl: String, categoriesPageUrl: String, typesPageUrl: String, openMonthUrl: String
   }
 
   connect() {
@@ -31,6 +32,8 @@ export default class extends Controller {
     this.state = "idle" // idle | adding | editing
     this.editingId = null
     this.deletingId = null
+    this._skipDateValidation = false
+    this._pendingSave = null
     this._sortColumn = "payment_date"
     this._sortDirection = "asc"
     this._setDefaultDateRange()
@@ -384,6 +387,12 @@ export default class extends Controller {
     if (!description) { this._showModalError("Description is required"); this.modalDescriptionTarget.focus(); return }
     if (!amount || parseFloat(amount) === 0) { this._showModalError("Amount is required"); this.modalAmountTarget.focus(); return }
 
+    if (!this._skipDateValidation) {
+      const dateOk = await this._validatePaymentDate(payment_date, "new")
+      if (!dateOk) return
+    }
+    this._skipDateValidation = false
+
     try {
       const response = await fetch(this.apiUrlValue, {
         method: "POST",
@@ -461,6 +470,12 @@ export default class extends Controller {
     if (!spending_category_id || spending_category_id === "new") { this.showRowError("Category is required — select an existing category or refresh after creating one"); catSelect?.focus(); return }
     if (!description) { this.showRowError("Description is required"); descInput?.focus(); return }
     if (!amount || parseFloat(amount) === 0) { this.showRowError("Amount is required"); amtInput?.focus(); return }
+
+    if (!this._skipDateValidation) {
+      const dateOk = await this._validatePaymentDate(payment_date, "edit")
+      if (!dateOk) return
+    }
+    this._skipDateValidation = false
 
     const oldPayment = this.payments.find(p => p.id === this.editingId)
     const oldAmount = parseFloat(oldPayment?.amount || 0)
@@ -1020,6 +1035,57 @@ export default class extends Controller {
         if (descInput) descInput.focus()
       }, 50)
     }
+  }
+
+  // --- Date Validation Against Open Month ---
+
+  async _validatePaymentDate(paymentDate, saveType) {
+    if (!this.openMonthUrlValue) return true
+    try {
+      const res = await fetch(this.openMonthUrlValue, { headers: { "Accept": "application/json" } })
+      if (!res.ok) return true
+      const openMonth = await res.json()
+      const [year, month] = paymentDate.split("-").map(Number)
+      if (year === openMonth.current_year && month === openMonth.current_month) return true
+
+      const monthName = new Date(year, month - 1).toLocaleString("en-US", { month: "long" })
+      const openMonthName = new Date(openMonth.current_year, openMonth.current_month - 1).toLocaleString("en-US", { month: "long" })
+      this._pendingSave = saveType
+      this._pendingPaymentDate = paymentDate
+      this.dateWarningMessageTarget.innerHTML =
+        `The payment date <strong class="text-gray-900 dark:text-white">${monthName} ${year}</strong> falls outside the current open month <strong class="text-gray-900 dark:text-white">${openMonthName} ${openMonth.current_year}</strong>.<br><br>Would you like to close the current month and advance to <strong class="text-gray-900 dark:text-white">${monthName} ${year}</strong>?`
+      this.dateWarningModalTarget.classList.remove("hidden")
+      return false
+    } catch (e) {
+      return true
+    }
+  }
+
+  async proceedDateWarning() {
+    this.dateWarningModalTarget.classList.add("hidden")
+    const [year, month] = this._pendingPaymentDate.split("-").map(Number)
+    try {
+      await fetch(this.openMonthUrlValue, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "X-CSRF-Token": this.csrfTokenValue
+        },
+        body: JSON.stringify({ open_month_master: { current_year: year, current_month: month } })
+      })
+    } catch (e) {
+      // If month advance fails, still try to save
+    }
+    this._skipDateValidation = true
+    if (this._pendingSave === "new") this.saveNew()
+    else this.saveEdit()
+  }
+
+  cancelDateWarning() {
+    this.dateWarningModalTarget.classList.add("hidden")
+    this._pendingSave = null
+    this._pendingPaymentDate = null
   }
 
   // --- Print View ---
