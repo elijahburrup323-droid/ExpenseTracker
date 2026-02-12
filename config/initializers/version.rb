@@ -1,8 +1,16 @@
-APP_VERSION = "1.1.2"
+APP_VERSION = "1.1.3"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.1.3",
+    changes: [
+      "Dashboard Card 2 expand/collapse control (fill full dashboard area)",
+      "ESC key collapses expanded Card 2",
+      "Expand icon visible on both front (accounts) and back (pie chart) sides",
+    ]
+  },
   {
     version: "1.1.2",
     changes: [

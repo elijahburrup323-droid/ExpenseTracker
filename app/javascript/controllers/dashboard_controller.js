@@ -3,20 +3,32 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = [
     "monthLabel", "prevBtn", "nextBtn",
-    "card1Content", "card2Flipper", "card4Content", "card5Content"
+    "card1Content", "card2Flipper", "card4Content", "card5Content",
+    "cardsGrid", "card2Wrapper", "card2ExpandBtn"
   ]
   static values = { apiUrl: String, openMonthUrl: String, month: Number, year: Number }
 
   connect() {
     this.currentMonth = this.monthValue
     this.currentYear = this.yearValue
+    this.isCard2Expanded = false
     this._updateArrowState()
+
+    // ESC key to collapse Card 2
+    this._escHandler = (e) => {
+      if (e.key === "Escape" && this.isCard2Expanded) this.collapseCard2()
+    }
+    document.addEventListener("keydown", this._escHandler)
 
     // If the persisted month differs from current real month, fetch the correct data
     const now = new Date()
     if (this.currentMonth !== now.getMonth() + 1 || this.currentYear !== now.getFullYear()) {
       this._fetchAndRender()
     }
+  }
+
+  disconnect() {
+    if (this._escHandler) document.removeEventListener("keydown", this._escHandler)
   }
 
   prevMonth() {
@@ -112,6 +124,68 @@ export default class extends Controller {
     if (this.hasCard2FlipperTarget) {
       this.card2FlipperTarget.style.transform = "rotateY(0deg)"
     }
+  }
+
+  // --- Card 2: Expand/Collapse ---
+
+  toggleCard2Expand() {
+    if (this.isCard2Expanded) {
+      this.collapseCard2()
+    } else {
+      this.expandCard2()
+    }
+  }
+
+  expandCard2() {
+    if (!this.hasCardsGridTarget || !this.hasCard2WrapperTarget) return
+    const grid = this.cardsGridTarget
+    const card2 = this.card2WrapperTarget
+
+    // Save current grid height
+    this._savedGridHeight = grid.offsetHeight
+
+    // Hide other cards
+    Array.from(grid.children).forEach(child => {
+      if (child !== card2) child.classList.add("hidden")
+    })
+
+    // Make Card 2 fill the grid
+    grid.style.minHeight = `${this._savedGridHeight}px`
+    card2.style.gridColumn = "1 / -1"
+    card2.style.minHeight = `${this._savedGridHeight}px`
+
+    // Swap icons to collapse
+    this._updateExpandIcons(true)
+    this.isCard2Expanded = true
+  }
+
+  collapseCard2() {
+    if (!this.hasCardsGridTarget || !this.hasCard2WrapperTarget) return
+    const grid = this.cardsGridTarget
+    const card2 = this.card2WrapperTarget
+
+    // Show other cards
+    Array.from(grid.children).forEach(child => {
+      child.classList.remove("hidden")
+    })
+
+    // Restore Card 2 to normal
+    grid.style.minHeight = ""
+    card2.style.gridColumn = ""
+    card2.style.minHeight = ""
+
+    // Swap icons to expand
+    this._updateExpandIcons(false)
+    this.isCard2Expanded = false
+  }
+
+  _updateExpandIcons(expanded) {
+    this.card2ExpandBtnTargets.forEach(btn => {
+      const expandIcon = btn.querySelector('[data-icon="expand"]')
+      const collapseIcon = btn.querySelector('[data-icon="collapse"]')
+      if (expandIcon) expandIcon.classList.toggle("hidden", expanded)
+      if (collapseIcon) collapseIcon.classList.toggle("hidden", !expanded)
+    })
   }
 
   // --- Card 1: Spending Overview ---
