@@ -286,5 +286,63 @@ Before each git commit, update these items:
 
 ## Post-Deploy Checklist
 After each deploy, run:
-1. `node export_docs.js` — exports ALL documentation pages as .docx to Google Drive AND to C:\Projects\ExpenseTracker\documentation</div>
+1. `node export_docs.js` — exports ALL documentation pages as .docx to Google Drive AND to C:\Projects\ExpenseTracker\documentation
+
+## How We Work Together (Claude Code + Developer)
+
+### Session Workflow
+- Developer says "Lets Work" → Claude picks up to 5 items from Open Items, processes them end-to-end
+- Claude moves files between Google Drive Kanban folders automatically (Open Items → In Process → Ready for QA)
+- Claude never pauses for confirmation — executes the full plan/build/test/deploy/QA cycle autonomously
+- When Open Items is empty after a batch, Claude sends notification email via the app's diagnose endpoint
+
+### Parallel Work Pattern
+- Documentation updates (database_schema + claude_prompt) run as background agents in parallel during deploy prep
+- Multiple Playwright test suites run sequentially per browser (Chrome first, then Safari)
+- Independent code exploration tasks are launched as parallel agents
+
+### Email Notification (Open Items Empty)
+- Sent via authenticated Playwright session hitting: `GET /api/diagnose_send?email=elijahdburrup@gmail.com&notify=...&notify_body=...`
+- Uses the `TestMailer.kanban_notify` mailer method
+- Route is `diagnose_send` (NOT `diagnose/test_send`) — the route file maps `get "diagnose_send"` to `diagnose#test_send`
+- Requires authentication (behind Api::BaseController) — cannot use unauthenticated curl
+
+### Production Test Accounts
+- Primary: elijahburrup323@gmail.com / Eli624462!
+- Secondary: djburrup@gmail.com / (verify password — Eli624462! does NOT work for this account)
+
+## Key Learnings & Gotchas
+
+### Rails Route Helper Naming
+- **CRITICAL**: For `resource :foo` (singular) with `post :bar` inside, Rails generates `bar_api_foo_path` NOT `api_foo_bar_path`
+- Example: `resource :open_month_master` with `post :close` → correct helper is `close_api_open_month_master_path`
+- Always verify with `bundle exec rails routes | grep <name>` before using route helpers in views
+- Getting this wrong causes 500 errors on production (NameError: undefined method)
+
+### Playwright Test Patterns
+1. **What's New overlay**: The `#whatsNewOverlay` is a full-screen fixed overlay (z-50) that blocks all clicks. Must be removed via `page.evaluate(() => document.getElementById('whatsNewOverlay')?.remove())` BEFORE any UI interaction. The Stimulus-based `[data-dashboard-target='whatsNewModal']` is a different element — dismiss both.
+2. **QA MODE banner**: The red sticky banner (z-[9999]) can intercept pointer events on elements positioned under it. Use `{ force: true }` on clicks when the banner might overlap.
+3. **Scoping locators**: `page.locator("text=Soft Close Month")` may match sidebar elements (hidden). Scope to the correct container: `page.locator(".sticky [data-controller='dropdown']").first().locator("text=Soft Close Month")` to target the header dropdown specifically.
+4. **Login helper**: Use `Promise.all([page.waitForURL(...), page.click(...)])` for Turbo navigation. If login times out, the password is likely wrong (check screenshot — password field will be empty or page won't redirect).
+5. **Test file naming**: Production tests go in `tests/` folder with pattern `prod-vXXX-batchN.spec.js`
+
+### Deploy & QA Cycle
+1. Set QA_MODE=true BEFORE deploying (include in the deploy commit)
+2. Wait for Render deploy to complete (~2-3 minutes) before running production tests
+3. Check for v-number in QA banner to confirm new code is live
+4. Run all tests on Chrome first, then Safari — fix any failures before moving on
+5. Set QA_MODE=false AFTER all tests pass, commit and push separately
+6. Move items to Ready for QA only after QA_MODE=false is pushed
+
+### Common Pitfalls
+- **Don't use overflow-x-hidden on parent containers** — breaks position:sticky in Safari/iPad
+- **Sticky sub-header stacking**: global header = `top:0 z-30`, page sub-header = `top:3.5rem z-20` (use inline style for fractional rem)
+- **Modal z-index**: Use z-[9999] for modals to stack above everything including QA banner
+- **Soft delete scope**: Always use `unscoped` when preloading associations that might reference deleted records
+- **API error format**: 422 for validation errors `{ errors: [...] }`, 409 for conflict/month-control errors, 405 for disallowed methods
+
+### File Reading from Google Drive
+- `.docx` files: Copy to local first (`cp`), then extract via `node -e` with JSZip (read word/document.xml, strip XML tags)
+- `.gdoc` files: Read via `node read_gdoc.js "<Doc Name>"` (uses Google Docs API; token in documentation/token.json)
+- Google Drive path in MINGW64: `/g/My Drive/ExpenseTracker/` with numbered folders (`1. Open Items`, `2. In Process`, `3. Ready for QA`)</div>
 </div>
