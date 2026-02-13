@@ -50,8 +50,8 @@
     <% end %>
     <% if user_signed_in? %>
       <div data-controller="sidebar month-actions"
-           data-month-actions-close-url-value="<%= api_open_month_master_close_path %>"
-           data-month-actions-reopen-url-value="<%= api_open_month_master_reopen_path %>"
+           data-month-actions-close-url-value="<%= close_api_open_month_master_path %>"
+           data-month-actions-reopen-url-value="<%= reopen_api_open_month_master_path %>"
            data-month-actions-show-url-value="<%= api_open_month_master_path %>"
            data-month-actions-csrf-token-value="<%= form_authenticity_token %>">
         <%= render "shared/navbar" %>
