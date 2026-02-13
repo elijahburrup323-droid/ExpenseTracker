@@ -260,12 +260,12 @@
 
   <%# Add Payment Modal %>
   <div class="hidden fixed inset-0 z-50" data-payments-target="addModal">
-    <div class="fixed inset-0 bg-gray-500/75 transition-opacity" data-action="click->payments#cancelAdding"></div>
+    <div class="fixed inset-0 bg-gray-500/75 transition-opacity" data-action="click->payments#cancelModal"></div>
     <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div class="bg-white rounded-lg shadow-xl max-w-lg w-full">
         <div class="flex items-center justify-between px-6 pt-5 pb-0">
-          <h3 class="text-lg font-semibold text-gray-900">Add Payment</h3>
-          <button type="button" class="text-gray-400 hover:text-gray-600 transition" data-action="click->payments#cancelAdding" title="Close">
+          <h3 class="text-lg font-semibold text-gray-900" data-payments-target="modalTitle">Add Payment</h3>
+          <button type="button" class="text-gray-400 hover:text-gray-600 transition" data-action="click->payments#cancelModal" title="Close">
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
@@ -323,12 +323,12 @@
         <div class="flex justify-end space-x-3 px-6 pb-5 pt-2">
           <button type="button"
                   class="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition"
-                  data-action="click->payments#cancelAdding">
+                  data-action="click->payments#cancelModal">
             Cancel
           </button>
           <button type="button"
                   class="px-4 py-2.5 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition"
-                  data-action="click->payments#saveNew">
+                  data-action="click->payments#saveModal">
             Save
           </button>
         </div>
@@ -388,6 +388,31 @@
           <button type="button"
                   class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-900 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                   data-action="click->payments#closeDeleteBlocked">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%# Edit Blocked Modal — payment outside open month %>
+  <div class="hidden fixed inset-0 z-50" data-payments-target="editBlockedModal">
+    <div class="fixed inset-0 bg-gray-500/75 dark:bg-gray-900/80 transition-opacity"></div>
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+        <div class="flex items-start">
+          <div class="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-full bg-yellow-100 dark:bg-yellow-900/30">
+            <svg class="h-5 w-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+            </svg>
+          </div>
+          <div class="ml-4">
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white">Cannot Edit Payment</h3>
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400" data-payments-target="editBlockedMessage"></p>
+          </div>
+        </div>
+        <div class="mt-6 flex justify-end">
+          <button type="button"
+                  class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-900 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+                  data-action="click->payments#closeEditBlocked">Close</button>
         </div>
       </div>
     </div>

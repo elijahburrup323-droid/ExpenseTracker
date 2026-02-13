@@ -26,6 +26,12 @@ module Api
     end
 
     def update
+      # Server-side month control: payment must be in current open month to edit
+      open_month = OpenMonthMaster.for_user(current_user)
+      if @payment.payment_date.year != open_month.current_year || @payment.payment_date.month != open_month.current_month
+        return render json: { errors: ["This payment cannot be edited because it is not in the current open month."] }, status: :conflict
+      end
+
       ActiveRecord::Base.transaction do
         old_amount = @payment.amount
         old_account = @payment.account

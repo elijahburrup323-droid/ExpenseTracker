@@ -1,8 +1,17 @@
-APP_VERSION = "1.1.8"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+APP_VERSION = "1.1.9"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.1.9",
+    changes: [
+      "Payments Edit converted from inline row editing to centered modal workflow",
+      "Edit modal reuses Add modal field set, validation, and styling with pre-populated values",
+      "Month control on Edit — blocks editing payments outside the current open month",
+      "Server-side month enforcement returns 409 Conflict for out-of-month edits",
+    ]
+  },
   {
     version: "1.1.8",
     changes: [
