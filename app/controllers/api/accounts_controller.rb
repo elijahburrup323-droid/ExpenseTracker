@@ -11,6 +11,22 @@ module Api
     end
 
     def create
+      # Server-side month control: effective_date must be in current open month
+      open_month = OpenMonthMaster.for_user(current_user)
+      effective_date = params[:account][:effective_date].presence
+      if effective_date.present?
+        begin
+          ed = Date.parse(effective_date)
+        rescue ArgumentError
+          ed = nil
+        end
+        if ed && (ed.year != open_month.current_year || ed.month != open_month.current_month)
+          month_name = Date::MONTHNAMES[open_month.current_month]
+          Rails.logger.info("[ACCOUNT CREATE BLOCKED] user=#{current_user.id} attempted_date=#{effective_date} open_month=#{open_month.current_year}-#{open_month.current_month}")
+          return render json: { errors: ["You can only add accounts dated within your open month (#{month_name} #{open_month.current_year}). Change the date or change your open month."] }, status: :conflict
+        end
+      end
+
       max_sort = current_user.accounts.maximum(:sort_order) || 0
       account = current_user.accounts.build(account_params)
       account.sort_order = max_sort + 1

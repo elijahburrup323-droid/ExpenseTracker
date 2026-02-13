@@ -30,16 +30,7 @@ module Api
     end
 
     def destroy
-      master = IncomeFrequencyMaster.find_by(id: params[:id])
-      return render_not_found unless master
-
-      if master.income_user_frequencies.exists?
-        master.update!(active: false)
-      else
-        master.destroy!
-      end
-
-      render json: { success: true }
+      render json: { errors: ["Frequency masters cannot be deleted. Use Deactivate instead to preserve referential integrity."] }, status: :method_not_allowed
     end
 
     private

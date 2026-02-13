@@ -113,18 +113,43 @@ export default class extends Controller {
     this.renderTable()
   }
 
-  async deleteItem(event) {
+  async deactivateItem(event) {
     const id = Number(event.currentTarget.dataset.id)
     const master = this.masters.find(m => m.id === id)
-    if (!confirm(`Delete "${master?.name}"?`)) return
+    if (!confirm(`Deactivate "${master?.name}"? It will no longer appear in deposit frequency dropdowns.`)) return
 
     try {
       const response = await fetch(`${this.apiUrlValue}/${id}`, {
-        method: "DELETE",
-        headers: this._headers()
+        method: "PUT",
+        headers: this._headers(),
+        body: JSON.stringify({ income_frequency_master: { active: false } })
       })
       if (response.ok) {
-        this.masters = this.masters.filter(m => m.id !== id)
+        const updated = await response.json()
+        const idx = this.masters.findIndex(m => m.id === id)
+        if (idx !== -1) this.masters[idx] = updated
+        this.renderTable()
+      }
+    } catch (e) {
+      alert("Network error")
+    }
+  }
+
+  async reactivateItem(event) {
+    const id = Number(event.currentTarget.dataset.id)
+    const master = this.masters.find(m => m.id === id)
+    if (!confirm(`Reactivate "${master?.name}"?`)) return
+
+    try {
+      const response = await fetch(`${this.apiUrlValue}/${id}`, {
+        method: "PUT",
+        headers: this._headers(),
+        body: JSON.stringify({ income_frequency_master: { active: true } })
+      })
+      if (response.ok) {
+        const updated = await response.json()
+        const idx = this.masters.findIndex(m => m.id === id)
+        if (idx !== -1) this.masters[idx] = updated
         this.renderTable()
       }
     } catch (e) {
@@ -340,8 +365,12 @@ export default class extends Controller {
             <div class="flex items-center justify-center space-x-3">
               <button type="button" class="text-brand-600 hover:text-brand-800 dark:text-brand-400 dark:hover:text-brand-300 text-sm font-medium"
                       data-id="${m.id}" data-action="click->income-frequency-masters#startEditing">Edit</button>
-              <button type="button" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium"
-                      data-id="${m.id}" data-action="click->income-frequency-masters#deleteItem">Delete</button>
+              ${m.active
+                ? `<button type="button" class="text-orange-600 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300 text-sm font-medium"
+                          data-id="${m.id}" data-action="click->income-frequency-masters#deactivateItem">Deactivate</button>`
+                : `<button type="button" class="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 text-sm font-medium"
+                          data-id="${m.id}" data-action="click->income-frequency-masters#reactivateItem">Reactivate</button>`
+              }
             </div>
           </td>
           <td class="px-6 py-4 text-center">${this._activeToggle(m.active, m.id)}</td>

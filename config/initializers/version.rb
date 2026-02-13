@@ -1,8 +1,23 @@
-APP_VERSION = "1.1.9"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+APP_VERSION = "1.2.0"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.2.0",
+    changes: [
+      "Accounts Add date validation against open month with effective date picker (CM-9)",
+      "Server-side 409 rejection for account creation outside open month",
+      "FrequencyMasters: Delete replaced with Deactivate/Reactivate for referential integrity (CM-7)",
+      "FrequencyMasters: 'Income Entries' renamed to 'Deposits' throughout UI",
+      "User Menu: Soft Close Month and Open Soft Close actions added to profile dropdown (CM-11)",
+      "Soft Close snapshots current month and advances to next month",
+      "Open Soft Close rolls back to previous month (blocked if transactions exist)",
+      "DBU: All CRUD converted to modal-based workflow — read-only display with Edit/Add/Delete modals (CM-15)",
+      "DBU: Sub-header made sticky beneath global header with 2-tier stacking",
+      "DBU: Schema Inspector and Record Browser now share unified information_schema source",
+    ]
+  },
   {
     version: "1.1.9",
     changes: [

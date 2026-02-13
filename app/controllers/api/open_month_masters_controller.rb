@@ -37,7 +37,7 @@ module Api
       end
     end
 
-    # POST /api/open_month_master/close
+    # POST /api/open_month_master/close  (Soft Close: snapshot + advance to next month)
     def close
       record = OpenMonthMaster.for_user(current_user)
 
@@ -47,24 +47,49 @@ module Api
 
       ActiveRecord::Base.transaction do
         record.generate_snapshots!
+
+        # Compute next month
+        next_month = record.current_month + 1
+        next_year = record.current_year
+        if next_month > 12
+          next_month = 1
+          next_year += 1
+        end
+
         record.update!(
-          is_closed: true,
+          is_closed: false,
           locked_at: Time.current,
-          locked_by_user_id: current_user.id
+          locked_by_user_id: current_user.id,
+          current_year: next_year,
+          current_month: next_month,
+          has_data: false,
+          first_data_at: nil,
+          first_data_source: nil
         )
       end
 
-      render json: open_month_json(record)
+      render json: open_month_json(record.reload)
     end
 
-    # POST /api/open_month_master/reopen
+    # POST /api/open_month_master/reopen  (Open Soft Close: roll back to previous month)
     def reopen
       record = OpenMonthMaster.for_user(current_user)
 
-      if record.has_data
+      # Authoritative count check: active (not soft-deleted) transactions in current open month
+      month_start = Date.new(record.current_year, record.current_month, 1)
+      month_end = month_start.end_of_month
+      range = month_start..month_end
+
+      active_count = 0
+      active_count += current_user.payments.where(payment_date: range).count
+      active_count += current_user.income_entries.where(entry_date: range).count
+      active_count += current_user.transfer_masters.where(transfer_date: range).count if current_user.respond_to?(:transfer_masters)
+
+      if active_count > 0 || record.has_data
+        month_name = Date::MONTHNAMES[record.current_month]
         return render json: {
           error: "REOPEN_BLOCKED_NEW_MONTH_HAS_DATA",
-          message: "You cannot reopen the previous month because entries already exist in the current month."
+          message: "You can't re-open the previous month because transactions exist in #{month_name} #{record.current_year}. Delete them first or keep this month open."
         }, status: :unprocessable_entity
       end
 

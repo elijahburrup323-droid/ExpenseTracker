@@ -127,6 +127,15 @@ export default class extends Controller {
     const closed = await this._checkMonthClosed()
     if (closed) return
 
+    // Fetch open month for date constraints
+    this._openMonth = null
+    if (this.openMonthUrlValue) {
+      try {
+        const res = await fetch(this.openMonthUrlValue, { headers: { "Accept": "application/json" } })
+        if (res.ok) this._openMonth = await res.json()
+      } catch (e) {}
+    }
+
     this.state = "adding"
     this.selectedIconKey = null
     this.selectedColorKey = "blue"
@@ -147,10 +156,12 @@ export default class extends Controller {
     const typeSelect = this.tableBodyTarget.querySelector("select[name='account_type_id']")
     const instInput = this.tableBodyTarget.querySelector("input[name='institution']")
     const balInput = this.tableBodyTarget.querySelector("input[name='balance']")
+    const dateInput = this.tableBodyTarget.querySelector("input[name='effective_date']")
     const name = nameInput?.value?.trim()
     const account_type_id = typeSelect?.value
     const institution = instInput?.value?.trim()
     const balance = balInput?.value?.trim() || "0"
+    const effective_date = dateInput?.value || ""
 
     if (!name) {
       this.showRowError("Name is required")
@@ -172,7 +183,7 @@ export default class extends Controller {
           "X-CSRF-Token": this.csrfTokenValue
         },
         body: JSON.stringify({ account: {
-          name, account_type_id, institution, balance,
+          name, account_type_id, institution, balance, effective_date,
           icon_key: this.selectedIconKey,
           color_key: this.selectedColorKey
         }})
@@ -592,6 +603,22 @@ export default class extends Controller {
       `<option value="${at.id}">${escapeHtml(at.name)}</option>`
     ).join("")
 
+    // Calculate date constraints from open month
+    let dateMin = "", dateMax = "", dateDefault = ""
+    if (this._openMonth) {
+      const y = this._openMonth.current_year
+      const m = this._openMonth.current_month
+      dateMin = `${y}-${String(m).padStart(2, "0")}-01`
+      const lastDay = new Date(y, m, 0).getDate()
+      dateMax = `${y}-${String(m).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`
+      const today = new Date()
+      if (today.getFullYear() === y && (today.getMonth() + 1) === m) {
+        dateDefault = `${y}-${String(m).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`
+      } else {
+        dateDefault = dateMax
+      }
+    }
+
     return `<tr class="bg-brand-50/40 dark:bg-brand-900/20">
       <td class="px-6 py-3">
         <div class="relative" data-icon-picker>
@@ -610,6 +637,12 @@ export default class extends Controller {
                maxlength="80"
                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
                data-action="keydown->accounts#handleKeydown">
+        <div class="mt-1.5">
+          <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-0.5">Effective Date</label>
+          <input type="date" name="effective_date" value="${dateDefault}" min="${dateMin}" max="${dateMax}"
+                 class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-xs focus:border-brand-500 focus:ring-brand-500 px-3 py-1"
+                 data-action="keydown->accounts#handleKeydown">
+        </div>
       </td>
       <td class="px-6 py-3">
         <select name="account_type_id"

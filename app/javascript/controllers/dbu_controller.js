@@ -6,7 +6,9 @@ export default class extends Controller {
     "recordPanel", "emptyMessage",
     "tabSchema", "tabRecords", "schemaPanel", "recordsPanel",
     "schemaSearch", "schemaMeta", "schemaContent",
-    "recordsMeta"
+    "recordsMeta",
+    "editModal", "editModalTitle", "editModalBody",
+    "deleteModal", "deleteModalMessage"
   ]
   static values = { tablesUrl: String, usersUrl: String, recordsUrl: String, schemaUrl: String, csrfToken: String, createUrl: String }
 
@@ -20,7 +22,6 @@ export default class extends Controller {
     this.columns = []
     this.pkColumns = []
     this.hasUserId = false
-    this.isDirty = false
     this.selectedTable = null
 
     // Schema inspector state
@@ -287,7 +288,6 @@ export default class extends Controller {
   }
 
   async refreshRecords() {
-    if (!this._checkDirty()) return
     this.allTables = []
     this.filteredTables = []
     this.selectedTable = null
@@ -370,7 +370,6 @@ export default class extends Controller {
   // --- Reset ---
 
   resetFilters() {
-    if (!this._checkDirty()) return
     this.searchInputTarget.value = ""
     this.filteredTables = [...this.allTables]
     this._populateDropdowns()
@@ -384,11 +383,6 @@ export default class extends Controller {
   // --- Table Selection ---
 
   onTableNameChange() {
-    if (!this._checkDirty()) {
-      this.tableNameSelectTarget.value = this.selectedTable || ""
-      this.tableDescSelectTarget.value = this.selectedTable || ""
-      return
-    }
     const tableName = this.tableNameSelectTarget.value
     this.tableDescSelectTarget.value = tableName
     if (tableName) {
@@ -401,11 +395,6 @@ export default class extends Controller {
   }
 
   onTableDescChange() {
-    if (!this._checkDirty()) {
-      this.tableNameSelectTarget.value = this.selectedTable || ""
-      this.tableDescSelectTarget.value = this.selectedTable || ""
-      return
-    }
     const tableName = this.tableDescSelectTarget.value
     this.tableNameSelectTarget.value = tableName
     if (tableName) {
@@ -418,9 +407,6 @@ export default class extends Controller {
   }
 
   onUserChange() {
-    if (!this._checkDirty()) {
-      // Cannot easily revert user select — just proceed
-    }
     if (this.selectedTable) {
       this._loadRecords()
     }
@@ -459,7 +445,6 @@ export default class extends Controller {
       if (res.ok) {
         const data = await res.json()
         this.currentRecord = data.record
-        this.isDirty = false
         this._renderRecordPanel()
       }
     } catch (e) {
@@ -470,7 +455,6 @@ export default class extends Controller {
   // --- Navigation ---
 
   prevRecord() {
-    if (!this._checkDirty()) return
     if (this.currentIndex > 0) {
       this.currentIndex--
       this._loadCurrentRecord()
@@ -478,76 +462,52 @@ export default class extends Controller {
   }
 
   nextRecord() {
-    if (!this._checkDirty()) return
     if (this.currentIndex < this.recordIds.length - 1) {
       this.currentIndex++
       this._loadCurrentRecord()
     }
   }
 
-  // --- Dirty State ---
+  // --- (Dirty state removed — modal CRUD only) ---
 
-  markDirty() {
-    this.isDirty = true
+  // --- Edit (Modal) ---
+
+  editRecord() {
+    if (!this.currentRecord) return
+    this._modalMode = "edit"
+    this.editModalTitleTarget.textContent = `Edit Record — ${this.selectedTable}`
+    this._renderModalFields(this.currentRecord)
+    this.editModalTarget.classList.remove("hidden")
   }
 
-  _checkDirty() {
-    if (!this.isDirty) return true
-    const choice = confirm("You have unsaved changes. Discard and continue?")
-    if (choice) {
-      this.isDirty = false
-      return true
+  // --- Add (Modal) ---
+
+  addRecord() {
+    if (!this.selectedTable) {
+      alert("Select a table before adding a record.")
+      return
     }
-    return false
+    this._modalMode = "add"
+    this.editModalTitleTarget.textContent = `Add Record — ${this.selectedTable}`
+    this._renderModalFields(null)
+    this.editModalTarget.classList.remove("hidden")
   }
 
-  // --- Save ---
+  // --- Delete (Modal) ---
 
-  async saveRecord() {
-    const fields = {}
-    this.columns.forEach(col => {
-      if (this.pkColumns.includes(col.name)) return
-      const input = this.recordPanelTarget.querySelector(`[data-field="${col.name}"]`)
-      if (input) {
-        fields[col.name] = input.value === "" ? null : input.value
-      }
-    })
-
-    const recordId = this.recordIds[this.currentIndex]
-    const url = `${this.recordsUrlValue}/${encodeURIComponent(recordId)}?table=${encodeURIComponent(this.selectedTable)}`
-    try {
-      const res = await fetch(url, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-          "X-CSRF-Token": this.csrfTokenValue
-        },
-        body: JSON.stringify({ fields })
-      })
-      if (res.ok) {
-        const data = await res.json()
-        this.currentRecord = data.record
-        this.isDirty = false
-        this._renderRecordPanel()
-        this._flashSaveSuccess()
-      } else {
-        const err = await res.json()
-        alert(err.error || "Failed to save")
-      }
-    } catch (e) {
-      alert("Network error")
-    }
+  deleteRecord() {
+    if (!this.currentRecord) return
+    const pkVal = this.pkColumns.map(c => `${c}: ${this.currentRecord[c]}`).join(", ")
+    this.deleteModalMessageTarget.textContent = `Delete record (${pkVal}) from ${this.selectedTable}? This cannot be undone.`
+    this.deleteModalTarget.classList.remove("hidden")
   }
 
-  // --- Delete ---
+  cancelDeleteModal() {
+    this.deleteModalTarget.classList.add("hidden")
+  }
 
-  async deleteRecord() {
-    if (this.isDirty) {
-      if (!confirm("You have unsaved changes. Discard and delete this record?")) return
-    }
-    if (!confirm("Are you sure you want to permanently delete this record?")) return
-
+  async confirmDelete() {
+    this.deleteModalTarget.classList.add("hidden")
     const recordId = this.recordIds[this.currentIndex]
     const url = `${this.recordsUrlValue}/${encodeURIComponent(recordId)}?table=${encodeURIComponent(this.selectedTable)}`
     try {
@@ -557,7 +517,6 @@ export default class extends Controller {
       })
       if (res.ok || res.status === 204) {
         this.recordIds.splice(this.currentIndex, 1)
-        this.isDirty = false
         if (this.recordIds.length === 0) {
           this.currentIndex = -1
           this._showEmpty("No records found for this table.")
@@ -571,7 +530,89 @@ export default class extends Controller {
     }
   }
 
-  // --- Rendering ---
+  // --- Modal Helpers ---
+
+  _renderModalFields(record) {
+    let html = ""
+    for (const col of this.columns) {
+      const isPk = this.pkColumns.includes(col.name)
+      if (this._modalMode === "add" && isPk) continue
+      const label = this._humanize(col.name)
+      const value = record ? (record[col.name] === null || record[col.name] === undefined ? "" : String(record[col.name])) : ""
+      const pkBadge = isPk ? `<span class="ml-1 text-xs font-bold text-brand-600">(PK)</span>` : ""
+      const readOnly = isPk
+
+      html += `<div class="mb-3">
+        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">${this._esc(label)}${pkBadge}</label>
+        <input type="text" value="${this._escAttr(value)}" data-modal-field="${this._escAttr(col.name)}"
+               class="w-full h-9 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2 ${readOnly ? 'bg-gray-100 dark:bg-gray-600 cursor-not-allowed' : ''}"
+               ${readOnly ? 'readonly' : ''}>
+      </div>`
+    }
+    this.editModalBodyTarget.innerHTML = html
+  }
+
+  cancelModal() {
+    this.editModalTarget.classList.add("hidden")
+  }
+
+  async saveFromModal() {
+    const fields = {}
+    this.columns.forEach(col => {
+      if (this.pkColumns.includes(col.name)) return
+      const input = this.editModalTarget.querySelector(`[data-modal-field="${col.name}"]`)
+      if (input) {
+        fields[col.name] = input.value === "" ? null : input.value
+      }
+    })
+
+    if (this._modalMode === "add") {
+      const url = `${this.createUrlValue}?table=${encodeURIComponent(this.selectedTable)}`
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "application/json", "X-CSRF-Token": this.csrfTokenValue },
+          body: JSON.stringify({ fields })
+        })
+        if (res.ok) {
+          this.editModalTarget.classList.add("hidden")
+          await this._loadRecords()
+          if (this.recordIds.length > 0) {
+            this.currentIndex = this.recordIds.length - 1
+            this._loadCurrentRecord()
+          }
+        } else {
+          const err = await res.json()
+          alert(err.error || "Failed to create record")
+        }
+      } catch (e) {
+        alert("Network error")
+      }
+    } else {
+      const recordId = this.recordIds[this.currentIndex]
+      const url = `${this.recordsUrlValue}/${encodeURIComponent(recordId)}?table=${encodeURIComponent(this.selectedTable)}`
+      try {
+        const res = await fetch(url, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", "Accept": "application/json", "X-CSRF-Token": this.csrfTokenValue },
+          body: JSON.stringify({ fields })
+        })
+        if (res.ok) {
+          const data = await res.json()
+          this.currentRecord = data.record
+          this.editModalTarget.classList.add("hidden")
+          this._renderRecordPanel()
+        } else {
+          const err = await res.json()
+          alert(err.error || "Failed to save")
+        }
+      } catch (e) {
+        alert("Network error")
+      }
+    }
+  }
+
+  // --- Rendering (read-only display) ---
 
   _renderRecordPanel() {
     const record = this.currentRecord
@@ -580,17 +621,12 @@ export default class extends Controller {
     const prevDisabled = this.currentIndex <= 0 ? "disabled" : ""
     const nextDisabled = this.currentIndex >= total - 1 ? "disabled" : ""
 
-    const descCol = this.columns.find(c => c.name === "description" || c.name === "table_description")
-
     let fieldsHtml = ""
     const orderedCols = [...this.columns]
-
+    const descCol = orderedCols.find(c => c.name === "description" || c.name === "table_description")
     if (descCol) {
-      const idx = orderedCols.indexOf(descCol)
-      if (idx > -1) {
-        orderedCols.splice(idx, 1)
-        orderedCols.unshift(descCol)
-      }
+      const di = orderedCols.indexOf(descCol)
+      if (di > -1) { orderedCols.splice(di, 1); orderedCols.unshift(descCol) }
     }
 
     for (const col of orderedCols) {
@@ -599,19 +635,11 @@ export default class extends Controller {
       const displayValue = value === null || value === undefined ? "" : String(value)
       const label = this._humanize(col.name)
       const pkBadge = isPk ? `<span class="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-brand-600 text-white">PK</span>` : ""
-      const readOnly = isPk
-
-      const isUserField = col.name === "user_id" && this.userSelectTarget.value === "all"
-      const fieldReadOnly = readOnly || isUserField
 
       fieldsHtml += `
         <div class="grid grid-cols-3 gap-4 items-center py-2 border-b border-gray-100 dark:border-gray-700">
           <label class="text-sm font-medium text-gray-700 dark:text-gray-300">${this._esc(label)}${pkBadge}</label>
-          <div class="col-span-2">
-            <input type="text" value="${this._escAttr(displayValue)}" data-field="${this._escAttr(col.name)}"
-                   class="w-full h-9 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2 ${fieldReadOnly ? 'bg-gray-100 dark:bg-gray-600 cursor-not-allowed' : ''}"
-                   ${fieldReadOnly ? 'readonly' : `data-action="input->dbu#markDirty"`}>
-          </div>
+          <div class="col-span-2 text-sm text-gray-900 dark:text-white break-all">${this._esc(displayValue) || '<span class="text-gray-300 dark:text-gray-600">—</span>'}</div>
         </div>`
     }
 
@@ -626,15 +654,15 @@ export default class extends Controller {
                     data-action="click->dbu#prevRecord" ${prevDisabled} title="Previous">
               <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
             </button>
-            <span class="text-sm text-gray-500 dark:text-gray-400">${idx} of ${total} Filtered</span>
+            <span class="text-sm text-gray-500 dark:text-gray-400">${idx} of ${total}</span>
             <button type="button" class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
                     data-action="click->dbu#nextRecord" ${nextDisabled} title="Next">
               <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
             </button>
             <button type="button"
                     class="h-8 inline-flex items-center px-3 text-sm font-medium rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
-                    data-action="click->dbu#saveRecord">
-              Save
+                    data-action="click->dbu#editRecord">
+              Edit
             </button>
             <button type="button"
                     class="h-8 inline-flex items-center px-3 text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 transition"
@@ -649,125 +677,11 @@ export default class extends Controller {
       </div>`
   }
 
-  // --- Add Record ---
-
-  addRecord() {
-    if (!this.selectedTable) {
-      alert("Select a table before adding a record.")
-      return
-    }
-    if (!this._checkDirty()) return
-    this.isAdding = true
-    this._renderAddForm()
-  }
-
-  _renderAddForm() {
-    const tableLabel = this._esc(this.selectedTable)
-    let fieldsHtml = ""
-    for (const col of this.columns) {
-      const isPk = this.pkColumns.includes(col.name)
-      if (isPk) continue // Skip PK fields (auto-generated)
-      const label = this._humanize(col.name)
-      fieldsHtml += `
-        <div class="grid grid-cols-3 gap-4 items-center py-2 border-b border-gray-100 dark:border-gray-700">
-          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">${this._esc(label)}</label>
-          <div class="col-span-2">
-            <input type="text" value="" data-add-field="${this._escAttr(col.name)}"
-                   class="w-full h-9 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2">
-          </div>
-        </div>`
-    }
-
-    this.recordPanelTarget.innerHTML = `
-      <div class="p-4">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">New Record — ${tableLabel}</h3>
-          <div class="flex items-center space-x-2">
-            <button type="button"
-                    class="h-8 inline-flex items-center px-3 text-sm font-medium rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
-                    data-action="click->dbu#saveNewRecord">
-              Save
-            </button>
-            <button type="button"
-                    class="h-8 inline-flex items-center px-3 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition"
-                    data-action="click->dbu#cancelAdd">
-              Cancel
-            </button>
-          </div>
-        </div>
-        <div class="divide-y divide-gray-100 dark:divide-gray-700">
-          ${fieldsHtml}
-        </div>
-      </div>`
-  }
-
-  async saveNewRecord() {
-    const fields = {}
-    this.columns.forEach(col => {
-      if (this.pkColumns.includes(col.name)) return
-      const input = this.recordPanelTarget.querySelector(`[data-add-field="${col.name}"]`)
-      if (input) {
-        fields[col.name] = input.value === "" ? null : input.value
-      }
-    })
-
-    const url = `${this.createUrlValue}?table=${encodeURIComponent(this.selectedTable)}`
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-          "X-CSRF-Token": this.csrfTokenValue
-        },
-        body: JSON.stringify({ fields })
-      })
-      if (res.ok) {
-        this.isAdding = false
-        // Reload records for the table to show the new one
-        await this._loadRecords()
-        // Navigate to the last record (newly created)
-        if (this.recordIds.length > 0) {
-          this.currentIndex = this.recordIds.length - 1
-          this._loadCurrentRecord()
-        }
-      } else {
-        const err = await res.json()
-        alert(err.error || "Failed to create record")
-      }
-    } catch (e) {
-      alert("Network error")
-    }
-  }
-
-  cancelAdd() {
-    this.isAdding = false
-    if (this.recordIds.length > 0 && this.currentIndex >= 0) {
-      this._loadCurrentRecord()
-    } else {
-      this._showEmpty("Select a table to browse records.")
-    }
-  }
-
   _showEmpty(message) {
     this.recordPanelTarget.innerHTML = `
       <div class="flex items-center justify-center h-64">
         <p class="text-sm text-gray-400 dark:text-gray-500">${this._esc(message)}</p>
       </div>`
-  }
-
-  _flashSaveSuccess() {
-    const btn = this.recordPanelTarget.querySelector("[data-action='click->dbu#saveRecord']")
-    if (!btn) return
-    const original = btn.textContent
-    btn.textContent = "Saved!"
-    btn.classList.replace("bg-brand-600", "bg-green-600")
-    btn.classList.replace("hover:bg-brand-700", "hover:bg-green-700")
-    setTimeout(() => {
-      btn.textContent = original
-      btn.classList.replace("bg-green-600", "bg-brand-600")
-      btn.classList.replace("hover:bg-green-700", "hover:bg-brand-700")
-    }, 1500)
   }
 
   // --- Helpers ---
