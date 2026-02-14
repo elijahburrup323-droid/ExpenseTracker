@@ -7,6 +7,12 @@ class IncomeFrequencyMaster < ApplicationRecord
   scope :ordered, -> { order(:sort_order) }
 
   has_many :income_user_frequencies, foreign_key: :frequency_master_id
+  has_many :income_recurrings, foreign_key: :frequency_master_id
+  has_many :income_entries, foreign_key: :frequency_master_id
+
+  def in_use?
+    income_user_frequencies.exists? || income_recurrings.exists? || income_entries.exists?
+  end
 
   def next_date_from(date)
     case frequency_type

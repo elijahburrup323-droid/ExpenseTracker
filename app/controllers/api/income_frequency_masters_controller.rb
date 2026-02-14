@@ -29,8 +29,28 @@ module Api
       end
     end
 
+    def can_delete
+      master = IncomeFrequencyMaster.find_by(id: params[:id])
+      return render_not_found unless master
+
+      if master.in_use?
+        render json: { can_delete: false, reason: "IN_USE" }
+      else
+        render json: { can_delete: true }
+      end
+    end
+
     def destroy
-      render json: { errors: ["Frequency masters cannot be deleted. Use Deactivate instead to preserve referential integrity."] }, status: :method_not_allowed
+      master = IncomeFrequencyMaster.find_by(id: params[:id])
+      return render_not_found unless master
+
+      if master.in_use?
+        render json: { errors: ["This frequency is currently in use and can't be deleted. Remove or update the items using it, then try again."] }, status: :unprocessable_entity
+        return
+      end
+
+      master.destroy!
+      render json: { success: true }
     end
 
     private

@@ -113,48 +113,97 @@ export default class extends Controller {
     this.renderTable()
   }
 
-  async deactivateItem(event) {
+  async deleteItem(event) {
     const id = Number(event.currentTarget.dataset.id)
     const master = this.masters.find(m => m.id === id)
-    if (!confirm(`Deactivate "${master?.name}"? It will no longer appear in deposit frequency dropdowns.`)) return
+    if (!master) return
 
     try {
-      const response = await fetch(`${this.apiUrlValue}/${id}`, {
-        method: "PUT",
-        headers: this._headers(),
-        body: JSON.stringify({ income_frequency_master: { active: false } })
+      const checkResp = await fetch(`${this.apiUrlValue}/${id}/can_delete`, {
+        headers: { "Accept": "application/json" }
       })
-      if (response.ok) {
-        const updated = await response.json()
-        const idx = this.masters.findIndex(m => m.id === id)
-        if (idx !== -1) this.masters[idx] = updated
-        this.renderTable()
+      const checkData = await checkResp.json()
+
+      if (!checkData.can_delete) {
+        this._showCannotDeleteModal()
+        return
       }
+
+      this._showDeleteConfirmModal(master.name, async () => {
+        try {
+          const resp = await fetch(`${this.apiUrlValue}/${id}`, {
+            method: "DELETE",
+            headers: this._headers()
+          })
+          if (resp.ok) {
+            this.masters = this.masters.filter(m => m.id !== id)
+            this.renderTable()
+          } else {
+            const err = await resp.json()
+            if (err.errors?.some(e => e.includes("in use"))) {
+              this._showCannotDeleteModal()
+            } else {
+              alert((err.errors || ["Delete failed"]).join(", "))
+            }
+          }
+        } catch (e) {
+          alert("Network error")
+        }
+      })
     } catch (e) {
       alert("Network error")
     }
   }
 
-  async reactivateItem(event) {
-    const id = Number(event.currentTarget.dataset.id)
-    const master = this.masters.find(m => m.id === id)
-    if (!confirm(`Reactivate "${master?.name}"?`)) return
+  _showCannotDeleteModal() {
+    this._removeModal()
+    const overlay = document.createElement("div")
+    overlay.id = "freqDeleteModal"
+    overlay.className = "fixed inset-0 z-[9999] flex items-center justify-center bg-black/50"
+    overlay.innerHTML = `
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Can't Delete Frequency</h3>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">This frequency is currently in use and can't be deleted. Remove or update the items using it, then try again.</p>
+        <div class="flex justify-end">
+          <button type="button" id="freqModalOk"
+                  class="px-4 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg shadow-sm transition">
+            OK
+          </button>
+        </div>
+      </div>`
+    document.body.appendChild(overlay)
+    overlay.querySelector("#freqModalOk").addEventListener("click", () => this._removeModal())
+    overlay.addEventListener("click", (e) => { if (e.target === overlay) this._removeModal() })
+  }
 
-    try {
-      const response = await fetch(`${this.apiUrlValue}/${id}`, {
-        method: "PUT",
-        headers: this._headers(),
-        body: JSON.stringify({ income_frequency_master: { active: true } })
-      })
-      if (response.ok) {
-        const updated = await response.json()
-        const idx = this.masters.findIndex(m => m.id === id)
-        if (idx !== -1) this.masters[idx] = updated
-        this.renderTable()
-      }
-    } catch (e) {
-      alert("Network error")
-    }
+  _showDeleteConfirmModal(name, onConfirm) {
+    this._removeModal()
+    const overlay = document.createElement("div")
+    overlay.id = "freqDeleteModal"
+    overlay.className = "fixed inset-0 z-[9999] flex items-center justify-center bg-black/50"
+    overlay.innerHTML = `
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Delete Frequency?</h3>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">Are you sure you want to delete this frequency master? This action cannot be undone.</p>
+        <div class="flex justify-end space-x-3">
+          <button type="button" id="freqModalCancel"
+                  class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition">
+            Cancel
+          </button>
+          <button type="button" id="freqModalDelete"
+                  class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-sm transition">
+            Delete
+          </button>
+        </div>
+      </div>`
+    document.body.appendChild(overlay)
+    overlay.querySelector("#freqModalCancel").addEventListener("click", () => this._removeModal())
+    overlay.querySelector("#freqModalDelete").addEventListener("click", () => { this._removeModal(); onConfirm() })
+    overlay.addEventListener("click", (e) => { if (e.target === overlay) this._removeModal() })
+  }
+
+  _removeModal() {
+    document.getElementById("freqDeleteModal")?.remove()
   }
 
   // --- Active Toggle ---
@@ -365,12 +414,8 @@ export default class extends Controller {
             <div class="flex items-center justify-center space-x-3">
               <button type="button" class="text-brand-600 hover:text-brand-800 dark:text-brand-400 dark:hover:text-brand-300 text-sm font-medium"
                       data-id="${m.id}" data-action="click->income-frequency-masters#startEditing">Edit</button>
-              ${m.active
-                ? `<button type="button" class="text-orange-600 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300 text-sm font-medium"
-                          data-id="${m.id}" data-action="click->income-frequency-masters#deactivateItem">Deactivate</button>`
-                : `<button type="button" class="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 text-sm font-medium"
-                          data-id="${m.id}" data-action="click->income-frequency-masters#reactivateItem">Reactivate</button>`
-              }
+              <button type="button" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium"
+                      data-id="${m.id}" data-action="click->income-frequency-masters#deleteItem">Delete</button>
             </div>
           </td>
           <td class="px-6 py-4 text-center">${this._activeToggle(m.active, m.id)}</td>

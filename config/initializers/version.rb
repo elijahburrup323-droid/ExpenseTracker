@@ -1,8 +1,17 @@
-APP_VERSION = "1.2.0"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+APP_VERSION = "1.2.1"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.2.1",
+    changes: [
+      "FrequencyMasters: Removed Deactivate/Reactivate action buttons — Active toggle is now the sole activation control",
+      "FrequencyMasters: Added Delete action with in-use protection (can_delete endpoint)",
+      "FrequencyMasters: Cannot-delete modal blocks deletion when frequency is referenced by any user",
+      "FrequencyMasters: Standard delete-confirm modal for unused frequencies with server-side race condition guard",
+    ]
+  },
   {
     version: "1.2.0",
     changes: [

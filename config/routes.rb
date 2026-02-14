@@ -67,7 +67,11 @@ Rails.application.routes.draw do
     resources :accounts, only: [:index, :create, :update, :destroy]
     resources :transfer_masters, only: [:index, :create, :update, :destroy]
     resources :payments, only: [:index, :create, :update, :destroy]
-    resources :income_frequency_masters, only: [:index, :create, :update, :destroy]
+    resources :income_frequency_masters, only: [:index, :create, :update, :destroy] do
+      member do
+        get :can_delete
+      end
+    end
     resources :income_user_frequencies, only: [:index, :update] do
       collection do
         put :bulk_update
