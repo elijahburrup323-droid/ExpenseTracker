@@ -1,8 +1,17 @@
-APP_VERSION = "1.2.1"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+APP_VERSION = "1.2.2"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.2.2",
+    changes: [
+      "Upload: Added Apple Numbers template format option alongside CSV and Excel",
+      "Upload: Numbers template uses UTF-8 BOM for proper encoding in Apple Numbers",
+      "Upload: Instruction text updated with Apple Numbers export guidance",
+      "Upload: Format selection persisted in localStorage across sessions",
+    ]
+  },
   {
     version: "1.2.1",
     changes: [

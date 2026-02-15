@@ -172,7 +172,7 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 - **account_types_controller.js** — CRUD with icon/color picker, generate dummy data
 - **accounts_controller.js** — CRUD with type select, budget toggle, generate dummy data. Add Account validates effective_date against the current open month: client-side date picker is constrained to the open month's date range, server-side returns 409 Conflict if effective_date falls outside the open month.
 - **payments_controller.js** — CRUD with date/account/category/type filters, search, combination sum search, CSV export of filtered/sorted data, print-friendly report with BudgetHQ header (mirrors filters/sorting), generate dummy data. After adding a payment, the list refreshes in the current sort order and scrolls to the top. After add/edit/delete, account balances are re-fetched from the server to stay in sync. Total display uses text-lg font-semibold for visual emphasis. On Add/Edit save, validates payment date against the current open month (fetched from /api/open_month_master). If date falls outside open month, shows a warning modal with Cancel/Proceed. Proceed advances the open month to match the payment date's month/year and then saves. As of v1.1.9, Edit uses a modal (same as Add modal) instead of inline row editing. The Edit modal enforces month control — payments can only be edited if their date falls within the current open month. The server-side update action returns 409 Conflict if the payment's date is outside the current open month.
-- **upload_controller.js** — Reusable CSV upload/import controller. Workflow: download template → upload CSV → validation grid with inline editing → batch import via existing API create endpoints. Used on all 9 data screens (admin only). Config passed via HTML data attributes (fields, lookups, API URL).
+- **upload_controller.js** — Reusable CSV upload/import controller. Workflow: download template → upload CSV → validation grid with inline editing → batch import via existing API create endpoints. Used on all 9 data screens (admin only). Config passed via HTML data attributes (fields, lookups, API URL). Template download supports 3 formats: CSV, Excel (XML-based XLS with styling), and Apple Numbers (CSV with UTF-8 BOM). Format selection persisted in localStorage. Google Sheets (TSV + opens sheets.google.com) also coded but not yet exposed in UI.
 - **pricing_controller.js** — Billing toggle (monthly/annual) on the pricing page. Dynamically updates price displays and savings badges for Paid ($3.99/mo or $25/year) and Advanced ($5.99/mo or $35/year) tiers. Free tier always $0.
 - **income_frequency_masters_controller.js** — CRUD with inline editing, active toggle, sort_order editing (admin-only). Delete action checks server-side in-use status (via /can_delete endpoint) — blocks with "Can't Delete" modal if frequency is referenced by any user, otherwise shows standard delete-confirm modal. Active toggle is the sole activation control (no Deactivate/Reactivate buttons). UI text renamed from "Income Entries" to "Deposits" throughout.
 - **income_user_frequencies_controller.js** — use_flag toggle list with "View All" filter toggle (OFF = show only enabled frequencies, ON = show all master frequencies; purely a view filter, no bulk API call)
@@ -243,27 +243,28 @@ All work items are managed via Google Drive at **G:\My Drive\ExpenseTracker** us
 - **Ready for QA** — completed items awaiting user verification
 
 ### When I say "Lets Work"
-1. Navigate to **G:\My Drive\ExpenseTracker\Open Items**
-2. Pick up to **5 items** (text files or feature folders) to work on
-3. For each item:
+1. **Launch WorkLauncher** — Run: `powershell -Command "Start-ScheduledTask -TaskName 'WorkLauncher'"`
+2. Navigate to **G:\My Drive\ExpenseTracker\Open Items**
+3. Pick up to **5 items** (text files or feature folders) to work on
+4. For each item:
    a. **Move** it from Open Items → **In Process**
    b. **Plan** the implementation
    c. **Build** the changes
    d. **Test locally** with Playwright against both **Safari** and **Chrome** browsers
    e. Repeat for the next item (up to 5 items before deploying)
-4. After processing up to 5 items, **deploy** to production:
+5. After processing up to 5 items, **deploy** to production:
    a. Set `QA_MODE = true` in `config/initializers/version.rb`
    b. Bump `APP_VERSION` and add changelog entry to `APP_ALL_VERSIONS`
    c. Update all documentation pages (database_schema, claude_prompt, etc.)
    d. Commit to GitHub, trigger Render deploy
    e. Run `node export_docs.js` to export ALL documentation pages to Google Drive and `C:\Projects\ExpenseTracker\documentation`
-5. **Test production** at https://djburrup.com/expensetracker with both accounts:
+6. **Test production** at https://djburrup.com/expensetracker with both accounts:
    - elijahburrup323@gmail.com / Eli624462!
    - djburrup@gmail.com / luckydjb
-6. Once all production tests pass:
+7. Once all production tests pass:
    a. Set `QA_MODE = false` in version.rb, commit and push
    b. **Move** all processed items from In Process → **Ready for QA**
-7. Go back to **Open Items** and grab the next batch — repeat
+8. Go back to **Open Items** and grab the next batch — repeat
 
 ### Bug text files
 - Process items that have **no status**, or are marked **NOT FIXED**, **FAILED**, or similar
@@ -309,7 +310,7 @@ After each deploy, run:
 
 ### Production Test Accounts
 - Primary: elijahburrup323@gmail.com / Eli624462!
-- Secondary: djburrup@gmail.com / (verify password — Eli624462! does NOT work for this account)
+- Secondary: djburrup@gmail.com / luckydjb
 
 ## Key Learnings & Gotchas
 

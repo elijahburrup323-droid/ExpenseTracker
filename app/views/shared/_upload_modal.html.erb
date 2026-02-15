@@ -39,7 +39,7 @@
           <div data-upload-phase="upload">
             <div class="space-y-4">
               <div>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">Download a template, fill in your data, then upload as CSV.</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">Download a template, fill in your data, then upload as CSV. Apple Numbers users: use File &gt; Export To &gt; CSV.</p>
 
                 <%# Format radio buttons %>
                 <div class="flex flex-wrap items-center gap-4 mb-3" data-upload-format-radios>
@@ -52,6 +52,11 @@
                     <input type="radio" name="template_format" value="excel" data-action="change->upload#formatChanged"
                            class="h-4 w-4 text-brand-600 border-gray-300 dark:border-gray-600 focus:ring-brand-500">
                     <span class="ml-1.5 text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">Excel</span>
+                  </label>
+                  <label class="inline-flex items-center cursor-pointer group">
+                    <input type="radio" name="template_format" value="numbers" data-action="change->upload#formatChanged"
+                           class="h-4 w-4 text-brand-600 border-gray-300 dark:border-gray-600 focus:ring-brand-500">
+                    <span class="ml-1.5 text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">Apple Numbers</span>
                   </label>
                 </div>
 
