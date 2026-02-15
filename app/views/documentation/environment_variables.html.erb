@@ -115,6 +115,11 @@
             <td class="px-4 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">Optional</span></td>
             <td class="px-4 py-2 text-gray-600 dark:text-gray-400">Log verbosity: debug, info, warn, error. Default: info</td>
           </tr>
+          <tr>
+            <td class="px-4 py-2 font-mono text-gray-900 dark:text-white">CI</td>
+            <td class="px-4 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">Optional</span></td>
+            <td class="px-4 py-2 text-gray-600 dark:text-gray-400">When present, triggers eager loading in test environment for CI/CD pipelines</td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -199,7 +204,7 @@
           <tr>
             <td class="px-4 py-2 font-mono text-gray-900 dark:text-white">SENDGRID_PASSWORD</td>
             <td class="px-4 py-2"><span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">SendGrid</span></td>
-            <td class="px-4 py-2 text-gray-600 dark:text-gray-400">SendGrid API key (starts with <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">SG.</code>). Used for SMTP email delivery.</td>
+            <td class="px-4 py-2 text-gray-600 dark:text-gray-400">SendGrid API key (starts with <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">SG.</code>). Used via SendGrid Web API (not SMTP &mdash; Render blocks outbound SMTP ports).</td>
           </tr>
           <tr>
             <td class="px-4 py-2 font-mono text-gray-900 dark:text-white">TWILIO_ACCOUNT_SID</td>

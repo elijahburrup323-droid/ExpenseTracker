@@ -1,8 +1,20 @@
-APP_VERSION = "1.2.2"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+APP_VERSION = "1.2.3"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.2.3",
+    changes: [
+      "Documentation: Updated all 8 documentation pages to match current system state",
+      "Database Schema: Added missing created_at/updated_at columns and indexes for income_frequency_masters and income_user_frequencies",
+      "Claude Prompt: Added Diagnostics page, transfer_masters and net_worth_populate Stimulus controllers, fixed admin sidebar listing",
+      "Architecture Overview: Added Transfers, Diagnostics, and Quotes to sidebar diagram; updated profile dropdown items",
+      "Database Visualization: Added 11 auxiliary tables section (transfers, snapshots, quotes, legal_pages, etc.)",
+      "Environment Variables: Added CI env var, corrected SendGrid description to Web API (not SMTP)",
+      "Deployment Runbook: Fixed script reference from export_docs.js to create_docx.js",
+    ]
+  },
   {
     version: "1.2.2",
     changes: [

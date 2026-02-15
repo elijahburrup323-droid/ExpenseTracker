@@ -14,6 +14,7 @@
     <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-blue-500"></span> Core User</div>
     <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-green-500"></span> Spending</div>
     <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-purple-500"></span> Income</div>
+    <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-orange-500"></span> Accounts</div>
     <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-yellow-500"></span> Authentication</div>
     <div class="flex items-center gap-1.5">
       <svg class="w-6 h-2"><line x1="0" y1="1" x2="24" y2="1" stroke="currentColor" stroke-width="2"/></svg> belongs_to
@@ -164,11 +165,65 @@
       <div><span class="font-mono text-gray-900 dark:text-white">User</span> has_many accounts, payments, spending_types, spending_categories</div>
       <div><span class="font-mono text-gray-900 dark:text-white">User</span> has_many income_recurrings, income_entries, income_user_frequencies</div>
       <div><span class="font-mono text-gray-900 dark:text-white">AccountType</span> has_many accounts</div>
-      <div><span class="font-mono text-gray-900 dark:text-white">Account</span> has_many payments, income_entries</div>
+      <div><span class="font-mono text-gray-900 dark:text-white">Account</span> has_many payments, income_entries, transfers_from, transfers_to, account_month_snapshots</div>
       <div><span class="font-mono text-gray-900 dark:text-white">SpendingType</span> has_many spending_categories</div>
       <div><span class="font-mono text-gray-900 dark:text-white">SpendingCategory</span> has_many payments</div>
       <div><span class="font-mono text-gray-900 dark:text-white">IncomeFrequencyMaster</span> has_many income_user_frequencies, income_recurrings</div>
       <div><span class="font-mono text-gray-900 dark:text-white">IncomeRecurring</span> has_many income_entries</div>
+      <div><span class="font-mono text-gray-900 dark:text-white">User</span> has_many transfer_masters, account_month_snapshots, dashboard_month_snapshots, net_worth_snapshots</div>
+      <div><span class="font-mono text-gray-900 dark:text-white">User</span> has_one open_month_master</div>
+    </div>
+  </div>
+
+  <%# Additional Tables (not shown in ERD above) %>
+  <div class="mt-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Additional Tables</h2>
+    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">These tables support system features but are not shown in the ERD above for clarity.</p>
+    <div class="grid sm:grid-cols-2 gap-3 text-sm">
+      <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+        <span class="font-mono font-semibold text-gray-900 dark:text-white">transfer_masters</span>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Account-to-account transfers with transactional balance updates</p>
+      </div>
+      <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+        <span class="font-mono font-semibold text-gray-900 dark:text-white">open_month_masters</span>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Controls month gating &mdash; one per user, tracks current open month and close/reopen state</p>
+      </div>
+      <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+        <span class="font-mono font-semibold text-gray-900 dark:text-white">account_month_snapshots</span>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Per-account beginning/ending balance snapshots generated on month close</p>
+      </div>
+      <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+        <span class="font-mono font-semibold text-gray-900 dark:text-white">dashboard_month_snapshots</span>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Aggregated monthly totals (spending, income, net worth) generated on month close</p>
+      </div>
+      <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+        <span class="font-mono font-semibold text-gray-900 dark:text-white">net_worth_snapshots</span>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Historical net worth data points for the dashboard chart</p>
+      </div>
+      <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+        <span class="font-mono font-semibold text-gray-900 dark:text-white">user_emails / user_phones</span>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Alternate contact info with verification codes, send counts, and lockout</p>
+      </div>
+      <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+        <span class="font-mono font-semibold text-gray-900 dark:text-white">phone_verifications</span>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">SMS verification codes for phone-based authentication</p>
+      </div>
+      <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+        <span class="font-mono font-semibold text-gray-900 dark:text-white">quotes</span>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">System-wide motivational quotes for sign-in and header display</p>
+      </div>
+      <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+        <span class="font-mono font-semibold text-gray-900 dark:text-white">legal_pages</span>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Privacy Policy and Terms of Service content (slug-based)</p>
+      </div>
+      <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+        <span class="font-mono font-semibold text-gray-900 dark:text-white">dbu_table_catalogs</span>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Admin Database Utility table metadata catalog</p>
+      </div>
+      <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+        <span class="font-mono font-semibold text-gray-900 dark:text-white">bug_reports</span>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Release notes and bug tracking entries grouped by date</p>
+      </div>
     </div>
   </div>
 </div>

@@ -458,8 +458,17 @@ phone_verifications
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">ordinal</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">integer</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">1st-4th occurrence (ordinal_weekday type)</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">sort_order</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">integer</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Display order</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">active</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">boolean</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">default: true</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Whether available for selection</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">created_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Record creation timestamp</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">updated_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Last update timestamp</td></tr>
         </tbody>
       </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5">
+        <li>(frequency_type)</li>
+        <li>(sort_order)</li>
+      </ul>
     </div>
   </div>
 
@@ -485,13 +494,15 @@ phone_verifications
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">frequency_master_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">&rarr; income_frequency_masters.id</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">use_flag</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">boolean</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">default: true</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Whether user has this frequency enabled</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">sort_order</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">integer</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">default: 0</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Display order</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">created_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Record creation timestamp</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">updated_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Last update timestamp</td></tr>
         </tbody>
       </table>
     </div>
     <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
       <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Indexes</p>
       <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5">
-        <li>(user_id, frequency_master_id) UNIQUE</li>
+        <li>(user_id, frequency_master_id) UNIQUE &mdash; idx_income_user_freq_unique</li>
         <li>(user_id)</li>
         <li>(frequency_master_id)</li>
       </ul>
