@@ -78,9 +78,11 @@ export default class extends Controller {
       this._defaultStartDate = urlStart || ""
       this._defaultEndDate = urlEnd || ""
     } else {
-      // No default dates — show ALL payments on page load so nothing "disappears"
-      this._defaultStartDate = ""
-      this._defaultEndDate = ""
+      // Default: first of current month through today
+      const now = new Date()
+      const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+      this._defaultStartDate = this._formatDateValue(firstOfMonth)
+      this._defaultEndDate = this._formatDateValue(now)
     }
   }
 

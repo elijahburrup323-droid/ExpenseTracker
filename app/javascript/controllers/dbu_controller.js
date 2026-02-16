@@ -49,6 +49,8 @@ export default class extends Controller {
     this.tabSchemaTarget.className = "whitespace-nowrap border-b-2 border-transparent py-3 px-1 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300"
     this.recordsPanelTarget.classList.remove("hidden")
     this.schemaPanelTarget.classList.add("hidden")
+    // Re-fetch tables if invalidated by Schema Inspector refresh
+    if (this.allTables.length === 0) this.fetchInitialData()
   }
 
   // ==================== SCHEMA INSPECTOR ====================
@@ -77,6 +79,9 @@ export default class extends Controller {
 
   refreshSchema() {
     this.expandedTables.clear()
+    // Also invalidate Record Browser cache so it re-fetches when user switches tab
+    this.allTables = []
+    this.filteredTables = []
     this.fetchSchema()
   }
 
@@ -121,6 +126,7 @@ export default class extends Controller {
     const d = this.schemaData
     const ts = new Date(d.refreshed_at).toLocaleString()
     this.schemaMetaTarget.innerHTML = `
+      <span><strong>Schema:</strong> public</span>
       <span><strong>Database:</strong> ${this._esc(d.database_name)}</span>
       <span><strong>Tables:</strong> ${d.table_count}</span>
       <span><strong>Last Refreshed:</strong> ${this._esc(ts)}</span>`

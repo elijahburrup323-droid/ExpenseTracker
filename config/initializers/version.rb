@@ -6,6 +6,13 @@ APP_ALL_VERSIONS = [
   {
     version: "1.2.6",
     changes: [
+      "Dashboard: All 6 cards now compute from transactions and update on month navigation (CM-3)",
+      "Dashboard: Accounts card (Card 2) shows computed balances-as-of for any selected month",
+      "Dashboard: Net Worth card (Card 3) updates value and chart when navigating months",
+      "Dashboard: Income & Spending card (Card 4) beginning/current balance computed from transactions, not static fields",
+      "Dashboard: New AccountBalanceService computes balance-as-of from beginning_balance + deposits - payments +/- transfers",
+      "DBU: Schema Inspector and Record Browser now share unified table descriptions and cross-tab refresh sync",
+      "Payments: Default date filter set to current month (first of month through today)",
       "Documentation: Updated all documentation pages to match current system state",
       "Database Schema: Added missing created_at/updated_at timestamps for income_recurrings and income_entries tables",
       "Deployment Runbook: Corrected deploy time from ~4 minutes to ~2 minutes",

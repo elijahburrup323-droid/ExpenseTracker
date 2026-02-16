@@ -4,7 +4,9 @@ export default class extends Controller {
   static targets = [
     "monthLabel", "prevBtn", "nextBtn",
     "card1Content", "card1Flipper", "card1Front", "card1Back", "card1BackContent",
-    "card2Flipper", "card4Content", "card5Content",
+    "card2Flipper", "card2FrontContent", "card2BackContent",
+    "card3Content",
+    "card4Content", "card5Content",
     "cardsGrid", "card2Wrapper", "card2ExpandBtn"
   ]
   static values = { apiUrl: String, openMonthUrl: String, month: Number, year: Number }
@@ -91,6 +93,8 @@ export default class extends Controller {
 
       // Re-render cards
       this._renderCard1(data.spending_overview)
+      this._renderCard2(data.accounts_overview)
+      this._renderCard3(data.net_worth_overview)
       this._renderCard4(data.income_spending)
       this._renderCard5(data.recent_activity)
     } catch (e) {
@@ -257,6 +261,165 @@ export default class extends Controller {
         this.card1BackContentTarget.innerHTML = html
       }
     }
+  }
+
+  // --- Card 2: Accounts ---
+
+  _renderCard2(data) {
+    if (!data) return
+    const colors = ["blue", "green", "purple", "amber", "sky", "red"]
+    const pieColorsHex = ["#3b82f6", "#22c55e", "#a855f7", "#f59e0b", "#0ea5e9", "#ef4444"]
+    const accounts = data.accounts || []
+    const total = data.total || 0
+
+    // Front: header + account list
+    if (this.hasCard2FrontContentTarget) {
+      let html = `
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Accounts</h2>
+          <span class="text-sm font-semibold text-gray-900 dark:text-white">Total: ${this._currency(total)}</span>
+        </div>
+        <ul class="space-y-3 flex-1">`
+      if (accounts.length === 0) {
+        html += `<li class="text-sm text-gray-400 dark:text-gray-500">No accounts yet.</li>`
+      } else {
+        accounts.forEach((a, i) => {
+          const c = colors[i % colors.length]
+          html += `
+            <li class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <span class="w-7 h-7 rounded-lg bg-${c}-100 dark:bg-${c}-900/30 flex items-center justify-center">
+                  <svg class="w-4 h-4 text-${c}-600 dark:text-${c}-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                  </svg>
+                </span>
+                <span class="text-sm text-gray-700 dark:text-gray-300">${this._esc(a.name)}</span>
+              </div>
+              <span class="text-sm font-semibold text-gray-900 dark:text-white">${this._currency(a.balance)}</span>
+            </li>`
+        })
+      }
+      html += `</ul>`
+      this.card2FrontContentTarget.innerHTML = html
+    }
+
+    // Back: header + pie chart + legend
+    if (this.hasCard2BackContentTarget) {
+      const sorted = [...accounts].sort((a, b) => b.balance - a.balance)
+      let html = `
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Accounts</h2>
+          <span class="text-sm font-semibold text-gray-900 dark:text-white">Total: ${this._currency(total)}</span>
+        </div>
+        <div class="flex-1 flex flex-col items-center justify-center overflow-hidden">`
+
+      if (total > 0 && sorted.length > 0) {
+        // Build pie chart SVG
+        const cx = 50, cy = 50, r = 45
+        let angle = -90.0
+        let paths = ""
+        sorted.forEach((a, i) => {
+          const pct = a.balance / total * 100
+          if (pct <= 0) return
+          const color = pieColorsHex[i % pieColorsHex.length]
+          const sweep = (pct / 100.0) * 360.0
+          const endA = angle + sweep
+          if (sweep >= 359.99) {
+            paths += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${color}"/>`
+          } else {
+            const sr = angle * Math.PI / 180
+            const er = endA * Math.PI / 180
+            const x1 = (cx + r * Math.cos(sr)).toFixed(2)
+            const y1 = (cy + r * Math.sin(sr)).toFixed(2)
+            const x2 = (cx + r * Math.cos(er)).toFixed(2)
+            const y2 = (cy + r * Math.sin(er)).toFixed(2)
+            const large = sweep > 180 ? 1 : 0
+            paths += `<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} Z" fill="${color}"/>`
+          }
+          angle = endA
+        })
+        html += `<svg viewBox="0 0 100 100" class="w-28 h-28 flex-shrink-0">${paths}</svg>`
+
+        // Legend
+        html += `<div class="mt-2 w-full space-y-1 overflow-y-auto" style="max-height: 5.5rem;">`
+        sorted.forEach((a, i) => {
+          const color = pieColorsHex[i % pieColorsHex.length]
+          const pct = total > 0 ? Math.round(a.balance / total * 100) : 0
+          html += `
+            <div class="flex items-center text-xs px-1">
+              <span class="w-2 h-2 rounded-full flex-shrink-0" style="background:${color}"></span>
+              <span class="text-gray-700 dark:text-gray-300 truncate ml-1.5">${this._esc(a.name)} &mdash; ${this._currency(a.balance)} &mdash; ${pct}%</span>
+            </div>`
+        })
+        html += `</div>`
+      } else {
+        html += `<p class="text-sm text-gray-400 dark:text-gray-500">No accounts to chart.</p>`
+      }
+      html += `</div>`
+      this.card2BackContentTarget.innerHTML = html
+    }
+  }
+
+  // --- Card 3: Net Worth ---
+
+  _renderCard3(data) {
+    if (!data || !this.hasCard3ContentTarget) return
+    const value = data.value || 0
+    const change = data.change || 0
+    const changePct = data.change_pct || 0
+    const snapshots = data.snapshots || []
+
+    let html = ""
+
+    // Value + change badge
+    html += `<div class="flex items-baseline space-x-2 mb-3">`
+    html += `<span class="text-2xl font-bold text-gray-900 dark:text-white">${this._currency(value)}</span>`
+    if (change >= 0) {
+      html += `<span class="text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded">+${this._currency(change)} (${changePct}%)</span>`
+    } else {
+      html += `<span class="text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 px-1.5 py-0.5 rounded">${this._currency(change)} (${changePct}%)</span>`
+    }
+    html += `</div>`
+
+    // Chart
+    if (snapshots.length === 0) {
+      html += `<div class="w-full h-20 flex-1 flex items-center justify-center"><p class="text-xs text-gray-400 dark:text-gray-500">No history yet</p></div>`
+    } else if (snapshots.length === 1) {
+      html += `<div class="w-full h-20 flex-1"><svg viewBox="0 0 200 60" class="w-full h-full" preserveAspectRatio="xMidYMid meet"><circle cx="100" cy="30" r="5" fill="#a855f7"/></svg></div>`
+      html += `<div class="flex justify-center text-[10px] text-gray-400 dark:text-gray-500 mt-1"><span>${this._esc(snapshots[0].label)}</span></div>`
+    } else {
+      const amounts = snapshots.map(s => s.amount)
+      const minVal = Math.min(...amounts)
+      const maxVal = Math.max(...amounts)
+      let range = maxVal - minVal
+      if (range === 0) range = 1
+      const padding = 5, chartH = 50, chartW = 190
+      const points = snapshots.map((s, i) => {
+        const x = padding + (i / (snapshots.length - 1)) * chartW
+        const y = padding + chartH - ((s.amount - minVal) / range * chartH)
+        return [x.toFixed(1), y.toFixed(1)]
+      })
+      const polylineStr = points.map(p => p.join(",")).join(" ")
+      const areaPath = `M${points[0][0]},${points[0][1]} ` +
+        points.slice(1).map(p => `L${p[0]},${p[1]}`).join(" ") +
+        ` L${points[points.length-1][0]},${padding + chartH} L${points[0][0]},${padding + chartH} Z`
+
+      html += `<div class="w-full h-20 flex-1"><svg viewBox="0 0 200 60" class="w-full h-full" preserveAspectRatio="none">`
+      html += `<defs><linearGradient id="netWorthGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#a855f7" stop-opacity="0.3"/><stop offset="100%" stop-color="#a855f7" stop-opacity="0"/></linearGradient></defs>`
+      html += `<path d="${areaPath}" fill="url(#netWorthGrad)"/>`
+      html += `<polyline points="${polylineStr}" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`
+      points.forEach(p => {
+        html += `<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="#a855f7"/>`
+      })
+      html += `</svg></div>`
+      html += `<div class="flex justify-between text-[10px] text-gray-400 dark:text-gray-500 mt-1">`
+      snapshots.forEach(s => { html += `<span>${this._esc(s.label)}</span>` })
+      html += `</div>`
+    }
+
+    html += `<p class="text-[10px] text-gray-400 dark:text-gray-500 mt-2 text-center">Your net worth chart will build automatically as more months are added.</p>`
+
+    this.card3ContentTarget.innerHTML = html
   }
 
   // --- Card 4: Income & Spending ---

@@ -98,12 +98,17 @@ module Api
         }
       end
 
+      # Merge descriptions from catalog (same source as /api/dbu/tables)
+      catalog_map = DbuTableCatalog.active.pluck(:table_name, :table_description).to_h
+
       tables = tables_result.map do |r|
+        tn = r["table_name"]
         {
-          table_name: r["table_name"],
+          table_name: tn,
           table_type: r["table_type"],
-          column_count: (cols_by_table[r["table_name"]] || []).length,
-          columns: cols_by_table[r["table_name"]] || []
+          table_description: catalog_map[tn] || tn.tr("_", " ").capitalize,
+          column_count: (cols_by_table[tn] || []).length,
+          columns: cols_by_table[tn] || []
         }
       end
 

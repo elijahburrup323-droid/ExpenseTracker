@@ -12,7 +12,6 @@ class DashboardController < ApplicationController
     # Card 1: Spending Overview (Tracking-Only mode)
     # Since bills_master does not exist, all users are in tracking-only mode.
     budget_accounts = @accounts.where(include_in_budget: true)
-    @budget_total = budget_accounts.sum(:balance)
     @spent_mtd = current_user.payments
                              .where(payment_date: @month_start...@month_end)
                              .sum(:amount)
@@ -42,8 +41,14 @@ class DashboardController < ApplicationController
       @net_worth_pct = @beginning_total != 0 ? ((@net_worth_change / @beginning_total) * 100).round(1) : 0
     end
 
-    # Card 4: Income & Spending — open-month scoped
-    @beginning_balance_total = budget_accounts.sum(:beginning_balance)
+    # Card 4: Income & Spending — computed balances
+    is_current_month = @month_start == Date.today.beginning_of_month
+    as_of_date = is_current_month ? Date.today : (@month_end - 1.day)
+    all_balances = AccountBalanceService.balances_as_of(current_user, as_of_date)
+    budget_ids = budget_accounts.pluck(:id)
+    beg_balances = AccountBalanceService.balances_as_of(current_user, @month_start - 1.day)
+    @beginning_balance_total = beg_balances.select { |id, _| budget_ids.include?(id) }.values.sum.to_f
+    @budget_total = all_balances.select { |id, _| budget_ids.include?(id) }.values.sum.to_f
     @current_month_payments = current_user.payments
                                           .where(account_id: budget_accounts.select(:id))
                                           .where(payment_date: @month_start...@month_end)
