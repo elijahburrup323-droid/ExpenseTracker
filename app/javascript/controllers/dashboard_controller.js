@@ -4,7 +4,7 @@ import { iconFor, escapeHtml } from "./shared/icon_catalog"
 export default class extends Controller {
   static targets = [
     "monthLabel", "prevBtn", "nextBtn",
-    "card1Content", "card1Flipper", "card1BackContent",
+    "card1Content", "card1Flipper", "card1Front", "card1Back", "card1BackContent",
     "card2Flipper", "card4Content", "card5Content",
     "cardsGrid", "card2Wrapper", "card2ExpandBtn"
   ]
@@ -119,12 +119,16 @@ export default class extends Controller {
   flipCard1() {
     if (this.hasCard1FlipperTarget) {
       this.card1FlipperTarget.style.transform = "rotateY(180deg)"
+      if (this.hasCard1FrontTarget) this.card1FrontTarget.style.pointerEvents = "none"
+      if (this.hasCard1BackTarget) this.card1BackTarget.style.pointerEvents = "auto"
     }
   }
 
   flipCard1Back() {
     if (this.hasCard1FlipperTarget) {
       this.card1FlipperTarget.style.transform = "rotateY(0deg)"
+      if (this.hasCard1FrontTarget) this.card1FrontTarget.style.pointerEvents = ""
+      if (this.hasCard1BackTarget) this.card1BackTarget.style.pointerEvents = "none"
     }
   }
 

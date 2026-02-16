@@ -13,7 +13,7 @@
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col" style="perspective: 1000px;" data-dashboard-target="card1Wrapper">
       <div class="relative flex-1" data-dashboard-target="card1Flipper" style="transform-style: preserve-3d; transition: transform 0.6s;">
         <%# === FRONT SIDE === %>
-        <div class="flex flex-col" style="backface-visibility: hidden;">
+        <div class="flex flex-col" data-dashboard-target="card1Front" style="backface-visibility: hidden;">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Spending Overview</h2>
             <div class="flex items-center space-x-2">
@@ -59,7 +59,7 @@
           </div>
         </div>
         <%# === BACK SIDE (Category Breakdown) === %>
-        <div class="absolute inset-0 flex flex-col" style="backface-visibility: hidden; transform: rotateY(180deg);">
+        <div class="absolute inset-0 flex flex-col" data-dashboard-target="card1Back" style="backface-visibility: hidden; transform: rotateY(180deg); pointer-events: none;">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Spending by Category</h2>
             <div class="flex items-center space-x-2">
