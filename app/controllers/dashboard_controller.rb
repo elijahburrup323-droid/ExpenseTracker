@@ -17,6 +17,16 @@ class DashboardController < ApplicationController
                              .where(payment_date: @month_start...@month_end)
                              .sum(:amount)
 
+    # Card 1 back: Spending by Category
+    spent_total = @spent_mtd.to_f
+    @spending_by_category = current_user.payments
+      .where(payment_date: @month_start...@month_end)
+      .joins(:spending_category)
+      .group("spending_categories.id", "spending_categories.name", "spending_categories.icon_key", "spending_categories.color_key")
+      .order(Arel.sql("SUM(payments.amount) DESC"))
+      .pluck(Arel.sql("spending_categories.id, spending_categories.name, spending_categories.icon_key, spending_categories.color_key, SUM(payments.amount)"))
+      .map { |id, name, icon_key, color_key, total| { name: name, icon_key: icon_key, color_key: color_key, amount: total.to_f, pct: spent_total > 0 ? (total.to_f / spent_total * 100).round(1) : 0.0 } }
+
     # Card 2: Accounts — all accounts (passed as @accounts)
 
     # Card 3: Net Worth — sum of all account balances + historical snapshots

@@ -8,40 +8,100 @@
   <%# ===== 6-CARD GRID (3 x 2, equal size) ===== %>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6" data-dashboard-target="cardsGrid">
 
-    <%# ===== CARD 1: Spending Overview (Tracking-Only Mode) ===== %>
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Spending Overview</h2>
-        <div class="flex items-center space-x-2">
-          <button type="button" data-action="click->dashboard#prevMonth" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-          </button>
-          <span class="text-xs text-gray-500 dark:text-gray-400 min-w-[5.5rem] text-center" data-dashboard-target="monthLabel"><%= Date.new(@open_month.current_year, @open_month.current_month, 1).strftime("%B %Y") %></span>
-          <button type="button" data-action="click->dashboard#nextMonth" data-dashboard-target="nextBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-          </button>
-        </div>
-      </div>
-      <div data-dashboard-target="card1Content">
-        <div class="flex items-center space-x-4 flex-1">
-          <%# Donut chart SVG — single-value ring for tracking-only mode %>
-          <% spent_val = @spent_mtd.to_f %>
-          <div class="relative w-32 h-32 flex-shrink-0">
-            <svg viewBox="0 0 36 36" class="w-full h-full">
-              <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#e5e7eb" stroke-width="3" class="dark:opacity-30"/>
-              <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#a855f7" stroke-width="3"
-                      stroke-dasharray="100 0" stroke-dashoffset="25" stroke-linecap="round"/>
-            </svg>
-            <div class="absolute inset-0 flex flex-col items-center justify-center">
-              <span class="text-xs text-gray-500 dark:text-gray-400">Spent</span>
-              <span class="text-sm font-bold text-gray-900 dark:text-white"><%= number_to_currency(spent_val, precision: 2) %></span>
+    <%# ===== CARD 1: Spending Overview (Flip Card) ===== %>
+    <% spent_val = @spent_mtd.to_f %>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col" style="perspective: 1000px;" data-dashboard-target="card1Wrapper">
+      <div class="relative flex-1" data-dashboard-target="card1Flipper" style="transform-style: preserve-3d; transition: transform 0.6s;">
+        <%# === FRONT SIDE === %>
+        <div class="flex flex-col" style="backface-visibility: hidden;">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Spending Overview</h2>
+            <div class="flex items-center space-x-2">
+              <button type="button" data-action="click->dashboard#prevMonth" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+              </button>
+              <span class="text-xs text-gray-500 dark:text-gray-400 min-w-[5.5rem] text-center" data-dashboard-target="monthLabel"><%= Date.new(@open_month.current_year, @open_month.current_month, 1).strftime("%B %Y") %></span>
+              <button type="button" data-action="click->dashboard#nextMonth" data-dashboard-target="nextBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+              </button>
             </div>
           </div>
-          <div>
-            <p class="text-lg font-semibold text-gray-800 dark:text-gray-200"><%= number_to_currency(spent_val, precision: 2) %></p>
-            <p class="text-sm text-gray-500 dark:text-gray-400">spent this month</p>
+          <div data-dashboard-target="card1Content">
+            <div class="flex items-center space-x-4 flex-1">
+              <div class="relative w-32 h-32 flex-shrink-0">
+                <svg viewBox="0 0 36 36" class="w-full h-full">
+                  <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#e5e7eb" stroke-width="3" class="dark:opacity-30"/>
+                  <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#a855f7" stroke-width="3"
+                          stroke-dasharray="100 0" stroke-dashoffset="25" stroke-linecap="round"/>
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                  <span class="text-xs text-gray-500 dark:text-gray-400">Spent</span>
+                  <span class="text-sm font-bold text-gray-900 dark:text-white"><%= number_to_currency(spent_val, precision: 2) %></span>
+                </div>
+              </div>
+              <div>
+                <p class="text-lg font-semibold text-gray-800 dark:text-gray-200"><%= number_to_currency(spent_val, precision: 2) %></p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">spent this month</p>
+              </div>
+            </div>
+          </div>
+          <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+            <button type="button" class="inline-flex items-center justify-center text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300" style="min-width:44px; min-height:44px;" data-action="click->dashboard#flipCard1" aria-label="View spending by category">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/>
+              </svg>
+            </button>
             <%= link_to payments_path(start_date: @month_start.to_s, end_date: (@month_end - 1).to_s),
-                  class: "text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium mt-2 inline-block" do %>
+                  class: "text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium" do %>
+              View Details &rsaquo;
+            <% end %>
+          </div>
+        </div>
+        <%# === BACK SIDE (Category Breakdown) === %>
+        <div class="absolute inset-0 flex flex-col" style="backface-visibility: hidden; transform: rotateY(180deg);">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Spending by Category</h2>
+            <div class="flex items-center space-x-2">
+              <button type="button" data-action="click->dashboard#prevMonth" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+              </button>
+              <span class="text-xs text-gray-500 dark:text-gray-400 min-w-[5.5rem] text-center" data-dashboard-target="monthLabel"><%= Date.new(@open_month.current_year, @open_month.current_month, 1).strftime("%B %Y") %></span>
+              <button type="button" data-action="click->dashboard#nextMonth" data-dashboard-target="nextBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="flex-1 overflow-y-auto" data-dashboard-target="card1BackContent">
+            <% if @spending_by_category.any? %>
+              <div class="space-y-2">
+                <% color_map = { "blue" => "#3b82f6", "green" => "#22c55e", "gold" => "#eab308", "red" => "#ef4444", "purple" => "#a855f7", "pink" => "#ec4899", "indigo" => "#6366f1", "teal" => "#14b8a6", "orange" => "#f97316", "gray" => "#6b7280" } %>
+                <% @spending_by_category.each do |cat| %>
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2 min-w-0">
+                      <span class="w-2 h-2 rounded-full flex-shrink-0" style="background: <%= color_map[cat[:color_key]] || '#6b7280' %>"></span>
+                      <span class="text-sm text-gray-700 dark:text-gray-300 truncate"><%= cat[:name] %></span>
+                    </div>
+                    <div class="flex items-center space-x-3 flex-shrink-0 ml-2">
+                      <span class="text-sm font-semibold text-gray-900 dark:text-white"><%= number_to_currency(cat[:amount]) %></span>
+                      <span class="text-xs text-gray-500 dark:text-gray-400 w-12 text-right"><%= cat[:pct] %>%</span>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+            <% else %>
+              <p class="text-sm text-gray-400 dark:text-gray-500">No spending yet for this month.</p>
+            <% end %>
+          </div>
+          <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+            <button type="button" class="inline-flex items-center justify-center text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300" style="min-width:44px; min-height:44px;" data-action="click->dashboard#flipCard1Back" aria-label="Back to spending overview">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/>
+              </svg>
+            </button>
+            <%= link_to payments_path(start_date: @month_start.to_s, end_date: (@month_end - 1).to_s),
+                  class: "text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium" do %>
               View Details &rsaquo;
             <% end %>
           </div>

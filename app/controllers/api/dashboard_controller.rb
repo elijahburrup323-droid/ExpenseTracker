@@ -18,6 +18,15 @@ module Api
                           .where(payment_date: month_start...month_end)
                           .sum(:amount).to_f
 
+      # Card 1 back: Spending by Category
+      by_category = current_user.payments
+        .where(payment_date: month_start...month_end)
+        .joins(:spending_category)
+        .group("spending_categories.id", "spending_categories.name", "spending_categories.icon_key", "spending_categories.color_key")
+        .order(Arel.sql("SUM(payments.amount) DESC"))
+        .pluck(Arel.sql("spending_categories.id, spending_categories.name, spending_categories.icon_key, spending_categories.color_key, SUM(payments.amount)"))
+        .map { |id, name, icon_key, color_key, total| { name: name, icon_key: icon_key, color_key: color_key, amount: total.to_f, pct: spent > 0 ? (total.to_f / spent * 100).round(1) : 0.0 } }
+
       # Card 4: Income & Spending
       beginning_balance = budget_accounts.sum(:beginning_balance).to_f
       expenses = current_user.payments
@@ -49,7 +58,7 @@ module Api
         year: year,
         month_label: month_start.strftime("%B %Y"),
         can_go_forward: can_go_forward,
-        spending_overview: { spent: spent },
+        spending_overview: { spent: spent, categories: by_category },
         income_spending: {
           beginning_balance: beginning_balance,
           income: income,

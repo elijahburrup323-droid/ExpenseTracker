@@ -1,9 +1,11 @@
 import { Controller } from "@hotwired/stimulus"
+import { iconFor, escapeHtml } from "./shared/icon_catalog"
 
 export default class extends Controller {
   static targets = [
     "monthLabel", "prevBtn", "nextBtn",
-    "card1Content", "card2Flipper", "card4Content", "card5Content",
+    "card1Content", "card1Flipper", "card1BackContent",
+    "card2Flipper", "card4Content", "card5Content",
     "cardsGrid", "card2Wrapper", "card2ExpandBtn"
   ]
   static values = { apiUrl: String, openMonthUrl: String, month: Number, year: Number }
@@ -112,6 +114,20 @@ export default class extends Controller {
     })
   }
 
+  // --- Card 1: Flip ---
+
+  flipCard1() {
+    if (this.hasCard1FlipperTarget) {
+      this.card1FlipperTarget.style.transform = "rotateY(180deg)"
+    }
+  }
+
+  flipCard1Back() {
+    if (this.hasCard1FlipperTarget) {
+      this.card1FlipperTarget.style.transform = "rotateY(0deg)"
+    }
+  }
+
   // --- Card 2: Flip ---
 
   flipCard2() {
@@ -192,7 +208,7 @@ export default class extends Controller {
 
   _renderCard1(data) {
     const spent = this._currency(data.spent)
-    const paymentsUrl = data.payments_url || "/expensetracker/payments"
+    // Front side content
     this.card1ContentTarget.innerHTML = `
       <div class="flex items-center space-x-4 flex-1">
         <div class="relative w-32 h-32 flex-shrink-0">
@@ -209,12 +225,35 @@ export default class extends Controller {
         <div>
           <p class="text-lg font-semibold text-gray-800 dark:text-gray-200">${spent}</p>
           <p class="text-sm text-gray-500 dark:text-gray-400">spent this month</p>
-          <a href="${paymentsUrl}?start_date=${this.currentYear}-${String(this.currentMonth).padStart(2,'0')}-01&end_date=${this.currentYear}-${String(this.currentMonth).padStart(2,'0')}-${new Date(this.currentYear, this.currentMonth, 0).getDate()}"
-             class="text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium mt-2 inline-block">
-            View Details &rsaquo;
-          </a>
         </div>
       </div>`
+
+    // Back side content (category breakdown)
+    if (this.hasCard1BackContentTarget) {
+      const categories = data.categories || []
+      if (categories.length === 0) {
+        this.card1BackContentTarget.innerHTML = `<p class="text-sm text-gray-400 dark:text-gray-500">No spending yet for this month.</p>`
+      } else {
+        const colorMap = { blue: "#3b82f6", green: "#22c55e", gold: "#eab308", red: "#ef4444", purple: "#a855f7", pink: "#ec4899", indigo: "#6366f1", teal: "#14b8a6", orange: "#f97316", gray: "#6b7280" }
+        let html = '<div class="space-y-2">'
+        for (const cat of categories) {
+          const dotColor = colorMap[cat.color_key] || "#6b7280"
+          html += `
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2 min-w-0">
+                <span class="w-2 h-2 rounded-full flex-shrink-0" style="background: ${dotColor}"></span>
+                <span class="text-sm text-gray-700 dark:text-gray-300 truncate">${this._esc(cat.name)}</span>
+              </div>
+              <div class="flex items-center space-x-3 flex-shrink-0 ml-2">
+                <span class="text-sm font-semibold text-gray-900 dark:text-white">${this._currency(cat.amount)}</span>
+                <span class="text-xs text-gray-500 dark:text-gray-400 w-12 text-right">${cat.pct}%</span>
+              </div>
+            </div>`
+        }
+        html += '</div>'
+        this.card1BackContentTarget.innerHTML = html
+      }
+    }
   }
 
   // --- Card 4: Income & Spending ---

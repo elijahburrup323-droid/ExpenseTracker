@@ -1,8 +1,16 @@
-APP_VERSION = "1.2.4"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+APP_VERSION = "1.2.5"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.2.5",
+    changes: [
+      "Dashboard: Added Spending Overview card (Card 1) flip feature — pie-chart icon in lower-left flips to show Spending by Category breakdown (CM-2)",
+      "Dashboard: Category breakdown shows categories sorted by amount DESC with color dot, name, amount, and percentage of total spending",
+      "Dashboard: Category breakdown updates via AJAX when navigating months, matching existing Card 2 flip pattern",
+    ]
+  },
   {
     version: "1.2.4",
     changes: [
