@@ -1,5 +1,4 @@
 import { Controller } from "@hotwired/stimulus"
-import { iconFor, escapeHtml } from "./shared/icon_catalog"
 
 export default class extends Controller {
   static targets = [
