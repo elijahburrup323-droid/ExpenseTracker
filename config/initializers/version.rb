@@ -1,5 +1,5 @@
 APP_VERSION = "1.2.4"
-QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
+QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
