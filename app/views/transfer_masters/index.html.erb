@@ -13,7 +13,6 @@
       <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Manage the account transfers you've made between accounts</p>
     </div>
     <div class="flex items-center space-x-2">
-      <% if current_user.budgethq_agent? %>
       <%= render "shared/upload_modal",
             entity: "transfer_master",
             api_url: api_transfer_masters_path,
@@ -26,7 +25,6 @@
             ].to_json,
             lookups_json: { from_account: api_accounts_path, to_account: api_accounts_path }.to_json,
             csrf_token: form_authenticity_token %>
-      <% end %>
       <button type="button"
               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
               data-transfer-masters-target="addButton"

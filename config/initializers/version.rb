@@ -18,6 +18,7 @@ APP_ALL_VERSIONS = [
       "Deployment Runbook: Corrected deploy time from ~4 minutes to ~2 minutes",
       "Database Visualization: Fixed legend color for Accounts (green-600 to match diagram)",
       "Test Coverage: Expanded Screen Coverage Matrix from 7 to 15 screens with full test file inventory",
+      "Upload: CSV upload/import feature now available to all user accounts (not just admin)",
     ]
   },
   {

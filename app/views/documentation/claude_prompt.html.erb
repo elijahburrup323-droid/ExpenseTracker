@@ -31,11 +31,13 @@
 - Deployed on Render.com at https://djburrup.com/expensetracker (relative_url_root = "/expensetracker")
 - Email delivery via SendGrid Web API (sendgrid-ruby gem) — Render blocks outbound SMTP ports, so we use the HTTP API instead of SMTP. API key stored in SENDGRID_PASSWORD env var.
 - SMS delivery via Twilio REST API (twilio-ruby gem) — phone number auto-normalized to E.164 format
+- Current Version: 1.2.6 (QA_MODE controlled via config/initializers/version.rb)
 
 ## Project Location
 - Local path: C:/Projects/ExpenseTracker
 - GitHub: https://github.com/elijahburrup323-droid/ExpenseTracker (main branch)
 - Windows development environment (MINGW64)
+- Render Service ID: srv-d61stbali9vc739cgvfg, Owner: tea-d61avmchg0os73cjbcb0
 
 ## Architecture Overview
 The app uses a sidebar navigation layout. All CRUD screens are single-page with Stimulus controllers that call JSON API endpoints. There are NO Turbo Frames or Turbo Streams used for data — all data operations go through fetch() calls to /api/* endpoints.
@@ -194,6 +196,12 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 - **net_worth_populate_controller.js** — Admin-only utility on Dashboard Card 3 (Net Worth). Dropdown to choose months back to populate, POSTs to /api/net_worth_snapshots/populate to generate historical net worth test data, auto-reloads the page after success.
 - **month_actions_controller.js** — Stimulus controller for User Menu month actions. Provides "Soft Close Month" (generates account_month_snapshots + dashboard_month_snapshots, then advances the open month to the next month) and "Open Soft Close" (reopens the previous month if no transactions exist in the current month). Both actions use confirmation modals defined in the application layout before executing.
 
+### Icon Catalog (app/javascript/controllers/shared/icon_catalog.js)
+- Contains 50 budget-related SVG icons (grocery, dining, gas, utilities, etc.) and 12 color options
+- Exports: `iconFor(key)`, `escapeHtml(str)`, `escapeAttr(str)`, `ICONS`, `COLORS`
+- SpendingCategory, SpendingType, AccountType, Account all have `icon_key` and `color_key` fields
+- IMPORTANT: Other controllers import using importmap path `"controllers/shared/icon_catalog"`, NOT relative `"./shared/icon_catalog"`. Using relative path breaks importmap resolution and kills the importing controller entirely.
+
 ## Seeding & Initialization
 - db/seeds.rb creates test user (test@example.com / password123) and 40+ IncomeFrequencyMaster records
 - On first visit, each screen auto-seeds defaults per user (spending types, categories, account types, frequencies)
@@ -220,6 +228,8 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 18. **Deposits rename** — "Income Entries" renamed to "Deposits" and "Recurring Income" to "Recurring Deposits" across sidebar, page headers, buttons, info text, and documentation.
 19. **Deposits deleted account display** — Deposits API preloads accounts with unscoped queries so deleted account names still display (read-only) instead of blank.
 20. **Deposits column sorting** — Date, Account, Source, Description, and Amount columns are click-to-sort with ASC/DESC toggle and arrow indicators.
+21. **CSS 3D flip cards** — Back side div with `absolute inset-0` intercepts pointer events. Fix: `pointer-events: none` on flipper container and inactive side, `auto` on active side. Toggle in JS on flip.
+22. **AccountBalanceService** — Computes balance-as-of from beginning_balance + deposits - payments +/- transfers for any selected month. Used by Dashboard Cards 2, 3, and 4 for month-aware computed balances.
 21. **Settings page parity** — Email and Phone settings sections have identical structure: editable primary field (email_field / telephone_field), border-separated alternate section with Stimulus-managed add/verify/remove, and verified/unverified badges. Primary phone changes do not require current password. Two-Factor toggle is disabled with red warning message when no verified phone exists (primary or alternate).
 22. **Sticky page subheaders (REQUIRED for all screens)** — Every CRUD/index screen must have a sticky page header containing the h1 title, subtitle, and action buttons (Add, Generate Data, Export, etc.). The header stays pinned below the global "Hello" bar when scrolling so buttons are always accessible. Pattern: `&lt;div class="sticky top-14 z-20 bg-gray-50 dark:bg-gray-900 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-2 border-b border-gray-200 dark:border-gray-700 shadow-sm"&gt;` wrapping a `flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3` inner div. IMPORTANT: Parent containers must NOT have overflow-x-hidden as it breaks position:sticky in Safari.
 23. **Open month has_data tracking** — Creating a payment, deposit (income entry), or transfer automatically sets has_data=true on the open_month_master for the current month (along with first_data_at and first_data_source if this is the first transaction). This flag is used to guard against reopening a prior month when the current month already has data.
@@ -237,7 +247,15 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 - Flash messages are positioned fixed top-right and auto-dismiss after 5s.
 - **Version system** — APP_VERSION in config/initializers/version.rb. Displayed in footer. "What's New" popup shows changelog on first visit after deploy (session-tracked). APP_VERSIONS array holds last 5 versions with change lists.
 - **QA Mode banner** — QA_MODE flag in version.rb. When true, a red banner "NEW RELEASE QA MODE — vX.X.X" appears at the top of every page. Set to true before deploying for production QA testing, set to false after moving specs to Ready for QA.
-- **.gdoc file reading** — Google Drive for Desktop .gdoc files are cloud shortcuts that cannot be read via standard file I/O. Use `read_gdoc.py` (Python script in project root) which looks up the doc ID from DriveFS's metadata_sqlite_db and fetches content via Google Docs API with OAuth. Requires one-time setup: gdoc_credentials.json from Google Cloud Console. .docx files are read via Node.js JSZip (extract word/document.xml, strip XML tags).
+- **Rails runner STDOUT** — Always use STDOUT.sync=true at top of runner scripts. Use file-based scripts (tmp/script.rb) for complex commands to avoid bash escaping issues. Avoid `!` in inline ruby strings.
+- **Release notes creation** — BugReport.create!(screen_name:, description:, processed_date: Date.today) via file-based Rails runner script
+- **Render deploy** — Push to main triggers auto-deploy. Wait ~90-120 seconds for completion.
+- **CRITICAL Render API note** — PUT /v1/services/{id}/env-vars REPLACES ALL env vars. Always include ALL existing vars when adding new ones.
+- **Required Render env vars** — DATABASE_URL, RAILS_ENV, RAILS_MASTER_KEY, WEB_CONCURRENCY, RAILS_RELATIVE_URL_ROOT, RAILS_SERVE_STATIC_FILES
+- **Importmap caveat** — Empty {"imports":{}} in production means RAILS_SERVE_STATIC_FILES is not set
+- **button_to creates mini-forms** — These have submit buttons that broad selectors like `button[type=submit]` will match before the main form. Be specific with selectors.
+- **Flash messages** — Positioned fixed top-right, can block navbar elements. Wait for auto-dismiss in tests or dismiss programmatically.
+- **.gdoc file reading** — Google Drive for Desktop .gdoc files are cloud shortcuts that cannot be read via standard file I/O. Use `gdoc_reader.py` script which fetches content via Google Docs API with OAuth. .docx files are read via Node.js JSZip (extract word/document.xml, strip XML tags).
 
 ## Task Intake: "Lets Work" Workflow
 
@@ -256,17 +274,29 @@ All work items are managed via Google Drive at **G:\My Drive\ExpenseTracker** us
    a. **Move** it from Open Items → **In Process**
    b. **Plan** the implementation
    c. **Build** the changes
-   d. **Test locally** with Playwright against both **Safari** and **Chrome** browsers
-   e. Repeat for the next item (up to 5 items before deploying)
+   d. **Pre-commit sanity checks** (before every git commit):
+      - Verify no broken imports — every `import ... from "X"` must reference a file that exists on disk
+      - Run `git status` and confirm no tracked files were accidentally deleted
+      - Check that the app still boots locally without JS console errors
+   e. **Test locally** with Playwright against both **Safari** and **Chrome** browsers
+   f. Repeat for the next item (up to 5 items before deploying)
 5. After processing up to 5 items, **deploy** to production:
    a. Set `QA_MODE = true` in `config/initializers/version.rb`
    b. Bump `APP_VERSION` and add changelog entry to `APP_ALL_VERSIONS`
    c. Update all documentation pages (database_schema, claude_prompt, etc.)
    d. Commit to GitHub, trigger Render deploy
    e. Run `node create_docx.js` to export ALL documentation pages to Google Drive and `C:\Projects\ExpenseTracker\documentation`
-6. **Test production** at https://djburrup.com/expensetracker with both accounts:
-   - elijahburrup323@gmail.com / Eli624462!
-   - djburrup@gmail.com / luckydjb
+6. **Post-deploy verification** (BEFORE moving to Ready for QA):
+   a. Sign in with **both** production accounts and verify login succeeds:
+      - elijahburrup323@gmail.com / Eli624462!
+      - djburrup@gmail.com / luckydjb
+   b. **Data presence check**: After login, verify existing data is visible (not blank screens). Confirm:
+      - Dashboard loads and shows spending data
+      - Navigation menus and profile dropdown are functional
+      - At least one data page (Payments, Accounts, etc.) shows existing records
+   c. **JavaScript health check**: Confirm NO JavaScript import errors or 404s on asset files
+   d. **Regression check**: Verify 2-3 pages/features unrelated to the current change still work
+   e. If ANY of the above fail: do NOT move to Ready for QA. Diagnose, fix, re-deploy, re-verify.
 7. Once all production tests pass:
    a. Set `QA_MODE = false` in version.rb, commit and push
    b. **Move** all processed items from In Process → **Ready for QA**
