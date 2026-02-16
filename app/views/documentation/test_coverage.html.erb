@@ -110,18 +110,26 @@
         <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
           <%
             screens = {
-              "Payments" => { local: ["payments.spec.js", "payments-add-modal.spec.js", "payments-cm2-layout.spec.js", "payments-csv-export.spec.js", "payments-cursor-flow.spec.js"],
-                              prod: ["prod-add-modal.spec.js", "prod-cm2-layout.spec.js", "prod-csv-export.spec.js"] },
-              "Dashboard" => { local: ["dashboard-tracking-only.spec.js", "net-worth-dashboard.spec.js"],
-                                prod: ["prod-net-worth.spec.js"] },
+              "Payments" => { local: ["payments.spec.js", "payments-add-modal.spec.js", "payments-cm2-layout.spec.js", "payments-csv-export.spec.js", "payments-cursor-flow.spec.js", "payments-responsive-filters.spec.js", "payments-filter-grid.spec.js", "payments-modal-date-fix.spec.js", "payments-sticky-subheader.spec.js", "payment-add-refresh.spec.js", "payment-delete-balance.spec.js"],
+                              prod: ["prod-add-modal.spec.js", "prod-cm2-layout.spec.js", "prod-csv-export.spec.js", "prod-responsive-filters.spec.js", "prod-payments-filter-grid.spec.js", "prod-payments-modal-date.spec.js", "prod-sticky-subheader.spec.js", "prod-payment-refresh.spec.js", "prod-payment-delete-balance.spec.js", "prod-cm1-payments.spec.js"] },
+              "Dashboard" => { local: ["dashboard-tracking-only.spec.js", "net-worth-dashboard.spec.js", "dashboard-updates.spec.js", "dashboard-preserve-style.spec.js", "dashboard-card2-flip.spec.js", "dashboard-header.spec.js", "dashboard-card2-pie-labels.spec.js", "dashboard-card1-flip.spec.js"],
+                                prod: ["prod-net-worth.spec.js", "prod-dashboard-updates.spec.js", "prod-dashboard-style.spec.js", "prod-dashboard-card2-flip.spec.js", "prod-card2-pie-labels.spec.js", "prod-dashboard-header.spec.js", "prod-cm1-dashboard-month-scope.spec.js", "prod-cm2-card1-flip.spec.js"] },
               "Settings" => { local: ["profile_settings.spec.js", "settings-phone-parity.spec.js", "settings-modifications.spec.js", "email-phone-verification.spec.js"],
                               prod: ["prod-phone-parity.spec.js"] },
               "Categories" => { local: ["spending_categories.spec.js"], prod: [] },
-              "Layout / Nav" => { local: ["footer.spec.js", "dark_mode_review.spec.js", "sticky-header.spec.js", "stacked-sticky-headers.spec.js"],
+              "Transfers" => { local: ["transfers-local.spec.js"], prod: ["prod-transfers.spec.js"] },
+              "Account Types" => { local: ["account-types-use-flag.spec.js"], prod: ["prod-account-types-use-flag.spec.js"] },
+              "Open Month" => { local: ["open-month-master.spec.js"], prod: ["prod-open-month.spec.js"] },
+              "Frequencies" => { local: ["frequencies-view-all.spec.js", "freq-master-delete.spec.js"], prod: ["prod-frequencies.spec.js"] },
+              "DBU" => { local: ["dbu-schema-inspector.spec.js", "dbu-record-browser-parity.spec.js", "dbu-update.spec.js", "dbu-add-record.spec.js"],
+                         prod: ["prod-dbu-schema.spec.js", "prod-dbu-record-browser.spec.js", "prod-dbu-update.spec.js", "prod-dbu-add-record.spec.js"] },
+              "Quotes" => { local: ["quotes.spec.js", "quotes-update.spec.js"], prod: ["prod-quotes.spec.js", "prod-quotes-update.spec.js"] },
+              "Documentation" => { local: ["documentation-pages.spec.js"], prod: ["prod-documentation-pages.spec.js"] },
+              "Legal Pages" => { local: ["privacy-policy.spec.js", "privacy-policy-redesign.spec.js"], prod: ["prod-privacy-policy.spec.js"] },
+              "Layout / Nav" => { local: ["footer.spec.js", "dark_mode_review.spec.js", "sticky-header.spec.js", "stacked-sticky-headers.spec.js", "sidebar-toggle-position.spec.js"],
                                   prod: [] },
-              "Legal Pages" => { local: ["privacy-policy.spec.js"], prod: ["prod-privacy-policy.spec.js"] },
-              "Multi-Screen" => { local: ["multi-screen-updates.spec.js", "comprehensive.spec.js", "localhost-review.spec.js"],
-                                  prod: ["production-regression.spec.js"] }
+              "Multi-Screen / Releases" => { local: ["multi-screen-updates.spec.js", "comprehensive.spec.js", "localhost-review.spec.js", "generate_data_button.spec.js", "ui-audit-v116.spec.js", "local-apple-numbers-upload.spec.js"],
+                                  prod: ["production-regression.spec.js", "prod-v116-release.spec.js", "prod-v118-cm3-7.spec.js", "prod-v119-cm8.spec.js", "prod-v120-batch3.spec.js", "prod-v121-batch1.spec.js", "prod-v122-apple-numbers.spec.js", "prod-manual-release.spec.js"] }
             }
           %>
           <% screens.each do |screen, files| %>

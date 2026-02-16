@@ -1,8 +1,18 @@
-APP_VERSION = "1.2.5"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+APP_VERSION = "1.2.6"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.2.6",
+    changes: [
+      "Documentation: Updated all documentation pages to match current system state",
+      "Database Schema: Added missing created_at/updated_at timestamps for income_recurrings and income_entries tables",
+      "Deployment Runbook: Corrected deploy time from ~4 minutes to ~2 minutes",
+      "Database Visualization: Fixed legend color for Accounts (green-600 to match diagram)",
+      "Test Coverage: Expanded Screen Coverage Matrix from 7 to 15 screens with full test file inventory",
+    ]
+  },
   {
     version: "1.2.5",
     changes: [
