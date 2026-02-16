@@ -1,8 +1,17 @@
-APP_VERSION = "1.2.3"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+APP_VERSION = "1.2.4"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.2.4",
+    changes: [
+      "Dashboard: Fixed month-scoping bug — Cards 1, 4, and 5 now use open_month_master as single source of truth instead of Date.today (CM-1)",
+      "Dashboard: 'New Account Added' lines on Card 4 only appear for accounts created within the selected open month",
+      "Dashboard: Card 5 (Recent Activity) now month-scoped to the open month instead of showing all-time recent payments",
+      "Dashboard: All date queries use half-open interval [month_start, month_end) for consistent month filtering",
+    ]
+  },
   {
     version: "1.2.3",
     changes: [
