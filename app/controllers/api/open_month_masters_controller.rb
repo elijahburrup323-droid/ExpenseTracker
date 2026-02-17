@@ -45,6 +45,9 @@ module Api
         return render json: { error: "Month is already closed" }, status: :unprocessable_entity
       end
 
+      closing_year = record.current_year
+      closing_month = record.current_month
+
       ActiveRecord::Base.transaction do
         record.generate_snapshots!
 
@@ -65,6 +68,16 @@ module Api
           has_data: false,
           first_data_at: nil,
           first_data_source: nil
+        )
+
+        # Record the closed month in the ledger
+        CloseMonthMaster.find_or_initialize_by(
+          user_id: current_user.id,
+          closed_year: closing_year,
+          closed_month: closing_month
+        ).update!(
+          closed_at: Time.current,
+          closed_by_user_id: current_user.id
         )
       end
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_17_175902) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_17_200000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -89,6 +89,19 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_17_175902) do
     t.date "processed_date"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "close_month_masters", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.integer "closed_year", null: false
+    t.integer "closed_month", null: false
+    t.datetime "closed_at"
+    t.bigint "closed_by_user_id"
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "closed_year", "closed_month"], name: "idx_close_month_uniq", unique: true
+    t.index ["user_id"], name: "index_close_month_masters_on_user_id"
   end
 
   create_table "dashboard_card_account_rule_tags", force: :cascade do |t|
@@ -501,6 +514,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_17_175902) do
   add_foreign_key "accounts", "users"
   add_foreign_key "balance_adjustments", "accounts"
   add_foreign_key "balance_adjustments", "users"
+  add_foreign_key "close_month_masters", "users"
   add_foreign_key "dashboard_card_account_rule_tags", "dashboard_card_account_rules"
   add_foreign_key "dashboard_card_account_rule_tags", "tags"
   add_foreign_key "dashboard_card_account_rule_tags", "users"

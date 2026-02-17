@@ -26,6 +26,7 @@ class User < ApplicationRecord
   has_many :dashboard_card_account_rules, dependent: :destroy
   has_many :balance_adjustments, dependent: :destroy
   has_many :reconciliation_records, dependent: :destroy
+  has_many :close_month_masters, dependent: :destroy
 
   validates :email, presence: true, uniqueness: true, unless: :phone_only_user?
   validates :phone_number, uniqueness: true, allow_blank: true

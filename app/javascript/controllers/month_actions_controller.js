@@ -13,8 +13,17 @@ export default class extends Controller {
   async confirmSoftClose() {
     try {
       const res = await fetch(this.showUrlValue, { headers: { "Accept": "application/json" } })
-      if (!res.ok) return
+      if (!res.ok) {
+        const msg = res.status === 401 ? "Session expired. Please sign in again."
+          : `Server error (${res.status}). Please reload the page and try again.`
+        this._showResult("Error", msg)
+        return
+      }
       const om = await res.json()
+      if (!om.current_month || !om.current_year) {
+        this._showResult("Error", "No open month record found. Please contact support.")
+        return
+      }
       const currentName = this._monthName(om.current_month, om.current_year)
       const nextMonth = om.current_month === 12 ? 1 : om.current_month + 1
       const nextYear = om.current_month === 12 ? om.current_year + 1 : om.current_year
@@ -23,7 +32,7 @@ export default class extends Controller {
         `This will close ${currentName} and move you to ${nextName}. You can re-open it only if you have not entered any transactions in the new month.`
       this.softCloseModalTarget.classList.remove("hidden")
     } catch (e) {
-      alert("Failed to load month info")
+      this._showResult("Error", "Failed to load month info. Please check your connection and try again.")
     }
   }
 
@@ -60,13 +69,22 @@ export default class extends Controller {
   async confirmOpenSoftClose() {
     try {
       const res = await fetch(this.showUrlValue, { headers: { "Accept": "application/json" } })
-      if (!res.ok) return
+      if (!res.ok) {
+        const msg = res.status === 401 ? "Session expired. Please sign in again."
+          : `Server error (${res.status}). Please reload the page and try again.`
+        this._showResult("Error", msg)
+        return
+      }
       const om = await res.json()
+      if (!om.current_month || !om.current_year) {
+        this._showResult("Error", "No open month record found. Please contact support.")
+        return
+      }
       this.openSoftCloseMessageTarget.textContent =
         `This will re-open the previous month. You can only do this if no transactions have been entered in the current open month (${this._monthName(om.current_month, om.current_year)}).`
       this.openSoftCloseModalTarget.classList.remove("hidden")
     } catch (e) {
-      alert("Failed to load month info")
+      this._showResult("Error", "Failed to load month info. Please check your connection and try again.")
     }
   }
 
