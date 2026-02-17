@@ -2,7 +2,12 @@ import { Controller } from "@hotwired/stimulus"
 import { ICON_CATALOG, COLOR_OPTIONS, renderIconSvg, defaultIconSvg, iconFor, escapeHtml, escapeAttr } from "controllers/shared/icon_catalog"
 
 export default class extends Controller {
-  static targets = ["tableBody", "addButton", "generateButton", "deleteModal", "deleteModalName"]
+  static targets = [
+    "tableBody", "addButton", "generateButton",
+    "deleteModal", "deleteModalName",
+    "typeModal", "modalTitle", "modalName", "modalDescription",
+    "modalIconPicker", "modalError"
+  ]
   static values = { apiUrl: String, csrfToken: String }
 
   connect() {
@@ -27,6 +32,7 @@ export default class extends Controller {
 
   disconnect() {
     document.removeEventListener("click", this._onDocumentClick)
+    this._unregisterModalEscape()
   }
 
   // --- Data Fetching ---
@@ -94,40 +100,72 @@ export default class extends Controller {
     this.renderTable()
   }
 
-  // --- State Transitions ---
+  // --- Modal State Transitions ---
 
   startAdding() {
-    if (this.state === "adding") return
-    if (this.state !== "idle") { this.state = "idle"; this.editingId = null; this.iconPickerOpen = false }
+    if (this.state !== "idle") return
     this.state = "adding"
     this.selectedIconKey = null
     this.selectedColorKey = "blue"
     this.iconPickerOpen = false
-    this.renderTable()
-    const nameInput = this.tableBodyTarget.querySelector("input[name='name']")
-    if (nameInput) nameInput.focus()
+
+    this.modalTitleTarget.textContent = "Add Spending Type"
+    this.modalNameTarget.value = ""
+    this.modalDescriptionTarget.value = ""
+    this._updateModalIconPreview()
+    this._hideModalError()
+    this.typeModalTarget.classList.remove("hidden")
+    this._registerModalEscape()
+    this.modalNameTarget.focus()
   }
 
-  cancelAdding() {
-    this.state = "idle"
+  startEditing(event) {
+    if (this.state !== "idle") return
+    const id = Number(event.currentTarget.dataset.id)
+    const st = this.spendingTypes.find(s => s.id === id)
+    if (!st) return
+
+    this.state = "editing"
+    this.editingId = id
+    this.selectedIconKey = st.icon_key || null
+    this.selectedColorKey = st.color_key || "blue"
     this.iconPickerOpen = false
-    this.renderTable()
+
+    this.modalTitleTarget.textContent = "Edit Spending Type"
+    this.modalNameTarget.value = st.name || ""
+    this.modalDescriptionTarget.value = st.description || ""
+    this._updateModalIconPreview()
+    this._hideModalError()
+    this.typeModalTarget.classList.remove("hidden")
+    this._registerModalEscape()
+    this.modalNameTarget.focus()
+  }
+
+  cancelModal() {
+    this.typeModalTarget.classList.add("hidden")
+    this.state = "idle"
+    this.editingId = null
+    this.iconPickerOpen = false
+    this._unregisterModalEscape()
+  }
+
+  saveModal() {
+    if (this.state === "adding") this.saveNew()
+    else if (this.state === "editing") this.saveEdit()
   }
 
   async saveNew() {
-    const nameInput = this.tableBodyTarget.querySelector("input[name='name']")
-    const descInput = this.tableBodyTarget.querySelector("input[name='description']")
-    const name = nameInput?.value?.trim()
-    const description = descInput?.value?.trim()
+    const name = this.modalNameTarget.value.trim()
+    const description = this.modalDescriptionTarget.value.trim()
 
     if (!name) {
-      this.showRowError("Name is required")
-      nameInput?.focus()
+      this._showModalError("Name is required")
+      this.modalNameTarget.focus()
       return
     }
     if (!description) {
-      this.showRowError("Description is required")
-      descInput?.focus()
+      this._showModalError("Description is required")
+      this.modalDescriptionTarget.focus()
       return
     }
 
@@ -140,8 +178,7 @@ export default class extends Controller {
           "X-CSRF-Token": this.csrfTokenValue
         },
         body: JSON.stringify({ spending_type: {
-          name,
-          description,
+          name, description,
           icon_key: this.selectedIconKey,
           color_key: this.selectedColorKey
         }})
@@ -150,53 +187,29 @@ export default class extends Controller {
       if (response.ok) {
         const newType = await response.json()
         this.spendingTypes.push(newType)
-        this.state = "idle"
-        this.iconPickerOpen = false
+        this.cancelModal()
         this.renderTable()
       } else {
         const data = await response.json()
-        this.showRowError(data.errors?.[0] || "Failed to save")
+        this._showModalError(data.errors?.[0] || "Failed to save")
       }
     } catch (e) {
-      this.showRowError("Network error")
+      this._showModalError("Network error")
     }
-  }
-
-  startEditing(event) {
-    if (this.state !== "idle") { this.state = "idle"; this.editingId = null; this.iconPickerOpen = false }
-    const id = Number(event.currentTarget.dataset.id)
-    const st = this.spendingTypes.find(s => s.id === id)
-    this.state = "editing"
-    this.editingId = id
-    this.selectedIconKey = st?.icon_key || null
-    this.selectedColorKey = st?.color_key || "blue"
-    this.iconPickerOpen = false
-    this.renderTable()
-    const nameInput = this.tableBodyTarget.querySelector("input[name='name']")
-    if (nameInput) nameInput.focus()
-  }
-
-  cancelEditing() {
-    this.state = "idle"
-    this.editingId = null
-    this.iconPickerOpen = false
-    this.renderTable()
   }
 
   async saveEdit() {
-    const nameInput = this.tableBodyTarget.querySelector("input[name='name']")
-    const descInput = this.tableBodyTarget.querySelector("input[name='description']")
-    const name = nameInput?.value?.trim()
-    const description = descInput?.value?.trim()
+    const name = this.modalNameTarget.value.trim()
+    const description = this.modalDescriptionTarget.value.trim()
 
     if (!name) {
-      this.showRowError("Name is required")
-      nameInput?.focus()
+      this._showModalError("Name is required")
+      this.modalNameTarget.focus()
       return
     }
     if (!description) {
-      this.showRowError("Description is required")
-      descInput?.focus()
+      this._showModalError("Description is required")
+      this.modalDescriptionTarget.focus()
       return
     }
 
@@ -209,8 +222,7 @@ export default class extends Controller {
           "X-CSRF-Token": this.csrfTokenValue
         },
         body: JSON.stringify({ spending_type: {
-          name,
-          description,
+          name, description,
           icon_key: this.selectedIconKey,
           color_key: this.selectedColorKey
         }})
@@ -220,21 +232,21 @@ export default class extends Controller {
         const updated = await response.json()
         const idx = this.spendingTypes.findIndex(st => st.id === this.editingId)
         if (idx !== -1) this.spendingTypes[idx] = updated
-        this.state = "idle"
-        this.editingId = null
-        this.iconPickerOpen = false
+        this.cancelModal()
         this.renderTable()
       } else {
         const data = await response.json()
-        this.showRowError(data.errors?.[0] || "Failed to save")
+        this._showModalError(data.errors?.[0] || "Failed to save")
       }
     } catch (e) {
-      this.showRowError("Network error")
+      this._showModalError("Network error")
     }
   }
 
+  // --- Delete ---
+
   confirmDelete(event) {
-    if (this.state !== "idle") { this.state = "idle"; this.editingId = null; this.iconPickerOpen = false; this.renderTable() }
+    if (this.state !== "idle") return
     const id = Number(event.currentTarget.dataset.id)
     const st = this.spendingTypes.find(s => s.id === id)
     if (!st) return
@@ -292,7 +304,7 @@ export default class extends Controller {
       this.selectedIconKey = key
       this.iconPickerOpen = false
       this._rerenderIconPicker()
-      this._updateIconButtonPreview()
+      this._updateModalIconPreview()
     }
   }
 
@@ -302,12 +314,13 @@ export default class extends Controller {
     if (key) {
       this.selectedColorKey = key
       this._rerenderIconPicker()
-      this._updateIconButtonPreview()
+      this._updateModalIconPreview()
     }
   }
 
   _rerenderIconPicker() {
-    const dropdown = this.element.querySelector("[data-icon-picker-dropdown]")
+    const container = this.hasModalIconPickerTarget ? this.modalIconPickerTarget : this.element
+    const dropdown = container.querySelector("[data-icon-picker-dropdown]")
     if (!dropdown) return
 
     if (!this.iconPickerOpen) {
@@ -318,7 +331,6 @@ export default class extends Controller {
     dropdown.classList.remove("hidden")
     dropdown.innerHTML = this._renderIconPickerContent()
 
-    // Position fixed dropdown relative to the icon button
     const btn = dropdown.closest("[data-icon-picker]")?.querySelector("button")
     if (btn) {
       const rect = btn.getBoundingClientRect()
@@ -327,8 +339,9 @@ export default class extends Controller {
     }
   }
 
-  _updateIconButtonPreview() {
-    const preview = this.element.querySelector("[data-icon-preview]")
+  _updateModalIconPreview() {
+    const container = this.hasModalIconPickerTarget ? this.modalIconPickerTarget : this.element
+    const preview = container.querySelector("[data-icon-preview]")
     if (preview) {
       preview.innerHTML = this.selectedIconKey
         ? renderIconSvg(this.selectedIconKey, this.selectedColorKey, "h-5 w-5")
@@ -370,21 +383,55 @@ export default class extends Controller {
       </div>`
   }
 
-  // --- Keyboard Handling ---
+  // --- Keyboard & Escape ---
 
   handleKeydown(event) {
     if (event.key === "Enter") {
       event.preventDefault()
-      if (this.state === "adding") this.saveNew()
-      else if (this.state === "editing") this.saveEdit()
+      this.saveModal()
     } else if (event.key === "Escape") {
       event.preventDefault()
       if (this.iconPickerOpen) {
         this.iconPickerOpen = false
         this._rerenderIconPicker()
-      } else if (this.state === "adding") this.cancelAdding()
-      else if (this.state === "editing") this.cancelEditing()
+      } else {
+        this.cancelModal()
+      }
     }
+  }
+
+  _registerModalEscape() {
+    this._escHandler = (e) => {
+      if (e.key === "Escape") {
+        e.preventDefault()
+        if (this.iconPickerOpen) {
+          this.iconPickerOpen = false
+          this._rerenderIconPicker()
+        } else {
+          this.cancelModal()
+        }
+      }
+    }
+    document.addEventListener("keydown", this._escHandler)
+  }
+
+  _unregisterModalEscape() {
+    if (this._escHandler) {
+      document.removeEventListener("keydown", this._escHandler)
+      this._escHandler = null
+    }
+  }
+
+  // --- Error Display ---
+
+  _showModalError(message) {
+    this.modalErrorTarget.textContent = message
+    this.modalErrorTarget.classList.remove("hidden")
+  }
+
+  _hideModalError() {
+    this.modalErrorTarget.textContent = ""
+    this.modalErrorTarget.classList.add("hidden")
   }
 
   // --- Rendering ---
@@ -392,19 +439,11 @@ export default class extends Controller {
   renderTable() {
     let html = ""
 
-    if (this.state === "adding") {
-      html += this.renderInputRow("", "")
-    }
-
     for (const st of this.spendingTypes) {
-      if (this.state === "editing" && st.id === this.editingId) {
-        html += this.renderInputRow(st.name, st.description || "")
-      } else {
-        html += this.renderDisplayRow(st)
-      }
+      html += this.renderDisplayRow(st)
     }
 
-    if (this.spendingTypes.length === 0 && this.state !== "adding") {
+    if (this.spendingTypes.length === 0) {
       html = `<tr><td colspan="4" class="px-6 py-8 text-center text-sm text-gray-400 dark:text-gray-500">No spending types yet. Click "Add Spending Type" to create one.</td></tr>`
     }
 
@@ -433,66 +472,5 @@ export default class extends Controller {
         </button>
       </td>
     </tr>`
-  }
-
-  renderInputRow(name, description) {
-    const isAdding = this.state === "adding"
-    const previewIcon = this.selectedIconKey
-      ? renderIconSvg(this.selectedIconKey, this.selectedColorKey, "h-5 w-5")
-      : `<svg class="h-5 w-5 text-gray-300 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`
-
-    return `<tr class="bg-brand-50/40 dark:bg-brand-900/20">
-      <td class="px-6 py-3">
-        <div class="relative" data-icon-picker>
-          <button type="button"
-                  class="p-1.5 rounded-md border border-gray-900 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
-                  data-action="click->spending-types#toggleIconPicker"
-                  title="Choose icon">
-            <span data-icon-preview>${previewIcon}</span>
-          </button>
-          <div data-icon-picker-dropdown class="hidden fixed z-[9999] bg-white dark:bg-gray-800 rounded-lg shadow-xl ring-1 ring-gray-200 dark:ring-gray-700 w-80">
-          </div>
-        </div>
-      </td>
-      <td class="px-6 py-3">
-        <input type="text" name="name" value="${escapeAttr(name)}" placeholder="Name"
-               maxlength="80"
-               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-               data-action="keydown->spending-types#handleKeydown">
-      </td>
-      <td class="px-6 py-3">
-        <input type="text" name="description" value="${escapeAttr(description)}" placeholder="Description"
-               maxlength="255"
-               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-               data-action="keydown->spending-types#handleKeydown">
-      </td>
-      <td class="px-6 py-3 text-right space-x-2">
-        <button type="button"
-                class="inline-flex items-center justify-center w-9 h-9 rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
-                data-action="click->spending-types#${isAdding ? 'saveNew' : 'saveEdit'}"
-                title="Save">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 21v-8H7v8"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 3v5h8"/></svg>
-        </button>
-        <button type="button"
-                class="inline-flex items-center justify-center w-9 h-9 rounded-md text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 transition"
-                data-action="click->spending-types#${isAdding ? 'cancelAdding' : 'cancelEditing'}"
-                title="Cancel">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        </button>
-      </td>
-    </tr>
-    <tr class="hidden" data-spending-types-target="rowError">
-      <td colspan="4" class="px-6 py-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30"></td>
-    </tr>`
-  }
-
-  // --- Error Display ---
-
-  showRowError(message) {
-    const errorRow = this.tableBodyTarget.querySelector("[data-spending-types-target='rowError']")
-    if (errorRow) {
-      errorRow.classList.remove("hidden")
-      errorRow.querySelector("td").textContent = message
-    }
   }
 }

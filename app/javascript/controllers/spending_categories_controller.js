@@ -2,7 +2,12 @@ import { Controller } from "@hotwired/stimulus"
 import { ICON_CATALOG, COLOR_OPTIONS, renderIconSvg, defaultIconSvg, iconFor, escapeHtml, escapeAttr } from "controllers/shared/icon_catalog"
 
 export default class extends Controller {
-  static targets = ["tableBody", "addButton", "generateButton", "deleteModal", "deleteModalName"]
+  static targets = [
+    "tableBody", "addButton", "generateButton",
+    "deleteModal", "deleteModalName",
+    "categoryModal", "modalTitle", "modalName", "modalDescription",
+    "modalType", "modalDebt", "modalIconPicker", "modalError"
+  ]
   static values = { apiUrl: String, typesUrl: String, csrfToken: String, typesPageUrl: String }
 
   connect() {
@@ -28,6 +33,7 @@ export default class extends Controller {
 
   disconnect() {
     document.removeEventListener("click", this._onDocumentClick)
+    this._unregisterModalEscape()
   }
 
   // --- Data Fetching ---
@@ -103,45 +109,78 @@ export default class extends Controller {
     this.renderTable()
   }
 
-  // --- State Transitions ---
+  // --- Modal State Transitions ---
 
   startAdding() {
-    if (this.state === "adding") return
-    if (this.state !== "idle") { this.state = "idle"; this.editingId = null; this.iconPickerOpen = false }
+    if (this.state !== "idle") return
     this.state = "adding"
     this.selectedIconKey = null
     this.selectedColorKey = "blue"
     this.iconPickerOpen = false
-    this.renderTable()
-    const nameInput = this.tableBodyTarget.querySelector("input[name='name']")
-    if (nameInput) nameInput.focus()
+
+    this.modalTitleTarget.textContent = "Add Spending Category"
+    this.modalNameTarget.value = ""
+    this.modalDescriptionTarget.value = ""
+    this._rebuildTypeDropdown()
+    this._setModalDebt(false)
+    this._updateModalIconPreview()
+    this._hideModalError()
+    this.categoryModalTarget.classList.remove("hidden")
+    this._registerModalEscape()
+    this.modalNameTarget.focus()
   }
 
-  cancelAdding() {
-    this.state = "idle"
+  startEditing(event) {
+    if (this.state !== "idle") return
+    const id = Number(event.currentTarget.dataset.id)
+    const cat = this.categories.find(c => c.id === id)
+    if (!cat) return
+
+    this.state = "editing"
+    this.editingId = id
+    this.selectedIconKey = cat.icon_key || null
+    this.selectedColorKey = cat.color_key || "blue"
     this.iconPickerOpen = false
-    this.renderTable()
+
+    this.modalTitleTarget.textContent = "Edit Spending Category"
+    this.modalNameTarget.value = cat.name || ""
+    this.modalDescriptionTarget.value = cat.description || ""
+    this._rebuildTypeDropdown(cat.spending_type_id)
+    this._setModalDebt(cat.is_debt)
+    this._updateModalIconPreview()
+    this._hideModalError()
+    this.categoryModalTarget.classList.remove("hidden")
+    this._registerModalEscape()
+    this.modalNameTarget.focus()
+  }
+
+  cancelModal() {
+    this.categoryModalTarget.classList.add("hidden")
+    this.state = "idle"
+    this.editingId = null
+    this.iconPickerOpen = false
+    this._unregisterModalEscape()
+  }
+
+  saveModal() {
+    if (this.state === "adding") this.saveNew()
+    else if (this.state === "editing") this.saveEdit()
   }
 
   async saveNew() {
-    const nameInput = this.tableBodyTarget.querySelector("input[name='name']")
-    const descInput = this.tableBodyTarget.querySelector("input[name='description']")
-    const typeSelect = this.tableBodyTarget.querySelector("select[name='spending_type_id']")
-    const debtToggle = this.tableBodyTarget.querySelector(".debt-toggle")
-    const name = nameInput?.value?.trim()
-    const description = descInput?.value?.trim()
-    const spending_type_id = typeSelect?.value
-    const is_debt = debtToggle?.dataset.checked === "true"
+    const name = this.modalNameTarget.value.trim()
+    const description = this.modalDescriptionTarget.value.trim()
+    const spending_type_id = this.modalTypeTarget.value
+    const is_debt = this._getModalDebt()
 
     if (!name) {
-      this.showRowError("Name is required")
-      nameInput?.focus()
+      this._showModalError("Name is required")
+      this.modalNameTarget.focus()
       return
     }
-
     if (!spending_type_id || spending_type_id === "new") {
-      this.showRowError("Spending Type is required — select an existing type or refresh after creating one")
-      typeSelect?.focus()
+      this._showModalError("Spending Type is required — select an existing type or refresh after creating one")
+      this.modalTypeTarget.focus()
       return
     }
 
@@ -154,10 +193,7 @@ export default class extends Controller {
           "X-CSRF-Token": this.csrfTokenValue
         },
         body: JSON.stringify({ spending_category: {
-          name,
-          description,
-          spending_type_id,
-          is_debt,
+          name, description, spending_type_id, is_debt,
           icon_key: this.selectedIconKey,
           color_key: this.selectedColorKey
         }})
@@ -166,58 +202,31 @@ export default class extends Controller {
       if (response.ok) {
         const newCat = await response.json()
         this.categories.push(newCat)
-        this.state = "idle"
-        this.iconPickerOpen = false
+        this.cancelModal()
         this.renderTable()
       } else {
         const data = await response.json()
-        this.showRowError(data.errors?.[0] || "Failed to save")
+        this._showModalError(data.errors?.[0] || "Failed to save")
       }
     } catch (e) {
-      this.showRowError("Network error")
+      this._showModalError("Network error")
     }
-  }
-
-  startEditing(event) {
-    if (this.state !== "idle") { this.state = "idle"; this.editingId = null; this.iconPickerOpen = false }
-    const id = Number(event.currentTarget.dataset.id)
-    const cat = this.categories.find(c => c.id === id)
-    this.state = "editing"
-    this.editingId = id
-    this.selectedIconKey = cat?.icon_key || null
-    this.selectedColorKey = cat?.color_key || "blue"
-    this.iconPickerOpen = false
-    this.renderTable()
-    const nameInput = this.tableBodyTarget.querySelector("input[name='name']")
-    if (nameInput) nameInput.focus()
-  }
-
-  cancelEditing() {
-    this.state = "idle"
-    this.editingId = null
-    this.iconPickerOpen = false
-    this.renderTable()
   }
 
   async saveEdit() {
-    const nameInput = this.tableBodyTarget.querySelector("input[name='name']")
-    const descInput = this.tableBodyTarget.querySelector("input[name='description']")
-    const typeSelect = this.tableBodyTarget.querySelector("select[name='spending_type_id']")
-    const debtToggle = this.tableBodyTarget.querySelector(".debt-toggle")
-    const name = nameInput?.value?.trim()
-    const description = descInput?.value?.trim()
-    const spending_type_id = typeSelect?.value
-    const is_debt = debtToggle?.dataset.checked === "true"
+    const name = this.modalNameTarget.value.trim()
+    const description = this.modalDescriptionTarget.value.trim()
+    const spending_type_id = this.modalTypeTarget.value
+    const is_debt = this._getModalDebt()
 
     if (!name) {
-      this.showRowError("Name is required")
-      nameInput?.focus()
+      this._showModalError("Name is required")
+      this.modalNameTarget.focus()
       return
     }
-
     if (!spending_type_id || spending_type_id === "new") {
-      this.showRowError("Spending Type is required — select an existing type or refresh after creating one")
-      typeSelect?.focus()
+      this._showModalError("Spending Type is required — select an existing type or refresh after creating one")
+      this.modalTypeTarget.focus()
       return
     }
 
@@ -230,10 +239,7 @@ export default class extends Controller {
           "X-CSRF-Token": this.csrfTokenValue
         },
         body: JSON.stringify({ spending_category: {
-          name,
-          description,
-          spending_type_id,
-          is_debt,
+          name, description, spending_type_id, is_debt,
           icon_key: this.selectedIconKey,
           color_key: this.selectedColorKey
         }})
@@ -243,21 +249,21 @@ export default class extends Controller {
         const updated = await response.json()
         const idx = this.categories.findIndex(c => c.id === this.editingId)
         if (idx !== -1) this.categories[idx] = updated
-        this.state = "idle"
-        this.editingId = null
-        this.iconPickerOpen = false
+        this.cancelModal()
         this.renderTable()
       } else {
         const data = await response.json()
-        this.showRowError(data.errors?.[0] || "Failed to save")
+        this._showModalError(data.errors?.[0] || "Failed to save")
       }
     } catch (e) {
-      this.showRowError("Network error")
+      this._showModalError("Network error")
     }
   }
 
+  // --- Delete ---
+
   confirmDelete(event) {
-    if (this.state !== "idle") { this.state = "idle"; this.editingId = null; this.iconPickerOpen = false; this.renderTable() }
+    if (this.state !== "idle") return
     const id = Number(event.currentTarget.dataset.id)
     const cat = this.categories.find(c => c.id === id)
     if (!cat) return
@@ -315,7 +321,7 @@ export default class extends Controller {
       this.selectedIconKey = key
       this.iconPickerOpen = false
       this._rerenderIconPicker()
-      this._updateIconButtonPreview()
+      this._updateModalIconPreview()
     }
   }
 
@@ -325,12 +331,13 @@ export default class extends Controller {
     if (key) {
       this.selectedColorKey = key
       this._rerenderIconPicker()
-      this._updateIconButtonPreview()
+      this._updateModalIconPreview()
     }
   }
 
   _rerenderIconPicker() {
-    const dropdown = this.element.querySelector("[data-icon-picker-dropdown]")
+    const container = this.hasModalIconPickerTarget ? this.modalIconPickerTarget : this.element
+    const dropdown = container.querySelector("[data-icon-picker-dropdown]")
     if (!dropdown) return
 
     if (!this.iconPickerOpen) {
@@ -341,7 +348,6 @@ export default class extends Controller {
     dropdown.classList.remove("hidden")
     dropdown.innerHTML = this._renderIconPickerContent()
 
-    // Position fixed dropdown relative to the icon button
     const btn = dropdown.closest("[data-icon-picker]")?.querySelector("button")
     if (btn) {
       const rect = btn.getBoundingClientRect()
@@ -350,8 +356,9 @@ export default class extends Controller {
     }
   }
 
-  _updateIconButtonPreview() {
-    const preview = this.element.querySelector("[data-icon-preview]")
+  _updateModalIconPreview() {
+    const container = this.hasModalIconPickerTarget ? this.modalIconPickerTarget : this.element
+    const preview = container.querySelector("[data-icon-preview]")
     if (preview) {
       preview.innerHTML = this.selectedIconKey
         ? renderIconSvg(this.selectedIconKey, this.selectedColorKey, "h-5 w-5")
@@ -393,21 +400,146 @@ export default class extends Controller {
       </div>`
   }
 
-  // --- Keyboard Handling ---
+  // --- Debt Toggle ---
+
+  toggleDebt(event) {
+    const btn = event.currentTarget
+    const wasOn = btn.dataset.checked === "true"
+    const nowOn = !wasOn
+
+    btn.dataset.checked = String(nowOn)
+    btn.setAttribute("aria-checked", String(nowOn))
+    btn.title = nowOn ? "Debt: Yes" : "Debt: No"
+    btn.className = btn.className.replace(nowOn ? "bg-gray-300" : "bg-purple-600", nowOn ? "bg-purple-600" : "bg-gray-300")
+    const knob = btn.querySelector("span")
+    knob.className = knob.className.replace(nowOn ? "translate-x-1" : "translate-x-7", nowOn ? "translate-x-7" : "translate-x-1")
+
+    // If in display mode (has data-id), persist to server
+    const catId = btn.dataset.id
+    if (catId && this.state === "idle") {
+      this._persistDebtToggle(btn, catId, wasOn, nowOn)
+    }
+  }
+
+  async _persistDebtToggle(btn, catId, wasOn, nowOn) {
+    try {
+      const response = await fetch(`${this.apiUrlValue}/${catId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "X-CSRF-Token": this.csrfTokenValue
+        },
+        body: JSON.stringify({ spending_category: { is_debt: nowOn } })
+      })
+      if (response.ok) {
+        const updated = await response.json()
+        const idx = this.categories.findIndex(c => c.id === Number(catId))
+        if (idx !== -1) this.categories[idx] = updated
+      }
+    } catch (e) {
+      // Revert on error
+      btn.dataset.checked = String(wasOn)
+      btn.setAttribute("aria-checked", String(wasOn))
+      btn.title = wasOn ? "Debt: Yes" : "Debt: No"
+      btn.className = btn.className.replace(wasOn ? "bg-gray-300" : "bg-purple-600", wasOn ? "bg-purple-600" : "bg-gray-300")
+      const knob = btn.querySelector("span")
+      knob.className = knob.className.replace(wasOn ? "translate-x-1" : "translate-x-7", wasOn ? "translate-x-7" : "translate-x-1")
+    }
+  }
+
+  _setModalDebt(isOn) {
+    const btn = this.modalDebtTarget.querySelector(".debt-toggle")
+    if (!btn) return
+    btn.dataset.checked = String(isOn)
+    btn.setAttribute("aria-checked", String(isOn))
+    btn.title = isOn ? "Debt: Yes" : "Debt: No"
+    btn.className = btn.className.replace(isOn ? "bg-gray-300" : "bg-purple-600", isOn ? "bg-purple-600" : "bg-gray-300")
+    const knob = btn.querySelector("span")
+    knob.className = knob.className.replace(isOn ? "translate-x-1" : "translate-x-7", isOn ? "translate-x-7" : "translate-x-1")
+  }
+
+  _getModalDebt() {
+    const btn = this.modalDebtTarget.querySelector(".debt-toggle")
+    return btn?.dataset.checked === "true"
+  }
+
+  // --- Dropdown Helpers ---
+
+  _rebuildTypeDropdown(selectedId = null) {
+    let html = `<option value="">Select type...</option><option value="new">&mdash; New Spending Type &mdash;</option>`
+    for (const st of this.spendingTypes) {
+      const sel = st.id === selectedId ? "selected" : ""
+      html += `<option value="${st.id}" ${sel}>${escapeHtml(st.name)}</option>`
+    }
+    this.modalTypeTarget.innerHTML = html
+  }
+
+  handleNewDropdown(event) {
+    if (event.target.value !== "new") return
+    if (this.hasTypesPageUrlValue) this._openInNewTab(this.typesPageUrlValue)
+  }
+
+  _openInNewTab(url) {
+    const a = document.createElement("a")
+    a.href = url
+    a.target = "_blank"
+    a.rel = "noopener noreferrer"
+    a.style.display = "none"
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+  }
+
+  // --- Keyboard & Escape ---
 
   handleKeydown(event) {
     if (event.key === "Enter") {
       event.preventDefault()
-      if (this.state === "adding") this.saveNew()
-      else if (this.state === "editing") this.saveEdit()
+      this.saveModal()
     } else if (event.key === "Escape") {
       event.preventDefault()
       if (this.iconPickerOpen) {
         this.iconPickerOpen = false
         this._rerenderIconPicker()
-      } else if (this.state === "adding") this.cancelAdding()
-      else if (this.state === "editing") this.cancelEditing()
+      } else {
+        this.cancelModal()
+      }
     }
+  }
+
+  _registerModalEscape() {
+    this._escHandler = (e) => {
+      if (e.key === "Escape") {
+        e.preventDefault()
+        if (this.iconPickerOpen) {
+          this.iconPickerOpen = false
+          this._rerenderIconPicker()
+        } else {
+          this.cancelModal()
+        }
+      }
+    }
+    document.addEventListener("keydown", this._escHandler)
+  }
+
+  _unregisterModalEscape() {
+    if (this._escHandler) {
+      document.removeEventListener("keydown", this._escHandler)
+      this._escHandler = null
+    }
+  }
+
+  // --- Error Display ---
+
+  _showModalError(message) {
+    this.modalErrorTarget.textContent = message
+    this.modalErrorTarget.classList.remove("hidden")
+  }
+
+  _hideModalError() {
+    this.modalErrorTarget.textContent = ""
+    this.modalErrorTarget.classList.add("hidden")
   }
 
   // --- Rendering ---
@@ -415,19 +547,11 @@ export default class extends Controller {
   renderTable() {
     let html = ""
 
-    if (this.state === "adding") {
-      html += this.renderAddRow()
-    }
-
     for (const cat of this.categories) {
-      if (this.state === "editing" && cat.id === this.editingId) {
-        html += this.renderEditRow(cat)
-      } else {
-        html += this.renderDisplayRow(cat)
-      }
+      html += this.renderDisplayRow(cat)
     }
 
-    if (this.categories.length === 0 && this.state !== "adding") {
+    if (this.categories.length === 0) {
       html = `<tr><td colspan="6" class="px-6 py-8 text-center text-sm text-gray-400 dark:text-gray-500">No spending categories yet. Click "Add Spending Category" to create one.</td></tr>`
     }
 
@@ -462,139 +586,6 @@ export default class extends Controller {
     </tr>`
   }
 
-  renderAddRow() {
-    const previewIcon = this.selectedIconKey
-      ? renderIconSvg(this.selectedIconKey, this.selectedColorKey, "h-5 w-5")
-      : `<svg class="h-5 w-5 text-gray-300 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`
-
-    const typeOptions = this.spendingTypes.map(st =>
-      `<option value="${st.id}">${escapeHtml(st.name)}</option>`
-    ).join("")
-
-    return `<tr class="bg-brand-50/40 dark:bg-brand-900/20">
-      <td class="px-6 py-3">
-        <div class="relative" data-icon-picker>
-          <button type="button"
-                  class="p-1.5 rounded-md border border-gray-900 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
-                  data-action="click->spending-categories#toggleIconPicker"
-                  title="Choose icon">
-            <span data-icon-preview>${previewIcon}</span>
-          </button>
-          <div data-icon-picker-dropdown class="hidden fixed z-[9999] bg-white dark:bg-gray-800 rounded-lg shadow-xl ring-1 ring-gray-200 dark:ring-gray-700 w-80">
-          </div>
-        </div>
-      </td>
-      <td class="px-6 py-3">
-        <input type="text" name="name" value="" placeholder="Name"
-               maxlength="80"
-               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-               data-action="keydown->spending-categories#handleKeydown">
-      </td>
-      <td class="px-6 py-3">
-        <input type="text" name="description" value="" placeholder="Description"
-               maxlength="255"
-               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-               data-action="keydown->spending-categories#handleKeydown">
-      </td>
-      <td class="px-6 py-3 w-48">
-        <select name="spending_type_id"
-                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-                data-action="keydown->spending-categories#handleKeydown change->spending-categories#handleNewDropdown">
-          <option value="">Select type...</option>
-          <option value="new">&mdash; New Spending Type &mdash;</option>
-          ${typeOptions}
-        </select>
-      </td>
-      <td class="px-6 py-3 text-center">
-        ${this._renderDebtToggle(false)}
-      </td>
-      <td class="px-6 py-3 text-right space-x-2">
-        <button type="button"
-                class="inline-flex items-center justify-center w-9 h-9 rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
-                data-action="click->spending-categories#saveNew"
-                title="Save">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 21v-8H7v8"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 3v5h8"/></svg>
-        </button>
-        <button type="button"
-                class="inline-flex items-center justify-center w-9 h-9 rounded-md text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 transition"
-                data-action="click->spending-categories#cancelAdding"
-                title="Cancel">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        </button>
-      </td>
-    </tr>
-    <tr class="hidden" data-spending-categories-target="rowError">
-      <td colspan="6" class="px-6 py-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30"></td>
-    </tr>`
-  }
-
-  renderEditRow(cat) {
-    const previewIcon = this.selectedIconKey
-      ? renderIconSvg(this.selectedIconKey, this.selectedColorKey, "h-5 w-5")
-      : `<svg class="h-5 w-5 text-gray-300 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`
-
-    const typeOptions = this.spendingTypes.map(st => {
-      const selected = st.id === cat.spending_type_id ? "selected" : ""
-      return `<option value="${st.id}" ${selected}>${escapeHtml(st.name)}</option>`
-    }).join("")
-
-    return `<tr class="bg-brand-50/40 dark:bg-brand-900/20">
-      <td class="px-6 py-3">
-        <div class="relative" data-icon-picker>
-          <button type="button"
-                  class="p-1.5 rounded-md border border-gray-900 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
-                  data-action="click->spending-categories#toggleIconPicker"
-                  title="Choose icon">
-            <span data-icon-preview>${previewIcon}</span>
-          </button>
-          <div data-icon-picker-dropdown class="hidden fixed z-[9999] bg-white dark:bg-gray-800 rounded-lg shadow-xl ring-1 ring-gray-200 dark:ring-gray-700 w-80">
-          </div>
-        </div>
-      </td>
-      <td class="px-6 py-3">
-        <input type="text" name="name" value="${escapeAttr(cat.name)}" placeholder="Name"
-               maxlength="80"
-               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-               data-action="keydown->spending-categories#handleKeydown">
-      </td>
-      <td class="px-6 py-3">
-        <input type="text" name="description" value="${escapeAttr(cat.description || "")}" placeholder="Description"
-               maxlength="255"
-               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-               data-action="keydown->spending-categories#handleKeydown">
-      </td>
-      <td class="px-6 py-3 w-48">
-        <select name="spending_type_id"
-                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-                data-action="keydown->spending-categories#handleKeydown change->spending-categories#handleNewDropdown">
-          <option value="">Select type...</option>
-          <option value="new">&mdash; New Spending Type &mdash;</option>
-          ${typeOptions}
-        </select>
-      </td>
-      <td class="px-6 py-3 text-center">
-        ${this._renderDebtToggle(cat.is_debt)}
-      </td>
-      <td class="px-6 py-3 text-right space-x-2">
-        <button type="button"
-                class="inline-flex items-center justify-center w-9 h-9 rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
-                data-action="click->spending-categories#saveEdit"
-                title="Save">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 21v-8H7v8"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 3v5h8"/></svg>
-        </button>
-        <button type="button"
-                class="inline-flex items-center justify-center w-9 h-9 rounded-md text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 transition"
-                data-action="click->spending-categories#cancelEditing"
-                title="Cancel">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        </button>
-      </td>
-    </tr>
-    <tr class="hidden" data-spending-categories-target="rowError">
-      <td colspan="6" class="px-6 py-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30"></td>
-    </tr>`
-  }
-
   _renderDebtToggle(isOn, catId = null) {
     const bg = isOn ? "bg-purple-600" : "bg-gray-300"
     const knobTranslate = isOn ? "translate-x-7" : "translate-x-1"
@@ -606,76 +597,5 @@ export default class extends Controller {
       role="switch" aria-checked="${isOn}" title="${isOn ? 'Debt: Yes' : 'Debt: No'}">
       <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${knobTranslate}"></span>
     </button>`
-  }
-
-  async toggleDebt(event) {
-    const btn = event.currentTarget
-    const wasOn = btn.dataset.checked === "true"
-    const nowOn = !wasOn
-
-    // Update visual state immediately
-    btn.dataset.checked = String(nowOn)
-    btn.setAttribute("aria-checked", String(nowOn))
-    btn.title = nowOn ? "Debt: Yes" : "Debt: No"
-    btn.className = btn.className.replace(nowOn ? "bg-gray-300" : "bg-purple-600", nowOn ? "bg-purple-600" : "bg-gray-300")
-    const knob = btn.querySelector("span")
-    knob.className = knob.className.replace(nowOn ? "translate-x-1" : "translate-x-7", nowOn ? "translate-x-7" : "translate-x-1")
-
-    // If in display mode (has data-id), make an API call
-    const catId = btn.dataset.id
-    if (catId && this.state === "idle") {
-      try {
-        const response = await fetch(`${this.apiUrlValue}/${catId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            "X-CSRF-Token": this.csrfTokenValue
-          },
-          body: JSON.stringify({ spending_category: { is_debt: nowOn } })
-        })
-        if (response.ok) {
-          const updated = await response.json()
-          const idx = this.categories.findIndex(c => c.id === Number(catId))
-          if (idx !== -1) this.categories[idx] = updated
-        }
-      } catch (e) {
-        // Revert on error
-        btn.dataset.checked = String(wasOn)
-        btn.setAttribute("aria-checked", String(wasOn))
-        btn.title = wasOn ? "Debt: Yes" : "Debt: No"
-        btn.className = btn.className.replace(wasOn ? "bg-gray-300" : "bg-purple-600", wasOn ? "bg-purple-600" : "bg-gray-300")
-        knob.className = knob.className.replace(wasOn ? "translate-x-1" : "translate-x-7", wasOn ? "translate-x-7" : "translate-x-1")
-      }
-    }
-  }
-
-  // --- "New" Dropdown Handler ---
-
-  handleNewDropdown(event) {
-    if (event.target.value !== "new") return
-    if (this.hasTypesPageUrlValue) this._openInNewTab(this.typesPageUrlValue)
-  }
-
-  // Safari blocks window.open from non-direct user gestures; anchor click works reliably
-  _openInNewTab(url) {
-    const a = document.createElement("a")
-    a.href = url
-    a.target = "_blank"
-    a.rel = "noopener noreferrer"
-    a.style.display = "none"
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-  }
-
-  // --- Error Display ---
-
-  showRowError(message) {
-    const errorRow = this.tableBodyTarget.querySelector("[data-spending-categories-target='rowError']")
-    if (errorRow) {
-      errorRow.classList.remove("hidden")
-      errorRow.querySelector("td").textContent = message
-    }
   }
 }

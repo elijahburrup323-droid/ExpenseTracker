@@ -3,7 +3,9 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = [
     "tableBody", "addButton", "generateButton", "deleteModal", "deleteModalName", "sortHeader", "total",
-    "dateWarningModal", "dateWarningMessage", "deleteBlockedModal", "deleteBlockedMessage"
+    "dateWarningModal", "dateWarningMessage", "deleteBlockedModal", "deleteBlockedMessage",
+    "entryModal", "modalTitle", "modalDate", "modalAccount", "modalSource",
+    "modalDescription", "modalAmount", "modalFrequency", "modalReceived", "modalError"
   ]
   static values = { apiUrl: String, accountsUrl: String, frequenciesUrl: String, recurringsUrl: String, generateUrl: String, csrfToken: String, openMonthUrl: String }
 
@@ -19,6 +21,12 @@ export default class extends Controller {
     this.sortColumn = null
     this.sortDirection = "asc"
     this.fetchAll()
+  }
+
+  disconnect() {
+    if (this._modalEscapeHandler) {
+      document.removeEventListener("keydown", this._modalEscapeHandler)
+    }
   }
 
   // --- Data Fetching ---
@@ -78,32 +86,77 @@ export default class extends Controller {
     }
   }
 
-  // --- State Transitions ---
+  // --- Modal Operations ---
 
   startAdding() {
-    if (this.state === "adding") return
-    if (this.state !== "idle") { this.state = "idle"; this.editingId = null }
+    if (this.state !== "idle") return
     this.state = "adding"
-    this.renderTable()
-    const dateInput = this.tableBodyTarget.querySelector("input[name='entry_date']")
-    if (dateInput) dateInput.focus()
+
+    this.modalTitleTarget.textContent = "Add Deposit"
+    this.modalDateTarget.value = new Date().toISOString().split("T")[0]
+    this._rebuildAccountDropdown()
+    this._rebuildFrequencyDropdown()
+    this.modalSourceTarget.value = ""
+    this.modalDescriptionTarget.value = ""
+    this.modalAmountTarget.value = ""
+    this.modalReceivedTarget.innerHTML = this._renderReceivedToggle(true)
+    this.modalErrorTarget.classList.add("hidden")
+
+    this.entryModalTarget.classList.remove("hidden")
+    this._registerModalEscape()
+    setTimeout(() => this.modalDateTarget.focus(), 50)
   }
 
-  cancelAdding() {
+  startEditing(event) {
+    if (this.state !== "idle") return
+    const id = Number(event.currentTarget.dataset.id)
+    const entry = this.entries.find(e => e.id === id)
+    if (!entry) return
+
+    this.state = "editing"
+    this.editingId = id
+
+    this.modalTitleTarget.textContent = "Edit Deposit"
+    this.modalDateTarget.value = entry.entry_date || ""
+    this._rebuildAccountDropdown()
+    this.modalAccountTarget.value = String(entry.account_id || "")
+    this._rebuildFrequencyDropdown()
+    this.modalFrequencyTarget.value = String(entry.frequency_master_id || "")
+    this.modalSourceTarget.value = entry.source_name || ""
+    this.modalDescriptionTarget.value = entry.description || ""
+    this.modalAmountTarget.value = parseFloat(entry.amount) || ""
+    this.modalReceivedTarget.innerHTML = this._renderReceivedToggle(entry.received_flag)
+    this.modalErrorTarget.classList.add("hidden")
+
+    this.entryModalTarget.classList.remove("hidden")
+    this._registerModalEscape()
+    setTimeout(() => this.modalSourceTarget.focus(), 50)
+  }
+
+  cancelModal() {
+    this.entryModalTarget.classList.add("hidden")
     this.state = "idle"
-    this.renderTable()
+    this.editingId = null
+    this._unregisterModalEscape()
+  }
+
+  saveModal() {
+    if (this.state === "adding") this.saveNew()
+    else if (this.state === "editing") this.saveEdit()
   }
 
   async saveNew() {
-    const source_name = this._val("source_name")
-    const description = this._val("description")
-    const entry_date = this._val("entry_date")
-    const amount = this._val("amount") || "0"
-    const account_id = this._selectVal("account_id") || null
-    const frequency_master_id = this._selectVal("frequency_master_id") || null
+    const source_name = this.modalSourceTarget.value.trim()
+    const description = this.modalDescriptionTarget.value.trim()
+    const entry_date = this.modalDateTarget.value
+    const amount = this.modalAmountTarget.value.trim() || "0"
+    const account_id = this.modalAccountTarget.value || null
+    const frequency_master_id = this.modalFrequencyTarget.value || null
+    const receivedToggle = this.modalReceivedTarget.querySelector(".received-toggle")
+    const received_flag = receivedToggle?.dataset.checked === "true"
 
-    if (!source_name) { this.showRowError("Source Name is required"); return }
-    if (!entry_date) { this.showRowError("Date is required"); return }
+    if (!source_name) { this._showModalError("Source Name is required"); this.modalSourceTarget.focus(); return }
+    if (!entry_date) { this._showModalError("Date is required"); this.modalDateTarget.focus(); return }
 
     if (!this._skipDateValidation) {
       const dateOk = await this._validateEntryDate(entry_date, "new")
@@ -119,63 +172,33 @@ export default class extends Controller {
           "Accept": "application/json",
           "X-CSRF-Token": this.csrfTokenValue
         },
-        body: JSON.stringify({ income_entry: { source_name, description, entry_date, amount, account_id, frequency_master_id, received_flag: true } })
+        body: JSON.stringify({ income_entry: { source_name, description, entry_date, amount, account_id, frequency_master_id, received_flag } })
       })
 
       if (response.ok) {
         const newEntry = await response.json()
         this.entries.unshift(newEntry)
-        this.state = "idle"
+        this.cancelModal()
         this.renderTable()
       } else {
         const data = await response.json()
-        this.showRowError(data.errors?.[0] || "Failed to save")
+        this._showModalError(data.errors?.[0] || "Failed to save")
       }
     } catch (e) {
-      this.showRowError("Network error")
+      this._showModalError("Network error")
     }
-  }
-
-  startEditing(event) {
-    if (this.state !== "idle") { this.state = "idle"; this.editingId = null }
-    const id = Number(event.currentTarget.dataset.id)
-    this.state = "editing"
-    this.editingId = id
-    this.renderTable()
-    const nameInput = this.tableBodyTarget.querySelector("input[name='source_name']")
-    if (nameInput) nameInput.focus()
-  }
-
-  _startEditingById(id, focusAmount = false) {
-    if (this.state !== "idle") { this.state = "idle"; this.editingId = null }
-    this.state = "editing"
-    this.editingId = id
-    this.renderTable()
-    if (focusAmount) {
-      const amtInput = this.tableBodyTarget.querySelector("input[name='amount']")
-      if (amtInput) { amtInput.focus(); amtInput.select() }
-    } else {
-      const nameInput = this.tableBodyTarget.querySelector("input[name='source_name']")
-      if (nameInput) nameInput.focus()
-    }
-  }
-
-  cancelEditing() {
-    this.state = "idle"
-    this.editingId = null
-    this.renderTable()
   }
 
   async saveEdit() {
-    const source_name = this._val("source_name")
-    const description = this._val("description")
-    const entry_date = this._val("entry_date")
-    const amount = this._val("amount") || "0"
-    const account_id = this._selectVal("account_id") || null
-    const frequency_master_id = this._selectVal("frequency_master_id") || null
+    const source_name = this.modalSourceTarget.value.trim()
+    const description = this.modalDescriptionTarget.value.trim()
+    const entry_date = this.modalDateTarget.value
+    const amount = this.modalAmountTarget.value.trim() || "0"
+    const account_id = this.modalAccountTarget.value || null
+    const frequency_master_id = this.modalFrequencyTarget.value || null
 
-    if (!source_name) { this.showRowError("Source Name is required"); return }
-    if (!entry_date) { this.showRowError("Date is required"); return }
+    if (!source_name) { this._showModalError("Source Name is required"); this.modalSourceTarget.focus(); return }
+    if (!entry_date) { this._showModalError("Date is required"); this.modalDateTarget.focus(); return }
 
     if (!this._skipDateValidation) {
       const dateOk = await this._validateEntryDate(entry_date, "edit")
@@ -198,20 +221,21 @@ export default class extends Controller {
         const updated = await response.json()
         const idx = this.entries.findIndex(e => e.id === this.editingId)
         if (idx !== -1) this.entries[idx] = updated
-        this.state = "idle"
-        this.editingId = null
+        this.cancelModal()
         this.renderTable()
       } else {
         const data = await response.json()
-        this.showRowError(data.errors?.[0] || "Failed to save")
+        this._showModalError(data.errors?.[0] || "Failed to save")
       }
     } catch (e) {
-      this.showRowError("Network error")
+      this._showModalError("Network error")
     }
   }
 
+  // --- Delete ---
+
   async confirmDelete(event) {
-    if (this.state !== "idle") { this.state = "idle"; this.editingId = null; this.renderTable() }
+    if (this.state !== "idle") return
     const id = Number(event.currentTarget.dataset.id)
     const entry = this.entries.find(e => e.id === id)
     if (!entry) return
@@ -290,7 +314,6 @@ export default class extends Controller {
     const wasOn = btn.dataset.checked === "true"
     const nowOn = !wasOn
 
-    // Update visual state immediately
     btn.dataset.checked = String(nowOn)
     btn.setAttribute("aria-checked", String(nowOn))
     btn.title = nowOn ? "Received: Yes" : "Received: No"
@@ -298,6 +321,7 @@ export default class extends Controller {
     const knob = btn.querySelector("span")
     knob.className = knob.className.replace(nowOn ? "translate-x-1" : "translate-x-7", nowOn ? "translate-x-7" : "translate-x-1")
 
+    // Only persist to server if toggling from the table row (has data-id)
     const entryId = btn.dataset.id
     if (entryId && this.state === "idle") {
       try {
@@ -314,14 +338,8 @@ export default class extends Controller {
           const updated = await response.json()
           const idx = this.entries.findIndex(e => e.id === Number(entryId))
           if (idx !== -1) this.entries[idx] = updated
-
-          // When toggled ON, switch to edit mode with focus on Amount
-          if (nowOn) {
-            this._startEditingById(Number(entryId), true)
-          }
         }
       } catch (e) {
-        // Revert on error
         btn.dataset.checked = String(wasOn)
         btn.setAttribute("aria-checked", String(wasOn))
         btn.title = wasOn ? "Received: Yes" : "Received: No"
@@ -331,34 +349,15 @@ export default class extends Controller {
     }
   }
 
-  // --- Field Auto-Advance ---
-
-  // Field sequence for add/edit rows (left to right)
-  get _fieldSequence() {
-    return ["entry_date", "account_id", "source_name", "description", "amount", "frequency_master_id"]
-  }
-
-  advanceField(event) {
-    const name = event.target.name
-    const seq = this._fieldSequence
-    const idx = seq.indexOf(name)
-    if (idx < 0 || idx >= seq.length - 1) return
-    const nextName = seq[idx + 1]
-    const next = this.tableBodyTarget.querySelector(`[name='${nextName}']`)
-    if (next) { next.focus(); if (next.select) next.select() }
-  }
-
   // --- Keyboard Handling ---
 
   handleKeydown(event) {
     if (event.key === "Enter") {
       event.preventDefault()
-      if (this.state === "adding") this.saveNew()
-      else if (this.state === "editing") this.saveEdit()
+      this.saveModal()
     } else if (event.key === "Escape") {
       event.preventDefault()
-      if (this.state === "adding") this.cancelAdding()
-      else if (this.state === "editing") this.cancelEditing()
+      this.cancelModal()
     }
   }
 
@@ -406,24 +405,16 @@ export default class extends Controller {
     })
   }
 
-  // --- Rendering ---
+  // --- Rendering (display-only) ---
 
   renderTable() {
     let html = ""
 
-    if (this.state === "adding") {
-      html += this._renderAddRow()
-    }
-
     for (const entry of this.entries) {
-      if (this.state === "editing" && entry.id === this.editingId) {
-        html += this._renderEditRow(entry)
-      } else {
-        html += this._renderDisplayRow(entry)
-      }
+      html += this._renderDisplayRow(entry)
     }
 
-    if (this.entries.length === 0 && this.state !== "adding") {
+    if (this.entries.length === 0) {
       html = `<tr><td colspan="8" class="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">No deposits yet. They will be generated from your Recurring Deposits, or click "Add Deposit" to create one manually.</td></tr>`
     }
 
@@ -449,11 +440,11 @@ export default class extends Controller {
 
     return `<tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${pendingClass}">
       <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">${entry.entry_date || ""}</td>
-      <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">${this._esc(entry.account_name || "—")}</td>
+      <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">${this._esc(entry.account_name || "\u2014")}</td>
       <td class="px-4 py-4 text-sm font-medium text-gray-900 dark:text-white">${this._esc(entry.source_name)}</td>
       <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">${this._esc(entry.description || "")}</td>
       <td class="px-4 py-4 text-sm text-gray-900 dark:text-white text-right font-mono">${this._formatAmount(entry.amount)}</td>
-      <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">${this._esc(entry.frequency_name || "—")}</td>
+      <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">${this._esc(entry.frequency_name || "\u2014")}</td>
       <td class="px-4 py-4 text-center">${receivedToggle}</td>
       <td class="px-4 py-4 text-right space-x-2 whitespace-nowrap">
         <button type="button"
@@ -474,144 +465,18 @@ export default class extends Controller {
     </tr>`
   }
 
-  _renderAddRow() {
-    const accOptions = this.accounts.map(a => `<option value="${a.id}">${this._esc(a.name)}</option>`).join("")
-    const freqOptions = this.frequencies.map(f => `<option value="${f.frequency_master_id}">${this._esc(f.name)}</option>`).join("")
-    const today = new Date().toISOString().split("T")[0]
+  // --- Dropdown Builders ---
 
-    return `<tr class="bg-brand-50/40 dark:bg-brand-900/20">
-      <td class="px-4 py-3">
-        <input type="date" name="entry_date" value="${today}"
-               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-               data-action="keydown->income-entries#handleKeydown change->income-entries#advanceField">
-      </td>
-      <td class="px-4 py-3">
-        <select name="account_id"
-                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-                data-action="change->income-entries#advanceField">
-          <option value="">No Account</option>
-          ${accOptions}
-        </select>
-      </td>
-      <td class="px-4 py-3">
-        <input type="text" name="source_name" value="" placeholder="Source Name" maxlength="80"
-               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-               data-action="keydown->income-entries#handleKeydown">
-      </td>
-      <td class="px-4 py-3">
-        <input type="text" name="description" value="" placeholder="Description" maxlength="255"
-               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-               data-action="keydown->income-entries#handleKeydown">
-      </td>
-      <td class="px-4 py-3">
-        <div class="flex items-center">
-          <span class="text-sm text-gray-500 dark:text-gray-400 mr-1">$</span>
-          <input type="number" name="amount" value="" placeholder="0.00" step="0.01"
-                 class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5 text-right"
-                 data-action="keydown->income-entries#handleKeydown">
-        </div>
-      </td>
-      <td class="px-4 py-3">
-        <select name="frequency_master_id"
-                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5">
-          <option value="">None</option>
-          ${freqOptions}
-        </select>
-      </td>
-      <td class="px-4 py-3 text-center">
-        ${this._renderReceivedToggle(true)}
-      </td>
-      <td class="px-4 py-3 text-right space-x-2 whitespace-nowrap">
-        <button type="button"
-                class="inline-flex items-center justify-center w-9 h-9 rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
-                data-action="click->income-entries#saveNew"
-                title="Save">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 21v-8H7v8"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 3v5h8"/></svg>
-        </button>
-        <button type="button"
-                class="inline-flex items-center justify-center w-9 h-9 rounded-md text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 transition"
-                data-action="click->income-entries#cancelAdding"
-                title="Cancel">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        </button>
-      </td>
-    </tr>
-    <tr class="hidden" data-income-entries-target="rowError">
-      <td colspan="8" class="px-4 py-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30"></td>
-    </tr>`
+  _rebuildAccountDropdown() {
+    let html = `<option value="">No Account</option>`
+    html += this.accounts.map(a => `<option value="${a.id}">${this._esc(a.name)}</option>`).join("")
+    this.modalAccountTarget.innerHTML = html
   }
 
-  _renderEditRow(entry) {
-    const accOptions = this.accounts.map(a => {
-      const selected = a.id === entry.account_id ? "selected" : ""
-      return `<option value="${a.id}" ${selected}>${this._esc(a.name)}</option>`
-    }).join("")
-    const freqOptions = this.frequencies.map(f => {
-      const selected = f.frequency_master_id === entry.frequency_master_id ? "selected" : ""
-      return `<option value="${f.frequency_master_id}" ${selected}>${this._esc(f.name)}</option>`
-    }).join("")
-    const amtVal = parseFloat(entry.amount) || ""
-
-    return `<tr class="bg-brand-50/40 dark:bg-brand-900/20">
-      <td class="px-4 py-3">
-        <input type="date" name="entry_date" value="${entry.entry_date || ""}"
-               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-               data-action="keydown->income-entries#handleKeydown change->income-entries#advanceField">
-      </td>
-      <td class="px-4 py-3">
-        <select name="account_id"
-                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-                data-action="change->income-entries#advanceField">
-          <option value="">No Account</option>
-          ${accOptions}
-        </select>
-      </td>
-      <td class="px-4 py-3">
-        <input type="text" name="source_name" value="${this._escAttr(entry.source_name)}" placeholder="Source Name" maxlength="80"
-               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-               data-action="keydown->income-entries#handleKeydown">
-      </td>
-      <td class="px-4 py-3">
-        <input type="text" name="description" value="${this._escAttr(entry.description || "")}" placeholder="Description" maxlength="255"
-               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-               data-action="keydown->income-entries#handleKeydown">
-      </td>
-      <td class="px-4 py-3">
-        <div class="flex items-center">
-          <span class="text-sm text-gray-500 dark:text-gray-400 mr-1">$</span>
-          <input type="number" name="amount" value="${amtVal}" placeholder="0.00" step="0.01"
-                 class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5 text-right"
-                 data-action="keydown->income-entries#handleKeydown">
-        </div>
-      </td>
-      <td class="px-4 py-3">
-        <select name="frequency_master_id"
-                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5">
-          <option value="">None</option>
-          ${freqOptions}
-        </select>
-      </td>
-      <td class="px-4 py-3 text-center">
-        ${this._renderReceivedToggle(entry.received_flag)}
-      </td>
-      <td class="px-4 py-3 text-right space-x-2 whitespace-nowrap">
-        <button type="button"
-                class="inline-flex items-center justify-center w-9 h-9 rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
-                data-action="click->income-entries#saveEdit"
-                title="Save">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 21v-8H7v8"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 3v5h8"/></svg>
-        </button>
-        <button type="button"
-                class="inline-flex items-center justify-center w-9 h-9 rounded-md text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 transition"
-                data-action="click->income-entries#cancelEditing"
-                title="Cancel">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        </button>
-      </td>
-    </tr>
-    <tr class="hidden" data-income-entries-target="rowError">
-      <td colspan="8" class="px-4 py-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30"></td>
-    </tr>`
+  _rebuildFrequencyDropdown() {
+    let html = `<option value="">None</option>`
+    html += this.frequencies.map(f => `<option value="${f.frequency_master_id}">${this._esc(f.name)}</option>`).join("")
+    this.modalFrequencyTarget.innerHTML = html
   }
 
   // --- Date Validation Against Open Month ---
@@ -665,26 +530,34 @@ export default class extends Controller {
     this._pendingEntryDate = null
   }
 
-  // --- Helpers ---
+  // --- Modal Helpers ---
 
-  _val(name) { return this.tableBodyTarget.querySelector(`input[name='${name}']`)?.value?.trim() }
-  _selectVal(name) { return this.tableBodyTarget.querySelector(`select[name='${name}']`)?.value }
+  _showModalError(message) {
+    this.modalErrorTarget.classList.remove("hidden")
+    this.modalErrorTarget.querySelector("p").textContent = message
+  }
+
+  _registerModalEscape() {
+    this._modalEscapeHandler = (e) => {
+      if (e.key === "Escape") {
+        e.preventDefault()
+        this.cancelModal()
+      }
+    }
+    document.addEventListener("keydown", this._modalEscapeHandler)
+  }
+
+  _unregisterModalEscape() {
+    if (this._modalEscapeHandler) {
+      document.removeEventListener("keydown", this._modalEscapeHandler)
+      this._modalEscapeHandler = null
+    }
+  }
+
+  // --- Helpers ---
 
   _esc(str) {
     if (!str) return ""
     return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
-  }
-
-  _escAttr(str) {
-    if (!str) return ""
-    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;")
-  }
-
-  showRowError(message) {
-    const errorRow = this.tableBodyTarget.querySelector("[data-income-entries-target='rowError']")
-    if (errorRow) {
-      errorRow.classList.remove("hidden")
-      errorRow.querySelector("td").textContent = message
-    }
   }
 }

@@ -1,9 +1,19 @@
-APP_VERSION = "1.2.7"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+APP_VERSION = "1.2.8"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.2.8",
+    changes: [
+      "Deposits: Converted Add/Edit from inline table-row editing to centered modal workflow (CM-9)",
+      "Spending Categories: Converted Add/Edit from inline editing to modal workflow (CM-11)",
+      "Spending Types: Converted Add/Edit from inline editing to modal workflow (CM-12)",
+      "All three screens: Table is now always read-only — no more inline input rows",
+      "All three screens: Icon picker, keyboard handling (Enter/Escape), error display all work within modal",
+    ]
+  },
   {
     version: "1.2.7",
     changes: [
