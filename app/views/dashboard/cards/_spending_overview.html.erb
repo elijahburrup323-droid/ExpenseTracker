@@ -51,10 +51,10 @@
       <% end %>
     </div>
   </div>
-  <%# === BACK SIDE (Category Breakdown) === %>
+  <%# === BACK SIDE (Category + Type Breakdowns) === %>
   <div class="absolute inset-0 flex flex-col" data-role="back" style="backface-visibility: hidden; transform: rotateY(180deg); pointer-events: none;">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Spending by Category</h2>
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Spending Breakdown</h2>
       <div class="flex items-center space-x-2">
         <button type="button" data-action="click->dashboard#prevMonth" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
@@ -66,27 +66,52 @@
       </div>
     </div>
     <div class="flex-1 overflow-y-auto" data-role="card-back-content">
+      <% color_map = { "blue" => "#3b82f6", "green" => "#22c55e", "gold" => "#eab308", "red" => "#ef4444", "purple" => "#a855f7", "pink" => "#ec4899", "indigo" => "#6366f1", "teal" => "#14b8a6", "orange" => "#f97316", "gray" => "#6b7280" } %>
+      <%# --- By Category --- %>
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">By Category</p>
       <% if @spending_by_category.any? %>
-        <div class="space-y-2">
-          <% color_map = { "blue" => "#3b82f6", "green" => "#22c55e", "gold" => "#eab308", "red" => "#ef4444", "purple" => "#a855f7", "pink" => "#ec4899", "indigo" => "#6366f1", "teal" => "#14b8a6", "orange" => "#f97316", "gray" => "#6b7280" } %>
+        <div class="space-y-1.5">
           <% @spending_by_category.each do |cat| %>
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-2 min-w-0">
                 <span class="w-2 h-2 rounded-full flex-shrink-0" style="background: <%= color_map[cat[:color_key]] || '#6b7280' %>"></span>
-                <span class="text-sm text-gray-700 dark:text-gray-300 truncate"><%= cat[:name] %></span>
+                <span class="text-xs text-gray-700 dark:text-gray-300 truncate"><%= cat[:name] %></span>
               </div>
-              <div class="flex items-center space-x-3 flex-shrink-0 ml-2">
-                <span class="text-sm font-semibold text-gray-900 dark:text-white"><%= number_to_currency(cat[:amount]) %></span>
-                <span class="text-xs text-gray-500 dark:text-gray-400 w-12 text-right"><%= cat[:pct] %>%</span>
+              <div class="flex items-center space-x-2 flex-shrink-0 ml-2">
+                <span class="text-xs font-semibold text-gray-900 dark:text-white"><%= number_to_currency(cat[:amount]) %></span>
+                <span class="text-xs text-gray-500 dark:text-gray-400 w-10 text-right"><%= cat[:pct] %>%</span>
               </div>
             </div>
           <% end %>
         </div>
+        <p class="text-xs font-semibold text-gray-700 dark:text-gray-300 mt-1.5">Total: <%= number_to_currency(@spent_mtd) %></p>
       <% else %>
-        <p class="text-sm text-gray-400 dark:text-gray-500">No spending yet for this month.</p>
+        <p class="text-xs text-gray-400 dark:text-gray-500">No spending yet.</p>
+      <% end %>
+
+      <%# --- By Spending Type --- %>
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-3 mb-1.5">By Spending Type</p>
+      <% if @spending_by_type.any? %>
+        <div class="space-y-1.5">
+          <% @spending_by_type.each do |st| %>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2 min-w-0">
+                <span class="w-2 h-2 rounded-full flex-shrink-0" style="background: <%= color_map[st[:color_key]] || '#6b7280' %>"></span>
+                <span class="text-xs text-gray-700 dark:text-gray-300 truncate"><%= st[:name] %></span>
+              </div>
+              <div class="flex items-center space-x-2 flex-shrink-0 ml-2">
+                <span class="text-xs font-semibold text-gray-900 dark:text-white"><%= number_to_currency(st[:amount]) %></span>
+                <span class="text-xs text-gray-500 dark:text-gray-400 w-10 text-right"><%= st[:pct] %>%</span>
+              </div>
+            </div>
+          <% end %>
+        </div>
+        <p class="text-xs font-semibold text-gray-700 dark:text-gray-300 mt-1.5">Total: <%= number_to_currency(@spent_mtd) %></p>
+      <% else %>
+        <p class="text-xs text-gray-400 dark:text-gray-500">No spending yet.</p>
       <% end %>
     </div>
-    <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+    <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
       <button type="button" class="inline-flex items-center justify-center text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300" style="min-width:44px; min-height:44px;" data-action="click->dashboard#flipCardBack" aria-label="Back to spending overview">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/>

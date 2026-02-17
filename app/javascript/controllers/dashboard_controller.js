@@ -287,28 +287,36 @@ export default class extends Controller {
     const backContent = wrapper.querySelector("[data-role='card-back-content']")
     if (backContent) {
       const categories = data.categories || []
-      if (categories.length === 0) {
-        backContent.innerHTML = `<p class="text-sm text-gray-400 dark:text-gray-500">No spending yet for this month.</p>`
-      } else {
-        const colorMap = { blue: "#3b82f6", green: "#22c55e", gold: "#eab308", red: "#ef4444", purple: "#a855f7", pink: "#ec4899", indigo: "#6366f1", teal: "#14b8a6", orange: "#f97316", gray: "#6b7280" }
-        let html = '<div class="space-y-2">'
-        for (const cat of categories) {
-          const dotColor = colorMap[cat.color_key] || "#6b7280"
-          html += `
+      const types = data.types || []
+      const colorMap = { blue: "#3b82f6", green: "#22c55e", gold: "#eab308", red: "#ef4444", purple: "#a855f7", pink: "#ec4899", indigo: "#6366f1", teal: "#14b8a6", orange: "#f97316", gray: "#6b7280" }
+
+      const renderList = (items) => {
+        if (items.length === 0) return `<p class="text-xs text-gray-400 dark:text-gray-500">No spending yet.</p>`
+        let h = '<div class="space-y-1.5">'
+        for (const item of items) {
+          const dotColor = colorMap[item.color_key] || "#6b7280"
+          h += `
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-2 min-w-0">
                 <span class="w-2 h-2 rounded-full flex-shrink-0" style="background: ${dotColor}"></span>
-                <span class="text-sm text-gray-700 dark:text-gray-300 truncate">${this._esc(cat.name)}</span>
+                <span class="text-xs text-gray-700 dark:text-gray-300 truncate">${this._esc(item.name)}</span>
               </div>
-              <div class="flex items-center space-x-3 flex-shrink-0 ml-2">
-                <span class="text-sm font-semibold text-gray-900 dark:text-white">${this._currency(cat.amount)}</span>
-                <span class="text-xs text-gray-500 dark:text-gray-400 w-12 text-right">${cat.pct}%</span>
+              <div class="flex items-center space-x-2 flex-shrink-0 ml-2">
+                <span class="text-xs font-semibold text-gray-900 dark:text-white">${this._currency(item.amount)}</span>
+                <span class="text-xs text-gray-500 dark:text-gray-400 w-10 text-right">${item.pct}%</span>
               </div>
             </div>`
         }
-        html += '</div>'
-        backContent.innerHTML = html
+        h += '</div>'
+        h += `<p class="text-xs font-semibold text-gray-700 dark:text-gray-300 mt-1.5">Total: ${spent}</p>`
+        return h
       }
+
+      let html = `<p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">By Category</p>`
+      html += renderList(categories)
+      html += `<p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-3 mb-1.5">By Spending Type</p>`
+      html += renderList(types)
+      backContent.innerHTML = html
     }
   }
 

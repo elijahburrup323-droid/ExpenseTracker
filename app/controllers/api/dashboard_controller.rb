@@ -134,7 +134,15 @@ module Api
         .pluck(Arel.sql("spending_categories.id, spending_categories.name, spending_categories.icon_key, spending_categories.color_key, SUM(payments.amount)"))
         .map { |id, name, icon_key, color_key, total| { name: name, icon_key: icon_key, color_key: color_key, amount: total.to_f, pct: spent > 0 ? (total.to_f / spent * 100).round(1) : 0.0 } }
 
-      { spent: spent, categories: by_category }
+      by_type = current_user.payments
+        .where(payment_date: ctx[:month_start]...ctx[:month_end])
+        .joins(spending_category: :spending_type)
+        .group("spending_types.id", "spending_types.name", "spending_types.icon_key", "spending_types.color_key")
+        .order(Arel.sql("SUM(payments.amount) DESC"))
+        .pluck(Arel.sql("spending_types.id, spending_types.name, spending_types.icon_key, spending_types.color_key, SUM(payments.amount)"))
+        .map { |id, name, icon_key, color_key, total| { name: name, icon_key: icon_key, color_key: color_key, amount: total.to_f, pct: spent > 0 ? (total.to_f / spent * 100).round(1) : 0.0 } }
+
+      { spent: spent, categories: by_category, types: by_type }
     end
 
     def compute_accounts_overview(ctx)

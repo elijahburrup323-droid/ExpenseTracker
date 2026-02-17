@@ -1,9 +1,18 @@
-APP_VERSION = "1.2.8"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+APP_VERSION = "1.2.9"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.2.9",
+    changes: [
+      "Dashboard: Spending Overview flip card now shows dual breakdown — By Category and By Spending Type (CM-13)",
+      "Dashboard: Both breakdowns include color-coded dots, amounts, percentages, and totals",
+      "Dashboard: Spending by Type aggregates payments through SpendingCategory → SpendingType relationship",
+      "Dashboard: AJAX month navigation updates both breakdowns dynamically",
+    ]
+  },
   {
     version: "1.2.8",
     changes: [
