@@ -56,6 +56,9 @@ Rails.application.routes.draw do
   # Quotes (HTML page, admin-only)
   resources :quotes, only: [:index]
 
+  # Soft Close Month (HTML page)
+  get "soft_close", to: "soft_close#index", as: :soft_close
+
   # Diagnostics (HTML page, admin-only)
   get "diagnostics", to: "diagnostics#index", as: :diagnostics
 
@@ -99,6 +102,8 @@ Rails.application.routes.draw do
       post :close
       post :reopen
     end
+    get  'soft_close/status',  to: 'soft_close#status'
+    post 'soft_close/confirm', to: 'soft_close#confirm'
     resources :quotes, only: [:index, :create, :update, :destroy] do
       collection do
         post :populate

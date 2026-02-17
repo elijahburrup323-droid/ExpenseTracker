@@ -1,9 +1,21 @@
-APP_VERSION = "1.2.9"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+APP_VERSION = "1.3.0"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.0",
+    changes: [
+      "Soft Close Month: Dedicated screen with live 10-item validation checklist (CM-5)",
+      "Soft Close: System checks validate recurring generation, required fields, account assignment, transfer validity",
+      "Soft Close: User must confirm totals review and final lock consent before closing",
+      "Soft Close: Month summary shows Payments, Deposits, Transfers, Beginning/Ending Balance, Net Change",
+      "Soft Close: Checklist auto-refreshes every 5 seconds via polling API endpoint",
+      "Soft Close: Atomic close with snapshots, month advance, and redirect to dashboard",
+      "Navigation: Soft Close menu item now navigates to dedicated page instead of simple modal",
+    ]
+  },
   {
     version: "1.2.9",
     changes: [

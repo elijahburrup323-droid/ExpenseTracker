@@ -1,0 +1,93 @@
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+     data-controller="soft-close"
+     data-soft-close-status-url-value="<%= api_soft_close_status_path %>"
+     data-soft-close-confirm-url-value="<%= api_soft_close_confirm_path %>"
+     data-soft-close-dashboard-url-value="<%= dashboard_path %>"
+     data-soft-close-csrf-token-value="<%= form_authenticity_token %>"
+     data-soft-close-month-label-value="<%= @month_label %>"
+     data-soft-close-next-month-label-value="<%= @next_month_label %>">
+
+  <%# Page Header (sticky) %>
+  <div class="sticky top-14 z-20 bg-gray-50 dark:bg-gray-900 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-2 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Soft Close Month</h1>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Close <span class="font-semibold" data-soft-close-target="monthLabel"><%= @month_label %></span> and advance to <span class="font-semibold"><%= @next_month_label %></span></p>
+      </div>
+      <div class="flex items-center space-x-2">
+        <a href="<%= dashboard_path %>"
+           class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+          Cancel
+        </a>
+        <button type="button"
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                data-soft-close-target="closeButton"
+                data-action="click->soft-close#closeMonth"
+                disabled>
+          <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+          Close Month
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <%# Explanatory text %>
+  <div class="mb-6 rounded-lg bg-blue-50 dark:bg-blue-900/30 p-4 ring-1 ring-blue-200 dark:ring-blue-800">
+    <div class="flex">
+      <svg class="h-5 w-5 text-blue-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+      </svg>
+      <p class="ml-3 text-sm text-blue-700 dark:text-blue-300">
+        Review the checklist below to ensure all data is complete for <strong><%= @month_label %></strong>.
+        Once all system checks pass and you confirm your review, click <strong>Close Month</strong> to lock the month and advance.
+        The checklist refreshes automatically every few seconds.
+      </p>
+    </div>
+  </div>
+
+  <%# Checklist Card %>
+  <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg ring-1 ring-gray-200 dark:ring-gray-700 p-6 mb-6">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Pre-Close Checklist</h2>
+
+    <div class="space-y-3" data-soft-close-target="checklistBody">
+      <div class="text-sm text-gray-400 dark:text-gray-500">Loading checklist...</div>
+    </div>
+
+    <%# Divider before user items %>
+    <div class="border-t border-gray-200 dark:border-gray-700 mt-4 pt-4">
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Your Confirmation</p>
+
+      <%# Item 9: Reviewed totals %>
+      <label class="flex items-start space-x-3 mb-3 cursor-pointer select-none">
+        <input type="checkbox" class="mt-0.5 h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+               data-soft-close-target="reviewedTotals"
+               data-action="change->soft-close#updateCloseButton">
+        <span class="text-sm text-gray-700 dark:text-gray-300">I have reviewed the totals shown below for <strong><%= @month_label %></strong>.</span>
+      </label>
+
+      <%# Item 10: Final confirmation %>
+      <label class="flex items-start space-x-3 cursor-pointer select-none">
+        <input type="checkbox" class="mt-0.5 h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+               data-soft-close-target="finalConfirmation"
+               data-action="change->soft-close#updateCloseButton">
+        <span class="text-sm text-gray-700 dark:text-gray-300">Yes, lock <strong><%= @month_label %></strong> and advance to <strong><%= @next_month_label %></strong>.</span>
+      </label>
+    </div>
+  </div>
+
+  <%# Summary Card %>
+  <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg ring-1 ring-gray-200 dark:ring-gray-700 p-6 mb-6">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Month Summary</h2>
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4" data-soft-close-target="summaryBody">
+      <div class="text-sm text-gray-400 dark:text-gray-500">Loading summary...</div>
+    </div>
+  </div>
+
+  <%# Error display %>
+  <div class="hidden mb-6 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 ring-1 ring-red-200 dark:ring-red-800 text-sm text-red-700 dark:text-red-300" data-soft-close-target="errorBox"></div>
+
+  <%# Success display %>
+  <div class="hidden mb-6 p-4 rounded-lg bg-green-50 dark:bg-green-900/30 ring-1 ring-green-200 dark:ring-green-800 text-sm text-green-700 dark:text-green-300" data-soft-close-target="successBox"></div>
+</div>
