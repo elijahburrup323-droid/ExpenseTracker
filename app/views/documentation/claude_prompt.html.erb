@@ -44,7 +44,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 
 ### Layout Structure
 - Collapsible left sidebar (w-56 expanded, w-16 collapsed) with gradient purple background
-- Sidebar groups: Accounts (Account Types, Transfers), Deposits (Recurring Deposits, Frequencies), Payments (Categories, Spending Types), Admin (DBU, Diagnostics, Documentation, Quotes, Frequency Masters — admin only, always at bottom). Sub-menus sorted alphabetically within each group, except Frequency-related items which are always pinned to the bottom of their group.
+- Sidebar groups: Accounts (Account Types, Transfers, Reconciliation), Deposits (Recurring Deposits, Frequencies), Payments (Categories, Spending Types), Admin (DBU, Diagnostics, Documentation, Quotes, Frequency Masters — admin only, always at bottom). Sub-menus sorted alphabetically within each group, except Frequency-related items which are always pinned to the bottom of their group.
 - Collapse/expand toggle button at bottom of sidebar, next to profile name (circular, bg-white/10)
 - Bottom sidebar section: user profile button (name + avatar) — click to expand/collapse dropdown with Theme toggle, Settings link, Soft Close Month, Open Soft Close, Sign Out link. "Soft Close Month" snapshots account and dashboard data then advances to the next month. "Open Soft Close" reopens the previous month (blocked if current month has transactions). Both actions trigger confirmation modals before executing.
 - Top header bar showing "Hello {first name}" with the current open month (from open_month_masters) displayed underneath in secondary text, motivational quote (wraps without overlapping right-side elements), current date, and profile dropdown (upper-right corner with avatar, contains Toggle Theme, Settings, Sign Out — always visible, sticky z-30)
@@ -101,9 +101,11 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 - **account_month_snapshots** — id, user_id (FK), account_id (FK → accounts), year (int), month (int 1-12), beginning_balance (decimal 12,2), ending_balance (decimal 12,2), is_stale (boolean, default false), created_at, updated_at. Per-account balance snapshots generated when a month is closed (via POST /api/open_month_master/close). beginning_balance captures the account balance at the start of the month; ending_balance captures it at close. Marked is_stale=true if the month is later reopened. Unique constraint on [user_id, account_id, year, month].
 - **dashboard_month_snapshots** — id, user_id (FK), year (int), month (int 1-12), total_spending (decimal 12,2), total_income (decimal 12,2), total_transfers (decimal 12,2), net_worth (decimal 12,2), is_stale (boolean, default false), created_at, updated_at. Aggregated dashboard card value snapshots generated when a month is closed (via POST /api/open_month_master/close). Captures the dashboard summary values at month-close time. Marked is_stale=true if the month is later reopened. Unique constraint on [user_id, year, month].
 - **quotes** — quote_text (text, NOT NULL), quote_author (varchar 120, nullable), is_active (boolean, default true). System-wide inspirational quotes displayed on sign-in page and in the header bar. Not user-scoped. Admin-only CRUD via /quotes screen. Random active quote shown on sign-in; daily quote cached in session for header bar display.
+- **balance_adjustments** — user_id (FK), account_id (FK → accounts), adjustment_date (date, NOT NULL), description (varchar 255, NOT NULL), amount (decimal 12,2, NOT NULL), notes (text, nullable), reconciled (boolean, default false), deleted_at (datetime, nullable). Manual balance corrections created during reconciliation. Soft-delete pattern. Amount can be positive or negative. Included in AccountBalanceService balance computation.
+- **reconciliation_records** — user_id (FK), account_id (FK → accounts), year (int), month (int), outside_balance (decimal 12,2, nullable), statement_payment_count (int, default 0), statement_deposit_count (int, default 0), statement_adjustment_count (int, default 0), reconciled_at (datetime, nullable), reconciled_by (bigint, nullable), status (varchar 20, default 'open'). Per-account per-month reconciliation metadata. Stores the external/statement balance and statement item counts. Unique constraint on [user_id, account_id, year, month].
 
 ### Key Relationships
-- User has_many: spending_types, spending_categories, account_types, accounts, payments, income_user_frequencies, income_recurrings, income_entries, transfer_masters, account_month_snapshots, dashboard_month_snapshots; has_one: open_month_master
+- User has_many: spending_types, spending_categories, account_types, accounts, payments, income_user_frequencies, income_recurrings, income_entries, transfer_masters, account_month_snapshots, dashboard_month_snapshots, balance_adjustments, reconciliation_records; has_one: open_month_master
 - SpendingType has_many spending_categories; SpendingCategory has_many payments
 - AccountType has_many accounts; Account has_many payments, transfers_from, transfers_to, account_month_snapshots
 - IncomeRecurring has_many income_entries; both link to frequency_master and optional account
@@ -116,6 +118,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 /pricing ............... Subscription pricing page (3 tiers: Free, Paid, Advanced) with monthly/annual toggle
 /accounts .............. Accounts CRUD screen
 /transfer_masters ...... Account Transfers CRUD screen (modal-based add/edit/delete)
+/account_reconciliation  Account Reconciliation screen (checkbox reconciliation + Fix Mode)
 /account_types ......... Account Types CRUD screen
 /spending_types ........ Spending Types CRUD screen
 /spending_categories ... Categories CRUD screen
@@ -146,6 +149,8 @@ API endpoints (all under /api/):
   /api/account_types .......... CRUD
   /api/accounts ............... CRUD
   /api/transfer_masters ....... CRUD (with transactional balance updates on both from/to accounts)
+  /api/reconciliation ......... data (GET), toggle (PATCH), outside_balance (PUT), statement_counts (PUT), mark_reconciled (PUT)
+  /api/balance_adjustments .... create, update, destroy (with balance updates)
   /api/payments ............... CRUD (with transactional balance updates)
   /api/income_frequency_masters  CRUD + GET :id/can_delete (admin-only, delete blocked if in use by any user)
   /api/income_user_frequencies  index + update (use_flag toggle per frequency)
@@ -195,6 +200,7 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 - **transfer_masters_controller.js** — Modal-based CRUD for account transfers. Add/Edit/Delete all use modals. Validates transfer date against open month (shows date warning modal if outside range). Delete is blocked with a dedicated modal if the transfer's date falls outside the current open month. Manages from/to account dropdowns, amount, memo, and pagination.
 - **net_worth_populate_controller.js** — Admin-only utility on Dashboard Card 3 (Net Worth). Dropdown to choose months back to populate, POSTs to /api/net_worth_snapshots/populate to generate historical net worth test data, auto-reloads the page after success.
 - **month_actions_controller.js** — Stimulus controller for User Menu month actions. Provides "Soft Close Month" (generates account_month_snapshots + dashboard_month_snapshots, then advances the open month to the next month) and "Open Soft Close" (reopens the previous month if no transactions exist in the current month). Both actions use confirmation modals defined in the application layout before executing.
+- **reconciliation_controller.js** — Stimulus controller for Account Reconciliation screen. Manages account selection, month navigation, fetches reconciliation data via AJAX, renders Payments/Deposits/Transfers/Balance Adjustments tables with reconcile checkboxes. Toggles reconciled state per-row via PATCH. External balance input and statement counts saved via PUT. Fix Mode shows unmatched transactions and suggested fixes. "Mark as Reconciled" enabled only when difference is zero. Read-only mode for non-current months.
 
 ### Icon Catalog (app/javascript/controllers/shared/icon_catalog.js)
 - Contains 50 budget-related SVG icons (grocery, dining, gas, utilities, etc.) and 12 color options
@@ -311,6 +317,21 @@ All work items are managed via Google Drive at **G:\My Drive\ExpenseTracker** us
 - Deploy automatically when changes are ready and tested
 - Commit to GitHub and trigger Render deploys as needed
 
+### Manual Change Requests
+When changes are made outside the Open Items workflow (direct user prompts, documentation updates, config tweaks), log them in a **Manual Change Requests** docx in `2. In Process`.
+
+**File naming**: `Manual Change Requests v{APP_VERSION}.{MANUAL_CHANGE_SEQ}.docx`
+- Both values live in `config/initializers/version.rb`
+- Example: `Manual Change Requests v1.2.6.1.docx`
+
+**Sequence logic** (tracked in version.rb via MANUAL_CHANGE_SEQ constant):
+1. Read MANUAL_CHANGE_SEQ from version.rb
+2. If a file for the current seq exists in `2. In Process`, append to it
+3. If not, increment MANUAL_CHANGE_SEQ in version.rb and create a new file
+4. When bumping APP_VERSION, reset MANUAL_CHANGE_SEQ to 0
+
+**Entry format**: Bold title, Screen, Date, bullet list of changes.
+
 ## Behavior Rules
 - **Never ask for acknowledgement or confirmation to continue.** Just do the work. Do not pause to say "shall I proceed?" or "ready to continue?" — execute each step and move to the next automatically.
 - Do not ask "does this look good?" mid-task. Complete the full workflow, then present results.
@@ -359,9 +380,11 @@ After each deploy, run:
 ### Playwright Test Patterns
 1. **What's New overlay**: The `#whatsNewOverlay` is a full-screen fixed overlay (z-50) that blocks all clicks. Must be removed via `page.evaluate(() => document.getElementById('whatsNewOverlay')?.remove())` BEFORE any UI interaction. The Stimulus-based `[data-dashboard-target='whatsNewModal']` is a different element — dismiss both.
 2. **QA MODE banner**: The red sticky banner (z-[9999]) can intercept pointer events on elements positioned under it. Use `{ force: true }` on clicks when the banner might overlap.
-3. **Scoping locators**: `page.locator("text=Soft Close Month")` may match sidebar elements (hidden). Scope to the correct container: `page.locator(".sticky [data-controller='dropdown']").first().locator("text=Soft Close Month")` to target the header dropdown specifically.
-4. **Login helper**: Use `Promise.all([page.waitForURL(...), page.click(...)])` for Turbo navigation. If login times out, the password is likely wrong (check screenshot — password field will be empty or page won't redirect).
-5. **Test file naming**: Production tests go in `tests/` folder with pattern `prod-vXXX-batchN.spec.js`
+3. **CSS 3D transforms**: Playwright's hit-testing cannot click through `perspective`/`preserve-3d` containers on the back side of flip cards. Use `{ force: true }` for back-side button clicks in tests.
+4. **Flash messages blocking UI**: Flash messages positioned fixed top-right can block navbar elements. Wait for auto-dismiss (5s) or dismiss programmatically before interacting with covered elements.
+5. **Scoping locators**: `page.locator("text=Soft Close Month")` may match sidebar elements (hidden). Scope to the correct container: `page.locator(".sticky [data-controller='dropdown']").first().locator("text=Soft Close Month")` to target the header dropdown specifically.
+6. **Login helper**: Use `Promise.all([page.waitForURL(...), page.click(...)])` for Turbo navigation. Use `getByRole("button", { name: "Sign in", exact: true })` for the login button. `button_to` creates mini-forms with submit buttons — broad selectors like `button[type=submit]` will match those first.
+7. **Test file naming**: Production tests go in `tests/` folder with pattern `prod-vXXX-batchN.spec.js`
 
 ### Deploy & QA Cycle
 1. Set QA_MODE=true BEFORE deploying (include in the deploy commit)
@@ -377,9 +400,23 @@ After each deploy, run:
 - **Modal z-index**: Use z-[9999] for modals to stack above everything including QA banner
 - **Soft delete scope**: Always use `unscoped` when preloading associations that might reference deleted records
 - **API error format**: 422 for validation errors `{ errors: [...] }`, 409 for conflict/month-control errors, 405 for disallowed methods
+- **Importmap path vs relative path**: Shared modules must use importmap path (`"controllers/shared/icon_catalog"`) not relative (`"./shared/icon_catalog"`). Wrong path kills the entire importing controller silently.
 
 ### File Reading from Google Drive
-- `.docx` files: Copy to local first (`cp`), then extract via `node -e` with JSZip (read word/document.xml, strip XML tags)
-- `.gdoc` files: Read via `node read_gdoc.js "<Doc Name>"` (uses Google Docs API; token in documentation/token.json)
-- Google Drive path in MINGW64: `/g/My Drive/ExpenseTracker/` with numbered folders (`1. Open Items`, `2. In Process`, `3. Ready for QA`)</div>
+- `.docx` files: Read via Python docx module (`/c/Users/elija/AppData/Local/Programs/Python/Python313/python.exe` with `PYTHONIOENCODING=utf-8`)
+- `.gdoc` files: Read via `python "S:/My Drive/1. Projects/Tools/gdoc_reader.py" read <DOC_ID>` (uses Google Docs API with OAuth)
+- Google Drive path in MINGW64: `/g/My Drive/ExpenseTracker/` with numbered folders (`1. Open Items`, `2. In Process`, `3. Ready for QA`)
+
+## Key Project Files
+- Dashboard view: `app/views/dashboard/index.html.erb` (single file, all 6 cards)
+- Dashboard controller: `app/controllers/dashboard_controller.rb`
+- Dashboard API: `app/controllers/api/dashboard_controller.rb` (AJAX card data)
+- Dashboard JS: `app/javascript/controllers/dashboard_controller.js` (Stimulus)
+- Icon catalog: `app/javascript/controllers/shared/icon_catalog.js` (50 icons + colors + helpers)
+- Version config: `config/initializers/version.rb` (APP_VERSION, QA_MODE, APP_ALL_VERSIONS)
+- Schema: `db/schema.rb`
+- Routes: `config/routes.rb`
+- Layout: `app/views/layouts/application.html.erb`
+- Sidebar: `app/views/shared/_sidebar.html.erb`
+- This prompt: `app/views/documentation/claude_prompt.html.erb`</div>
 </div>

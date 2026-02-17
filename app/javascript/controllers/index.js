@@ -28,6 +28,7 @@ import UploadController from "controllers/upload_controller"
 import PricingController from "controllers/pricing_controller"
 import MonthActionsController from "controllers/month_actions_controller"
 import SoftCloseController from "controllers/soft_close_controller"
+import ReconciliationController from "controllers/reconciliation_controller"
 
 application.register("flash", FlashController)
 application.register("dropdown", DropdownController)
@@ -57,3 +58,4 @@ application.register("upload", UploadController)
 application.register("pricing", PricingController)
 application.register("month-actions", MonthActionsController)
 application.register("soft-close", SoftCloseController)
+application.register("reconciliation", ReconciliationController)

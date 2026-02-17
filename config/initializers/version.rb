@@ -1,9 +1,24 @@
-APP_VERSION = "1.3.0"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+APP_VERSION = "1.3.1"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.1",
+    changes: [
+      "Account Reconciliation: New screen under Accounts menu for reconciling individual accounts per month",
+      "Account Reconciliation: Compare BudgetHQ balance against external/statement balance with real-time difference",
+      "Account Reconciliation: Checkbox-driven reconciliation for Payments, Deposits, Transfers, and Balance Adjustments",
+      "Account Reconciliation: Fix Mode with guided troubleshooting — Unmatched Payments, Deposits, and Suggested Fixes",
+      "Account Reconciliation: Add Balance Adjustments directly from reconciliation screen",
+      "Account Reconciliation: Auto-Match Suggestions to detect count mismatches and identify discrepancies",
+      "Account Reconciliation: Mark as Reconciled when difference equals zero with server-side validation",
+      "Account Reconciliation: Read-only mode for non-current months; month navigation with chevrons",
+      "Balance Adjustments: New entity type for manual account balance corrections",
+      "Soft Close: Reconciliation checklist item now checks for unreconciled transactions",
+    ]
+  },
   {
     version: "1.3.0",
     changes: [

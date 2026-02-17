@@ -1,0 +1,442 @@
+<div data-controller="reconciliation"
+     data-reconciliation-data-url-value="<%= api_reconciliation_data_path %>"
+     data-reconciliation-toggle-url-value="<%= api_reconciliation_toggle_path %>"
+     data-reconciliation-outside-balance-url-value="<%= api_reconciliation_save_outside_balance_path %>"
+     data-reconciliation-statement-counts-url-value="<%= api_reconciliation_save_statement_counts_path %>"
+     data-reconciliation-mark-reconciled-url-value="<%= api_reconciliation_mark_reconciled_path %>"
+     data-reconciliation-balance-adjustments-url-value="<%= api_balance_adjustments_path %>"
+     data-reconciliation-csrf-token-value="<%= form_authenticity_token %>"
+     data-reconciliation-initial-year-value="<%= @open_month.current_year %>"
+     data-reconciliation-initial-month-value="<%= @open_month.current_month %>"
+     class="px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto">
+
+  <%# ====== PAGE HEADER ====== %>
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Reconcile Balance</h1>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Compare your BudgetHQ records against your bank or credit card statement to find and fix discrepancies.</p>
+    </div>
+    <div class="flex items-center space-x-2 flex-shrink-0">
+      <input type="text" placeholder="Search amount..."
+             class="w-36 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+             data-reconciliation-target="searchInput"
+             data-action="input->reconciliation#search">
+      <button type="button"
+              class="px-3 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition"
+              data-action="click->reconciliation#search">Search</button>
+    </div>
+  </div>
+
+  <%# ====== ACCOUNT SELECTOR + MONTH NAV ====== %>
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <%# Account selector %>
+    <div class="flex items-center space-x-3">
+      <select data-reconciliation-target="accountSelect"
+              data-action="change->reconciliation#selectAccount"
+              class="px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500">
+        <option value="">Select an account...</option>
+        <% @accounts.each do |account| %>
+          <option value="<%= account.id %>"><%= account.name %></option>
+        <% end %>
+      </select>
+    </div>
+
+    <%# Month navigation %>
+    <div class="flex items-center space-x-3">
+      <button type="button" data-action="click->reconciliation#prevMonth"
+              class="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <span data-reconciliation-target="monthLabel" class="text-lg font-semibold text-gray-900 dark:text-white min-w-[10rem] text-center">
+        <%= Date.new(@open_month.current_year, @open_month.current_month, 1).strftime("%B %Y") %>
+      </span>
+      <button type="button" data-action="click->reconciliation#nextMonth"
+              class="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <%# ====== READ-ONLY BANNER (hidden by default) ====== %>
+  <div data-reconciliation-target="readOnlyBanner" class="hidden mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg">
+    <div class="flex items-center space-x-2">
+      <svg class="h-5 w-5 text-amber-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+      </svg>
+      <span class="text-sm font-medium text-amber-800 dark:text-amber-200">This month is not the current open month. Reconciliation is read-only.</span>
+    </div>
+  </div>
+
+  <%# ====== MAIN RECONCILIATION VIEW (Screen 1) ====== %>
+  <div data-reconciliation-target="mainPanel">
+
+    <%# ---- TOP SUMMARY PANEL ---- %>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5 mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <%# BudgetHQ Balance %>
+        <div class="text-center">
+          <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">BudgetHQ Balance</p>
+          <p data-reconciliation-target="budgetBalance" class="text-2xl font-bold text-gray-900 dark:text-white">$0.00</p>
+          <div class="mt-2 flex items-center justify-center space-x-2">
+            <label class="text-xs text-gray-500 dark:text-gray-400">Your Records:</label>
+            <input type="number" min="0" value="0"
+                   data-reconciliation-target="recordCount"
+                   class="w-16 px-2 py-1 text-xs text-center border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white"
+                   disabled>
+          </div>
+        </div>
+
+        <%# External / Statement Balance %>
+        <div class="text-center">
+          <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+            <span data-reconciliation-target="externalLabel">Statement</span> Balance
+          </p>
+          <div class="flex items-center justify-center space-x-2">
+            <span class="text-2xl font-bold text-gray-900 dark:text-white">$</span>
+            <input type="number" step="0.01" placeholder="0.00"
+                   data-reconciliation-target="externalBalance"
+                   data-action="change->reconciliation#updateExternalBalance"
+                   class="w-32 px-2 py-1 text-2xl font-bold text-center border-b-2 border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-white focus:border-brand-500 focus:outline-none">
+            <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+            </svg>
+          </div>
+        </div>
+
+        <%# Difference %>
+        <div class="text-center">
+          <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Difference</p>
+          <div class="flex items-center justify-center space-x-2">
+            <span data-reconciliation-target="differenceDisplay" class="text-2xl font-bold text-green-600 dark:text-green-400">$0.00</span>
+            <svg data-reconciliation-target="differenceWarning" class="h-5 w-5 text-red-500 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+            </svg>
+          </div>
+          <button type="button"
+                  data-reconciliation-target="fixModeBtn"
+                  data-action="click->reconciliation#enterFixMode"
+                  class="hidden mt-2 px-3 py-1 text-xs font-medium text-red-600 dark:text-red-400 border border-red-300 dark:border-red-600 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition">
+            Fix Mode
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <%# ---- EMPTY STATE (shown before account selection) ---- %>
+    <div data-reconciliation-target="emptyState" class="text-center py-16">
+      <svg class="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">Select an account above to begin reconciliation.</p>
+    </div>
+
+    <%# ---- DATA SECTIONS (hidden until account selected) ---- %>
+    <div data-reconciliation-target="dataSections" class="hidden space-y-6">
+
+      <%# === PAYMENTS SECTION === %>
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-5 py-3 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div class="flex items-center space-x-3">
+            <svg class="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a5 5 0 00-10 0v2M12 12v3m-3-3h6m-9 7h12a2 2 0 002-2v-4a2 2 0 00-2-2H6a2 2 0 00-2 2v4a2 2 0 002 2z"/>
+            </svg>
+            <span class="text-sm font-semibold text-gray-900 dark:text-white">Payments</span>
+            <span data-reconciliation-target="paymentsUnreconciled" class="text-xs text-red-500 font-medium">(0 Unreconciled)</span>
+          </div>
+          <div class="flex items-center space-x-3">
+            <div class="flex items-center space-x-1">
+              <label class="text-xs text-gray-500 dark:text-gray-400" data-reconciliation-target="paymentCountLabel">Statement Count:</label>
+              <input type="number" min="0" value="0"
+                     data-reconciliation-target="paymentStatementCount"
+                     data-action="change->reconciliation#updateStatementCount"
+                     data-section="payments"
+                     class="w-14 px-2 py-0.5 text-xs text-center border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white">
+            </div>
+            <span data-reconciliation-target="paymentsTotal" class="text-sm font-semibold text-red-600 dark:text-red-400">$0.00</span>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead class="bg-gray-50 dark:bg-gray-900/50">
+              <tr>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Date</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Payee</th>
+                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Amount</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Comments</th>
+                <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase w-20">Reconcile</th>
+              </tr>
+            </thead>
+            <tbody data-reconciliation-target="paymentsBody" class="divide-y divide-gray-200 dark:divide-gray-700">
+            </tbody>
+          </table>
+        </div>
+        <div class="px-5 py-2 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
+          <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Total</span>
+          <span data-reconciliation-target="paymentsTotalBottom" class="text-sm font-semibold text-red-600 dark:text-red-400">$0.00</span>
+        </div>
+      </div>
+
+      <%# === DEPOSITS SECTION === %>
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-5 py-3 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div class="flex items-center space-x-3">
+            <svg class="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span class="text-sm font-semibold text-gray-900 dark:text-white">Deposits</span>
+            <span data-reconciliation-target="depositsUnreconciled" class="text-xs text-red-500 font-medium">(0 Unreconciled)</span>
+          </div>
+          <div class="flex items-center space-x-3">
+            <div class="flex items-center space-x-1">
+              <label class="text-xs text-gray-500 dark:text-gray-400" data-reconciliation-target="depositCountLabel">Statement Count:</label>
+              <input type="number" min="0" value="0"
+                     data-reconciliation-target="depositStatementCount"
+                     data-action="change->reconciliation#updateStatementCount"
+                     data-section="deposits"
+                     class="w-14 px-2 py-0.5 text-xs text-center border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white">
+            </div>
+            <span data-reconciliation-target="depositsTotal" class="text-sm font-semibold text-green-600 dark:text-green-400">$0.00</span>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead class="bg-gray-50 dark:bg-gray-900/50">
+              <tr>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Date</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Source</th>
+                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Amount</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Notes</th>
+                <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase w-20">Reconcile</th>
+              </tr>
+            </thead>
+            <tbody data-reconciliation-target="depositsBody" class="divide-y divide-gray-200 dark:divide-gray-700">
+            </tbody>
+          </table>
+        </div>
+        <div class="px-5 py-2 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
+          <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Total</span>
+          <span data-reconciliation-target="depositsTotalBottom" class="text-sm font-semibold text-green-600 dark:text-green-400">$0.00</span>
+        </div>
+      </div>
+
+      <%# === TRANSFERS SECTION === %>
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-5 py-3 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div class="flex items-center space-x-3">
+            <svg class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+            </svg>
+            <span class="text-sm font-semibold text-gray-900 dark:text-white">Transfers</span>
+            <span data-reconciliation-target="transfersUnreconciled" class="text-xs text-red-500 font-medium">(0 Unreconciled)</span>
+          </div>
+          <span data-reconciliation-target="transfersTotal" class="text-sm font-semibold text-blue-600 dark:text-blue-400">$0.00</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead class="bg-gray-50 dark:bg-gray-900/50">
+              <tr>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Date</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Description</th>
+                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Amount</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Memo</th>
+                <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase w-20">Reconcile</th>
+              </tr>
+            </thead>
+            <tbody data-reconciliation-target="transfersBody" class="divide-y divide-gray-200 dark:divide-gray-700">
+            </tbody>
+          </table>
+        </div>
+        <div class="px-5 py-2 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
+          <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Total</span>
+          <span data-reconciliation-target="transfersTotalBottom" class="text-sm font-semibold text-blue-600 dark:text-blue-400">$0.00</span>
+        </div>
+      </div>
+
+      <%# === BALANCE ADJUSTMENTS SECTION === %>
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-5 py-3 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div class="flex items-center space-x-3">
+            <svg class="h-5 w-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+            </svg>
+            <span class="text-sm font-semibold text-gray-900 dark:text-white">Balance Adjustments</span>
+            <span data-reconciliation-target="adjustmentsUnreconciled" class="text-xs text-red-500 font-medium">(0 Unreconciled)</span>
+          </div>
+          <div class="flex items-center space-x-3">
+            <div class="flex items-center space-x-1">
+              <label class="text-xs text-gray-500 dark:text-gray-400" data-reconciliation-target="adjustmentCountLabel">Statement Count:</label>
+              <input type="number" min="0" value="0"
+                     data-reconciliation-target="adjustmentStatementCount"
+                     data-action="change->reconciliation#updateStatementCount"
+                     data-section="adjustments"
+                     class="w-14 px-2 py-0.5 text-xs text-center border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white">
+            </div>
+            <span data-reconciliation-target="adjustmentsTotal" class="text-sm font-semibold text-orange-600 dark:text-orange-400">$0.00</span>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead class="bg-gray-50 dark:bg-gray-900/50">
+              <tr>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Date</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Description</th>
+                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Amount</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Notes</th>
+                <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase w-20">Reconcile</th>
+              </tr>
+            </thead>
+            <tbody data-reconciliation-target="adjustmentsBody" class="divide-y divide-gray-200 dark:divide-gray-700">
+            </tbody>
+          </table>
+        </div>
+        <div class="px-5 py-2 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
+          <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Total</span>
+          <span data-reconciliation-target="adjustmentsTotalBottom" class="text-sm font-semibold text-orange-600 dark:text-orange-400">$0.00</span>
+        </div>
+      </div>
+
+      <%# === MARK AS RECONCILED BUTTON === %>
+      <div class="flex justify-end">
+        <button type="button" disabled
+                data-reconciliation-target="markReconciledBtn"
+                data-action="click->reconciliation#markReconciled"
+                class="px-6 py-2.5 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-lg shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed">
+          Mark as Reconciled
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <%# ====== FIX MODE (Screen 2) — hidden by default ====== %>
+  <div data-reconciliation-target="fixModePanel" class="hidden">
+    <%# Fix Mode Header %>
+    <div class="bg-gradient-to-r from-brand-700 to-brand-500 rounded-t-xl px-6 py-4 mb-0">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl font-bold text-white">Reconciliation Fix Mode</h2>
+        <button type="button" data-action="click->reconciliation#exitFixMode"
+                class="px-3 py-1.5 text-sm font-medium text-white/80 hover:text-white border border-white/30 rounded-lg hover:bg-white/10 transition">
+          Back to Reconciliation
+        </button>
+      </div>
+    </div>
+
+    <%# Out-of-balance banner %>
+    <div class="bg-red-50 dark:bg-red-900/20 border-x border-b border-red-200 dark:border-red-700 rounded-b-xl px-6 py-4 mb-6">
+      <div class="flex items-center space-x-3">
+        <svg class="h-8 w-8 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+        </svg>
+        <div>
+          <p data-reconciliation-target="fixModeAmount" class="text-lg font-bold text-red-700 dark:text-red-300">$0.00 Out of Balance</p>
+          <p data-reconciliation-target="fixModeGuidance" class="text-sm text-red-600 dark:text-red-400 mt-1">Review unmatched transactions below to identify the discrepancy.</p>
+        </div>
+      </div>
+    </div>
+
+    <%# 3-card grid %>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      <%# Card 1: Unmatched Payments %>
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col" style="max-height: 28rem;">
+        <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+          <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Unmatched Payments</h3>
+        </div>
+        <div data-reconciliation-target="fixPaymentsBody" class="flex-1 overflow-y-auto p-3 space-y-2">
+          <p class="text-xs text-gray-400 dark:text-gray-500 text-center py-4">No unmatched payments</p>
+        </div>
+      </div>
+
+      <%# Card 2: Unmatched Deposits %>
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col" style="max-height: 28rem;">
+        <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Unmatched Deposits</h3>
+          </div>
+          <input type="text" placeholder="Search deposits..."
+                 data-reconciliation-target="fixDepositSearch"
+                 data-action="input->reconciliation#searchFixDeposits"
+                 class="mt-2 w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white">
+        </div>
+        <div data-reconciliation-target="fixDepositsBody" class="flex-1 overflow-y-auto p-3 space-y-2">
+          <p class="text-xs text-gray-400 dark:text-gray-500 text-center py-4">No unmatched deposits</p>
+        </div>
+      </div>
+
+      <%# Card 3: Suggested Fixes %>
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col" style="max-height: 28rem;">
+        <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+          <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Suggested Fixes</h3>
+        </div>
+        <div data-reconciliation-target="fixSuggestionsBody" class="flex-1 overflow-y-auto p-3 space-y-2">
+          <p class="text-xs text-gray-400 dark:text-gray-500 text-center py-4">No suggestions</p>
+        </div>
+      </div>
+    </div>
+
+    <%# Bottom action bar %>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 px-5 py-3 flex flex-wrap items-center gap-3">
+      <button type="button" data-action="click->reconciliation#addMissingPayment"
+              class="px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+        + Add Missing Payment
+      </button>
+      <button type="button" data-action="click->reconciliation#addMissingDeposit"
+              class="px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+        + Add Missing Deposit
+      </button>
+      <button type="button" data-action="click->reconciliation#showAddAdjustmentModal"
+              class="px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+        + Add Adjustment
+      </button>
+      <button type="button" data-action="click->reconciliation#autoMatch"
+              class="px-3 py-2 text-xs font-medium text-brand-600 dark:text-brand-400 border border-brand-300 dark:border-brand-600 rounded-lg hover:bg-brand-50 dark:hover:bg-brand-900/20 transition">
+        Auto-Match Suggestions
+      </button>
+      <div class="flex-1"></div>
+      <button type="button" disabled
+              data-reconciliation-target="fixMarkReconciledBtn"
+              data-action="click->reconciliation#markReconciled"
+              class="px-5 py-2 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-lg shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed">
+        Mark as Reconciled
+      </button>
+    </div>
+  </div>
+
+  <%# ====== ADD ADJUSTMENT MODAL ====== %>
+  <div data-reconciliation-target="adjustmentModal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-black/50">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full mx-4 p-6">
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Add Balance Adjustment</h3>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
+          <input type="date" data-reconciliation-target="adjDate"
+                 class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+          <input type="text" data-reconciliation-target="adjDescription" placeholder="e.g., Bank fee, Interest"
+                 class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Amount (negative to subtract)</label>
+          <input type="number" step="0.01" data-reconciliation-target="adjAmount" placeholder="0.00"
+                 class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes (optional)</label>
+          <input type="text" data-reconciliation-target="adjNotes" placeholder=""
+                 class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+        </div>
+      </div>
+      <div data-reconciliation-target="adjError" class="hidden mt-3 text-sm text-red-600 dark:text-red-400"></div>
+      <div class="flex justify-end space-x-3 mt-5">
+        <button type="button" data-action="click->reconciliation#closeAdjustmentModal"
+                class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">Cancel</button>
+        <button type="button" data-action="click->reconciliation#saveAdjustment"
+                class="px-4 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg shadow-sm transition">Save Adjustment</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_17_000004) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_17_175902) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -65,6 +65,22 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_17_000004) do
     t.index ["account_type_id"], name: "index_accounts_on_account_type_id"
     t.index ["user_id", "sort_order"], name: "index_accounts_on_user_id_and_sort_order"
     t.index ["user_id"], name: "index_accounts_on_user_id"
+  end
+
+  create_table "balance_adjustments", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "account_id", null: false
+    t.date "adjustment_date", null: false
+    t.string "description", limit: 255, null: false
+    t.decimal "amount", precision: 12, scale: 2, null: false
+    t.text "notes"
+    t.boolean "reconciled", default: false, null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_balance_adjustments_on_account_id"
+    t.index ["user_id", "adjustment_date"], name: "index_balance_adjustments_on_user_id_and_adjustment_date"
+    t.index ["user_id"], name: "index_balance_adjustments_on_user_id"
   end
 
   create_table "bug_reports", force: :cascade do |t|
@@ -173,6 +189,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_17_000004) do
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "reconciled", default: false, null: false
     t.index ["account_id"], name: "index_income_entries_on_account_id"
     t.index ["frequency_master_id"], name: "index_income_entries_on_frequency_master_id"
     t.index ["income_recurring_id"], name: "index_income_entries_on_income_recurring_id"
@@ -284,6 +301,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_17_000004) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "spending_type_override_id"
+    t.boolean "reconciled", default: false, null: false
     t.index ["account_id"], name: "index_payments_on_account_id"
     t.index ["spending_category_id"], name: "index_payments_on_spending_category_id"
     t.index ["user_id", "payment_date"], name: "index_payments_on_user_id_and_payment_date"
@@ -309,6 +327,25 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_17_000004) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["is_active"], name: "index_quotes_on_is_active"
+  end
+
+  create_table "reconciliation_records", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "account_id", null: false
+    t.integer "year", null: false
+    t.integer "month", null: false
+    t.decimal "outside_balance", precision: 12, scale: 2
+    t.integer "statement_payment_count", default: 0
+    t.integer "statement_deposit_count", default: 0
+    t.integer "statement_adjustment_count", default: 0
+    t.datetime "reconciled_at"
+    t.bigint "reconciled_by"
+    t.string "status", limit: 20, default: "open"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_reconciliation_records_on_account_id"
+    t.index ["user_id", "account_id", "year", "month"], name: "idx_recon_records_unique", unique: true
+    t.index ["user_id"], name: "index_reconciliation_records_on_user_id"
   end
 
   create_table "spending_categories", force: :cascade do |t|
@@ -380,6 +417,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_17_000004) do
     t.string "memo"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "reconciled", default: false, null: false
     t.index ["from_account_id"], name: "index_transfer_masters_on_from_account_id"
     t.index ["to_account_id"], name: "index_transfer_masters_on_to_account_id"
     t.index ["transfer_date"], name: "index_transfer_masters_on_transfer_date"
@@ -461,6 +499,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_17_000004) do
   add_foreign_key "account_types", "users"
   add_foreign_key "accounts", "account_types"
   add_foreign_key "accounts", "users"
+  add_foreign_key "balance_adjustments", "accounts"
+  add_foreign_key "balance_adjustments", "users"
   add_foreign_key "dashboard_card_account_rule_tags", "dashboard_card_account_rules"
   add_foreign_key "dashboard_card_account_rule_tags", "tags"
   add_foreign_key "dashboard_card_account_rule_tags", "users"
@@ -487,6 +527,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_17_000004) do
   add_foreign_key "payments", "spending_categories"
   add_foreign_key "payments", "spending_types", column: "spending_type_override_id", on_delete: :nullify
   add_foreign_key "payments", "users"
+  add_foreign_key "reconciliation_records", "accounts"
+  add_foreign_key "reconciliation_records", "users"
   add_foreign_key "spending_categories", "spending_types"
   add_foreign_key "spending_categories", "users"
   add_foreign_key "spending_types", "users"

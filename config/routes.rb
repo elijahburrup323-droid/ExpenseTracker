@@ -38,6 +38,9 @@ Rails.application.routes.draw do
   # Transfers (HTML page)
   resources :transfer_masters, only: [:index]
 
+  # Account Reconciliation (HTML page)
+  get "account_reconciliation", to: "account_reconciliation#index", as: :account_reconciliation
+
   # Payments (HTML page)
   resources :payments, only: [:index]
 
@@ -109,6 +112,15 @@ Rails.application.routes.draw do
         post :populate
       end
     end
+    # Reconciliation API
+    scope :reconciliation, controller: "reconciliation", as: :reconciliation do
+      get "data", action: :data
+      patch "toggle", action: :toggle
+      put "outside_balance", action: :save_outside_balance
+      put "statement_counts", action: :save_statement_counts
+      put "mark_reconciled", action: :mark_reconciled
+    end
+    resources :balance_adjustments, only: [:create, :update, :destroy]
     resources :net_worth_snapshots, only: [:index] do
       collection do
         post :populate

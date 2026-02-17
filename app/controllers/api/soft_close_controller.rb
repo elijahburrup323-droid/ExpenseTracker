@@ -157,11 +157,15 @@ module Api
         detail: "All transactions are date-scoped"
       }
 
-      # 8. Reconciliation complete — no feature exists
+      # 8. Reconciliation complete — check for unreconciled transactions
+      unreconciled_payments = current_user.payments.where(payment_date: range, deleted_at: nil, reconciled: false).count
+      unreconciled_deposits = current_user.income_entries.where(entry_date: range, deleted_at: nil, reconciled: false).count
+      unreconciled_transfers = current_user.transfer_masters.where(transfer_date: range, reconciled: false).count
+      unreconciled_total = unreconciled_payments + unreconciled_deposits + unreconciled_transfers
       item8 = {
         key: "reconciliation_done", label: "Reconciliation complete",
-        passed: true, auto: true,
-        detail: "N/A — no reconciliation feature"
+        passed: unreconciled_total == 0, auto: true,
+        detail: unreconciled_total > 0 ? "#{unreconciled_total} unreconciled transaction#{'s' if unreconciled_total != 1}" : nil
       }
 
       [item1, item2, item3, item4, item5, item6, item7, item8]

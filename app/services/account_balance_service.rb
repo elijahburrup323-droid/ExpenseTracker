@@ -35,6 +35,13 @@ class AccountBalanceService
         .sum(:amount)
         .each { |aid, amt| balances[aid] = (balances[aid] || 0) - amt.to_f }
 
+    # Balance adjustments
+    user.balance_adjustments
+        .where("adjustment_date <= ?", as_of_date)
+        .group(:account_id)
+        .sum(:amount)
+        .each { |aid, amt| balances[aid] = (balances[aid] || 0) + amt.to_f }
+
     balances
   end
 end
