@@ -26,6 +26,8 @@ import LegalTocController from "controllers/legal_toc_controller"
 import TransferMastersController from "controllers/transfer_masters_controller"
 import UploadController from "controllers/upload_controller"
 import PricingController from "controllers/pricing_controller"
+import MonthActionsController from "controllers/month_actions_controller"
+import SoftCloseController from "controllers/soft_close_controller"
 
 application.register("flash", FlashController)
 application.register("dropdown", DropdownController)
@@ -53,3 +55,5 @@ application.register("legal-toc", LegalTocController)
 application.register("transfer-masters", TransferMastersController)
 application.register("upload", UploadController)
 application.register("pricing", PricingController)
+application.register("month-actions", MonthActionsController)
+application.register("soft-close", SoftCloseController)
