@@ -5,7 +5,10 @@ export default class extends Controller {
   static targets = [
     "tableBody", "addButton", "generateButton", "deleteModal", "deleteModalName",
     "blockedDeleteModal", "blockedDeleteBody", "blockedDeleteButtons", "total",
-    "monthClosedModal", "monthClosedMessage"
+    "monthClosedModal", "monthClosedMessage",
+    "accountModal", "modalTitle", "modalName", "modalDate", "modalDateRow",
+    "modalType", "modalInstitution", "modalBalance", "modalBudget",
+    "modalIconPicker", "modalError"
   ]
   static values = { apiUrl: String, typesUrl: String, csrfToken: String, typesPageUrl: String, depositsPageUrl: String, paymentsPageUrl: String, openMonthUrl: String }
 
@@ -31,6 +34,9 @@ export default class extends Controller {
 
   disconnect() {
     document.removeEventListener("click", this._onDocumentClick)
+    if (this._modalEscapeHandler) {
+      document.removeEventListener("keydown", this._modalEscapeHandler)
+    }
   }
 
   // --- Data Fetching ---
@@ -117,13 +123,11 @@ export default class extends Controller {
     this.renderTable()
   }
 
-  // --- State Transitions ---
+  // --- Modal Operations ---
 
   async startAdding() {
-    if (this.state === "adding") return
-    if (this.state !== "idle") { this.state = "idle"; this.editingId = null; this.iconPickerOpen = false }
+    if (this.state !== "idle") return
 
-    // Check if month is closed
     const closed = await this._checkMonthClosed()
     if (closed) return
 
@@ -140,37 +144,137 @@ export default class extends Controller {
     this.selectedIconKey = null
     this.selectedColorKey = "blue"
     this.iconPickerOpen = false
-    this.renderTable()
-    const nameInput = this.tableBodyTarget.querySelector("input[name='name']")
-    if (nameInput) nameInput.focus()
+
+    // Set modal title
+    this.modalTitleTarget.textContent = "Add Account"
+
+    // Reset fields
+    this.modalNameTarget.value = ""
+    this.modalInstitutionTarget.value = ""
+    this.modalBalanceTarget.value = ""
+
+    // Date field: visible in add mode, constrained to open month
+    this.modalDateRowTarget.classList.remove("hidden")
+    if (this._openMonth) {
+      const y = this._openMonth.current_year
+      const m = this._openMonth.current_month
+      const dateMin = `${y}-${String(m).padStart(2, "0")}-01`
+      const lastDay = new Date(y, m, 0).getDate()
+      const dateMax = `${y}-${String(m).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`
+      const today = new Date()
+      let dateDefault
+      if (today.getFullYear() === y && (today.getMonth() + 1) === m) {
+        dateDefault = `${y}-${String(m).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`
+      } else {
+        dateDefault = dateMax
+      }
+      this.modalDateTarget.min = dateMin
+      this.modalDateTarget.max = dateMax
+      this.modalDateTarget.value = dateDefault
+    } else {
+      this.modalDateTarget.min = ""
+      this.modalDateTarget.max = ""
+      this.modalDateTarget.value = ""
+    }
+
+    // Rebuild type dropdown with active types
+    this._rebuildTypeDropdown()
+
+    // Budget toggle: default ON
+    this.modalBudgetTarget.innerHTML = this._renderBudgetToggle(true)
+
+    // Update icon preview in modal
+    this._updateModalIconPreview()
+
+    // Hide error
+    this.modalErrorTarget.classList.add("hidden")
+
+    // Show modal
+    this.accountModalTarget.classList.remove("hidden")
+    this._registerModalEscape()
+
+    // Focus name
+    setTimeout(() => this.modalNameTarget.focus(), 50)
   }
 
-  cancelAdding() {
-    this.state = "idle"
+  async startEditing(event) {
+    if (this.state !== "idle") return
+
+    const closed = await this._checkMonthClosed()
+    if (closed) return
+
+    const id = Number(event.currentTarget.dataset.id)
+    const acc = this.accounts.find(a => a.id === id)
+    if (!acc) return
+
+    this.state = "editing"
+    this.editingId = id
+    this.selectedIconKey = acc.icon_key || null
+    this.selectedColorKey = acc.color_key || "blue"
     this.iconPickerOpen = false
-    this.renderTable()
+
+    // Set modal title
+    this.modalTitleTarget.textContent = "Edit Account"
+
+    // Populate fields
+    this.modalNameTarget.value = acc.name || ""
+    this.modalInstitutionTarget.value = acc.institution || ""
+    this.modalBalanceTarget.value = parseFloat(acc.balance) || ""
+
+    // Date field: hidden in edit mode
+    this.modalDateRowTarget.classList.add("hidden")
+
+    // Rebuild type dropdown, include disabled types if they match current
+    this._rebuildTypeDropdown(acc.account_type_id)
+    this.modalTypeTarget.value = String(acc.account_type_id || "")
+
+    // Budget toggle: match current value
+    this.modalBudgetTarget.innerHTML = this._renderBudgetToggle(acc.include_in_budget)
+
+    // Update icon preview in modal
+    this._updateModalIconPreview()
+
+    // Hide error
+    this.modalErrorTarget.classList.add("hidden")
+
+    // Show modal
+    this.accountModalTarget.classList.remove("hidden")
+    this._registerModalEscape()
+
+    // Focus name
+    setTimeout(() => this.modalNameTarget.focus(), 50)
+  }
+
+  cancelModal() {
+    this.accountModalTarget.classList.add("hidden")
+    this.state = "idle"
+    this.editingId = null
+    this.iconPickerOpen = false
+    this._unregisterModalEscape()
+  }
+
+  saveModal() {
+    if (this.state === "adding") this.saveNew()
+    else if (this.state === "editing") this.saveEdit()
   }
 
   async saveNew() {
-    const nameInput = this.tableBodyTarget.querySelector("input[name='name']")
-    const typeSelect = this.tableBodyTarget.querySelector("select[name='account_type_id']")
-    const instInput = this.tableBodyTarget.querySelector("input[name='institution']")
-    const balInput = this.tableBodyTarget.querySelector("input[name='balance']")
-    const dateInput = this.tableBodyTarget.querySelector("input[name='effective_date']")
-    const name = nameInput?.value?.trim()
-    const account_type_id = typeSelect?.value
-    const institution = instInput?.value?.trim()
-    const balance = balInput?.value?.trim() || "0"
-    const effective_date = dateInput?.value || ""
+    const name = this.modalNameTarget.value.trim()
+    const account_type_id = this.modalTypeTarget.value
+    const institution = this.modalInstitutionTarget.value.trim()
+    const balance = this.modalBalanceTarget.value.trim() || "0"
+    const effective_date = this.modalDateTarget.value || ""
+    const budgetToggle = this.modalBudgetTarget.querySelector(".budget-toggle")
+    const include_in_budget = budgetToggle?.dataset.checked === "true"
 
     if (!name) {
-      this.showRowError("Name is required")
-      nameInput?.focus()
+      this._showModalError("Name is required")
+      this.modalNameTarget.focus()
       return
     }
     if (!account_type_id) {
-      this.showRowError("Account Type is required")
-      typeSelect?.focus()
+      this._showModalError("Account Type is required")
+      this.modalTypeTarget.focus()
       return
     }
 
@@ -185,69 +289,41 @@ export default class extends Controller {
         body: JSON.stringify({ account: {
           name, account_type_id, institution, balance, effective_date,
           icon_key: this.selectedIconKey,
-          color_key: this.selectedColorKey
+          color_key: this.selectedColorKey,
+          include_in_budget
         }})
       })
 
       if (response.ok) {
         const newAcc = await response.json()
         this.accounts.push(newAcc)
-        this.state = "idle"
-        this.iconPickerOpen = false
+        this.cancelModal()
         this.renderTable()
       } else {
         const data = await response.json()
-        this.showRowError(data.errors?.[0] || "Failed to save")
+        this._showModalError(data.errors?.[0] || data.error || "Failed to save")
       }
     } catch (e) {
-      this.showRowError("Network error")
+      this._showModalError("Network error")
     }
-  }
-
-  async startEditing(event) {
-    if (this.state !== "idle") { this.state = "idle"; this.editingId = null; this.iconPickerOpen = false }
-
-    // Check if month is closed
-    const closed = await this._checkMonthClosed()
-    if (closed) return
-
-    const id = Number(event.currentTarget.dataset.id)
-    const acc = this.accounts.find(a => a.id === id)
-    this.state = "editing"
-    this.editingId = id
-    this.selectedIconKey = acc?.icon_key || null
-    this.selectedColorKey = acc?.color_key || "blue"
-    this.iconPickerOpen = false
-    this.renderTable()
-    const nameInput = this.tableBodyTarget.querySelector("input[name='name']")
-    if (nameInput) nameInput.focus()
-  }
-
-  cancelEditing() {
-    this.state = "idle"
-    this.editingId = null
-    this.iconPickerOpen = false
-    this.renderTable()
   }
 
   async saveEdit() {
-    const nameInput = this.tableBodyTarget.querySelector("input[name='name']")
-    const typeSelect = this.tableBodyTarget.querySelector("select[name='account_type_id']")
-    const instInput = this.tableBodyTarget.querySelector("input[name='institution']")
-    const balInput = this.tableBodyTarget.querySelector("input[name='balance']")
-    const name = nameInput?.value?.trim()
-    const account_type_id = typeSelect?.value
-    const institution = instInput?.value?.trim()
-    const balance = balInput?.value?.trim() || "0"
+    const name = this.modalNameTarget.value.trim()
+    const account_type_id = this.modalTypeTarget.value
+    const institution = this.modalInstitutionTarget.value.trim()
+    const balance = this.modalBalanceTarget.value.trim() || "0"
+    const budgetToggle = this.modalBudgetTarget.querySelector(".budget-toggle")
+    const include_in_budget = budgetToggle?.dataset.checked === "true"
 
     if (!name) {
-      this.showRowError("Name is required")
-      nameInput?.focus()
+      this._showModalError("Name is required")
+      this.modalNameTarget.focus()
       return
     }
     if (!account_type_id) {
-      this.showRowError("Account Type is required")
-      typeSelect?.focus()
+      this._showModalError("Account Type is required")
+      this.modalTypeTarget.focus()
       return
     }
 
@@ -262,7 +338,8 @@ export default class extends Controller {
         body: JSON.stringify({ account: {
           name, account_type_id, institution, balance,
           icon_key: this.selectedIconKey,
-          color_key: this.selectedColorKey
+          color_key: this.selectedColorKey,
+          include_in_budget
         }})
       })
 
@@ -270,26 +347,25 @@ export default class extends Controller {
         const updated = await response.json()
         const idx = this.accounts.findIndex(a => a.id === this.editingId)
         if (idx !== -1) this.accounts[idx] = updated
-        this.state = "idle"
-        this.editingId = null
-        this.iconPickerOpen = false
+        this.cancelModal()
         this.renderTable()
       } else {
         const data = await response.json()
-        this.showRowError(data.errors?.[0] || "Failed to save")
+        this._showModalError(data.errors?.[0] || data.error || "Failed to save")
       }
     } catch (e) {
-      this.showRowError("Network error")
+      this._showModalError("Network error")
     }
   }
 
+  // --- Delete ---
+
   async confirmDelete(event) {
-    if (this.state !== "idle") { this.state = "idle"; this.editingId = null; this.iconPickerOpen = false; this.renderTable() }
+    if (this.state !== "idle") return
     const id = Number(event.currentTarget.dataset.id)
     const acc = this.accounts.find(a => a.id === id)
     if (!acc) return
 
-    // Check if month is closed
     const closed = await this._checkMonthClosed()
     if (closed) return
 
@@ -379,7 +455,7 @@ export default class extends Controller {
       this.selectedIconKey = key
       this.iconPickerOpen = false
       this._rerenderIconPicker()
-      this._updateIconButtonPreview()
+      this._updateModalIconPreview()
     }
   }
 
@@ -389,12 +465,13 @@ export default class extends Controller {
     if (key) {
       this.selectedColorKey = key
       this._rerenderIconPicker()
-      this._updateIconButtonPreview()
+      this._updateModalIconPreview()
     }
   }
 
   _rerenderIconPicker() {
-    const dropdown = this.element.querySelector("[data-icon-picker-dropdown]")
+    const picker = this.hasModalIconPickerTarget ? this.modalIconPickerTarget : this.element
+    const dropdown = picker.querySelector("[data-icon-picker-dropdown]")
     if (!dropdown) return
 
     if (!this.iconPickerOpen) {
@@ -413,8 +490,9 @@ export default class extends Controller {
     }
   }
 
-  _updateIconButtonPreview() {
-    const preview = this.element.querySelector("[data-icon-preview]")
+  _updateModalIconPreview() {
+    const picker = this.hasModalIconPickerTarget ? this.modalIconPickerTarget : this.element
+    const preview = picker.querySelector("[data-icon-preview]")
     if (preview) {
       preview.innerHTML = this.selectedIconKey
         ? renderIconSvg(this.selectedIconKey, this.selectedColorKey, "h-5 w-5")
@@ -483,6 +561,7 @@ export default class extends Controller {
     const knob = btn.querySelector("span")
     knob.className = knob.className.replace(nowOn ? "translate-x-1" : "translate-x-7", nowOn ? "translate-x-7" : "translate-x-1")
 
+    // Only persist to server if toggling from the table row (has data-id)
     const accId = btn.dataset.id
     if (accId && this.state === "idle") {
       try {
@@ -515,36 +594,28 @@ export default class extends Controller {
   handleKeydown(event) {
     if (event.key === "Enter") {
       event.preventDefault()
-      if (this.state === "adding") this.saveNew()
-      else if (this.state === "editing") this.saveEdit()
+      this.saveModal()
     } else if (event.key === "Escape") {
       event.preventDefault()
       if (this.iconPickerOpen) {
         this.iconPickerOpen = false
         this._rerenderIconPicker()
-      } else if (this.state === "adding") this.cancelAdding()
-      else if (this.state === "editing") this.cancelEditing()
+      } else {
+        this.cancelModal()
+      }
     }
   }
 
-  // --- Rendering ---
+  // --- Rendering (display-only) ---
 
   renderTable() {
     let html = ""
 
-    if (this.state === "adding") {
-      html += this.renderAddRow()
-    }
-
     for (const acc of this.accounts) {
-      if (this.state === "editing" && acc.id === this.editingId) {
-        html += this.renderEditRow(acc)
-      } else {
-        html += this.renderDisplayRow(acc)
-      }
+      html += this.renderDisplayRow(acc)
     }
 
-    if (this.accounts.length === 0 && this.state !== "adding") {
+    if (this.accounts.length === 0) {
       html = `<tr><td colspan="7" class="px-6 py-8 text-center text-sm text-gray-400 dark:text-gray-500">No accounts yet. Click "Add Account" to create one.</td></tr>`
     }
 
@@ -594,184 +665,23 @@ export default class extends Controller {
     </tr>`
   }
 
-  renderAddRow() {
-    const previewIcon = this.selectedIconKey
-      ? renderIconSvg(this.selectedIconKey, this.selectedColorKey, "h-5 w-5")
-      : `<svg class="h-5 w-5 text-gray-300 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`
+  // --- Type Dropdown ---
 
-    const typeOptions = this.accountTypes.filter(at => at.use_flag !== false).map(at =>
+  _rebuildTypeDropdown(currentTypeId = null) {
+    const types = this.accountTypes.filter(at =>
+      at.use_flag !== false || (currentTypeId && at.id === currentTypeId)
+    )
+    let html = `<option value="">Select type...</option>`
+    html += `<option value="new">&mdash; New Account Type &mdash;</option>`
+    html += types.map(at =>
       `<option value="${at.id}">${escapeHtml(at.name)}</option>`
     ).join("")
-
-    // Calculate date constraints from open month
-    let dateMin = "", dateMax = "", dateDefault = ""
-    if (this._openMonth) {
-      const y = this._openMonth.current_year
-      const m = this._openMonth.current_month
-      dateMin = `${y}-${String(m).padStart(2, "0")}-01`
-      const lastDay = new Date(y, m, 0).getDate()
-      dateMax = `${y}-${String(m).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`
-      const today = new Date()
-      if (today.getFullYear() === y && (today.getMonth() + 1) === m) {
-        dateDefault = `${y}-${String(m).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`
-      } else {
-        dateDefault = dateMax
-      }
-    }
-
-    return `<tr class="bg-brand-50/40 dark:bg-brand-900/20">
-      <td class="px-6 py-3">
-        <div class="relative" data-icon-picker>
-          <button type="button"
-                  class="p-1.5 rounded-md border border-gray-900 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
-                  data-action="click->accounts#toggleIconPicker"
-                  title="Choose icon">
-            <span data-icon-preview>${previewIcon}</span>
-          </button>
-          <div data-icon-picker-dropdown class="hidden fixed z-[9999] bg-white dark:bg-gray-800 rounded-lg shadow-xl ring-1 ring-gray-200 dark:ring-gray-700 w-80">
-          </div>
-        </div>
-      </td>
-      <td class="px-6 py-3">
-        <input type="text" name="name" value="" placeholder="Name"
-               maxlength="80"
-               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-               data-action="keydown->accounts#handleKeydown">
-        <div class="mt-1.5">
-          <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-0.5">Effective Date</label>
-          <input type="date" name="effective_date" value="${dateDefault}" min="${dateMin}" max="${dateMax}"
-                 class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-xs focus:border-brand-500 focus:ring-brand-500 px-3 py-1"
-                 data-action="keydown->accounts#handleKeydown">
-        </div>
-      </td>
-      <td class="px-6 py-3">
-        <select name="account_type_id"
-                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-                data-action="keydown->accounts#handleKeydown change->accounts#handleNewDropdown">
-          <option value="">Select type...</option>
-          <option value="new">&mdash; New Account Type &mdash;</option>
-          ${typeOptions}
-        </select>
-      </td>
-      <td class="px-6 py-3">
-        <input type="text" name="institution" value="" placeholder="Institution"
-               maxlength="120"
-               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-               data-action="keydown->accounts#handleKeydown">
-      </td>
-      <td class="px-6 py-3">
-        <div class="flex items-center">
-          <span class="text-sm text-gray-500 dark:text-gray-400 mr-1">$</span>
-          <input type="number" name="balance" value="" placeholder="0.00" step="0.01"
-                 class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5 text-right"
-                 data-action="keydown->accounts#handleKeydown">
-        </div>
-      </td>
-      <td class="px-6 py-3 text-center">
-        ${this._renderBudgetToggle(true)}
-      </td>
-      <td class="px-6 py-3 text-right space-x-2 whitespace-nowrap">
-        <button type="button"
-                class="inline-flex items-center justify-center w-9 h-9 rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
-                data-action="click->accounts#saveNew"
-                title="Save">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 21v-8H7v8"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 3v5h8"/></svg>
-        </button>
-        <button type="button"
-                class="inline-flex items-center justify-center w-9 h-9 rounded-md text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 transition"
-                data-action="click->accounts#cancelAdding"
-                title="Cancel">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        </button>
-      </td>
-    </tr>
-    <tr class="hidden" data-accounts-target="rowError">
-      <td colspan="7" class="px-6 py-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30"></td>
-    </tr>`
+    this.modalTypeTarget.innerHTML = html
   }
-
-  renderEditRow(acc) {
-    const previewIcon = this.selectedIconKey
-      ? renderIconSvg(this.selectedIconKey, this.selectedColorKey, "h-5 w-5")
-      : `<svg class="h-5 w-5 text-gray-300 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`
-
-    const typeOptions = this.accountTypes.filter(at => at.use_flag !== false || at.id === acc.account_type_id).map(at => {
-      const selected = at.id === acc.account_type_id ? "selected" : ""
-      return `<option value="${at.id}" ${selected}>${escapeHtml(at.name)}</option>`
-    }).join("")
-
-    const balVal = parseFloat(acc.balance) || ""
-
-    return `<tr class="bg-brand-50/40 dark:bg-brand-900/20">
-      <td class="px-6 py-3">
-        <div class="relative" data-icon-picker>
-          <button type="button"
-                  class="p-1.5 rounded-md border border-gray-900 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
-                  data-action="click->accounts#toggleIconPicker"
-                  title="Choose icon">
-            <span data-icon-preview>${previewIcon}</span>
-          </button>
-          <div data-icon-picker-dropdown class="hidden fixed z-[9999] bg-white dark:bg-gray-800 rounded-lg shadow-xl ring-1 ring-gray-200 dark:ring-gray-700 w-80">
-          </div>
-        </div>
-      </td>
-      <td class="px-6 py-3">
-        <input type="text" name="name" value="${escapeAttr(acc.name)}" placeholder="Name"
-               maxlength="80"
-               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-               data-action="keydown->accounts#handleKeydown">
-      </td>
-      <td class="px-6 py-3">
-        <select name="account_type_id"
-                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-                data-action="keydown->accounts#handleKeydown change->accounts#handleNewDropdown">
-          <option value="">Select type...</option>
-          <option value="new">&mdash; New Account Type &mdash;</option>
-          ${typeOptions}
-        </select>
-      </td>
-      <td class="px-6 py-3">
-        <input type="text" name="institution" value="${escapeAttr(acc.institution || "")}" placeholder="Institution"
-               maxlength="120"
-               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-               data-action="keydown->accounts#handleKeydown">
-      </td>
-      <td class="px-6 py-3">
-        <div class="flex items-center">
-          <span class="text-sm text-gray-500 dark:text-gray-400 mr-1">$</span>
-          <input type="number" name="balance" value="${balVal}" placeholder="0.00" step="0.01"
-                 class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5 text-right"
-                 data-action="keydown->accounts#handleKeydown">
-        </div>
-      </td>
-      <td class="px-6 py-3 text-center">
-        ${this._renderBudgetToggle(acc.include_in_budget)}
-      </td>
-      <td class="px-6 py-3 text-right space-x-2 whitespace-nowrap">
-        <button type="button"
-                class="inline-flex items-center justify-center w-9 h-9 rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
-                data-action="click->accounts#saveEdit"
-                title="Save">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 21v-8H7v8"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 3v5h8"/></svg>
-        </button>
-        <button type="button"
-                class="inline-flex items-center justify-center w-9 h-9 rounded-md text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 transition"
-                data-action="click->accounts#cancelEditing"
-                title="Cancel">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        </button>
-      </td>
-    </tr>
-    <tr class="hidden" data-accounts-target="rowError">
-      <td colspan="7" class="px-6 py-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30"></td>
-    </tr>`
-  }
-
-  // --- "New" Dropdown Handler ---
 
   handleNewDropdown(event) {
     if (event.target.value !== "new") return
-    if (event.target.name === "account_type_id" && this.typesPageUrlValue) {
+    if (this.typesPageUrlValue) {
       const a = document.createElement("a")
       a.href = this.typesPageUrlValue
       a.target = "_blank"
@@ -808,13 +718,32 @@ export default class extends Controller {
     this.monthClosedModalTarget.classList.add("hidden")
   }
 
-  // --- Error Display ---
+  // --- Modal Helpers ---
 
-  showRowError(message) {
-    const errorRow = this.tableBodyTarget.querySelector("[data-accounts-target='rowError']")
-    if (errorRow) {
-      errorRow.classList.remove("hidden")
-      errorRow.querySelector("td").textContent = message
+  _showModalError(message) {
+    this.modalErrorTarget.classList.remove("hidden")
+    this.modalErrorTarget.querySelector("p").textContent = message
+  }
+
+  _registerModalEscape() {
+    this._modalEscapeHandler = (e) => {
+      if (e.key === "Escape") {
+        e.preventDefault()
+        if (this.iconPickerOpen) {
+          this.iconPickerOpen = false
+          this._rerenderIconPicker()
+        } else {
+          this.cancelModal()
+        }
+      }
+    }
+    document.addEventListener("keydown", this._modalEscapeHandler)
+  }
+
+  _unregisterModalEscape() {
+    if (this._modalEscapeHandler) {
+      document.removeEventListener("keydown", this._modalEscapeHandler)
+      this._modalEscapeHandler = null
     }
   }
 }
