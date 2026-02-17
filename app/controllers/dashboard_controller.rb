@@ -2,8 +2,15 @@ class DashboardController < ApplicationController
   before_action :authenticate_user!
 
   def index
+    DashboardCard.seed_defaults_for(current_user)
+
     @open_month = OpenMonthMaster.for_user(current_user)
     @accounts = current_user.accounts.includes(:account_type).ordered
+
+    # Load slot layout
+    @slots = current_user.dashboard_slots
+                          .includes(dashboard_card: :dashboard_card_account_rule)
+                          .order(:slot_number)
 
     # Open-month date range — single source of truth for month-scoped cards
     @month_start = Date.new(@open_month.current_year, @open_month.current_month, 1)

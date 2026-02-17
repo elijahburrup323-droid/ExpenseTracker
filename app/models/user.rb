@@ -19,6 +19,11 @@ class User < ApplicationRecord
   has_one :open_month_master, dependent: :destroy
   has_many :account_month_snapshots, dependent: :destroy
   has_many :dashboard_month_snapshots, dependent: :destroy
+  has_many :tags, dependent: :destroy
+  has_many :tag_assignments, dependent: :destroy
+  has_many :dashboard_cards, dependent: :destroy
+  has_many :dashboard_slots, dependent: :destroy
+  has_many :dashboard_card_account_rules, dependent: :destroy
 
   validates :email, presence: true, uniqueness: true, unless: :phone_only_user?
   validates :phone_number, uniqueness: true, allow_blank: true

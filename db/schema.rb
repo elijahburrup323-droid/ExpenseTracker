@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_12_150000) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_17_000004) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -75,6 +75,41 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_12_150000) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "dashboard_card_account_rule_tags", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "dashboard_card_account_rule_id", null: false
+    t.bigint "tag_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["dashboard_card_account_rule_id"], name: "idx_rule_tags_rule_id"
+    t.index ["tag_id"], name: "idx_rule_tags_tag_id"
+    t.index ["user_id"], name: "index_dashboard_card_account_rule_tags_on_user_id"
+  end
+
+  create_table "dashboard_card_account_rules", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "dashboard_card_id", null: false
+    t.string "match_mode", limit: 20, default: "all", null: false
+    t.boolean "is_enabled", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["dashboard_card_id"], name: "index_dashboard_card_account_rules_on_dashboard_card_id"
+    t.index ["user_id", "dashboard_card_id"], name: "idx_card_account_rules_unique", unique: true
+    t.index ["user_id"], name: "index_dashboard_card_account_rules_on_user_id"
+  end
+
+  create_table "dashboard_cards", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "card_key", limit: 60, null: false
+    t.string "title", limit: 120, null: false
+    t.string "card_type", limit: 60, null: false
+    t.boolean "is_active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "card_key"], name: "idx_dashboard_cards_user_card_key", unique: true
+    t.index ["user_id"], name: "index_dashboard_cards_on_user_id"
+  end
+
   create_table "dashboard_month_snapshots", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.integer "year", null: false
@@ -88,6 +123,17 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_12_150000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id", "year", "month"], name: "idx_dash_month_snap_unique", unique: true
+  end
+
+  create_table "dashboard_slots", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.integer "slot_number", null: false
+    t.bigint "dashboard_card_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["dashboard_card_id"], name: "index_dashboard_slots_on_dashboard_card_id"
+    t.index ["user_id", "slot_number"], name: "idx_dashboard_slots_user_slot", unique: true
+    t.index ["user_id"], name: "index_dashboard_slots_on_user_id"
   end
 
   create_table "dbu_table_catalogs", force: :cascade do |t|
@@ -300,6 +346,31 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_12_150000) do
     t.index ["user_id"], name: "index_spending_types_on_user_id"
   end
 
+  create_table "tag_assignments", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "tag_id", null: false
+    t.string "taggable_type", null: false
+    t.bigint "taggable_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["tag_id"], name: "index_tag_assignments_on_tag_id"
+    t.index ["taggable_type", "taggable_id", "tag_id"], name: "idx_tag_assignments_unique", unique: true
+    t.index ["user_id", "taggable_type", "taggable_id"], name: "idx_tag_assignments_user_taggable"
+    t.index ["user_id"], name: "index_tag_assignments_on_user_id"
+  end
+
+  create_table "tags", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "name", limit: 80, null: false
+    t.string "color_key", limit: 40
+    t.integer "sort_order", default: 0, null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "name"], name: "idx_tags_user_name_active", unique: true, where: "(deleted_at IS NULL)"
+    t.index ["user_id"], name: "index_tags_on_user_id"
+  end
+
   create_table "transfer_masters", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.date "transfer_date", null: false
@@ -390,7 +461,15 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_12_150000) do
   add_foreign_key "account_types", "users"
   add_foreign_key "accounts", "account_types"
   add_foreign_key "accounts", "users"
+  add_foreign_key "dashboard_card_account_rule_tags", "dashboard_card_account_rules"
+  add_foreign_key "dashboard_card_account_rule_tags", "tags"
+  add_foreign_key "dashboard_card_account_rule_tags", "users"
+  add_foreign_key "dashboard_card_account_rules", "dashboard_cards"
+  add_foreign_key "dashboard_card_account_rules", "users"
+  add_foreign_key "dashboard_cards", "users"
   add_foreign_key "dashboard_month_snapshots", "users"
+  add_foreign_key "dashboard_slots", "dashboard_cards"
+  add_foreign_key "dashboard_slots", "users"
   add_foreign_key "identities", "users"
   add_foreign_key "income_entries", "accounts"
   add_foreign_key "income_entries", "income_frequency_masters", column: "frequency_master_id"
@@ -411,6 +490,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_12_150000) do
   add_foreign_key "spending_categories", "spending_types"
   add_foreign_key "spending_categories", "users"
   add_foreign_key "spending_types", "users"
+  add_foreign_key "tag_assignments", "tags"
+  add_foreign_key "tag_assignments", "users"
+  add_foreign_key "tags", "users"
   add_foreign_key "transfer_masters", "accounts", column: "from_account_id"
   add_foreign_key "transfer_masters", "accounts", column: "to_account_id"
   add_foreign_key "transfer_masters", "users"

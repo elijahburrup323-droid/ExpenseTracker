@@ -1,25 +1,23 @@
 import { Controller } from "@hotwired/stimulus"
+import Sortable from "sortablejs"
 
 export default class extends Controller {
   static targets = [
     "monthLabel", "prevBtn", "nextBtn",
-    "card1Content", "card1Flipper", "card1Front", "card1Back", "card1BackContent",
-    "card2Flipper", "card2FrontContent", "card2BackContent",
-    "card3Content",
-    "card4Content", "card5Content",
-    "cardsGrid", "card2Wrapper", "card2ExpandBtn"
+    "cardsGrid", "slotWrapper"
   ]
-  static values = { apiUrl: String, openMonthUrl: String, month: Number, year: Number }
+  static values = { apiUrl: String, reorderUrl: String, openMonthUrl: String, month: Number, year: Number }
 
   connect() {
     this.currentMonth = this.monthValue
     this.currentYear = this.yearValue
-    this.isCard2Expanded = false
+    this.expandedCardType = null
     this._updateArrowState()
+    this._initSortable()
 
-    // ESC key to collapse Card 2
+    // ESC key to collapse expanded card
     this._escHandler = (e) => {
-      if (e.key === "Escape" && this.isCard2Expanded) this.collapseCard2()
+      if (e.key === "Escape" && this.expandedCardType) this._collapseCard()
     }
     document.addEventListener("keydown", this._escHandler)
 
@@ -32,7 +30,10 @@ export default class extends Controller {
 
   disconnect() {
     if (this._escHandler) document.removeEventListener("keydown", this._escHandler)
+    if (this.sortable) this.sortable.destroy()
   }
+
+  // --- Month Navigation ---
 
   prevMonth() {
     this.currentMonth--
@@ -48,7 +49,6 @@ export default class extends Controller {
     const now = new Date()
     const currentRealMonth = now.getMonth() + 1
     const currentRealYear = now.getFullYear()
-    // Don't go beyond current real month
     if (this.currentYear > currentRealYear ||
         (this.currentYear === currentRealYear && this.currentMonth >= currentRealMonth)) {
       return
@@ -75,10 +75,10 @@ export default class extends Controller {
         },
         body: JSON.stringify({ open_month_master: { current_year: this.currentYear, current_month: this.currentMonth } })
       })
-    } catch (e) {
-      // silently fail
-    }
+    } catch (e) { /* silently fail */ }
   }
+
+  // --- Fetch & Render ---
 
   async _fetchAndRender() {
     const url = `${this.apiUrlValue}?month=${this.currentMonth}&year=${this.currentYear}`
@@ -91,14 +91,29 @@ export default class extends Controller {
       this.monthLabelTargets.forEach(el => el.textContent = data.month_label)
       this._updateArrowState()
 
-      // Re-render cards
-      this._renderCard1(data.spending_overview)
-      this._renderCard2(data.accounts_overview)
-      this._renderCard3(data.net_worth_overview)
-      this._renderCard4(data.income_spending)
-      this._renderCard5(data.recent_activity)
-    } catch (e) {
-      // silently fail
+      // Slot-based rendering
+      for (const slotData of (data.slots || [])) {
+        const wrapper = this._findSlotWrapper(slotData.slot_number)
+        if (!wrapper) continue
+        const renderer = this._renderers[slotData.card_type]
+        if (renderer) renderer.call(this, wrapper, slotData.data)
+      }
+    } catch (e) { /* silently fail */ }
+  }
+
+  _findSlotWrapper(slotNumber) {
+    return this.slotWrapperTargets.find(
+      el => parseInt(el.dataset.slotNumber) === slotNumber
+    )
+  }
+
+  get _renderers() {
+    return {
+      spending_overview: this._renderSpendingOverview,
+      accounts_overview: this._renderAccountsOverview,
+      net_worth: this._renderNetWorth,
+      income_spending: this._renderIncomeSpending,
+      recent_activity: this._renderRecentActivity,
     }
   }
 
@@ -117,93 +132,85 @@ export default class extends Controller {
     })
   }
 
-  // --- Card 1: Flip ---
+  // --- Generic Flip ---
 
-  flipCard1() {
-    if (this.hasCard1FlipperTarget) {
-      this.card1FlipperTarget.style.transform = "rotateY(180deg)"
-      if (this.hasCard1FrontTarget) this.card1FrontTarget.style.pointerEvents = "none"
-      if (this.hasCard1BackTarget) this.card1BackTarget.style.pointerEvents = "auto"
-    }
+  flipCard(event) {
+    const wrapper = event.target.closest("[data-dashboard-target='slotWrapper']")
+    if (!wrapper) return
+    const flipper = wrapper.querySelector("[data-role='flipper']")
+    if (!flipper) return
+    flipper.style.transform = "rotateY(180deg)"
+    const front = wrapper.querySelector("[data-role='front']")
+    const back = wrapper.querySelector("[data-role='back']")
+    if (front) front.style.pointerEvents = "none"
+    if (back) back.style.pointerEvents = "auto"
   }
 
-  flipCard1Back() {
-    if (this.hasCard1FlipperTarget) {
-      this.card1FlipperTarget.style.transform = "rotateY(0deg)"
-      if (this.hasCard1FrontTarget) this.card1FrontTarget.style.pointerEvents = ""
-      if (this.hasCard1BackTarget) this.card1BackTarget.style.pointerEvents = "none"
-    }
+  flipCardBack(event) {
+    const wrapper = event.target.closest("[data-dashboard-target='slotWrapper']")
+    if (!wrapper) return
+    const flipper = wrapper.querySelector("[data-role='flipper']")
+    if (!flipper) return
+    flipper.style.transform = "rotateY(0deg)"
+    const front = wrapper.querySelector("[data-role='front']")
+    const back = wrapper.querySelector("[data-role='back']")
+    if (front) front.style.pointerEvents = ""
+    if (back) back.style.pointerEvents = "none"
   }
 
-  // --- Card 2: Flip ---
+  // --- Generic Expand/Collapse ---
 
-  flipCard2() {
-    if (this.hasCard2FlipperTarget) {
-      this.card2FlipperTarget.style.transform = "rotateY(180deg)"
-    }
-  }
-
-  flipCard2Back() {
-    if (this.hasCard2FlipperTarget) {
-      this.card2FlipperTarget.style.transform = "rotateY(0deg)"
-    }
-  }
-
-  // --- Card 2: Expand/Collapse ---
-
-  toggleCard2Expand() {
-    if (this.isCard2Expanded) {
-      this.collapseCard2()
+  toggleCardExpand(event) {
+    const wrapper = event.target.closest("[data-dashboard-target='slotWrapper']")
+    if (!wrapper) return
+    const cardType = wrapper.dataset.cardType
+    if (this.expandedCardType === cardType) {
+      this._collapseCard()
     } else {
-      this.expandCard2()
+      this._expandCard(wrapper)
     }
   }
 
-  expandCard2() {
-    if (!this.hasCardsGridTarget || !this.hasCard2WrapperTarget) return
+  _expandCard(wrapper) {
+    if (!this.hasCardsGridTarget) return
     const grid = this.cardsGridTarget
-    const card2 = this.card2WrapperTarget
-
-    // Save current grid height
     this._savedGridHeight = grid.offsetHeight
+    this._expandedWrapper = wrapper
 
-    // Hide other cards
     Array.from(grid.children).forEach(child => {
-      if (child !== card2) child.classList.add("hidden")
+      if (child !== wrapper) child.classList.add("hidden")
     })
 
-    // Make Card 2 fill the grid
     grid.style.minHeight = `${this._savedGridHeight}px`
-    card2.style.gridColumn = "1 / -1"
-    card2.style.minHeight = `${this._savedGridHeight}px`
+    wrapper.style.gridColumn = "1 / -1"
+    wrapper.style.minHeight = `${this._savedGridHeight}px`
 
-    // Swap icons to collapse
-    this._updateExpandIcons(true)
-    this.isCard2Expanded = true
+    this._updateExpandIcons(wrapper, true)
+    this.expandedCardType = wrapper.dataset.cardType
+    if (this.sortable) this.sortable.option("disabled", true)
   }
 
-  collapseCard2() {
-    if (!this.hasCardsGridTarget || !this.hasCard2WrapperTarget) return
+  _collapseCard() {
+    if (!this.hasCardsGridTarget || !this._expandedWrapper) return
     const grid = this.cardsGridTarget
-    const card2 = this.card2WrapperTarget
+    const wrapper = this._expandedWrapper
 
-    // Show other cards
     Array.from(grid.children).forEach(child => {
       child.classList.remove("hidden")
     })
 
-    // Restore Card 2 to normal
     grid.style.minHeight = ""
-    card2.style.gridColumn = ""
-    card2.style.minHeight = ""
+    wrapper.style.gridColumn = ""
+    wrapper.style.minHeight = ""
 
-    // Swap icons to expand
-    this._updateExpandIcons(false)
-    this.isCard2Expanded = false
+    this._updateExpandIcons(wrapper, false)
+    this.expandedCardType = null
+    this._expandedWrapper = null
+    if (this.sortable) this.sortable.option("disabled", false)
   }
 
-  _updateExpandIcons(expanded) {
-    this.card2ExpandBtnTargets.forEach(btn => {
+  _updateExpandIcons(wrapper, expanded) {
+    wrapper.querySelectorAll("[data-role='expand-btn']").forEach(btn => {
       const expandIcon = btn.querySelector('[data-icon="expand"]')
       const collapseIcon = btn.querySelector('[data-icon="collapse"]')
       if (expandIcon) expandIcon.classList.toggle("hidden", expanded)
@@ -211,35 +218,77 @@ export default class extends Controller {
     })
   }
 
-  // --- Card 1: Spending Overview ---
+  // --- SortableJS Drag-and-Drop ---
 
-  _renderCard1(data) {
+  _initSortable() {
+    if (!this.hasCardsGridTarget) return
+    this.sortable = Sortable.create(this.cardsGridTarget, {
+      animation: 150,
+      handle: ".drag-handle",
+      ghostClass: "opacity-30",
+      onEnd: () => this._onSortEnd(),
+    })
+  }
+
+  async _onSortEnd() {
+    const wrappers = Array.from(this.cardsGridTarget.children)
+    const assignments = wrappers.map((el, idx) => ({
+      slot_number: idx + 1,
+      card_key: el.dataset.cardKey,
+    }))
+
+    // Update data-slot-number attributes to match new positions
+    wrappers.forEach((el, idx) => {
+      el.dataset.slotNumber = idx + 1
+    })
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
+    try {
+      await fetch(this.reorderUrlValue, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "X-CSRF-Token": csrfToken,
+        },
+        body: JSON.stringify({ slots: assignments }),
+      })
+    } catch (e) {
+      window.location.reload()
+    }
+  }
+
+  // --- Card Renderers ---
+
+  _renderSpendingOverview(wrapper, data) {
     const spent = this._currency(data.spent)
-    // Front side content
-    this.card1ContentTarget.innerHTML = `
-      <div class="flex items-center space-x-4 flex-1">
-        <div class="relative w-32 h-32 flex-shrink-0">
-          <svg viewBox="0 0 36 36" class="w-full h-full">
-            <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#e5e7eb" stroke-width="3" class="dark:opacity-30"/>
-            <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#a855f7" stroke-width="3"
-                    stroke-dasharray="100 0" stroke-dashoffset="25" stroke-linecap="round"/>
-          </svg>
-          <div class="absolute inset-0 flex flex-col items-center justify-center">
-            <span class="text-xs text-gray-500 dark:text-gray-400">Spent</span>
-            <span class="text-sm font-bold text-gray-900 dark:text-white">${spent}</span>
+    const content = wrapper.querySelector("[data-role='card-content']")
+    if (content) {
+      content.innerHTML = `
+        <div class="flex items-center space-x-4 flex-1">
+          <div class="relative w-32 h-32 flex-shrink-0">
+            <svg viewBox="0 0 36 36" class="w-full h-full">
+              <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#e5e7eb" stroke-width="3" class="dark:opacity-30"/>
+              <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#a855f7" stroke-width="3"
+                      stroke-dasharray="100 0" stroke-dashoffset="25" stroke-linecap="round"/>
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <span class="text-xs text-gray-500 dark:text-gray-400">Spent</span>
+              <span class="text-sm font-bold text-gray-900 dark:text-white">${spent}</span>
+            </div>
           </div>
-        </div>
-        <div>
-          <p class="text-lg font-semibold text-gray-800 dark:text-gray-200">${spent}</p>
-          <p class="text-sm text-gray-500 dark:text-gray-400">spent this month</p>
-        </div>
-      </div>`
+          <div>
+            <p class="text-lg font-semibold text-gray-800 dark:text-gray-200">${spent}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">spent this month</p>
+          </div>
+        </div>`
+    }
 
-    // Back side content (category breakdown)
-    if (this.hasCard1BackContentTarget) {
+    const backContent = wrapper.querySelector("[data-role='card-back-content']")
+    if (backContent) {
       const categories = data.categories || []
       if (categories.length === 0) {
-        this.card1BackContentTarget.innerHTML = `<p class="text-sm text-gray-400 dark:text-gray-500">No spending yet for this month.</p>`
+        backContent.innerHTML = `<p class="text-sm text-gray-400 dark:text-gray-500">No spending yet for this month.</p>`
       } else {
         const colorMap = { blue: "#3b82f6", green: "#22c55e", gold: "#eab308", red: "#ef4444", purple: "#a855f7", pink: "#ec4899", indigo: "#6366f1", teal: "#14b8a6", orange: "#f97316", gray: "#6b7280" }
         let html = '<div class="space-y-2">'
@@ -258,25 +307,28 @@ export default class extends Controller {
             </div>`
         }
         html += '</div>'
-        this.card1BackContentTarget.innerHTML = html
+        backContent.innerHTML = html
       }
     }
   }
 
-  // --- Card 2: Accounts ---
-
-  _renderCard2(data) {
+  _renderAccountsOverview(wrapper, data) {
     if (!data) return
     const colors = ["blue", "green", "purple", "amber", "sky", "red"]
     const pieColorsHex = ["#3b82f6", "#22c55e", "#a855f7", "#f59e0b", "#0ea5e9", "#ef4444"]
     const accounts = data.accounts || []
     const total = data.total || 0
 
-    // Front: header + account list
-    if (this.hasCard2FrontContentTarget) {
+    const frontContent = wrapper.querySelector("[data-role='front-content']")
+    if (frontContent) {
       let html = `
         <div class="flex items-center justify-between mb-4">
-          <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Accounts</h2>
+          <div class="flex items-center">
+            <span class="drag-handle cursor-grab text-gray-300 hover:text-gray-500 dark:text-gray-600 dark:hover:text-gray-400 mr-2">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><circle cx="8" cy="4" r="1.5"/><circle cx="16" cy="4" r="1.5"/><circle cx="8" cy="12" r="1.5"/><circle cx="16" cy="12" r="1.5"/><circle cx="8" cy="20" r="1.5"/><circle cx="16" cy="20" r="1.5"/></svg>
+            </span>
+            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Accounts</h2>
+          </div>
           <span class="text-sm font-semibold text-gray-900 dark:text-white">Total: ${this._currency(total)}</span>
         </div>
         <ul class="space-y-3 flex-1">`
@@ -300,11 +352,11 @@ export default class extends Controller {
         })
       }
       html += `</ul>`
-      this.card2FrontContentTarget.innerHTML = html
+      frontContent.innerHTML = html
     }
 
-    // Back: header + pie chart + legend
-    if (this.hasCard2BackContentTarget) {
+    const backContent = wrapper.querySelector("[data-role='back-content']")
+    if (backContent) {
       const sorted = [...accounts].sort((a, b) => b.balance - a.balance)
       let html = `
         <div class="flex items-center justify-between mb-4">
@@ -314,7 +366,6 @@ export default class extends Controller {
         <div class="flex-1 flex flex-col items-center justify-center overflow-hidden">`
 
       if (total > 0 && sorted.length > 0) {
-        // Build pie chart SVG
         const cx = 50, cy = 50, r = 45
         let angle = -90.0
         let paths = ""
@@ -340,7 +391,6 @@ export default class extends Controller {
         })
         html += `<svg viewBox="0 0 100 100" class="w-28 h-28 flex-shrink-0">${paths}</svg>`
 
-        // Legend
         html += `<div class="mt-2 w-full space-y-1 overflow-y-auto" style="max-height: 5.5rem;">`
         sorted.forEach((a, i) => {
           const color = pieColorsHex[i % pieColorsHex.length]
@@ -356,22 +406,21 @@ export default class extends Controller {
         html += `<p class="text-sm text-gray-400 dark:text-gray-500">No accounts to chart.</p>`
       }
       html += `</div>`
-      this.card2BackContentTarget.innerHTML = html
+      backContent.innerHTML = html
     }
   }
 
-  // --- Card 3: Net Worth ---
+  _renderNetWorth(wrapper, data) {
+    if (!data) return
+    const content = wrapper.querySelector("[data-role='card-content']")
+    if (!content) return
 
-  _renderCard3(data) {
-    if (!data || !this.hasCard3ContentTarget) return
     const value = data.value || 0
     const change = data.change || 0
     const changePct = data.change_pct || 0
     const snapshots = data.snapshots || []
 
     let html = ""
-
-    // Value + change badge
     html += `<div class="flex items-baseline space-x-2 mb-3">`
     html += `<span class="text-2xl font-bold text-gray-900 dark:text-white">${this._currency(value)}</span>`
     if (change >= 0) {
@@ -381,7 +430,6 @@ export default class extends Controller {
     }
     html += `</div>`
 
-    // Chart
     if (snapshots.length === 0) {
       html += `<div class="w-full h-20 flex-1 flex items-center justify-center"><p class="text-xs text-gray-400 dark:text-gray-500">No history yet</p></div>`
     } else if (snapshots.length === 1) {
@@ -418,15 +466,15 @@ export default class extends Controller {
     }
 
     html += `<p class="text-[10px] text-gray-400 dark:text-gray-500 mt-2 text-center">Your net worth chart will build automatically as more months are added.</p>`
-
-    this.card3ContentTarget.innerHTML = html
+    content.innerHTML = html
   }
 
-  // --- Card 4: Income & Spending ---
+  _renderIncomeSpending(wrapper, data) {
+    const content = wrapper.querySelector("[data-role='card-content']")
+    if (!content) return
 
-  _renderCard4(data) {
     let accountsHtml = ""
-    for (const acct of data.new_accounts) {
+    for (const acct of (data.new_accounts || [])) {
       accountsHtml += `
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-2">
@@ -444,7 +492,7 @@ export default class extends Controller {
         </div>`
     }
 
-    this.card4ContentTarget.innerHTML = `
+    content.innerHTML = `
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-2">
           <span class="w-6 h-6 rounded bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
@@ -488,12 +536,14 @@ export default class extends Controller {
       </div>`
   }
 
-  // --- Card 5: Recent Activity ---
-
-  _renderCard5(payments) {
+  _renderRecentActivity(wrapper, data) {
+    const content = wrapper.querySelector("[data-role='card-content']")
+    if (!content) return
+    const payments = data.recent || []
     const colors = ["blue", "green", "purple", "amber", "sky"]
+
     if (payments.length === 0) {
-      this.card5ContentTarget.innerHTML = `<li class="text-sm text-gray-400 dark:text-gray-500">No payments this month.</li>`
+      content.innerHTML = `<li class="text-sm text-gray-400 dark:text-gray-500">No payments this month.</li>`
       return
     }
     let html = ""
@@ -512,7 +562,7 @@ export default class extends Controller {
           <span class="text-sm font-semibold text-gray-900 dark:text-white">${this._currency(p.amount)}</span>
         </li>`
     })
-    this.card5ContentTarget.innerHTML = html
+    content.innerHTML = html
   }
 
   // --- Helpers ---

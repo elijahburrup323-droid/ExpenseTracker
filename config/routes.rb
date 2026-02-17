@@ -115,6 +115,7 @@ Rails.application.routes.draw do
     # Dashboard API
     scope :dashboard, controller: "dashboard", as: :dashboard do
       get "card_data", action: :card_data
+      put "reorder_slots", action: :reorder_slots
     end
   end
 

@@ -29,8 +29,41 @@
  ├── has_many :transfer_masters       (transfer_masters.user_id → users.id)
  ├── has_many :account_month_snapshots (account_month_snapshots.user_id → users.id)
  ├── has_many :dashboard_month_snapshots (dashboard_month_snapshots.user_id → users.id)
+ ├── has_many :tags                    (tags.user_id → users.id)
+ ├── has_many :tag_assignments         (tag_assignments.user_id → users.id)
+ ├── has_many :dashboard_cards         (dashboard_cards.user_id → users.id)
+ ├── has_many :dashboard_slots         (dashboard_slots.user_id → users.id)
+ ├── has_many :dashboard_card_account_rules (dashboard_card_account_rules.user_id → users.id)
  ├── referenced by phone_verifications (via phone_number, no FK)
  └── (admin) dbu_table_catalogs (standalone, no FK)
+
+tags
+ ├── belongs_to :user                  (user_id FK → users.id)
+ └── has_many :tag_assignments         (tag_assignments.tag_id → tags.id)
+
+tag_assignments
+ ├── belongs_to :user                  (user_id FK → users.id)
+ ├── belongs_to :tag                   (tag_id FK → tags.id)
+ └── polymorphic :taggable             (taggable_type + taggable_id)
+
+dashboard_cards
+ ├── belongs_to :user                  (user_id FK → users.id)
+ ├── has_one :dashboard_slot           (dashboard_slots.dashboard_card_id → dashboard_cards.id)
+ └── has_one :dashboard_card_account_rule (dashboard_card_account_rules.dashboard_card_id → dashboard_cards.id)
+
+dashboard_slots
+ ├── belongs_to :user                  (user_id FK → users.id)
+ └── belongs_to :dashboard_card        (dashboard_card_id FK → dashboard_cards.id, optional)
+
+dashboard_card_account_rules
+ ├── belongs_to :user                  (user_id FK → users.id)
+ ├── belongs_to :dashboard_card        (dashboard_card_id FK → dashboard_cards.id)
+ └── has_many :dashboard_card_account_rule_tags
+
+dashboard_card_account_rule_tags
+ ├── belongs_to :user                  (user_id FK → users.id)
+ ├── belongs_to :dashboard_card_account_rule (FK)
+ └── belongs_to :tag                   (tag_id FK → tags.id)
 
 identities
  └── belongs_to :user                  (user_id FK → users.id)
@@ -1022,6 +1055,156 @@ phone_verifications
     </div>
   </div>
 
+  <%# ── tags ── %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 mb-6 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">tags</h2>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">User-defined tags for organizing accounts and other entities</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead><tr class="border-b border-gray-100 dark:border-gray-700"><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Column</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Type</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Constraints</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Description</th></tr></thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr><td class="px-6 py-2 font-mono font-medium text-gray-900 dark:text-white">id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">PK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Primary key</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">user_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; users</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Owning user (multi-tenant)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">name</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar(80)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Tag name</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">color_key</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar(40)</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Color key for display</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">sort_order</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">integer</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">default 0</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Display order</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">deleted_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Soft delete timestamp</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">created_at / updated_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Timestamps</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5"><li>UNIQUE (user_id, name) WHERE deleted_at IS NULL</li></ul>
+    </div>
+  </div>
+
+  <%# ── tag_assignments ── %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 mb-6 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">tag_assignments</h2>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Polymorphic join table connecting tags to taggable entities (accounts, etc.)</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead><tr class="border-b border-gray-100 dark:border-gray-700"><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Column</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Type</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Constraints</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Description</th></tr></thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr><td class="px-6 py-2 font-mono font-medium text-gray-900 dark:text-white">id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">PK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Primary key</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">user_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; users</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Owning user</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">tag_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; tags</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Tag being applied</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">taggable_type</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Polymorphic type (e.g. "Account")</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">taggable_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Polymorphic ID</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">created_at / updated_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Timestamps</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5"><li>UNIQUE (taggable_type, taggable_id, tag_id)</li><li>INDEX (user_id, taggable_type, taggable_id)</li></ul>
+    </div>
+  </div>
+
+  <%# ── dashboard_cards ── %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 mb-6 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">dashboard_cards</h2>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Dashboard card definitions — immutable card_key identity separated from slot position</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead><tr class="border-b border-gray-100 dark:border-gray-700"><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Column</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Type</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Constraints</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Description</th></tr></thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr><td class="px-6 py-2 font-mono font-medium text-gray-900 dark:text-white">id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">PK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Primary key</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">user_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; users</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Owning user</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">card_key</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar(60)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300 px-1.5 py-0.5 rounded">UNIQUE per user</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Immutable card identifier (e.g. spending_overview)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">title</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar(120)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">User-visible title</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">card_type</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar(60)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Determines which renderer is used</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">is_active</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">boolean</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">default true</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Whether card is visible</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">created_at / updated_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Timestamps</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5"><li>UNIQUE (user_id, card_key)</li></ul>
+    </div>
+  </div>
+
+  <%# ── dashboard_slots ── %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 mb-6 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">dashboard_slots</h2>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Maps slot positions (1&ndash;6) to dashboard cards — reorder updates this mapping only</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead><tr class="border-b border-gray-100 dark:border-gray-700"><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Column</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Type</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Constraints</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Description</th></tr></thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr><td class="px-6 py-2 font-mono font-medium text-gray-900 dark:text-white">id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">PK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Primary key</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">user_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; users</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Owning user</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">slot_number</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">integer</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300 px-1.5 py-0.5 rounded">UNIQUE per user</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Position in 3x2 grid (1&ndash;6)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">dashboard_card_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">nullable</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; dashboard_cards</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Card occupying this slot</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">created_at / updated_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Timestamps</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5"><li>UNIQUE (user_id, slot_number)</li></ul>
+    </div>
+  </div>
+
+  <%# ── dashboard_card_account_rules ── %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 mb-6 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">dashboard_card_account_rules</h2>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Tag-driven account inclusion rules per dashboard card</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead><tr class="border-b border-gray-100 dark:border-gray-700"><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Column</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Type</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Constraints</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Description</th></tr></thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr><td class="px-6 py-2 font-mono font-medium text-gray-900 dark:text-white">id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">PK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Primary key</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">user_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; users</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Owning user</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">dashboard_card_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; dashboard_cards</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Card this rule applies to</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">match_mode</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar(20)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">default &ldquo;all&rdquo;</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">&ldquo;all&rdquo; or &ldquo;any_tag&rdquo;</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">is_enabled</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">boolean</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">default true</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Whether rule is active</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">created_at / updated_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Timestamps</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5"><li>UNIQUE (user_id, dashboard_card_id)</li></ul>
+    </div>
+  </div>
+
+  <%# ── dashboard_card_account_rule_tags ── %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 mb-6 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">dashboard_card_account_rule_tags</h2>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Join table connecting card account rules to specific tags</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead><tr class="border-b border-gray-100 dark:border-gray-700"><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Column</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Type</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Constraints</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Description</th></tr></thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr><td class="px-6 py-2 font-mono font-medium text-gray-900 dark:text-white">id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">PK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Primary key</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">user_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; users</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Owning user</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">dashboard_card_account_rule_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; dashboard_card_account_rules</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Parent rule</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">tag_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; tags</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Tag for inclusion rule</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">created_at / updated_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Timestamps</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5"><li>INDEX (dashboard_card_account_rule_id)</li><li>INDEX (tag_id)</li></ul>
+    </div>
+  </div>
+
   <%# ── Foreign Keys Summary ── %>
   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 overflow-hidden">
     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
@@ -1066,6 +1249,16 @@ phone_verifications
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">account_month_snapshots</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">account_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">accounts.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (DB-level foreign key)</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">dashboard_month_snapshots</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (DB-level foreign key)</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">open_month_masters</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">last_reopened_by_user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (DB-level foreign key)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">tags</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">cascade (via Rails dependent: :destroy)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">tag_assignments</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">cascade (via Rails dependent: :destroy)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">tag_assignments</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">tag_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">tags.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (DB-level foreign key)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">dashboard_cards</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">cascade (via Rails dependent: :destroy)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">dashboard_slots</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">cascade (via Rails dependent: :destroy)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">dashboard_slots</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">dashboard_card_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">dashboard_cards.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">nullify (optional FK)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">dashboard_card_account_rules</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">cascade (via Rails dependent: :destroy)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">dashboard_card_account_rules</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">dashboard_card_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">dashboard_cards.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (DB-level foreign key)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">dashboard_card_account_rule_tags</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">dashboard_card_account_rule_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">dashboard_card_account_rules.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (DB-level foreign key)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">dashboard_card_account_rule_tags</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">tag_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">tags.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (DB-level foreign key)</td></tr>
         </tbody>
       </table>
     </div>

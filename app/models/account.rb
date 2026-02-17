@@ -5,6 +5,8 @@ class Account < ApplicationRecord
   has_many :income_entries
   has_many :transfers_from, class_name: "TransferMaster", foreign_key: :from_account_id
   has_many :transfers_to, class_name: "TransferMaster", foreign_key: :to_account_id
+  has_many :tag_assignments, as: :taggable, dependent: :destroy
+  has_many :tags, through: :tag_assignments
 
   default_scope { where(deleted_at: nil) }
 

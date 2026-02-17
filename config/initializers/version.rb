@@ -1,9 +1,22 @@
-APP_VERSION = "1.2.6"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
-MANUAL_CHANGE_SEQ = 1  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+APP_VERSION = "1.2.7"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
+MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.2.7",
+    changes: [
+      "Dashboard: Cards vs Slots architecture — card identity separated from layout position (CM-11)",
+      "Dashboard: Drag-and-drop reorder via SortableJS — cards can be moved between slots and positions persist",
+      "Dashboard: Slot-driven rendering pipeline — cards render by card_type, not position number",
+      "Dashboard: Reorder API endpoint (PUT /api/dashboard/reorder_slots) persists slot assignments",
+      "Database: New tables — dashboard_cards, dashboard_slots, dashboard_card_account_rules, dashboard_card_account_rule_tags",
+      "Database: Tags system — tags and tag_assignments tables for future tag-driven account inclusion",
+      "Dashboard: Default cards auto-seeded for new and existing users on first dashboard load",
+      "Dashboard: Generic flip and expand/collapse — works on any card in any slot position",
+    ]
+  },
   {
     version: "1.2.6",
     changes: [
