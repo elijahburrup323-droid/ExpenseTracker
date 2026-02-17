@@ -1,9 +1,15 @@
-APP_VERSION = "1.3.1"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+APP_VERSION = "1.3.2"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.2",
+    changes: [
+      "Navigation: Soft Close Month menu item added under Accounts sidebar group (CM-4)",
+    ]
+  },
   {
     version: "1.3.1",
     changes: [
