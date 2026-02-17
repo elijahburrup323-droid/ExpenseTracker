@@ -87,8 +87,7 @@ export default class extends Controller {
   updateCloseButton() {
     const reviewed = this.reviewedTotalsTarget.checked
     const confirmed = this.finalConfirmationTarget.checked
-    const ready = this.systemPassed && reviewed && confirmed
-    this.closeButtonTarget.disabled = !ready
+    this.closeButtonTarget.disabled = !(reviewed && confirmed)
   }
 
   async closeMonth() {

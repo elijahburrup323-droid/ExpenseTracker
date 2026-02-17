@@ -1,9 +1,18 @@
-APP_VERSION = "1.3.2"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+APP_VERSION = "1.3.3"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.3",
+    changes: [
+      "Soft Close: Removed reconciliation checklist item — month close no longer depends on reconciliation status (CM-5)",
+      "Soft Close: Close Month button now enables when both confirmation checkboxes are checked, independent of system checks (CM-5)",
+      "Navigation: New 'Month' submenu group added under Accounts, Deposits, and Payments (CM-5)",
+      "Navigation: Soft Close Month moved under Month submenu in all three nav groups (CM-5)",
+    ]
+  },
   {
     version: "1.3.2",
     changes: [
