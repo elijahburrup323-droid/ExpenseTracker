@@ -200,10 +200,12 @@ export default class extends Controller {
   async startEditing(event) {
     if (this.state !== "idle") return
 
+    // Capture id before any await (event.currentTarget is null after async)
+    const id = Number(event.currentTarget.dataset.id)
+
     const closed = await this._checkMonthClosed()
     if (closed) return
 
-    const id = Number(event.currentTarget.dataset.id)
     const acc = this.accounts.find(a => a.id === id)
     if (!acc) return
 
