@@ -1,9 +1,18 @@
-APP_VERSION = "1.3.11"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+APP_VERSION = "1.3.12"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.12",
+    changes: [
+      "User Menu: Removed Soft Close Month and Open Soft Close from user dropdown — accessible via Monthly nav only (CM-21)",
+      "Reports: New Reports Menu screen under Monthly > Reports with 9 report cards in 3x3 grid (CM-22)",
+      "Reports: Drag-and-drop card reorder with per-user slot persistence via SortableJS (CM-22)",
+      "Reports: Category badges, icons, and descriptions on each report card (CM-22)",
+    ]
+  },
   {
     version: "1.3.11",
     changes: [

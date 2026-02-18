@@ -1,0 +1,10 @@
+class ReportsController < ApplicationController
+  before_action :authenticate_user!
+
+  def index
+    UserReportLayout.seed_defaults_for(current_user)
+    @slots = current_user.user_report_layouts.order(:slot_number)
+    @open_month = OpenMonthMaster.for_user(current_user)
+    @month_label = Date.new(@open_month.current_year, @open_month.current_month, 1).strftime("%B %Y")
+  end
+end

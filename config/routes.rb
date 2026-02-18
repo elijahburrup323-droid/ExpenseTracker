@@ -62,6 +62,9 @@ Rails.application.routes.draw do
   # Quotes (HTML page, admin-only)
   resources :quotes, only: [:index]
 
+  # Reports Menu (HTML page)
+  get "reports", to: "reports#index", as: :reports
+
   # Soft Close Month (HTML page)
   get "soft_close", to: "soft_close#index", as: :soft_close
 
@@ -147,6 +150,12 @@ Rails.application.routes.draw do
     scope :dashboard, controller: "dashboard", as: :dashboard do
       get "card_data", action: :card_data
       put "reorder_slots", action: :reorder_slots
+    end
+
+    # Reports API
+    scope :reports, controller: "reports", as: :reports do
+      get "layout", action: :layout
+      put "reorder", action: :reorder
     end
   end
 

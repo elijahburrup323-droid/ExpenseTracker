@@ -64,6 +64,7 @@
           path: soft_close_path,
           icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>',
           children: [
+            { path: reports_path, label: "Reports", icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>' },
             { path: soft_close_path, label: "Soft Close Month", icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>' },
           ]
         },
@@ -225,22 +226,6 @@
         </svg>
         <span data-sidebar-label>Settings</span>
       <% end %>
-      <%# Soft Close Month %>
-      <%= link_to soft_close_path, class: "w-full flex items-center space-x-3 px-3 py-1.5 rounded-lg text-sm text-white/70 hover:bg-white/10 hover:text-white transition" do %>
-        <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
-        <span data-sidebar-label>Soft Close</span>
-      <% end %>
-      <%# Open Soft Close %>
-      <button type="button"
-              class="w-full flex items-center space-x-3 px-3 py-1.5 rounded-lg text-sm text-white/70 hover:bg-white/10 hover:text-white transition"
-              data-action="click->month-actions#confirmOpenSoftClose">
-        <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-        </svg>
-        <span data-sidebar-label>Open Soft Close</span>
-      </button>
       <%# Upgrade %>
       <%= link_to pricing_path, class: "flex items-center space-x-3 px-3 py-1.5 rounded-lg text-sm text-yellow-300 hover:bg-white/10 hover:text-yellow-200 transition" do %>
         <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
