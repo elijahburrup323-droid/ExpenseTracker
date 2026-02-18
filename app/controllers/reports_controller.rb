@@ -7,4 +7,8 @@ class ReportsController < ApplicationController
     @open_month = OpenMonthMaster.for_user(current_user)
     @month_label = Date.new(@open_month.current_year, @open_month.current_month, 1).strftime("%B %Y")
   end
+
+  def monthly_cash_flow
+    @open_month = OpenMonthMaster.for_user(current_user)
+  end
 end

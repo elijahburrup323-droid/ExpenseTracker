@@ -1,5 +1,5 @@
 APP_VERSION = "1.3.13"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
@@ -17,6 +17,10 @@ APP_ALL_VERSIONS = [
       "Account Types: View All toggle — switch between enabled-only and all available types (CM-7)",
       "Account Types: Click-to-edit description — customize descriptions per user with Reset to master option (CM-7)",
       "Database: Added custom_description column to user_account_types for per-user description overrides (CM-7)",
+      "Reports: New Monthly Cash Flow report — Beginning Balance, Deposits, Payments, Net Cash Flow, Ending Balance (CM-8)",
+      "Reports: Expandable detail sections — Deposits by Account and Payments by Category breakdowns (CM-8)",
+      "Reports: Month navigation on report page with prev/next arrows (CM-8)",
+      "Reports: Cards on Reports Menu now link to report pages when available, 'Coming Soon' for others (CM-8)",
     ]
   },
   {

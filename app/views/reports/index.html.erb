@@ -55,12 +55,21 @@
             <%= defn.description %>
           </p>
           <div class="mt-auto pt-3">
-            <span class="inline-flex items-center text-xs font-medium text-brand-600 dark:text-brand-400 group-hover:underline">
-              View Report
-              <svg class="ml-1 h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
-              </svg>
-            </span>
+            <% if defn.route_path.present? %>
+              <%= link_to defn.route_path, class: "inline-flex items-center text-xs font-medium text-brand-600 dark:text-brand-400 hover:underline" do %>
+                View Report
+                <svg class="ml-1 h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                </svg>
+              <% end %>
+            <% else %>
+              <span class="inline-flex items-center text-xs font-medium text-gray-400 dark:text-gray-500">
+                Coming Soon
+                <svg class="ml-1 h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                </svg>
+              </span>
+            <% end %>
           </div>
         </div>
 
