@@ -58,19 +58,6 @@ export default class extends Controller {
     this.fetchData()
   }
 
-  prevMonth() {
-    this.month--
-    if (this.month < 1) { this.month = 12; this.year-- }
-    this._updateMonthLabel()
-    if (this.accountSelectTarget.value) this.fetchData()
-  }
-
-  nextMonth() {
-    this.month++
-    if (this.month > 12) { this.month = 1; this.year++ }
-    this._updateMonthLabel()
-    if (this.accountSelectTarget.value) this.fetchData()
-  }
 
   async fetchData() {
     const accountId = this.accountSelectTarget.value
@@ -414,11 +401,6 @@ export default class extends Controller {
   }
 
   // ===================== PRIVATE METHODS =====================
-
-  _updateMonthLabel() {
-    const d = new Date(this.year, this.month - 1, 1)
-    this.monthLabelTarget.textContent = d.toLocaleDateString("en-US", { month: "long", year: "numeric" })
-  }
 
   _renderPayments(payments) {
     if (payments.length === 0) {

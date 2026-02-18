@@ -9,6 +9,8 @@ APP_ALL_VERSIONS = [
     changes: [
       "Recurring Deposits: Renamed 'Income Sources' to 'Deposit Sources' throughout the screen (CM-9)",
       "Frequencies: Updated helper text to reference 'deposit sources' instead of 'income sources' (CM-9)",
+      "Reconciliation: Removed month navigation — screen now shows current open month only as static text (CM-10)",
+      "Reconciliation: Server-side enforcement — all API endpoints forced to current open month regardless of URL params (CM-10)",
     ]
   },
   {

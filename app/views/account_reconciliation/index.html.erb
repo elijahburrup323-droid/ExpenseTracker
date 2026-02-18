@@ -41,23 +41,11 @@
       </select>
     </div>
 
-    <%# Month navigation %>
-    <div class="flex items-center space-x-3">
-      <button type="button" data-action="click->reconciliation#prevMonth"
-              class="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
-        </svg>
-      </button>
+    <%# Current month display (static, no navigation) %>
+    <div class="flex items-center">
       <span data-reconciliation-target="monthLabel" class="text-lg font-semibold text-gray-900 dark:text-white min-w-[10rem] text-center">
         <%= Date.new(@open_month.current_year, @open_month.current_month, 1).strftime("%B %Y") %>
       </span>
-      <button type="button" data-action="click->reconciliation#nextMonth"
-              class="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
-        </svg>
-      </button>
     </div>
   </div>
 

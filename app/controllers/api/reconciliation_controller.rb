@@ -5,8 +5,10 @@ module Api
       account = current_user.accounts.find_by(id: params[:account_id])
       return render_not_found unless account
 
-      year = params[:year].to_i
-      month = params[:month].to_i
+      # Force to current open month only (no month navigation)
+      om = OpenMonthMaster.for_user(current_user)
+      year = om.current_year
+      month = om.current_month
       month_start = Date.new(year, month, 1)
       month_end = month_start.next_month
       range = month_start...month_end
@@ -91,10 +93,8 @@ module Api
           }
         end
 
-      # Check if month is closed (for read-only mode)
-      om = OpenMonthMaster.for_user(current_user)
-      is_current_month = (year == om.current_year && month == om.current_month)
-      is_read_only = !is_current_month
+      # Always current month, never read-only
+      is_read_only = false
 
       render json: {
         account: { id: account.id, name: account.name, icon_key: account.icon_key, color_key: account.color_key },
@@ -159,10 +159,11 @@ module Api
       account = current_user.accounts.find_by(id: params[:account_id])
       return render_not_found unless account
 
+      om = OpenMonthMaster.for_user(current_user)
       recon = current_user.reconciliation_records.find_or_initialize_by(
         account_id: account.id,
-        year: params[:year].to_i,
-        month: params[:month].to_i
+        year: om.current_year,
+        month: om.current_month
       )
       recon.outside_balance = params[:outside_balance]
       recon.save!
@@ -175,10 +176,11 @@ module Api
       account = current_user.accounts.find_by(id: params[:account_id])
       return render_not_found unless account
 
+      om = OpenMonthMaster.for_user(current_user)
       recon = current_user.reconciliation_records.find_or_initialize_by(
         account_id: account.id,
-        year: params[:year].to_i,
-        month: params[:month].to_i
+        year: om.current_year,
+        month: om.current_month
       )
       recon.statement_payment_count = params[:payment_count].to_i if params[:payment_count]
       recon.statement_deposit_count = params[:deposit_count].to_i if params[:deposit_count]
@@ -193,8 +195,9 @@ module Api
       account = current_user.accounts.find_by(id: params[:account_id])
       return render_not_found unless account
 
-      year = params[:year].to_i
-      month = params[:month].to_i
+      om = OpenMonthMaster.for_user(current_user)
+      year = om.current_year
+      month = om.current_month
 
       recon = current_user.reconciliation_records.find_or_initialize_by(
         account_id: account.id, year: year, month: month
