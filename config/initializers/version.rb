@@ -1,9 +1,18 @@
-APP_VERSION = "1.3.5"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+APP_VERSION = "1.3.6"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.6",
+    changes: [
+      "Account Types: Converted to master/user pattern — global AccountTypeMasters table with per-user UserAccountTypes toggle (CM-8)",
+      "Account Types: User screen now shows toggle switches to enable/disable master types instead of full CRUD (CM-8)",
+      "Admin: New Acct Type Masters screen for managing global account types (add, edit, delete with in-use protection) (CM-8)",
+      "Accounts: Dropdown now sources from master types via user selections instead of legacy account_types table (CM-8)",
+    ]
+  },
   {
     version: "1.3.5",
     changes: [

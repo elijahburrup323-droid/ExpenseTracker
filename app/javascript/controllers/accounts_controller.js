@@ -101,7 +101,7 @@ export default class extends Controller {
           },
           body: JSON.stringify({ account: {
             name: item.name,
-            account_type_id: type.id,
+            account_type_master_id: type.account_type_master_id,
             institution: institutions[i],
             balance: randBal(),
             icon_key: item.icon_key,
@@ -227,8 +227,8 @@ export default class extends Controller {
     this.modalDateRowTarget.classList.add("hidden")
 
     // Rebuild type dropdown, include disabled types if they match current
-    this._rebuildTypeDropdown(acc.account_type_id)
-    this.modalTypeTarget.value = String(acc.account_type_id || "")
+    this._rebuildTypeDropdown(acc.account_type_master_id)
+    this.modalTypeTarget.value = String(acc.account_type_master_id || "")
 
     // Budget toggle: match current value
     this.modalBudgetTarget.innerHTML = this._renderBudgetToggle(acc.include_in_budget)
@@ -262,7 +262,7 @@ export default class extends Controller {
 
   async saveNew() {
     const name = this.modalNameTarget.value.trim()
-    const account_type_id = this.modalTypeTarget.value
+    const account_type_master_id = this.modalTypeTarget.value
     const institution = this.modalInstitutionTarget.value.trim()
     const balance = this.modalBalanceTarget.value.trim() || "0"
     const effective_date = this.modalDateTarget.value || ""
@@ -274,7 +274,7 @@ export default class extends Controller {
       this.modalNameTarget.focus()
       return
     }
-    if (!account_type_id) {
+    if (!account_type_master_id) {
       this._showModalError("Account Type is required")
       this.modalTypeTarget.focus()
       return
@@ -289,7 +289,7 @@ export default class extends Controller {
           "X-CSRF-Token": this.csrfTokenValue
         },
         body: JSON.stringify({ account: {
-          name, account_type_id, institution, balance, effective_date,
+          name, account_type_master_id, institution, balance, effective_date,
           icon_key: this.selectedIconKey,
           color_key: this.selectedColorKey,
           include_in_budget
@@ -312,7 +312,7 @@ export default class extends Controller {
 
   async saveEdit() {
     const name = this.modalNameTarget.value.trim()
-    const account_type_id = this.modalTypeTarget.value
+    const account_type_master_id = this.modalTypeTarget.value
     const institution = this.modalInstitutionTarget.value.trim()
     const balance = this.modalBalanceTarget.value.trim() || "0"
     const budgetToggle = this.modalBudgetTarget.querySelector(".budget-toggle")
@@ -323,7 +323,7 @@ export default class extends Controller {
       this.modalNameTarget.focus()
       return
     }
-    if (!account_type_id) {
+    if (!account_type_master_id) {
       this._showModalError("Account Type is required")
       this.modalTypeTarget.focus()
       return
@@ -338,7 +338,7 @@ export default class extends Controller {
           "X-CSRF-Token": this.csrfTokenValue
         },
         body: JSON.stringify({ account: {
-          name, account_type_id, institution, balance,
+          name, account_type_master_id, institution, balance,
           icon_key: this.selectedIconKey,
           color_key: this.selectedColorKey,
           include_in_budget
@@ -676,14 +676,13 @@ export default class extends Controller {
 
   // --- Type Dropdown ---
 
-  _rebuildTypeDropdown(currentTypeId = null) {
+  _rebuildTypeDropdown(currentMasterId = null) {
     const types = this.accountTypes.filter(at =>
-      at.use_flag !== false || (currentTypeId && at.id === currentTypeId)
+      at.is_enabled !== false || (currentMasterId && at.account_type_master_id === currentMasterId)
     )
     let html = `<option value="">Select type...</option>`
-    html += `<option value="new">&mdash; New Account Type &mdash;</option>`
     html += types.map(at =>
-      `<option value="${at.id}">${escapeHtml(at.name)}</option>`
+      `<option value="${at.account_type_master_id}">${escapeHtml(at.display_name)}</option>`
     ).join("")
     this.modalTypeTarget.innerHTML = html
   }

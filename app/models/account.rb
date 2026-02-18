@@ -1,6 +1,7 @@
 class Account < ApplicationRecord
   belongs_to :user
   belongs_to :account_type
+  belongs_to :account_type_master, optional: true
   has_many :payments
   has_many :income_entries
   has_many :transfers_from, class_name: "TransferMaster", foreign_key: :from_account_id

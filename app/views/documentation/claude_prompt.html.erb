@@ -44,7 +44,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 
 ### Layout Structure
 - Collapsible left sidebar (w-56 expanded, w-16 collapsed) with gradient purple background
-- Sidebar groups: Accounts (Account Types, Transfers, Reconciliation), Deposits (Recurring Deposits, Frequencies), Payments (Categories, Spending Types), Monthly (Soft Close Month), Admin (DBU, Diagnostics, Documentation, Quotes, Frequency Masters — admin only, always at bottom). Monthly is a standalone top-level group between Payments and Admin, available to all users. Sub-menus sorted alphabetically within each group, except Frequency-related items which are always pinned to the bottom of their group.
+- Sidebar groups: Accounts (Account Types, Transfers, Reconciliation), Deposits (Recurring Deposits, Frequencies), Payments (Categories, Spending Types), Monthly (Soft Close Month), Admin (Acct Type Masters, DBU, Diagnostics, Documentation, Quotes, Frequency Masters — admin only, always at bottom). Monthly is a standalone top-level group between Payments and Admin, available to all users. Sub-menus sorted alphabetically within each group, except Frequency-related items which are always pinned to the bottom of their group.
 - Collapse/expand toggle button at bottom of sidebar, next to profile name (circular, bg-white/10)
 - Bottom sidebar section: user profile button (name + avatar) — click to expand/collapse dropdown with Theme toggle, Settings link, Soft Close Month, Open Soft Close, Sign Out link. "Soft Close Month" snapshots account and dashboard data then advances to the next month. "Open Soft Close" reopens the previous month (blocked if current month has transactions). Both actions trigger confirmation modals before executing.
 - Top header bar showing "Hello {first name}" with the current open month (from open_month_masters) displayed underneath in secondary text, motivational quote (wraps without overlapping right-side elements), current date, and profile dropdown (upper-right corner with avatar, contains Toggle Theme, Settings, Sign Out — always visible, sticky z-30)
@@ -82,8 +82,10 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 ### Spending Side
 - **spending_types** — user-scoped categories of spending (Need, Want, Savings — seeded as system defaults)
 - **spending_categories** — user-scoped, belongs_to spending_type (Groceries, Dining, Mortgage — seeded)
-- **account_types** — user-scoped (Checking, Savings, Venmo — seeded as system defaults). Has use_flag boolean toggle — when ON, appears in account type dropdowns; when OFF, hidden from dropdowns.
-- **accounts** — user-scoped, belongs_to account_type (balance, beginning_balance, include_in_budget flag)
+- **account_type_masters** — global lookup table (Checking, Savings, Venmo, etc.). Admin-editable via Acct Type Masters screen. Fields: display_name, normalized_key (unique), description, is_active, sort_order. Similar pattern to income_frequency_masters.
+- **user_account_types** — user-scoped join to account_type_masters with is_enabled toggle. Controls which account types appear in each user's Account Type dropdown. Unique constraint on [user_id, account_type_master_id].
+- **account_types** — legacy user-scoped table (Checking, Savings, Venmo — seeded as system defaults). Retained for backward compatibility; new accounts use account_type_master_id instead.
+- **accounts** — user-scoped, belongs_to account_type (legacy) and account_type_master (new FK). balance, beginning_balance, include_in_budget flag.
 - **payments** — user-scoped, belongs_to account + spending_category, optional spending_type_override. Payment create/update/destroy adjusts account balance in a transaction.
 
 ### Income Side
@@ -119,7 +121,8 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 /accounts .............. Accounts CRUD screen
 /transfer_masters ...... Account Transfers CRUD screen (modal-based add/edit/delete)
 /account_reconciliation  Account Reconciliation screen (checkbox reconciliation + Fix Mode)
-/account_types ......... Account Types CRUD screen
+/account_types ......... Account Types toggle screen (user enables/disables master types)
+/account_type_masters .. Acct Type Masters CRUD screen (admin-only)
 /spending_types ........ Spending Types CRUD screen
 /spending_categories ... Categories CRUD screen
 /payments .............. Payments CRUD screen (with advanced filtering & combination search)
@@ -146,7 +149,9 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 API endpoints (all under /api/):
   /api/spending_types ......... CRUD
   /api/spending_categories .... CRUD
-  /api/account_types .......... CRUD
+  /api/account_types .......... CRUD (legacy)
+  /api/account_type_masters ... CRUD + GET :id/can_delete (admin-only, delete blocked if in use by any user)
+  /api/user_account_types ..... index + update (is_enabled toggle per account type)
   /api/accounts ............... CRUD
   /api/transfer_masters ....... CRUD (with transactional balance updates on both from/to accounts)
   /api/reconciliation ......... data (GET), toggle (PATCH), outside_balance (PUT), statement_counts (PUT), mark_reconciled (PUT)
@@ -180,7 +185,8 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 - **otp_controller.js** — 6-digit OTP input with auto-submit
 - **spending_types_controller.js** — CRUD with icon/color picker, generate dummy data
 - **spending_categories_controller.js** — CRUD with type select, debt toggle
-- **account_types_controller.js** — CRUD with icon/color picker, generate dummy data
+- **account_types_controller.js** — Toggle screen for user account types. Fetches from /api/user_account_types, displays master type name and description, toggle switch enables/disables each type for the user. No CRUD — types are managed by admin via Acct Type Masters.
+- **account_type_masters_controller.js** — Admin CRUD for global account type masters: Add/Edit modal with name + description + active toggle, Delete with in-use protection (can_delete endpoint), Cannot-Delete modal when type is referenced by users. Similar pattern to income_frequency_masters_controller.js.
 - **accounts_controller.js** — CRUD with type select, budget toggle, generate dummy data. Add Account validates effective_date against the current open month: client-side date picker is constrained to the open month's date range, server-side returns 409 Conflict if effective_date falls outside the open month. Double-clicking an account name navigates to Account Reconciliation with that account pre-selected via ?account_id= query param.
 - **payments_controller.js** — CRUD with date/account/category/type filters, search, combination sum search, CSV export of filtered/sorted data, print-friendly report with BudgetHQ header (mirrors filters/sorting), generate dummy data. After adding a payment, the list refreshes in the current sort order and scrolls to the top. After add/edit/delete, account balances are re-fetched from the server to stay in sync. Total display uses text-lg font-semibold for visual emphasis. On Add/Edit save, validates payment date against the current open month (fetched from /api/open_month_master). If date falls outside open month, shows a warning modal with Cancel/Proceed. Proceed advances the open month to match the payment date's month/year and then saves. As of v1.1.9, Edit uses a modal (same as Add modal) instead of inline row editing. The Edit modal enforces month control — payments can only be edited if their date falls within the current open month. The server-side update action returns 409 Conflict if the payment's date is outside the current open month.
 - **upload_controller.js** — Reusable CSV upload/import controller. Workflow: download template → upload CSV → validation grid with inline editing → batch import via existing API create endpoints. Used on all 9 data screens (admin only). Config passed via HTML data attributes (fields, lookups, API URL). Template download supports 3 formats: CSV, Excel (XML-based XLS with styling), and Apple Numbers (CSV with UTF-8 BOM). Format selection persisted in localStorage. Google Sheets (TSV + opens sheets.google.com) also coded but not yet exposed in UI.
@@ -222,7 +228,7 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 6. **Sort order** — auto-assigned as max(sort_order)+1 on create
 7. **Case-insensitive uniqueness** — name fields use lower() index with deleted_at IS NULL filter
 8. **API error format** — { errors: ["message"] } with 422 status
-9. **Admin gating** — Admin sidebar group (DBU, Diagnostics, Documentation, Quotes, Frequency Masters), Admin Users management (/admin/users), Generate Data buttons, and admin API endpoints are only visible/accessible to users with budgethq_agent=true
+9. **Admin gating** — Admin sidebar group (Acct Type Masters, DBU, Diagnostics, Documentation, Quotes, Frequency Masters), Admin Users management (/admin/users), Generate Data buttons, and admin API endpoints are only visible/accessible to users with budgethq_agent=true
 10. **Motivational quotes** — Random active quote from the `quotes` table shown on sign-in page; daily quote cached in session and displayed in header bar. Admin CRUD screen at /quotes for managing quotes. Seeded with 200 financial quotes with authors. Cache is version-tracked: when an admin creates/updates/deletes a quote, the cache version is bumped and all sessions refresh the quote on next page load.
 11. **Auto-cancel editing** — Clicking Add/Edit/Delete while another row is being edited auto-cancels the previous edit (no need for explicit cancel)
 12. **Auto-save toggles** — All toggle switches (budget, use_flag, active, admin) save immediately via API without requiring a Save button

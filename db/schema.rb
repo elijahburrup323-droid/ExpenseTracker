@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_17_200000) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_18_100004) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -26,6 +26,18 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_17_200000) do
     t.datetime "updated_at", null: false
     t.index ["user_id", "year", "month", "account_id"], name: "idx_acct_month_snap_unique", unique: true
     t.index ["user_id", "year", "month"], name: "idx_acct_month_snap_period"
+  end
+
+  create_table "account_type_masters", force: :cascade do |t|
+    t.string "display_name", limit: 80, null: false
+    t.string "normalized_key", limit: 80, null: false
+    t.string "description", limit: 255
+    t.boolean "is_active", default: true, null: false
+    t.integer "sort_order", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["normalized_key"], name: "index_account_type_masters_on_normalized_key", unique: true
+    t.index ["sort_order"], name: "index_account_type_masters_on_sort_order"
   end
 
   create_table "account_types", force: :cascade do |t|
@@ -61,8 +73,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_17_200000) do
     t.datetime "updated_at", null: false
     t.decimal "beginning_balance", precision: 12, scale: 2, default: "0.0", null: false
     t.boolean "month_ending_balance", default: false, null: false
+    t.bigint "account_type_master_id"
     t.index "user_id, lower((name)::text)", name: "index_accounts_on_user_id_and_lower_name", unique: true, where: "(deleted_at IS NULL)"
     t.index ["account_type_id"], name: "index_accounts_on_account_type_id"
+    t.index ["account_type_master_id"], name: "index_accounts_on_account_type_master_id"
     t.index ["user_id", "sort_order"], name: "index_accounts_on_user_id_and_sort_order"
     t.index ["user_id"], name: "index_accounts_on_user_id"
   end
@@ -437,6 +451,17 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_17_200000) do
     t.index ["user_id"], name: "index_transfer_masters_on_user_id"
   end
 
+  create_table "user_account_types", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "account_type_master_id", null: false
+    t.boolean "is_enabled", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_type_master_id"], name: "index_user_account_types_on_account_type_master_id"
+    t.index ["user_id", "account_type_master_id"], name: "idx_user_account_types_unique", unique: true
+    t.index ["user_id"], name: "index_user_account_types_on_user_id"
+  end
+
   create_table "user_emails", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "email", null: false
@@ -510,6 +535,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_17_200000) do
   add_foreign_key "account_month_snapshots", "accounts"
   add_foreign_key "account_month_snapshots", "users"
   add_foreign_key "account_types", "users"
+  add_foreign_key "accounts", "account_type_masters"
   add_foreign_key "accounts", "account_types"
   add_foreign_key "accounts", "users"
   add_foreign_key "balance_adjustments", "accounts"
@@ -552,6 +578,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_17_200000) do
   add_foreign_key "transfer_masters", "accounts", column: "from_account_id"
   add_foreign_key "transfer_masters", "accounts", column: "to_account_id"
   add_foreign_key "transfer_masters", "users"
+  add_foreign_key "user_account_types", "account_type_masters"
+  add_foreign_key "user_account_types", "users"
   add_foreign_key "user_emails", "users"
   add_foreign_key "user_phones", "users"
 end

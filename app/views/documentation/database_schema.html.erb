@@ -36,6 +36,7 @@
  ├── has_many :dashboard_card_account_rules (dashboard_card_account_rules.user_id → users.id)
  ├── has_many :balance_adjustments    (balance_adjustments.user_id → users.id)
  ├── has_many :reconciliation_records (reconciliation_records.user_id → users.id)
+ ├── has_many :user_account_types   (user_account_types.user_id → users.id)
  ├── referenced by phone_verifications (via phone_number, no FK)
  └── (admin) dbu_table_catalogs (standalone, no FK)
 
@@ -87,13 +88,22 @@ spending_categories
  ├── belongs_to :spending_type         (spending_type_id FK → spending_types.id)
  └── has_many :payments                (payments.spending_category_id → spending_categories.id)
 
-account_types
+account_type_masters (global lookup, not user-scoped)
+ ├── has_many :user_account_types      (user_account_types.account_type_master_id)
+ └── has_many :accounts                (accounts.account_type_master_id)
+
+user_account_types
+ ├── belongs_to :user                  (user_id FK → users.id)
+ └── belongs_to :account_type_master   (account_type_master_id FK → account_type_masters.id)
+
+account_types (legacy, user-scoped)
  ├── belongs_to :user                  (user_id FK → users.id)
  └── has_many :accounts                (accounts.account_type_id → account_types.id)
 
 accounts
  ├── belongs_to :user                  (user_id FK → users.id)
- ├── belongs_to :account_type          (account_type_id FK → account_types.id)
+ ├── belongs_to :account_type          (legacy, account_type_id FK → account_types.id)
+ ├── belongs_to :account_type_master   (account_type_master_id FK → account_type_masters.id, optional)
  ├── has_many :payments                (payments.account_id → accounts.id)
  ├── has_many :income_recurrings       (income_recurrings.account_id → accounts.id)
  ├── has_many :income_entries          (income_entries.account_id → accounts.id)
@@ -340,11 +350,82 @@ phone_verifications
     </div>
   </div>
 
-  <%# ── Account Types ── %>
+  <%# ── Account Type Masters ── %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 mb-6 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">account_type_masters</h2>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Global account type lookup table &mdash; admin-managed, shared across all users</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-100 dark:border-gray-700">
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Column</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Type</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Constraints</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Description</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr><td class="px-6 py-2 font-mono font-medium text-gray-900 dark:text-white">id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">PK</span> <span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">auto</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Primary key</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">display_name</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">string(80)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Display name (e.g. "Checking", "Savings")</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">normalized_key</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">string(80)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300 px-1.5 py-0.5 rounded">UQ</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Lowercase key for dedup (auto-generated from display_name)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">description</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">string(255)</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Short description</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">is_active</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">boolean</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Active flag (default: true)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">sort_order</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">integer</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Display order (default: 0)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">created_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Record created</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">updated_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Record last updated</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5">
+        <li>UNIQUE (normalized_key) &mdash; <span class="text-gray-400 dark:text-gray-500">case-insensitive dedup</span></li>
+        <li>(sort_order, display_name)</li>
+      </ul>
+    </div>
+  </div>
+
+  <%# ── User Account Types ── %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 mb-6 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">user_account_types</h2>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Per-user enable/disable selection for account type masters</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-100 dark:border-gray-700">
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Column</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Type</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Constraints</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Description</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr><td class="px-6 py-2 font-mono font-medium text-gray-900 dark:text-white">id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">PK</span> <span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">auto</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Primary key</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">user_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; users</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Owning user</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">account_type_master_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; account_type_masters</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Referenced master type</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">is_enabled</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">boolean</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">User-enabled toggle (default: true)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">created_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Record created</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">updated_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Record last updated</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5">
+        <li>UNIQUE (user_id, account_type_master_id) &mdash; <span class="text-gray-400 dark:text-gray-500">one selection per user per master type</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <%# ── Account Types (Legacy) ── %>
   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 mb-6 overflow-hidden">
     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
       <h2 class="text-lg font-semibold text-gray-900 dark:text-white">account_types</h2>
-      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Per-user financial account classifications with soft delete</p>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Legacy per-user financial account classifications with soft delete &mdash; superseded by account_type_masters</p>
     </div>
     <div class="overflow-x-auto">
       <table class="min-w-full text-sm">
@@ -402,7 +483,8 @@ phone_verifications
         <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
           <tr><td class="px-6 py-2 font-mono font-medium text-gray-900 dark:text-white">id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">PK</span> <span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">auto</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Primary key</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">user_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; users</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Owning user</td></tr>
-          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">account_type_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; account_types</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Account classification</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">account_type_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; account_types</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Legacy account classification</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">account_type_master_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">nullable</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; account_type_masters</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">New master account type reference</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">name</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">string(80)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Display name</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">institution</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">string(120)</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Financial institution name</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">balance</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">decimal(12,2)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Current balance (default: 0.00)</td></tr>
@@ -1238,7 +1320,10 @@ phone_verifications
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">spending_types</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">cascade (via Rails dependent: :destroy)</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">account_types</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">cascade (via Rails dependent: :destroy)</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">accounts</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">cascade (via Rails dependent: :destroy)</td></tr>
-          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">accounts</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">account_type_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">account_types.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (DB-level foreign key)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">accounts</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">account_type_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">account_types.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (DB-level foreign key, legacy)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">accounts</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">account_type_master_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">account_type_masters.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (optional)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">user_account_types</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">cascade (via Rails dependent: :destroy)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">user_account_types</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">account_type_master_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">account_type_masters.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">spending_categories</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">cascade (via Rails dependent: :destroy)</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">spending_categories</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">spending_type_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">spending_types.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (DB-level foreign key)</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">payments</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">cascade (via Rails dependent: :destroy)</td></tr>

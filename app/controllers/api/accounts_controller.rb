@@ -3,10 +3,13 @@ module Api
     before_action :set_account, only: [:update, :destroy]
 
     def index
-      accounts = current_user.accounts.ordered.includes(:account_type)
+      accounts = current_user.accounts.ordered.includes(:account_type, :account_type_master)
       render json: accounts.map { |a|
+        master = a.account_type_master
+        type_name = master&.display_name || a.account_type&.name || ""
+        type_desc = master&.description || a.account_type&.description || ""
         a.as_json(only: [:id, :name, :institution, :balance, :include_in_budget, :icon_key, :color_key, :sort_order])
-          .merge(account_type_id: a.account_type_id, account_type_name: a.account_type.name, account_type_description: a.account_type.description)
+          .merge(account_type_id: a.account_type_id, account_type_master_id: a.account_type_master_id, account_type_name: type_name, account_type_description: type_desc)
       }
     end
 
@@ -33,9 +36,12 @@ module Api
       account.beginning_balance = account.balance
 
       if account.save
+        master = account.account_type_master
         account_type = account.account_type
+        type_name = master&.display_name || account_type&.name || ""
+        type_desc = master&.description || account_type&.description || ""
         render json: account.as_json(only: [:id, :name, :institution, :balance, :include_in_budget, :icon_key, :color_key, :sort_order])
-          .merge(account_type_id: account.account_type_id, account_type_name: account_type.name, account_type_description: account_type.description), status: :created
+          .merge(account_type_id: account.account_type_id, account_type_master_id: account.account_type_master_id, account_type_name: type_name, account_type_description: type_desc), status: :created
       else
         render_errors(account)
       end
@@ -46,9 +52,12 @@ module Api
         @account.beginning_balance = account_params[:balance]
       end
       if @account.update(account_params)
+        master = @account.account_type_master
         account_type = @account.account_type
+        type_name = master&.display_name || account_type&.name || ""
+        type_desc = master&.description || account_type&.description || ""
         render json: @account.as_json(only: [:id, :name, :institution, :balance, :include_in_budget, :icon_key, :color_key, :sort_order])
-          .merge(account_type_id: @account.account_type_id, account_type_name: account_type.name, account_type_description: account_type.description)
+          .merge(account_type_id: @account.account_type_id, account_type_master_id: @account.account_type_master_id, account_type_name: type_name, account_type_description: type_desc)
       else
         render_errors(@account)
       end
@@ -78,7 +87,7 @@ module Api
     end
 
     def account_params
-      params.require(:account).permit(:name, :account_type_id, :institution, :balance, :include_in_budget, :icon_key, :color_key)
+      params.require(:account).permit(:name, :account_type_id, :account_type_master_id, :institution, :balance, :include_in_budget, :icon_key, :color_key)
     end
   end
 end

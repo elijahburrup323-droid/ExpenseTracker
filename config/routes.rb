@@ -44,6 +44,9 @@ Rails.application.routes.draw do
   # Payments (HTML page)
   resources :payments, only: [:index]
 
+  # Account Type Masters (HTML page, agent-only)
+  resources :account_type_masters, only: [:index]
+
   # Income Frequency Masters (HTML page, agent-only)
   resources :income_frequency_masters, only: [:index]
 
@@ -73,6 +76,12 @@ Rails.application.routes.draw do
     resources :accounts, only: [:index, :create, :update, :destroy]
     resources :transfer_masters, only: [:index, :create, :update, :destroy]
     resources :payments, only: [:index, :create, :update, :destroy]
+    resources :account_type_masters, only: [:index, :create, :update, :destroy] do
+      member do
+        get :can_delete
+      end
+    end
+    resources :user_account_types, only: [:index, :update]
     resources :income_frequency_masters, only: [:index, :create, :update, :destroy] do
       member do
         get :can_delete
