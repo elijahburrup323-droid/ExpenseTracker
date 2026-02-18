@@ -329,7 +329,7 @@ export default class extends Controller {
     }
 
     if (this.recurrings.length === 0 && this.state !== "adding") {
-      html = `<tr><td colspan="8" class="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">No income sources yet. Click "Add Income Source" to create one.</td></tr>`
+      html = `<tr><td colspan="8" class="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">No deposit sources yet. Click "Add Deposit Source" to create one.</td></tr>`
     }
 
     this.tableBodyTarget.innerHTML = html
