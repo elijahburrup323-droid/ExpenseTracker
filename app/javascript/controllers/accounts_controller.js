@@ -10,7 +10,7 @@ export default class extends Controller {
     "modalType", "modalInstitution", "modalBalance", "modalBudget",
     "modalIconPicker", "modalError"
   ]
-  static values = { apiUrl: String, typesUrl: String, csrfToken: String, typesPageUrl: String, depositsPageUrl: String, paymentsPageUrl: String, openMonthUrl: String }
+  static values = { apiUrl: String, typesUrl: String, csrfToken: String, typesPageUrl: String, depositsPageUrl: String, paymentsPageUrl: String, openMonthUrl: String, reconciliationUrl: String }
 
   connect() {
     this.accounts = []
@@ -632,6 +632,13 @@ export default class extends Controller {
     this.totalTarget.textContent = `— Total: ${sum.toLocaleString("en-US", { style: "currency", currency: "USD" })}`
   }
 
+  goToReconciliation(event) {
+    const accountId = event.currentTarget.dataset.id
+    if (accountId) {
+      window.location.href = `${this.reconciliationUrlValue}?account_id=${accountId}`
+    }
+  }
+
   _formatBalance(balance) {
     const num = parseFloat(balance)
     if (!num && num !== 0) return "&mdash;"
@@ -643,7 +650,7 @@ export default class extends Controller {
 
     return `<tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
       <td class="px-6 py-4">${iconFor(acc.icon_key, acc.color_key)}</td>
-      <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">${escapeHtml(acc.name)}</td>
+      <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white cursor-pointer" data-id="${acc.id}" data-action="dblclick->accounts#goToReconciliation">${escapeHtml(acc.name)}</td>
       <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">${escapeHtml(acc.account_type_description || acc.account_type_name || "")}</td>
       <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">${escapeHtml(acc.institution || "")}</td>
       <td class="px-6 py-4 text-sm text-gray-900 dark:text-white text-right font-mono">${this._formatBalance(acc.balance)}</td>

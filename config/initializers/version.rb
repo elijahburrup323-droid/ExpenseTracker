@@ -1,9 +1,16 @@
-APP_VERSION = "1.3.4"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+APP_VERSION = "1.3.5"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.5",
+    changes: [
+      "Accounts: Double-click account name navigates to Account Reconciliation with that account pre-selected (CM-7)",
+      "Reconciliation: Auto-selects account from query param on page load for seamless cross-screen navigation (CM-7)",
+    ]
+  },
   {
     version: "1.3.4",
     changes: [

@@ -35,6 +35,17 @@ export default class extends Controller {
     this.month = this.initialMonthValue
     this.data_cache = null
     this.isReadOnly = false
+
+    // Auto-select account if passed via query param (e.g., from Accounts dblclick)
+    const params = new URLSearchParams(window.location.search)
+    const preselect = params.get("account_id")
+    if (preselect) {
+      const option = this.accountSelectTarget.querySelector(`option[value="${preselect}"]`)
+      if (option) {
+        this.accountSelectTarget.value = preselect
+        this.fetchData()
+      }
+    }
   }
 
   selectAccount() {
