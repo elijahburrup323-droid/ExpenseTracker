@@ -10,6 +10,17 @@
       <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Account Types</h1>
       <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Choose which account types are available in your dropdowns</p>
     </div>
+    <div class="flex items-center space-x-3">
+      <span class="text-sm text-gray-500 dark:text-gray-400">View All</span>
+      <button type="button"
+              class="relative inline-flex h-7 w-14 items-center rounded-full transition-colors bg-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-300"
+              data-account-types-target="toggleAllButton"
+              data-action="click->account-types#toggleViewAll"
+              data-checked="false"
+              role="switch" aria-checked="false" title="View all account types">
+        <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform translate-x-1"></span>
+      </button>
+    </div>
     </div>
   </div>
 
@@ -38,8 +49,8 @@
         <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
       </svg>
       <p class="ml-3 text-sm text-blue-700 dark:text-blue-300">
-        Toggle account types on or off to control which options appear in your Account Type dropdown when adding or editing accounts.
-        These types are managed globally by your administrator.
+        Toggle account types on or off to control which options appear in your Account Type dropdown.
+        Click the description text to customize it for your account. Use the "View All" toggle to see all available types.
       </p>
     </div>
   </div>
