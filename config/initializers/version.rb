@@ -1,9 +1,16 @@
-APP_VERSION = "1.3.8"
+APP_VERSION = "1.3.9"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.9",
+    changes: [
+      "Admin: Fixed Account Type Masters data loading — Stimulus controller was not registered, table stayed on 'Loading...' (CM-14)",
+      "Reconciliation: Made Reconcile Balance header sticky — title, search, and account selector stay pinned below global header on scroll (CM-15)",
+    ]
+  },
   {
     version: "1.3.8",
     changes: [

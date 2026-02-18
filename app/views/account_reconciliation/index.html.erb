@@ -10,42 +10,44 @@
      data-reconciliation-initial-month-value="<%= @open_month.current_month %>"
      class="px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto">
 
-  <%# ====== PAGE HEADER ====== %>
-  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
-    <div>
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Reconcile Balance</h1>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Compare your BudgetHQ records against your bank or credit card statement to find and fix discrepancies.</p>
-    </div>
-    <div class="flex items-center space-x-2 flex-shrink-0">
-      <input type="text" placeholder="Search amount..."
-             class="w-36 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-             data-reconciliation-target="searchInput"
-             data-action="input->reconciliation#search">
-      <button type="button"
-              class="px-3 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition"
-              data-action="click->reconciliation#search">Search</button>
-    </div>
-  </div>
-
-  <%# ====== ACCOUNT SELECTOR + MONTH NAV ====== %>
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-    <%# Account selector %>
-    <div class="flex items-center space-x-3">
-      <select data-reconciliation-target="accountSelect"
-              data-action="change->reconciliation#selectAccount"
-              class="px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500">
-        <option value="">Select an account...</option>
-        <% @accounts.each do |account| %>
-          <option value="<%= account.id %>"><%= account.name %></option>
-        <% end %>
-      </select>
+  <%# ====== PAGE HEADER (sticky) ====== %>
+  <div class="sticky top-14 z-20 bg-gray-50 dark:bg-gray-900 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-2 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Reconcile Balance</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Compare your BudgetHQ records against your bank or credit card statement to find and fix discrepancies.</p>
+      </div>
+      <div class="flex items-center space-x-2 flex-shrink-0">
+        <input type="text" placeholder="Search amount..."
+               class="w-36 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+               data-reconciliation-target="searchInput"
+               data-action="input->reconciliation#search">
+        <button type="button"
+                class="px-3 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition"
+                data-action="click->reconciliation#search">Search</button>
+      </div>
     </div>
 
-    <%# Current month display (static, no navigation) %>
-    <div class="flex items-center">
-      <span data-reconciliation-target="monthLabel" class="text-lg font-semibold text-gray-900 dark:text-white min-w-[10rem] text-center">
-        <%= Date.new(@open_month.current_year, @open_month.current_month, 1).strftime("%B %Y") %>
-      </span>
+    <%# ====== ACCOUNT SELECTOR + MONTH NAV ====== %>
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-3">
+      <%# Account selector %>
+      <div class="flex items-center space-x-3">
+        <select data-reconciliation-target="accountSelect"
+                data-action="change->reconciliation#selectAccount"
+                class="px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500">
+          <option value="">Select an account...</option>
+          <% @accounts.each do |account| %>
+            <option value="<%= account.id %>"><%= account.name %></option>
+          <% end %>
+        </select>
+      </div>
+
+      <%# Current month display (static, no navigation) %>
+      <div class="flex items-center">
+        <span data-reconciliation-target="monthLabel" class="text-lg font-semibold text-gray-900 dark:text-white min-w-[10rem] text-center">
+          <%= Date.new(@open_month.current_year, @open_month.current_month, 1).strftime("%B %Y") %>
+        </span>
+      </div>
     </div>
   </div>
 
