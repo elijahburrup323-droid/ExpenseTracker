@@ -78,7 +78,7 @@ module Api
       deposits_by_account = current_user.income_entries
         .joins("LEFT JOIN accounts ON accounts.id = income_entries.account_id")
         .where(entry_date: range, deleted_at: nil)
-        .group("COALESCE(accounts.account_name, 'Unassigned')")
+        .group("COALESCE(accounts.name, 'Unassigned')")
         .sum(:amount)
         .transform_values { |v| v.to_f.round(2) }
         .sort_by { |_, v| -v }
