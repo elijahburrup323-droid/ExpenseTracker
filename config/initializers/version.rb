@@ -1,5 +1,5 @@
 APP_VERSION = "1.3.13"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
@@ -26,6 +26,8 @@ APP_ALL_VERSIONS = [
       "Reconciliation: Collapse state persists per user/account/month — survives page reload (CM-9)",
       "Reconciliation: Keyboard accessible (Enter/Space) group toggle with chevron indicator (CM-9)",
       "Database: New reconciliation_group_ui_states table for persisted collapse preferences (CM-9)",
+      "Reports/Dashboard: Critical grid CSS loaded in head to prevent single-column flash on Turbo navigation (CM-11)",
+      "Reports: Monthly Cash Flow card link now includes relative_url_root prefix — resolves 404 on production (CM-12)",
     ]
   },
   {

@@ -41,6 +41,14 @@
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <%= javascript_importmap_tags %>
+    <%# Critical grid CSS — loaded before Tailwind CDN processes DOM to prevent FOUC on Turbo navigation %>
+    <style>
+      .grid { display: grid; }
+      .gap-6 { gap: 1.5rem; }
+      .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+      @media (min-width: 640px) { .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+      @media (min-width: 768px) { .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    </style>
   </head>
   <body class="font-sans bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">
     <% if defined?(QA_MODE) && QA_MODE %>
