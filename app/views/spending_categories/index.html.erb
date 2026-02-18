@@ -2,6 +2,7 @@
      data-controller="spending-categories"
      data-spending-categories-api-url-value="<%= api_spending_categories_path %>"
      data-spending-categories-types-url-value="<%= api_spending_types_path %>"
+     data-spending-categories-limits-url-value="<%= api_spending_limits_path %>"
      data-spending-categories-csrf-token-value="<%= form_authenticity_token %>"
      data-spending-categories-types-page-url-value="<%= spending_types_path %>">
 
@@ -58,12 +59,13 @@
           <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
           <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-48">Spending Type</th>
           <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-20">Debt</th>
+          <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-28">Monthly Limit</th>
           <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-40">Actions</th>
         </tr>
       </thead>
       <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700" data-spending-categories-target="tableBody">
         <tr>
-          <td colspan="6" class="px-6 py-8 text-center text-sm text-gray-400 dark:text-gray-500">Loading...</td>
+          <td colspan="7" class="px-6 py-8 text-center text-sm text-gray-400 dark:text-gray-500">Loading...</td>
         </tr>
       </tbody>
     </table>
@@ -160,6 +162,48 @@
                   data-action="click->spending-categories#saveModal">
             Save
           </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%# Set Limit Modal %>
+  <div class="hidden fixed inset-0 z-50" data-spending-categories-target="limitModal">
+    <div class="fixed inset-0 bg-gray-500/75 dark:bg-gray-900/80 transition-opacity"></div>
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-sm w-full p-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Set Monthly Category Limit</h3>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
+          Set a monthly spending limit for
+          <strong data-spending-categories-target="limitModalName" class="text-gray-700 dark:text-gray-300"></strong>.
+        </p>
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Limit Amount ($)</label>
+          <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">$</span>
+            <input type="number" min="0" step="0.01" placeholder="e.g. 500.00"
+                   class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 pl-7 pr-3 py-2"
+                   data-spending-categories-target="limitModalValue"
+                   data-action="keydown->spending-categories#handleLimitKeydown">
+          </div>
+        </div>
+        <div class="hidden mb-4 p-3 rounded-md bg-red-50 dark:bg-red-900/30 text-sm text-red-600 dark:text-red-400" data-spending-categories-target="limitModalError"></div>
+        <div class="flex justify-between pt-2">
+          <button type="button"
+                  class="hidden px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition"
+                  data-spending-categories-target="limitModalRemoveBtn"
+                  data-action="click->spending-categories#removeLimitModal">
+            Remove Limit
+          </button>
+          <div class="flex-1"></div>
+          <div class="flex space-x-3">
+            <button type="button"
+                    class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+                    data-action="click->spending-categories#closeLimitModal">Cancel</button>
+            <button type="button"
+                    class="px-4 py-2 text-sm font-medium text-white bg-brand-600 border border-transparent rounded-lg hover:bg-brand-700 transition"
+                    data-action="click->spending-categories#saveLimitModal">Save</button>
+          </div>
         </div>
       </div>
     </div>

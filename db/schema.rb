@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_18_100004) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_18_200001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -393,6 +393,22 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_18_100004) do
     t.index ["user_id"], name: "index_spending_categories_on_user_id"
   end
 
+  create_table "spending_limits_history", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "scope_type", limit: 20, null: false
+    t.bigint "scope_id", null: false
+    t.string "limit_mode", limit: 10, null: false
+    t.decimal "limit_value", precision: 12, scale: 2, null: false
+    t.integer "effective_start_yyyymm", null: false
+    t.integer "effective_end_yyyymm"
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "scope_type", "scope_id", "effective_start_yyyymm", "effective_end_yyyymm"], name: "idx_spending_limits_lookup"
+    t.index ["user_id", "scope_type", "scope_id"], name: "idx_spending_limits_active_unique", unique: true, where: "((deleted_at IS NULL) AND (effective_end_yyyymm IS NULL))"
+    t.index ["user_id"], name: "index_spending_limits_history_on_user_id"
+  end
+
   create_table "spending_types", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "name", limit: 80, null: false
@@ -571,6 +587,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_18_100004) do
   add_foreign_key "reconciliation_records", "users"
   add_foreign_key "spending_categories", "spending_types"
   add_foreign_key "spending_categories", "users"
+  add_foreign_key "spending_limits_history", "users"
   add_foreign_key "spending_types", "users"
   add_foreign_key "tag_assignments", "tags"
   add_foreign_key "tag_assignments", "users"

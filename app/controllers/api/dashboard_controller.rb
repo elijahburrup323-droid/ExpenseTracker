@@ -132,7 +132,7 @@ module Api
         .group("spending_categories.id", "spending_categories.name", "spending_categories.icon_key", "spending_categories.color_key")
         .order(Arel.sql("SUM(payments.amount) DESC"))
         .pluck(Arel.sql("spending_categories.id, spending_categories.name, spending_categories.icon_key, spending_categories.color_key, SUM(payments.amount)"))
-        .map { |id, name, icon_key, color_key, total| { name: name, icon_key: icon_key, color_key: color_key, amount: total.to_f, pct: spent > 0 ? (total.to_f / spent * 100).round(1) : 0.0 } }
+        .map { |id, name, icon_key, color_key, total| { id: id, name: name, icon_key: icon_key, color_key: color_key, amount: total.to_f, pct: spent > 0 ? (total.to_f / spent * 100).round(1) : 0.0 } }
 
       by_type = current_user.payments
         .where(payment_date: ctx[:month_start]...ctx[:month_end])
@@ -140,7 +140,27 @@ module Api
         .group("spending_types.id", "spending_types.name", "spending_types.icon_key", "spending_types.color_key")
         .order(Arel.sql("SUM(payments.amount) DESC"))
         .pluck(Arel.sql("spending_types.id, spending_types.name, spending_types.icon_key, spending_types.color_key, SUM(payments.amount)"))
-        .map { |id, name, icon_key, color_key, total| { name: name, icon_key: icon_key, color_key: color_key, amount: total.to_f, pct: spent > 0 ? (total.to_f / spent * 100).round(1) : 0.0 } }
+        .map { |id, name, icon_key, color_key, total| { id: id, name: name, icon_key: icon_key, color_key: color_key, amount: total.to_f, pct: spent > 0 ? (total.to_f / spent * 100).round(1) : 0.0 } }
+
+      # Enrich with spending limits
+      yyyymm = ctx[:month_start].year * 100 + ctx[:month_start].month
+      cat_limits = SpendingLimitHistory.limits_for_month(current_user, SpendingLimitHistory::SCOPE_CATEGORY, yyyymm)
+      by_category.each do |cat|
+        lim = cat_limits[cat[:id]]
+        if lim
+          cat[:limit] = lim.limit_value.to_f
+          cat[:limit_pct_used] = cat[:limit] > 0 ? (cat[:amount] / cat[:limit] * 100).round(1) : 0.0
+        end
+      end
+
+      type_limits = SpendingLimitHistory.limits_for_month(current_user, SpendingLimitHistory::SCOPE_SPENDING_TYPE, yyyymm)
+      by_type.each do |tp|
+        lim = type_limits[tp[:id]]
+        if lim
+          tp[:limit_pct] = lim.limit_value.to_f
+          tp[:over_under] = (tp[:pct] - lim.limit_value.to_f).round(1)
+        end
+      end
 
       { spent: spent, categories: by_category, types: by_type }
     end

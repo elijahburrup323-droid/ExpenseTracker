@@ -290,21 +290,43 @@ export default class extends Controller {
       const types = data.types || []
       const colorMap = { blue: "#3b82f6", green: "#22c55e", gold: "#eab308", red: "#ef4444", purple: "#a855f7", pink: "#ec4899", indigo: "#6366f1", teal: "#14b8a6", orange: "#f97316", gray: "#6b7280" }
 
-      const renderList = (items) => {
+      const renderList = (items, listType) => {
         if (items.length === 0) return `<p class="text-xs text-gray-400 dark:text-gray-500">No spending yet.</p>`
         let h = '<div class="space-y-1.5">'
         for (const item of items) {
           const dotColor = colorMap[item.color_key] || "#6b7280"
+          let limitHtml = ""
+          if (listType === "category" && item.limit != null) {
+            const pctUsed = item.limit_pct_used || 0
+            const barColor = pctUsed >= 100 ? "#ef4444" : pctUsed >= 80 ? "#f59e0b" : "#22c55e"
+            const barWidth = Math.min(pctUsed, 100)
+            limitHtml = `
+              <div class="flex items-center mt-0.5">
+                <div class="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-1.5 mr-2">
+                  <div class="h-1.5 rounded-full" style="width: ${barWidth}%; background: ${barColor}"></div>
+                </div>
+                <span class="text-[10px] ${pctUsed >= 100 ? 'text-red-500 font-semibold' : 'text-gray-400 dark:text-gray-500'}">${this._currency(item.amount)} / ${this._currency(item.limit)}</span>
+              </div>`
+          } else if (listType === "type" && item.limit_pct != null) {
+            const over = item.over_under || 0
+            const overClass = over > 0 ? "text-red-500" : "text-green-500"
+            const sign = over > 0 ? "+" : ""
+            limitHtml = `<span class="text-[10px] ${overClass} ml-1">(lim ${item.limit_pct}%, ${sign}${over}%)</span>`
+          }
           h += `
-            <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-2 min-w-0">
-                <span class="w-2 h-2 rounded-full flex-shrink-0" style="background: ${dotColor}"></span>
-                <span class="text-xs text-gray-700 dark:text-gray-300 truncate">${this._esc(item.name)}</span>
+            <div>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2 min-w-0">
+                  <span class="w-2 h-2 rounded-full flex-shrink-0" style="background: ${dotColor}"></span>
+                  <span class="text-xs text-gray-700 dark:text-gray-300 truncate">${this._esc(item.name)}</span>
+                </div>
+                <div class="flex items-center space-x-2 flex-shrink-0 ml-2">
+                  <span class="text-xs font-semibold text-gray-900 dark:text-white">${this._currency(item.amount)}</span>
+                  <span class="text-xs text-gray-500 dark:text-gray-400 w-10 text-right">${item.pct}%</span>
+                  ${listType === "type" && item.limit_pct != null ? limitHtml : ""}
+                </div>
               </div>
-              <div class="flex items-center space-x-2 flex-shrink-0 ml-2">
-                <span class="text-xs font-semibold text-gray-900 dark:text-white">${this._currency(item.amount)}</span>
-                <span class="text-xs text-gray-500 dark:text-gray-400 w-10 text-right">${item.pct}%</span>
-              </div>
+              ${listType === "category" && item.limit != null ? limitHtml : ""}
             </div>`
         }
         h += '</div>'
@@ -313,9 +335,9 @@ export default class extends Controller {
       }
 
       let html = `<p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">By Category</p>`
-      html += renderList(categories)
+      html += renderList(categories, "category")
       html += `<p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-3 mb-1.5">By Spending Type</p>`
-      html += renderList(types)
+      html += renderList(types, "type")
       backContent.innerHTML = html
     }
   }

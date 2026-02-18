@@ -37,6 +37,7 @@
  ├── has_many :balance_adjustments    (balance_adjustments.user_id → users.id)
  ├── has_many :reconciliation_records (reconciliation_records.user_id → users.id)
  ├── has_many :user_account_types   (user_account_types.user_id → users.id)
+ ├── has_many :spending_limit_histories (spending_limits_history.user_id → users.id)
  ├── referenced by phone_verifications (via phone_number, no FK)
  └── (admin) dbu_table_catalogs (standalone, no FK)
 
@@ -87,6 +88,14 @@ spending_categories
  ├── belongs_to :user                  (user_id FK → users.id)
  ├── belongs_to :spending_type         (spending_type_id FK → spending_types.id)
  └── has_many :payments                (payments.spending_category_id → spending_categories.id)
+
+spending_limits_history (effective-dated versioning)
+ ├── belongs_to :user                  (user_id FK → users.id)
+ ├── scope_type: 'CATEGORY' or 'SPENDING_TYPE'
+ ├── scope_id: FK → spending_categories.id or spending_types.id
+ ├── limit_mode: 'AMOUNT' (dollars) or 'PERCENT'
+ ├── effective_start_yyyymm / effective_end_yyyymm for history tracking
+ └── soft-delete via deleted_at timestamp
 
 account_type_masters (global lookup, not user-scoped)
  ├── has_many :user_account_types      (user_account_types.account_type_master_id)
@@ -346,6 +355,46 @@ phone_verifications
         <li>(user_id, sort_order)</li>
         <li>(user_id)</li>
         <li>(spending_type_id)</li>
+      </ul>
+    </div>
+  </div>
+
+  <%# ── Spending Limits History ── %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 mb-6 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">spending_limits_history</h2>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Per-user effective-dated spending limits &mdash; dollar amounts for categories, percentages for types</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-100 dark:border-gray-700">
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Column</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Type</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Constraints</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Description</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr><td class="px-6 py-2 font-mono font-medium text-gray-900 dark:text-white">id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">PK</span> <span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">auto</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Primary key</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">user_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; users</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Owning user</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">scope_type</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">string(20)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">'CATEGORY' or 'SPENDING_TYPE'</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">scope_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">FK to spending_categories or spending_types</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">limit_mode</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">string(10)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">'AMOUNT' (dollars) or 'PERCENT'</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">limit_value</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">decimal(12,2)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Limit value (dollars or percentage)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">effective_start_yyyymm</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">integer</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Start month (e.g. 202602)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">effective_end_yyyymm</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">integer</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">End month (NULL = currently active)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">deleted_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Soft-delete timestamp</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">created_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Record created</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">updated_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Record last updated</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5">
+        <li>(user_id, scope_type, scope_id, effective_start_yyyymm, effective_end_yyyymm) &mdash; <span class="text-gray-400 dark:text-gray-500">lookup composite</span></li>
+        <li>UNIQUE (user_id, scope_type, scope_id) WHERE deleted_at IS NULL AND effective_end_yyyymm IS NULL &mdash; <span class="text-gray-400 dark:text-gray-500">one active limit per scope</span></li>
       </ul>
     </div>
   </div>
@@ -1326,6 +1375,7 @@ phone_verifications
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">user_account_types</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">account_type_master_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">account_type_masters.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">spending_categories</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">cascade (via Rails dependent: :destroy)</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">spending_categories</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">spending_type_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">spending_types.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (DB-level foreign key)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">spending_limits_history</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">cascade (via Rails dependent: :destroy)</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">payments</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">cascade (via Rails dependent: :destroy)</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">payments</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">account_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">accounts.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (DB-level foreign key)</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">payments</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">spending_category_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">spending_categories.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (DB-level foreign key)</td></tr>

@@ -72,6 +72,7 @@ Rails.application.routes.draw do
   namespace :api do
     resources :spending_types, only: [:index, :create, :update, :destroy]
     resources :spending_categories, only: [:index, :create, :update, :destroy]
+    resources :spending_limits, only: [:index, :create, :destroy]
     resources :account_types, only: [:index, :create, :update, :destroy]
     resources :accounts, only: [:index, :create, :update, :destroy]
     resources :transfer_masters, only: [:index, :create, :update, :destroy]

@@ -1,9 +1,19 @@
-APP_VERSION = "1.3.9"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+APP_VERSION = "1.3.10"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.10",
+    changes: [
+      "Spending Limits: New history-aware monthly limits with effective-dated versioning (CM-13)",
+      "Spending Categories: Monthly Limit $ column — set, edit, and remove dollar-amount limits per category (CM-13)",
+      "Spending Types: Monthly Limit % column — set, edit, and remove percentage limits per type (CM-13)",
+      "Dashboard: Spending Overview back card shows progress bars for category limits and over/under indicators for type limits (CM-13)",
+      "API: New /api/spending_limits endpoints (GET/POST/DELETE) with history-aware versioning (CM-13)",
+    ]
+  },
   {
     version: "1.3.9",
     changes: [

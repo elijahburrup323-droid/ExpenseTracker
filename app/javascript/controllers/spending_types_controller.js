@@ -6,15 +6,18 @@ export default class extends Controller {
     "tableBody", "addButton", "generateButton",
     "deleteModal", "deleteModalName",
     "typeModal", "modalTitle", "modalName", "modalDescription",
-    "modalIconPicker", "modalError"
+    "modalIconPicker", "modalError",
+    "limitModal", "limitModalName", "limitModalValue", "limitModalError", "limitModalRemoveBtn"
   ]
-  static values = { apiUrl: String, csrfToken: String }
+  static values = { apiUrl: String, limitsUrl: String, csrfToken: String }
 
   connect() {
     this.spendingTypes = []
+    this.limits = {}
     this.state = "idle" // idle | adding | editing
     this.editingId = null
     this.deletingId = null
+    this.limitScopeId = null
     this.selectedIconKey = null
     this.selectedColorKey = "blue"
     this.iconPickerOpen = false
@@ -48,7 +51,28 @@ export default class extends Controller {
     } catch (e) {
       // silently fail, show empty table
     }
+    await this._fetchLimits()
     this.renderTable()
+  }
+
+  async _fetchLimits() {
+    if (!this.limitsUrlValue) return
+    try {
+      const yyyymm = this._currentYYYYMM()
+      const res = await fetch(`${this.limitsUrlValue}?scope_type=SPENDING_TYPE&yyyymm=${yyyymm}`, {
+        headers: { "Accept": "application/json" }
+      })
+      if (res.ok) {
+        this.limits = await res.json()
+      }
+    } catch (e) {
+      this.limits = {}
+    }
+  }
+
+  _currentYYYYMM() {
+    const now = new Date()
+    return now.getFullYear() * 100 + (now.getMonth() + 1)
   }
 
   // --- Generate Data ---
@@ -444,17 +468,28 @@ export default class extends Controller {
     }
 
     if (this.spendingTypes.length === 0) {
-      html = `<tr><td colspan="4" class="px-6 py-8 text-center text-sm text-gray-400 dark:text-gray-500">No spending types yet. Click "Add Spending Type" to create one.</td></tr>`
+      html = `<tr><td colspan="5" class="px-6 py-8 text-center text-sm text-gray-400 dark:text-gray-500">No spending types yet. Click "Add Spending Type" to create one.</td></tr>`
     }
 
     this.tableBodyTarget.innerHTML = html
   }
 
   renderDisplayRow(st) {
+    const limit = this.limits[String(st.id)]
+    const limitHtml = limit
+      ? `<span class="text-sm font-semibold text-purple-600 dark:text-purple-400">${limit.limit_value}%</span>
+         <button type="button" class="ml-1 text-gray-400 hover:text-brand-600 dark:hover:text-brand-400"
+                 data-id="${st.id}" data-action="click->spending-types#startSettingLimit" title="Edit limit">
+           <svg class="h-3.5 w-3.5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+         </button>`
+      : `<button type="button" class="text-xs text-brand-600 dark:text-brand-400 hover:underline"
+                 data-id="${st.id}" data-action="click->spending-types#startSettingLimit">Set</button>`
+
     return `<tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
       <td class="px-6 py-4">${iconFor(st.icon_key, st.color_key)}</td>
       <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">${escapeHtml(st.name)}</td>
       <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">${escapeHtml(st.description || "")}</td>
+      <td class="px-6 py-4 text-center">${limitHtml}</td>
       <td class="px-6 py-4 text-right space-x-2">
         <button type="button"
                 class="inline-flex items-center justify-center w-8 h-8 rounded-md text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800 transition"
@@ -472,5 +507,104 @@ export default class extends Controller {
         </button>
       </td>
     </tr>`
+  }
+
+  // --- Limit Modal ---
+
+  startSettingLimit(event) {
+    const id = Number(event.currentTarget.dataset.id)
+    const st = this.spendingTypes.find(s => s.id === id)
+    if (!st) return
+
+    this.limitScopeId = id
+    this.limitModalNameTarget.textContent = st.name
+    const existing = this.limits[String(id)]
+    this.limitModalValueTarget.value = existing ? existing.limit_value : ""
+    this.limitModalErrorTarget.classList.add("hidden")
+
+    if (existing) {
+      this.limitModalRemoveBtnTarget.classList.remove("hidden")
+    } else {
+      this.limitModalRemoveBtnTarget.classList.add("hidden")
+    }
+
+    this.limitModalTarget.classList.remove("hidden")
+    this.limitModalValueTarget.focus()
+  }
+
+  closeLimitModal() {
+    this.limitModalTarget.classList.add("hidden")
+    this.limitScopeId = null
+  }
+
+  handleLimitKeydown(event) {
+    if (event.key === "Enter") {
+      event.preventDefault()
+      this.saveLimitModal()
+    } else if (event.key === "Escape") {
+      event.preventDefault()
+      this.closeLimitModal()
+    }
+  }
+
+  async saveLimitModal() {
+    const value = parseFloat(this.limitModalValueTarget.value)
+    if (isNaN(value) || value <= 0 || value > 100) {
+      this.limitModalErrorTarget.textContent = "Enter a value between 0.1 and 100"
+      this.limitModalErrorTarget.classList.remove("hidden")
+      return
+    }
+
+    try {
+      const res = await fetch(this.limitsUrlValue, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "X-CSRF-Token": this.csrfTokenValue
+        },
+        body: JSON.stringify({ spending_limit: {
+          scope_type: "SPENDING_TYPE",
+          scope_id: this.limitScopeId,
+          limit_value: value
+        }})
+      })
+
+      if (res.ok) {
+        this.closeLimitModal()
+        await this._fetchLimits()
+        this.renderTable()
+      } else {
+        const data = await res.json()
+        this.limitModalErrorTarget.textContent = (data.errors || ["Save failed"]).join(", ")
+        this.limitModalErrorTarget.classList.remove("hidden")
+      }
+    } catch (e) {
+      this.limitModalErrorTarget.textContent = "Network error"
+      this.limitModalErrorTarget.classList.remove("hidden")
+    }
+  }
+
+  async removeLimitModal() {
+    const existing = this.limits[String(this.limitScopeId)]
+    if (!existing) return
+
+    try {
+      const res = await fetch(`${this.limitsUrlValue}/${existing.id}`, {
+        method: "DELETE",
+        headers: {
+          "X-CSRF-Token": this.csrfTokenValue,
+          "Accept": "application/json"
+        }
+      })
+
+      if (res.ok || res.status === 204) {
+        this.closeLimitModal()
+        await this._fetchLimits()
+        this.renderTable()
+      }
+    } catch (e) {
+      // silently fail
+    }
   }
 }

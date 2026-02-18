@@ -82,6 +82,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 ### Spending Side
 - **spending_types** — user-scoped categories of spending (Need, Want, Savings — seeded as system defaults)
 - **spending_categories** — user-scoped, belongs_to spending_type (Groceries, Dining, Mortgage — seeded)
+- **spending_limits_history** — effective-dated monthly spending limits. scope_type='CATEGORY' uses AMOUNT (dollars), scope_type='SPENDING_TYPE' uses PERCENT. History-aware: editing end-dates current row and inserts new. Soft-delete via deleted_at.
 - **account_type_masters** — global lookup table (Checking, Savings, Venmo, etc.). Admin-editable via Acct Type Masters screen. Fields: display_name, normalized_key (unique), description, is_active, sort_order. Similar pattern to income_frequency_masters.
 - **user_account_types** — user-scoped join to account_type_masters with is_enabled toggle. Controls which account types appear in each user's Account Type dropdown. Unique constraint on [user_id, account_type_master_id].
 - **account_types** — legacy user-scoped table (Checking, Savings, Venmo — seeded as system defaults). Retained for backward compatibility; new accounts use account_type_master_id instead.
@@ -107,7 +108,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 - **reconciliation_records** — user_id (FK), account_id (FK → accounts), year (int), month (int), outside_balance (decimal 12,2, nullable), statement_payment_count (int, default 0), statement_deposit_count (int, default 0), statement_adjustment_count (int, default 0), reconciled_at (datetime, nullable), reconciled_by (bigint, nullable), status (varchar 20, default 'open'). Per-account per-month reconciliation metadata. Stores the external/statement balance and statement item counts. Unique constraint on [user_id, account_id, year, month].
 
 ### Key Relationships
-- User has_many: spending_types, spending_categories, account_types, accounts, payments, income_user_frequencies, income_recurrings, income_entries, transfer_masters, account_month_snapshots, dashboard_month_snapshots, balance_adjustments, reconciliation_records; has_one: open_month_master
+- User has_many: spending_types, spending_categories, spending_limit_histories, account_types, accounts, payments, income_user_frequencies, income_recurrings, income_entries, transfer_masters, account_month_snapshots, dashboard_month_snapshots, balance_adjustments, reconciliation_records; has_one: open_month_master
 - SpendingType has_many spending_categories; SpendingCategory has_many payments
 - AccountType has_many accounts; Account has_many payments, transfers_from, transfers_to, account_month_snapshots
 - IncomeRecurring has_many income_entries; both link to frequency_master and optional account
@@ -149,6 +150,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 API endpoints (all under /api/):
   /api/spending_types ......... CRUD
   /api/spending_categories .... CRUD
+  /api/spending_limits ........ GET (index by scope_type+yyyymm), POST (set/update), DELETE (soft-delete)
   /api/account_types .......... CRUD (legacy)
   /api/account_type_masters ... CRUD + GET :id/can_delete (admin-only, delete blocked if in use by any user)
   /api/user_account_types ..... index + update (is_enabled toggle per account type)
