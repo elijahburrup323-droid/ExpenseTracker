@@ -11,7 +11,7 @@ function escapeAttr(str) {
 }
 
 export default class extends Controller {
-  static targets = ["tableBody", "addButton", "populateButton", "deleteModal", "deleteModalName"]
+  static targets = ["tableBody", "addButton", "populateButton", "deleteModal", "deleteModalName", "sortIcon"]
   static values = { apiUrl: String, csrfToken: String }
 
   connect() {
@@ -19,6 +19,8 @@ export default class extends Controller {
     this.state = "idle" // idle | adding | editing
     this.editingId = null
     this.deletingId = null
+    this.sortBy = "is_active"
+    this.sortDir = "desc"
     this.fetchAll()
   }
 
@@ -35,7 +37,9 @@ export default class extends Controller {
     } catch (e) {
       // silently fail
     }
+    this._sortQuotes()
     this.renderTable()
+    this._updateSortIcons()
   }
 
   async populate() {
@@ -258,6 +262,57 @@ export default class extends Controller {
         knob.className = knob.className.replace(wasOn ? "translate-x-1" : "translate-x-7", wasOn ? "translate-x-7" : "translate-x-1")
       }
     }
+  }
+
+  // --- Sorting ---
+
+  sort(event) {
+    const key = event.currentTarget.dataset.sortKey
+    if (this.sortBy === key) {
+      this.sortDir = this.sortDir === "asc" ? "desc" : "asc"
+    } else {
+      this.sortBy = key
+      this.sortDir = "asc"
+    }
+    this._sortQuotes()
+    this.renderTable()
+    this._updateSortIcons()
+  }
+
+  _sortQuotes() {
+    const key = this.sortBy
+    const dir = this.sortDir === "asc" ? 1 : -1
+
+    this.quotes.sort((a, b) => {
+      let va = a[key]
+      let vb = b[key]
+
+      if (key === "is_active") {
+        va = va ? 1 : 0
+        vb = vb ? 1 : 0
+      } else {
+        va = (va || "").toString().toLowerCase()
+        vb = (vb || "").toString().toLowerCase()
+      }
+
+      if (va < vb) return -1 * dir
+      if (va > vb) return 1 * dir
+      // Tie-breaker: ID desc
+      return b.id - a.id
+    })
+  }
+
+  _updateSortIcons() {
+    const upSvg = `<svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>`
+    const downSvg = `<svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>`
+
+    this.sortIconTargets.forEach(el => {
+      if (el.dataset.sortKey === this.sortBy) {
+        el.innerHTML = this.sortDir === "asc" ? upSvg : downSvg
+      } else {
+        el.innerHTML = ""
+      }
+    })
   }
 
   // --- Keyboard Handling ---

@@ -38,13 +38,19 @@ export default class extends Controller {
     }
 
     this.tableBodyTarget.innerHTML = this.masters.map(m => {
-      const activeToggle = m.is_active
-        ? `<button class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50 transition" data-id="${m.id}" data-action="click->account-type-masters#toggleActive">Active</button>`
-        : `<button class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition" data-id="${m.id}" data-action="click->account-type-masters#toggleActive">Inactive</button>`
+      const bg = m.is_active ? "bg-green-600" : "bg-gray-300"
+      const knobTranslate = m.is_active ? "translate-x-7" : "translate-x-1"
+      const activeToggle = `<button type="button"
+        class="relative inline-flex h-7 w-14 items-center rounded-full transition-colors ${bg} focus:outline-none focus:ring-2 focus:ring-green-300"
+        data-id="${m.id}" data-checked="${m.is_active}"
+        data-action="click->account-type-masters#toggleActive"
+        role="switch" aria-checked="${m.is_active}" title="${m.is_active ? 'Active' : 'Inactive'}">
+        <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${knobTranslate}"></span>
+      </button>`
 
       return `<tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
         <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">${escapeHtml(m.display_name)}</td>
-        <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 font-mono">${escapeHtml(m.normalized_key)}</td>
+        <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-[16rem] truncate" title="${escapeHtml(m.description || '')}">${escapeHtml(m.description || "")}</td>
         <td class="px-6 py-4 text-center">${activeToggle}</td>
         <td class="px-6 py-4 text-center space-x-2 whitespace-nowrap">
           <button type="button"
@@ -134,19 +140,45 @@ export default class extends Controller {
   // --- Active Toggle ---
 
   async toggleActive(event) {
-    const id = parseInt(event.currentTarget.dataset.id)
+    const btn = event.currentTarget
+    const id = parseInt(btn.dataset.id)
     const master = this.masters.find(m => m.id === id)
     if (!master) return
+
+    const wasOn = master.is_active
+    const nowOn = !wasOn
+
+    // Optimistic UI update
+    btn.dataset.checked = String(nowOn)
+    btn.setAttribute("aria-checked", String(nowOn))
+    btn.title = nowOn ? "Active" : "Inactive"
+    btn.className = btn.className.replace(nowOn ? "bg-gray-300" : "bg-green-600", nowOn ? "bg-green-600" : "bg-gray-300")
+    const knob = btn.querySelector("span")
+    knob.className = knob.className.replace(nowOn ? "translate-x-1" : "translate-x-7", nowOn ? "translate-x-7" : "translate-x-1")
 
     try {
       const res = await fetch(`${this.apiUrlValue}/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", "Accept": "application/json", "X-CSRF-Token": this.csrfTokenValue },
-        body: JSON.stringify({ account_type_master: { is_active: !master.is_active } })
+        body: JSON.stringify({ account_type_master: { is_active: nowOn } })
       })
-      if (res.ok) this.fetchAll()
+      if (res.ok) {
+        master.is_active = nowOn
+      } else {
+        // Revert on server error
+        btn.dataset.checked = String(wasOn)
+        btn.setAttribute("aria-checked", String(wasOn))
+        btn.title = wasOn ? "Active" : "Inactive"
+        btn.className = btn.className.replace(wasOn ? "bg-gray-300" : "bg-green-600", wasOn ? "bg-green-600" : "bg-gray-300")
+        knob.className = knob.className.replace(wasOn ? "translate-x-1" : "translate-x-7", wasOn ? "translate-x-7" : "translate-x-1")
+      }
     } catch (e) {
-      console.error("Toggle failed:", e)
+      // Revert on network error
+      btn.dataset.checked = String(wasOn)
+      btn.setAttribute("aria-checked", String(wasOn))
+      btn.title = wasOn ? "Active" : "Inactive"
+      btn.className = btn.className.replace(wasOn ? "bg-gray-300" : "bg-green-600", wasOn ? "bg-green-600" : "bg-gray-300")
+      knob.className = knob.className.replace(wasOn ? "translate-x-1" : "translate-x-7", wasOn ? "translate-x-7" : "translate-x-1")
     }
   }
 

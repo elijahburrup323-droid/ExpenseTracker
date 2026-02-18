@@ -1,9 +1,18 @@
-APP_VERSION = "1.3.10"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+APP_VERSION = "1.3.11"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.11",
+    changes: [
+      "Admin: Account Type Masters Active column now uses slider toggle instead of badge buttons (CM-16)",
+      "Admin: Account Type Masters shows Description column instead of Key column (CM-20)",
+      "Quotes: Sortable column headers — click Quote, Author, or Active to sort with visual arrow indicators (CM-2)",
+      "Dashboard: Drag-and-drop card reorder already implemented in v1.2.7 — confirmed working (CM-3)",
+    ]
+  },
   {
     version: "1.3.10",
     changes: [

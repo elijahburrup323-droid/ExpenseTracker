@@ -48,9 +48,18 @@
     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
       <thead class="bg-gray-50 dark:bg-gray-800">
         <tr>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Quote</th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-40">Author</th>
-          <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-20">Active</th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 select-none"
+              data-sort-key="quote_text" data-action="click->quotes#sort">
+            <span class="inline-flex items-center">Quote <span data-quotes-target="sortIcon" data-sort-key="quote_text" class="ml-1"></span></span>
+          </th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-40 cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 select-none"
+              data-sort-key="quote_author" data-action="click->quotes#sort">
+            <span class="inline-flex items-center">Author <span data-quotes-target="sortIcon" data-sort-key="quote_author" class="ml-1"></span></span>
+          </th>
+          <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-20 cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 select-none"
+              data-sort-key="is_active" data-action="click->quotes#sort">
+            <span class="inline-flex items-center justify-center">Active <span data-quotes-target="sortIcon" data-sort-key="is_active" class="ml-1"></span></span>
+          </th>
           <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-40">Actions</th>
         </tr>
       </thead>
