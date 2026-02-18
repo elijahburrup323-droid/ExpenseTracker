@@ -64,7 +64,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 
 ## Admin Role
 - **budgethq_agent** boolean on users table (default false). Only DJ and Elijah have this flag.
-- Admin users see an "Admin" group in the sidebar containing: DBU, Diagnostics, Documentation, Quotes, and Frequency Masters. Clicking the Admin group heading navigates to the Admin Users management screen (/admin/users).
+- Admin users see an "Admin" group in the sidebar containing: DBU, Diagnostics, Documentation, Quotes, Frequency Masters, Acct Type Masters, and Reports Maint. Clicking the Admin group heading navigates to the Admin Users management screen (/admin/users).
 - Admin users also see Generate Data buttons on all CRUD screens.
 - Non-admins see the normal user experience without admin tools.
 - Admin user management screen (/admin/users, titled "Admin Users") lets admins search users and toggle admin status via API.
@@ -94,6 +94,12 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 - **income_user_frequencies** — user-scoped join to frequency_masters with use_flag toggle
 - **income_recurrings** — user-scoped recurring income sources (name, amount, frequency, next_date, use_flag). Has advance_next_date! to calculate next occurrence.
 - **income_entries** — user-scoped income transactions. Auto-generated from due recurrings via IncomeEntry.generate_due_entries_for(user). Has received_flag toggle. When received_flag is toggled ON, account balance is adjusted (same transactional pattern as payments). Income entries with received_flag=true for budget accounts are summed into Dashboard Card 4 as "Income".
+
+### Reports System
+- **reports_masters** — global report definitions (report_key unique, title, category, description, icon_key, accent_style, route_path, is_active, sort_order_default). Managed via Admin &gt; Reports Maintenance. Replaces the hardcoded REPORT_DEFINITIONS constant.
+- **reports_slots_masters** — defines available slot positions on the Reports menu (slot_number PK, is_active). Currently 9, expandable via admin.
+- **reports_menu_layouts** — default slot-to-report mapping (slot_number unique FK, report_key unique FK, is_active). Maps which report appears in which slot for new users.
+- **user_report_layouts** — per-user slot assignments (user_id, slot_number, report_key). Seeded from reports_menu_layouts on first visit. Drag-and-drop reorder persists here.
 
 ### Admin / System Tables
 - **bug_reports** — screen_name, description, processed_date. Displayed on Documentation &gt; Release Notes, paginated by date (5 days per page).
@@ -132,6 +138,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 /income_user_frequencies Frequencies toggle screen
 /income_frequency_masters Frequency Masters CRUD (admin-only)
 /quotes ................. Quotes CRUD screen (admin-only)
+/reports_masters ........ Reports Maintenance — manage report definitions and slots (admin-only)
 /admin/users ............. Admin user management (admin-only)
 /diagnostics ........... Admin diagnostics page — email/SMS test buttons (admin-only)
 /dbu .................. Database Utility admin tool (admin-only)
@@ -230,7 +237,7 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 6. **Sort order** — auto-assigned as max(sort_order)+1 on create
 7. **Case-insensitive uniqueness** — name fields use lower() index with deleted_at IS NULL filter
 8. **API error format** — { errors: ["message"] } with 422 status
-9. **Admin gating** — Admin sidebar group (Acct Type Masters, DBU, Diagnostics, Documentation, Quotes, Frequency Masters), Admin Users management (/admin/users), Generate Data buttons, and admin API endpoints are only visible/accessible to users with budgethq_agent=true
+9. **Admin gating** — Admin sidebar group (Acct Type Masters, DBU, Diagnostics, Documentation, Quotes, Frequency Masters, Reports Maint.), Admin Users management (/admin/users), Generate Data buttons, and admin API endpoints are only visible/accessible to users with budgethq_agent=true
 10. **Motivational quotes** — Random active quote from the `quotes` table shown on sign-in page; daily quote cached in session and displayed in header bar. Admin CRUD screen at /quotes for managing quotes. Seeded with 200 financial quotes with authors. Cache is version-tracked: when an admin creates/updates/deletes a quote, the cache version is bumped and all sessions refresh the quote on next page load.
 11. **Auto-cancel editing** — Clicking Add/Edit/Delete while another row is being edited auto-cancels the previous edit (no need for explicit cancel)
 12. **Auto-save toggles** — All toggle switches (budget, use_flag, active, admin) save immediately via API without requiring a Save button

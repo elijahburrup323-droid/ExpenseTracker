@@ -77,6 +77,10 @@ export const ICON_CATALOG = [
   { key: "tag", label: "Tag", style: "stroke", viewBox: "0 0 24 24", path: `<path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/>` },
   { key: "flag", label: "Goal", style: "stroke", viewBox: "0 0 24 24", path: `<path stroke-linecap="round" stroke-linejoin="round" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2z"/>` },
   { key: "sun", label: "Vacation", style: "stroke", viewBox: "0 0 24 24", path: `<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>` },
+  // --- Reports-specific ---
+  { key: "archive", label: "Archive", style: "stroke", viewBox: "0 0 24 24", path: `<path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>` },
+  { key: "check-circle-outline", label: "Check Circle", style: "stroke", viewBox: "0 0 24 24", path: `<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>` },
+  { key: "lock", label: "Lock", style: "stroke", viewBox: "0 0 24 24", path: `<path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>` },
 ]
 
 export const COLOR_OPTIONS = [

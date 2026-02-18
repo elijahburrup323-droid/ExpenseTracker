@@ -1,9 +1,21 @@
-APP_VERSION = "1.3.12"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+APP_VERSION = "1.3.13"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.13",
+    changes: [
+      "Admin: New Reports Maintenance screen for managing global report definitions and slot assignments (CM-23)",
+      "Admin: Add/Edit reports via modal with icon picker, category, description, route path, and slot assignment (CM-23)",
+      "Admin: Expandable slot system — Add Slot button creates new slots beyond the default 9 (CM-23)",
+      "Admin: Soft-delete reports (deactivate + unassign slot) with in-use count display (CM-23)",
+      "Database: New tables — reports_masters, reports_slots_masters, reports_menu_layouts (CM-23)",
+      "Reports: Report definitions now database-driven instead of hardcoded constant (CM-23)",
+      "Reports: Icon rendering via icon catalog with 3 new icons (archive, check-circle-outline, lock) (CM-23)",
+    ]
+  },
   {
     version: "1.3.12",
     changes: [

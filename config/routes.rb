@@ -47,6 +47,9 @@ Rails.application.routes.draw do
   # Account Type Masters (HTML page, agent-only)
   resources :account_type_masters, only: [:index]
 
+  # Reports Masters (HTML page, agent-only)
+  resources :reports_masters, only: [:index]
+
   # Income Frequency Masters (HTML page, agent-only)
   resources :income_frequency_masters, only: [:index]
 
@@ -87,6 +90,15 @@ Rails.application.routes.draw do
     resources :account_type_masters, only: [:index, :create, :update, :destroy] do
       member do
         get :can_delete
+      end
+    end
+    resources :reports_masters, only: [:index, :create, :update, :destroy] do
+      member do
+        get :can_delete
+      end
+      collection do
+        get :slots
+        post :add_slot
       end
     end
     resources :user_account_types, only: [:index, :update]

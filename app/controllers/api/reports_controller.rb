@@ -7,13 +7,14 @@ module Api
       UserReportLayout.seed_defaults_for(current_user)
 
       slots = current_user.user_report_layouts.order(:slot_number).map do |slot|
-        defn = slot.definition || {}
+        defn = slot.definition
         {
           slot_number: slot.slot_number,
           report_key: slot.report_key,
-          title: defn[:title],
-          category: defn[:category],
-          description: defn[:description]
+          title: defn&.title,
+          category: defn&.category,
+          description: defn&.description,
+          icon_key: defn&.icon_key
         }
       end
 

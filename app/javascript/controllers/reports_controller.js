@@ -1,11 +1,13 @@
 import { Controller } from "@hotwired/stimulus"
 import Sortable from "sortablejs"
+import { renderIconSvg } from "controllers/shared/icon_catalog"
 
 export default class extends Controller {
   static targets = ["cardsGrid", "cardWrapper"]
   static values = { reorderUrl: String }
 
   connect() {
+    this._hydrateIcons()
     this._initSortable()
   }
 
@@ -14,6 +16,15 @@ export default class extends Controller {
       this.sortable.destroy()
       this.sortable = null
     }
+  }
+
+  _hydrateIcons() {
+    this.element.querySelectorAll("[data-icon-key]").forEach(el => {
+      const key = el.dataset.iconKey
+      if (key) {
+        el.innerHTML = renderIconSvg(key, "blue", "h-5 w-5")
+      }
+    })
   }
 
   _initSortable() {

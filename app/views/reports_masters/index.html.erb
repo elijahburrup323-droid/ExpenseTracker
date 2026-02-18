@@ -1,0 +1,186 @@
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+     data-controller="reports-masters"
+     data-reports-masters-api-url-value="<%= api_reports_masters_path %>"
+     data-reports-masters-csrf-token-value="<%= form_authenticity_token %>">
+
+  <%# Page Header (sticky) %>
+  <div class="sticky top-14 z-20 bg-gray-50 dark:bg-gray-900 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-2 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Reports Maintenance</h1>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Manage reports shown under Monthly &gt; Reports</p>
+    </div>
+    <div class="flex items-center space-x-2">
+      <button type="button"
+              class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition"
+              data-action="click->reports-masters#addSlot">
+        <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17 14v6m-3-3h6M6 10h2a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v2a2 2 0 002 2zm10 0h2a2 2 0 002-2V6a2 2 0 00-2-2h-2a2 2 0 00-2 2v2a2 2 0 002 2zM6 20h2a2 2 0 002-2v-2a2 2 0 00-2-2H6a2 2 0 00-2 2v2a2 2 0 002 2z"/>
+        </svg>
+        + Add Slot
+      </button>
+      <button type="button"
+              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition"
+              data-action="click->reports-masters#openAddModal">
+        <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+        </svg>
+        + Add Report
+      </button>
+    </div>
+    </div>
+  </div>
+
+  <%# Slot count badge %>
+  <div class="mb-4 flex items-center space-x-2">
+    <span class="text-sm text-gray-500 dark:text-gray-400">Available slots:</span>
+    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300"
+          data-reports-masters-target="slotCount">...</span>
+  </div>
+
+  <%# Table %>
+  <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden ring-1 ring-gray-200 dark:ring-gray-700">
+    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+      <thead class="bg-gray-50 dark:bg-gray-800">
+        <tr>
+          <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-10">Icon</th>
+          <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Title</th>
+          <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Category</th>
+          <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Description</th>
+          <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-16">Slot</th>
+          <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-20">Active</th>
+          <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700" data-reports-masters-target="tableBody">
+        <tr>
+          <td colspan="7" class="px-6 py-8 text-center text-sm text-gray-400 dark:text-gray-500">Loading...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <%# Info Box %>
+  <div class="mt-6 rounded-lg bg-blue-50 dark:bg-blue-900/30 p-4 ring-1 ring-blue-200 dark:ring-blue-800">
+    <div class="flex">
+      <svg class="h-5 w-5 text-blue-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+      </svg>
+      <p class="ml-3 text-sm text-blue-700 dark:text-blue-300">
+        These are global report definitions for the Monthly &gt; Reports screen. Changes to slot assignments affect the default layout
+        for new users. Existing users keep their personalized drag-and-drop order. Deactivating a report hides it from new user seeding.
+      </p>
+    </div>
+  </div>
+
+  <%# Add/Edit Modal %>
+  <div class="hidden fixed inset-0 z-50 overflow-y-auto" data-reports-masters-target="modal">
+    <div class="flex min-h-full items-center justify-center p-4">
+      <div class="fixed inset-0 bg-black/50 transition-opacity" data-action="click->reports-masters#closeModal"></div>
+      <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg p-6 ring-1 ring-gray-200 dark:ring-gray-700 max-h-[90vh] overflow-y-auto">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4" data-reports-masters-target="modalTitle">Add Report</h3>
+        <div class="space-y-4">
+          <%# Title %>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title <span class="text-red-500">*</span></label>
+            <input type="text" data-reports-masters-target="modalTitleInput"
+                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                   placeholder="e.g. Monthly Cash Flow"
+                   data-action="keydown->reports-masters#modalKeydown">
+          </div>
+          <%# Report Key %>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Report Key <span class="text-red-500">*</span></label>
+            <input type="text" data-reports-masters-target="modalReportKey"
+                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                   placeholder="e.g. monthly_cash_flow"
+                   data-action="keydown->reports-masters#modalKeydown">
+          </div>
+          <%# Category %>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category <span class="text-red-500">*</span></label>
+            <input type="text" data-reports-masters-target="modalCategory"
+                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                   placeholder="e.g. Cash Flow"
+                   data-action="keydown->reports-masters#modalKeydown">
+          </div>
+          <%# Description %>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+            <textarea data-reports-masters-target="modalDescription"
+                      class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                      rows="2" placeholder="Short description of the report"></textarea>
+          </div>
+          <%# Route Path %>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Route Path <span class="text-gray-400">(optional)</span></label>
+            <input type="text" data-reports-masters-target="modalRoutePath"
+                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                   placeholder="e.g. /monthly/reports/cash-flow"
+                   data-action="keydown->reports-masters#modalKeydown">
+          </div>
+          <%# Slot Assignment %>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Assign to Slot <span class="text-red-500">*</span></label>
+            <select data-reports-masters-target="modalSlot"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500">
+              <option value="">Unassigned</option>
+            </select>
+          </div>
+          <%# Icon Picker %>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Icon</label>
+            <div class="grid grid-cols-8 gap-1.5 p-2 border border-gray-200 dark:border-gray-600 rounded-lg max-h-40 overflow-y-auto bg-gray-50 dark:bg-gray-900"
+                 data-reports-masters-target="iconGrid">
+            </div>
+            <input type="hidden" data-reports-masters-target="modalIconKey">
+          </div>
+          <%# Accent Style %>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Accent Style</label>
+            <select data-reports-masters-target="modalAccentStyle"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500">
+              <option value="brand">Brand (default)</option>
+              <option value="blue">Blue</option>
+              <option value="green">Green</option>
+              <option value="purple">Purple</option>
+              <option value="red">Red</option>
+              <option value="gold">Gold</option>
+              <option value="teal">Teal</option>
+              <option value="indigo">Indigo</option>
+              <option value="orange">Orange</option>
+              <option value="pink">Pink</option>
+            </select>
+          </div>
+          <%# Error %>
+          <div data-reports-masters-target="modalError" class="hidden text-sm text-red-600 dark:text-red-400"></div>
+        </div>
+        <div class="flex justify-end space-x-3 mt-6">
+          <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition"
+                  data-action="click->reports-masters#closeModal">Cancel</button>
+          <button type="button" class="px-4 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg transition"
+                  data-action="click->reports-masters#saveModal">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%# Delete Confirmation Modal %>
+  <div class="hidden fixed inset-0 z-50 overflow-y-auto" data-reports-masters-target="deleteModal">
+    <div class="flex min-h-full items-center justify-center p-4">
+      <div class="fixed inset-0 bg-black/50 transition-opacity" data-action="click->reports-masters#closeDeleteModal"></div>
+      <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-sm p-6 ring-1 ring-gray-200 dark:ring-gray-700">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Deactivate Report</h3>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Are you sure you want to deactivate <strong data-reports-masters-target="deleteModalName"></strong>?</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4" data-reports-masters-target="deleteModalInUse"></p>
+        <div data-reports-masters-target="deleteModalError" class="hidden text-sm text-red-600 dark:text-red-400 mb-4"></div>
+        <div class="flex justify-end space-x-3">
+          <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition"
+                  data-action="click->reports-masters#closeDeleteModal">Cancel</button>
+          <button type="button" class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition"
+                  data-action="click->reports-masters#executeDelete">Deactivate</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_18_202235) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_19_100004) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -373,6 +373,38 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_18_202235) do
     t.index ["account_id"], name: "index_reconciliation_records_on_account_id"
     t.index ["user_id", "account_id", "year", "month"], name: "idx_recon_records_unique", unique: true
     t.index ["user_id"], name: "index_reconciliation_records_on_user_id"
+  end
+
+  create_table "reports_masters", force: :cascade do |t|
+    t.string "report_key", limit: 60, null: false
+    t.string "title", limit: 120, null: false
+    t.string "category", limit: 60, null: false
+    t.string "description", limit: 255
+    t.string "icon_key", limit: 40
+    t.string "accent_style", limit: 40, default: "brand"
+    t.string "route_path", limit: 255
+    t.boolean "is_active", default: true, null: false
+    t.integer "sort_order_default", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["is_active"], name: "index_reports_masters_on_is_active"
+    t.index ["report_key"], name: "index_reports_masters_on_report_key", unique: true
+    t.index ["sort_order_default"], name: "index_reports_masters_on_sort_order_default"
+  end
+
+  create_table "reports_menu_layouts", force: :cascade do |t|
+    t.integer "slot_number", null: false
+    t.string "report_key", limit: 60, null: false
+    t.boolean "is_active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["report_key"], name: "index_reports_menu_layouts_on_report_key", unique: true
+    t.index ["slot_number"], name: "index_reports_menu_layouts_on_slot_number", unique: true
+  end
+
+  create_table "reports_slots_masters", primary_key: "slot_number", id: :serial, force: :cascade do |t|
+    t.boolean "is_active", default: true, null: false
+    t.datetime "created_at", null: false
   end
 
   create_table "spending_categories", force: :cascade do |t|

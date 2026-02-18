@@ -31,6 +31,7 @@ import SoftCloseController from "controllers/soft_close_controller"
 import ReconciliationController from "controllers/reconciliation_controller"
 import AccountTypeMastersController from "controllers/account_type_masters_controller"
 import ReportsController from "controllers/reports_controller"
+import ReportsMastersController from "controllers/reports_masters_controller"
 
 application.register("flash", FlashController)
 application.register("dropdown", DropdownController)
@@ -63,3 +64,4 @@ application.register("soft-close", SoftCloseController)
 application.register("reconciliation", ReconciliationController)
 application.register("account-type-masters", AccountTypeMastersController)
 application.register("reports", ReportsController)
+application.register("reports-masters", ReportsMastersController)
