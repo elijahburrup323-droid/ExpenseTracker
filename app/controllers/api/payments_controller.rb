@@ -62,7 +62,48 @@ module Api
       head :no_content
     end
 
+    # GET /api/payments/suggestions?q=...&category_id=...
+    def suggestions
+      q = params[:q].to_s.strip
+      return render json: [] if q.length < 2
+
+      category_id = params[:category_id].presence&.to_i
+      base = current_user.payments
+
+      # Category-scoped search first
+      results = []
+      if category_id
+        results = description_suggestions(base.where(spending_category_id: category_id), q)
+      end
+
+      # Fallback to all payments if no category or no results
+      if results.empty?
+        results = description_suggestions(base, q)
+      end
+
+      render json: results.map { |r| { description: r[:description] } }
+    end
+
     private
+
+    def description_suggestions(scope, q)
+      escaped = q.gsub('%', '\%').gsub('_', '\_')
+      prefix_pattern = "#{escaped}%"
+
+      # Group by description, count frequency, get most recent date
+      # Prefix matches ranked first, then by frequency, then recency
+      rows = scope
+        .select(
+          "description, COUNT(*) as freq, MAX(payment_date) as latest",
+          scope.sanitize_sql_array(["CASE WHEN description ILIKE ? THEN 0 ELSE 1 END as rank_order", prefix_pattern])
+        )
+        .where("description ILIKE ?", "%#{escaped}%")
+        .group("description")
+        .order(Arel.sql("rank_order, freq DESC, latest DESC"))
+        .limit(8)
+
+      rows.map { |r| { description: r.description } }
+    end
 
     def set_payment
       @payment = current_user.payments.find_by(id: params[:id])

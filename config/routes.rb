@@ -75,7 +75,11 @@ Rails.application.routes.draw do
     resources :account_types, only: [:index, :create, :update, :destroy]
     resources :accounts, only: [:index, :create, :update, :destroy]
     resources :transfer_masters, only: [:index, :create, :update, :destroy]
-    resources :payments, only: [:index, :create, :update, :destroy]
+    resources :payments, only: [:index, :create, :update, :destroy] do
+      collection do
+        get :suggestions
+      end
+    end
     resources :account_type_masters, only: [:index, :create, :update, :destroy] do
       member do
         get :can_delete

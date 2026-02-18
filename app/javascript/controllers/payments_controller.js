@@ -19,11 +19,13 @@ export default class extends Controller {
     "modalDescription", "modalAmount", "modalError",
     "dateWarningModal", "dateWarningMessage",
     "deleteBlockedModal", "deleteBlockedMessage",
-    "editBlockedModal", "editBlockedMessage"
+    "editBlockedModal", "editBlockedMessage",
+    "suggestionsList"
   ]
   static values = {
     apiUrl: String, accountsUrl: String, categoriesUrl: String, typesUrl: String, csrfToken: String,
-    accountsPageUrl: String, categoriesPageUrl: String, typesPageUrl: String, openMonthUrl: String
+    accountsPageUrl: String, categoriesPageUrl: String, typesPageUrl: String, openMonthUrl: String,
+    suggestionsUrl: String
   }
 
   connect() {
@@ -37,7 +39,9 @@ export default class extends Controller {
     this._skipDateValidation = false
     this._pendingSave = null
     this._sortColumn = "payment_date"
-    this._sortDirection = "asc"
+    this._sortDirection = "desc"
+    this._suggestionsIndex = -1
+    this._suggestionsDebounce = null
     this._setDefaultDateRange()
     this.fetchAll()
 
@@ -373,6 +377,7 @@ export default class extends Controller {
   cancelModal() {
     this.state = "idle"
     this.editingId = null
+    this._hideSuggestions()
     this.addModalTarget.classList.add("hidden")
     if (this._modalEscapeHandler) {
       document.removeEventListener("keydown", this._modalEscapeHandler)
@@ -949,6 +954,26 @@ export default class extends Controller {
   }
 
   handleModalKeydown(event) {
+    // If suggestions are visible and this is the description field, handle navigation
+    if (event.target === this.modalDescriptionTarget && this._isSuggestionsVisible()) {
+      if (event.key === "ArrowDown") {
+        event.preventDefault()
+        this._moveSuggestionsIndex(1)
+        return
+      } else if (event.key === "ArrowUp") {
+        event.preventDefault()
+        this._moveSuggestionsIndex(-1)
+        return
+      } else if ((event.key === "Enter" || event.key === "Tab") && this._suggestionsIndex >= 0) {
+        event.preventDefault()
+        this._acceptSuggestion(this._suggestionsIndex)
+        return
+      } else if (event.key === "Escape") {
+        event.preventDefault()
+        this._hideSuggestions()
+        return
+      }
+    }
     if (event.key === "Enter") {
       event.preventDefault()
       this.saveModal()
@@ -1032,6 +1057,101 @@ export default class extends Controller {
     this.dateWarningModalTarget.classList.add("hidden")
     this._pendingSave = null
     this._pendingPaymentDate = null
+  }
+
+  // --- Description Typeahead ---
+
+  onDescriptionInput() {
+    clearTimeout(this._suggestionsDebounce)
+    const q = this.modalDescriptionTarget.value.trim()
+    if (q.length < 2) {
+      this._hideSuggestions()
+      return
+    }
+    this._suggestionsDebounce = setTimeout(() => this._fetchSuggestions(q), 200)
+  }
+
+  async _fetchSuggestions(q) {
+    if (!this.suggestionsUrlValue) return
+    const categoryId = this.modalCategoryTarget.value
+    const params = new URLSearchParams({ q })
+    if (categoryId && categoryId !== "" && categoryId !== "new") params.set("category_id", categoryId)
+    try {
+      const res = await fetch(`${this.suggestionsUrlValue}?${params}`, { headers: { "Accept": "application/json" } })
+      if (!res.ok) return
+      const suggestions = await res.json()
+      if (suggestions.length === 0 || this.modalDescriptionTarget.value.trim() !== q) {
+        this._hideSuggestions()
+        return
+      }
+      this._renderSuggestions(suggestions)
+    } catch (e) {
+      this._hideSuggestions()
+    }
+  }
+
+  _renderSuggestions(suggestions) {
+    const list = this.suggestionsListTarget
+    list.innerHTML = suggestions.map((s, i) => {
+      const text = escapeHtml(s.description)
+      return `<li role="option" id="suggestion-${i}" class="px-3 py-2 text-sm text-gray-900 cursor-pointer hover:bg-brand-50"
+                  data-index="${i}" data-value="${escapeAttr(s.description)}"
+                  data-action="click->payments#clickSuggestion mouseenter->payments#hoverSuggestion">${text}</li>`
+    }).join("")
+    this._suggestionsIndex = -1
+    list.classList.remove("hidden")
+    this.modalDescriptionTarget.setAttribute("aria-expanded", "true")
+  }
+
+  _hideSuggestions() {
+    if (!this.hasSuggestionsListTarget) return
+    this.suggestionsListTarget.classList.add("hidden")
+    this.suggestionsListTarget.innerHTML = ""
+    this._suggestionsIndex = -1
+    this.modalDescriptionTarget.setAttribute("aria-expanded", "false")
+  }
+
+  _isSuggestionsVisible() {
+    return this.hasSuggestionsListTarget && !this.suggestionsListTarget.classList.contains("hidden")
+  }
+
+  _moveSuggestionsIndex(delta) {
+    const items = this.suggestionsListTarget.querySelectorAll("[role='option']")
+    if (items.length === 0) return
+    // Remove current highlight
+    if (this._suggestionsIndex >= 0 && items[this._suggestionsIndex]) {
+      items[this._suggestionsIndex].classList.remove("bg-brand-100", "dark:bg-brand-900/30")
+    }
+    this._suggestionsIndex += delta
+    if (this._suggestionsIndex < 0) this._suggestionsIndex = items.length - 1
+    if (this._suggestionsIndex >= items.length) this._suggestionsIndex = 0
+    const active = items[this._suggestionsIndex]
+    active.classList.add("bg-brand-100", "dark:bg-brand-900/30")
+    active.scrollIntoView({ block: "nearest" })
+    this.modalDescriptionTarget.setAttribute("aria-activedescendant", active.id)
+  }
+
+  _acceptSuggestion(index) {
+    const items = this.suggestionsListTarget.querySelectorAll("[role='option']")
+    if (index >= 0 && index < items.length) {
+      this.modalDescriptionTarget.value = items[index].dataset.value
+    }
+    this._hideSuggestions()
+    this.modalAmountTarget.focus()
+  }
+
+  clickSuggestion(event) {
+    const li = event.currentTarget
+    this.modalDescriptionTarget.value = li.dataset.value
+    this._hideSuggestions()
+    this.modalAmountTarget.focus()
+  }
+
+  hoverSuggestion(event) {
+    const items = this.suggestionsListTarget.querySelectorAll("[role='option']")
+    items.forEach(el => el.classList.remove("bg-brand-100", "dark:bg-brand-900/30"))
+    event.currentTarget.classList.add("bg-brand-100", "dark:bg-brand-900/30")
+    this._suggestionsIndex = Number(event.currentTarget.dataset.index)
   }
 
   // --- Print View ---

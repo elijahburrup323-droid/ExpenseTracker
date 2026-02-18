@@ -1,9 +1,18 @@
-APP_VERSION = "1.3.7"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+APP_VERSION = "1.3.8"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.8",
+    changes: [
+      "Payments: Default sort changed from Date Ascending to Date Descending — newest payments appear first (CM-11)",
+      "Payments: Description field autocomplete — type 2+ characters to see suggestions from past payments (CM-12)",
+      "Payments: Suggestions ranked by prefix match, frequency, then recency with category-scoped search (CM-12)",
+      "Payments: Keyboard navigation (Up/Down/Enter/Tab/Esc) and ARIA combobox roles on suggestion dropdown (CM-12)",
+    ]
+  },
   {
     version: "1.3.7",
     changes: [
