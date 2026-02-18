@@ -1,9 +1,16 @@
-APP_VERSION = "1.3.3"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+APP_VERSION = "1.3.4"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.4",
+    changes: [
+      "Navigation: New top-level 'Monthly' menu group added between Payments and Admin (CM-6)",
+      "Navigation: Soft Close Month consolidated under Monthly — removed duplicate Month subgroups from Accounts, Deposits, and Payments (CM-6)",
+    ]
+  },
   {
     version: "1.3.3",
     changes: [
