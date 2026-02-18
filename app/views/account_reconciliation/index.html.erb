@@ -4,6 +4,8 @@
      data-reconciliation-outside-balance-url-value="<%= api_reconciliation_outside_balance_path %>"
      data-reconciliation-statement-counts-url-value="<%= api_reconciliation_statement_counts_path %>"
      data-reconciliation-mark-reconciled-url-value="<%= api_reconciliation_mark_reconciled_path %>"
+     data-reconciliation-group-states-url-value="<%= api_reconciliation_group_states_path %>"
+     data-reconciliation-toggle-group-url-value="<%= api_reconciliation_toggle_group_path %>"
      data-reconciliation-balance-adjustments-url-value="<%= api_balance_adjustments_path %>"
      data-reconciliation-csrf-token-value="<%= form_authenticity_token %>"
      data-reconciliation-initial-year-value="<%= @open_month.current_year %>"
@@ -129,8 +131,14 @@
 
       <%# === PAYMENTS SECTION === %>
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div class="px-5 py-3 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div class="px-5 py-3 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 cursor-pointer select-none"
+             data-action="click->reconciliation#toggleGroup keydown->reconciliation#toggleGroupKeydown"
+             data-group="payments"
+             role="button" tabindex="0">
           <div class="flex items-center space-x-3">
+            <svg data-reconciliation-target="paymentsChevron" class="h-4 w-4 text-gray-400 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+            </svg>
             <svg class="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a5 5 0 00-10 0v2M12 12v3m-3-3h6m-9 7h12a2 2 0 002-2v-4a2 2 0 00-2-2H6a2 2 0 00-2 2v4a2 2 0 002 2z"/>
             </svg>
@@ -138,7 +146,7 @@
             <span data-reconciliation-target="paymentsUnreconciled" class="text-xs text-red-500 font-medium">(0 Unreconciled)</span>
           </div>
           <div class="flex items-center space-x-3">
-            <div class="flex items-center space-x-1">
+            <div class="flex items-center space-x-1" data-action="click->reconciliation#stopProp">
               <label class="text-xs text-gray-500 dark:text-gray-400" data-reconciliation-target="paymentCountLabel">Statement Count:</label>
               <input type="number" min="0" value="0"
                      data-reconciliation-target="paymentStatementCount"
@@ -149,31 +157,39 @@
             <span data-reconciliation-target="paymentsTotal" class="text-sm font-semibold text-red-600 dark:text-red-400">$0.00</span>
           </div>
         </div>
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead class="bg-gray-50 dark:bg-gray-900/50">
-              <tr>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Date</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Payee</th>
-                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Amount</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Comments</th>
-                <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase w-20">Reconcile</th>
-              </tr>
-            </thead>
-            <tbody data-reconciliation-target="paymentsBody" class="divide-y divide-gray-200 dark:divide-gray-700">
-            </tbody>
-          </table>
-        </div>
-        <div class="px-5 py-2 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
-          <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Total</span>
-          <span data-reconciliation-target="paymentsTotalBottom" class="text-sm font-semibold text-red-600 dark:text-red-400">$0.00</span>
+        <div data-reconciliation-target="paymentsContent">
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead class="bg-gray-50 dark:bg-gray-900/50">
+                <tr>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Date</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Payee</th>
+                  <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Amount</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Comments</th>
+                  <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase w-20">Reconcile</th>
+                </tr>
+              </thead>
+              <tbody data-reconciliation-target="paymentsBody" class="divide-y divide-gray-200 dark:divide-gray-700">
+              </tbody>
+            </table>
+          </div>
+          <div class="px-5 py-2 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
+            <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Total</span>
+            <span data-reconciliation-target="paymentsTotalBottom" class="text-sm font-semibold text-red-600 dark:text-red-400">$0.00</span>
+          </div>
         </div>
       </div>
 
       <%# === DEPOSITS SECTION === %>
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div class="px-5 py-3 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div class="px-5 py-3 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 cursor-pointer select-none"
+             data-action="click->reconciliation#toggleGroup keydown->reconciliation#toggleGroupKeydown"
+             data-group="deposits"
+             role="button" tabindex="0">
           <div class="flex items-center space-x-3">
+            <svg data-reconciliation-target="depositsChevron" class="h-4 w-4 text-gray-400 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+            </svg>
             <svg class="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
@@ -181,7 +197,7 @@
             <span data-reconciliation-target="depositsUnreconciled" class="text-xs text-red-500 font-medium">(0 Unreconciled)</span>
           </div>
           <div class="flex items-center space-x-3">
-            <div class="flex items-center space-x-1">
+            <div class="flex items-center space-x-1" data-action="click->reconciliation#stopProp">
               <label class="text-xs text-gray-500 dark:text-gray-400" data-reconciliation-target="depositCountLabel">Statement Count:</label>
               <input type="number" min="0" value="0"
                      data-reconciliation-target="depositStatementCount"
@@ -192,31 +208,39 @@
             <span data-reconciliation-target="depositsTotal" class="text-sm font-semibold text-green-600 dark:text-green-400">$0.00</span>
           </div>
         </div>
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead class="bg-gray-50 dark:bg-gray-900/50">
-              <tr>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Date</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Source</th>
-                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Amount</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Notes</th>
-                <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase w-20">Reconcile</th>
-              </tr>
-            </thead>
-            <tbody data-reconciliation-target="depositsBody" class="divide-y divide-gray-200 dark:divide-gray-700">
-            </tbody>
-          </table>
-        </div>
-        <div class="px-5 py-2 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
-          <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Total</span>
-          <span data-reconciliation-target="depositsTotalBottom" class="text-sm font-semibold text-green-600 dark:text-green-400">$0.00</span>
+        <div data-reconciliation-target="depositsContent">
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead class="bg-gray-50 dark:bg-gray-900/50">
+                <tr>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Date</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Source</th>
+                  <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Amount</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Notes</th>
+                  <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase w-20">Reconcile</th>
+                </tr>
+              </thead>
+              <tbody data-reconciliation-target="depositsBody" class="divide-y divide-gray-200 dark:divide-gray-700">
+              </tbody>
+            </table>
+          </div>
+          <div class="px-5 py-2 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
+            <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Total</span>
+            <span data-reconciliation-target="depositsTotalBottom" class="text-sm font-semibold text-green-600 dark:text-green-400">$0.00</span>
+          </div>
         </div>
       </div>
 
       <%# === TRANSFERS SECTION === %>
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div class="px-5 py-3 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div class="px-5 py-3 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 cursor-pointer select-none"
+             data-action="click->reconciliation#toggleGroup keydown->reconciliation#toggleGroupKeydown"
+             data-group="transfers"
+             role="button" tabindex="0">
           <div class="flex items-center space-x-3">
+            <svg data-reconciliation-target="transfersChevron" class="h-4 w-4 text-gray-400 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+            </svg>
             <svg class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
             </svg>
@@ -225,31 +249,39 @@
           </div>
           <span data-reconciliation-target="transfersTotal" class="text-sm font-semibold text-blue-600 dark:text-blue-400">$0.00</span>
         </div>
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead class="bg-gray-50 dark:bg-gray-900/50">
-              <tr>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Date</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Description</th>
-                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Amount</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Memo</th>
-                <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase w-20">Reconcile</th>
-              </tr>
-            </thead>
-            <tbody data-reconciliation-target="transfersBody" class="divide-y divide-gray-200 dark:divide-gray-700">
-            </tbody>
-          </table>
-        </div>
-        <div class="px-5 py-2 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
-          <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Total</span>
-          <span data-reconciliation-target="transfersTotalBottom" class="text-sm font-semibold text-blue-600 dark:text-blue-400">$0.00</span>
+        <div data-reconciliation-target="transfersContent">
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead class="bg-gray-50 dark:bg-gray-900/50">
+                <tr>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Date</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Description</th>
+                  <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Amount</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Memo</th>
+                  <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase w-20">Reconcile</th>
+                </tr>
+              </thead>
+              <tbody data-reconciliation-target="transfersBody" class="divide-y divide-gray-200 dark:divide-gray-700">
+              </tbody>
+            </table>
+          </div>
+          <div class="px-5 py-2 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
+            <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Total</span>
+            <span data-reconciliation-target="transfersTotalBottom" class="text-sm font-semibold text-blue-600 dark:text-blue-400">$0.00</span>
+          </div>
         </div>
       </div>
 
       <%# === BALANCE ADJUSTMENTS SECTION === %>
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div class="px-5 py-3 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div class="px-5 py-3 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 cursor-pointer select-none"
+             data-action="click->reconciliation#toggleGroup keydown->reconciliation#toggleGroupKeydown"
+             data-group="adjustments"
+             role="button" tabindex="0">
           <div class="flex items-center space-x-3">
+            <svg data-reconciliation-target="adjustmentsChevron" class="h-4 w-4 text-gray-400 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+            </svg>
             <svg class="h-5 w-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
             </svg>
@@ -257,7 +289,7 @@
             <span data-reconciliation-target="adjustmentsUnreconciled" class="text-xs text-red-500 font-medium">(0 Unreconciled)</span>
           </div>
           <div class="flex items-center space-x-3">
-            <div class="flex items-center space-x-1">
+            <div class="flex items-center space-x-1" data-action="click->reconciliation#stopProp">
               <label class="text-xs text-gray-500 dark:text-gray-400" data-reconciliation-target="adjustmentCountLabel">Statement Count:</label>
               <input type="number" min="0" value="0"
                      data-reconciliation-target="adjustmentStatementCount"
@@ -268,24 +300,26 @@
             <span data-reconciliation-target="adjustmentsTotal" class="text-sm font-semibold text-orange-600 dark:text-orange-400">$0.00</span>
           </div>
         </div>
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead class="bg-gray-50 dark:bg-gray-900/50">
-              <tr>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Date</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Description</th>
-                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Amount</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Notes</th>
-                <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase w-20">Reconcile</th>
-              </tr>
-            </thead>
-            <tbody data-reconciliation-target="adjustmentsBody" class="divide-y divide-gray-200 dark:divide-gray-700">
-            </tbody>
-          </table>
-        </div>
-        <div class="px-5 py-2 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
-          <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Total</span>
-          <span data-reconciliation-target="adjustmentsTotalBottom" class="text-sm font-semibold text-orange-600 dark:text-orange-400">$0.00</span>
+        <div data-reconciliation-target="adjustmentsContent">
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead class="bg-gray-50 dark:bg-gray-900/50">
+                <tr>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Date</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Description</th>
+                  <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Amount</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Notes</th>
+                  <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase w-20">Reconcile</th>
+                </tr>
+              </thead>
+              <tbody data-reconciliation-target="adjustmentsBody" class="divide-y divide-gray-200 dark:divide-gray-700">
+              </tbody>
+            </table>
+          </div>
+          <div class="px-5 py-2 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
+            <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Total</span>
+            <span data-reconciliation-target="adjustmentsTotalBottom" class="text-sm font-semibold text-orange-600 dark:text-orange-400">$0.00</span>
+          </div>
         </div>
       </div>
 

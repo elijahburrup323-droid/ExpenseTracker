@@ -77,6 +77,10 @@ reconciliation_records
  ├── belongs_to :user                  (user_id FK → users.id)
  └── belongs_to :account               (account_id FK → accounts.id)
 
+reconciliation_group_ui_states
+ ├── belongs_to :user                  (user_id FK → users.id)
+ └── belongs_to :account               (account_id FK → accounts.id)
+
 identities
  └── belongs_to :user                  (user_id FK → users.id)
 
@@ -1491,6 +1495,8 @@ phone_verifications
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">balance_adjustments</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">account_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">accounts.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (DB-level foreign key)</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">reconciliation_records</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">cascade (via Rails dependent: :destroy)</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">reconciliation_records</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">account_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">accounts.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (DB-level foreign key)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">reconciliation_group_ui_states</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">cascade (via Rails dependent: :destroy)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">reconciliation_group_ui_states</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">account_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">accounts.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (DB-level foreign key)</td></tr>
         </tbody>
       </table>
     </div>

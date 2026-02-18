@@ -1,5 +1,5 @@
 APP_VERSION = "1.3.13"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
@@ -21,6 +21,11 @@ APP_ALL_VERSIONS = [
       "Reports: Expandable detail sections — Deposits by Account and Payments by Category breakdowns (CM-8)",
       "Reports: Month navigation on report page with prev/next arrows (CM-8)",
       "Reports: Cards on Reports Menu now link to report pages when available, 'Coming Soon' for others (CM-8)",
+      "Reconciliation: Collapsible group sections — click header to expand/collapse Payments, Deposits, Transfers, Adjustments (CM-9)",
+      "Reconciliation: Auto-collapse empty groups and fully reconciled groups on load (CM-9)",
+      "Reconciliation: Collapse state persists per user/account/month — survives page reload (CM-9)",
+      "Reconciliation: Keyboard accessible (Enter/Space) group toggle with chevron indicator (CM-9)",
+      "Database: New reconciliation_group_ui_states table for persisted collapse preferences (CM-9)",
     ]
   },
   {

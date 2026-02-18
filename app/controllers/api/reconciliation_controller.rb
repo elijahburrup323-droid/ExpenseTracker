@@ -190,6 +190,48 @@ module Api
       render json: { success: true }
     end
 
+    # GET /api/reconciliation/group_states?account_id=X
+    def group_states
+      account = current_user.accounts.find_by(id: params[:account_id])
+      return render_not_found unless account
+
+      om = OpenMonthMaster.for_user(current_user)
+      states = ReconciliationGroupUiState.where(
+        user_id: current_user.id,
+        account_id: account.id,
+        year: om.current_year,
+        month: om.current_month
+      )
+
+      result = {}
+      states.each { |s| result[s.group_type] = s.is_collapsed }
+      render json: result
+    end
+
+    # PUT /api/reconciliation/toggle_group
+    def toggle_group
+      account = current_user.accounts.find_by(id: params[:account_id])
+      return render_not_found unless account
+
+      group_type = params[:group_type]
+      unless ReconciliationGroupUiState::VALID_GROUP_TYPES.include?(group_type)
+        return render json: { error: "Invalid group_type" }, status: :unprocessable_entity
+      end
+
+      om = OpenMonthMaster.for_user(current_user)
+      state = ReconciliationGroupUiState.find_or_initialize_by(
+        user_id: current_user.id,
+        account_id: account.id,
+        year: om.current_year,
+        month: om.current_month,
+        group_type: group_type
+      )
+      state.is_collapsed = params[:is_collapsed]
+      state.save!
+
+      render json: { success: true, is_collapsed: state.is_collapsed }
+    end
+
     # PUT /api/reconciliation/mark_reconciled
     def mark_reconciled
       account = current_user.accounts.find_by(id: params[:account_id])

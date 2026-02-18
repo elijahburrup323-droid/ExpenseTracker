@@ -149,6 +149,8 @@ Rails.application.routes.draw do
       put "outside_balance", action: :save_outside_balance
       put "statement_counts", action: :save_statement_counts
       put "mark_reconciled", action: :mark_reconciled
+      get "group_states", action: :group_states
+      put "toggle_group", action: :toggle_group
     end
     resources :balance_adjustments, only: [:create, :update, :destroy]
     resources :net_worth_snapshots, only: [:index] do

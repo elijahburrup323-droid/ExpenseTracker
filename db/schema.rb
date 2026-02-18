@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_19_200002) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_19_200003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -356,6 +356,20 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_19_200002) do
     t.index ["is_active"], name: "index_quotes_on_is_active"
   end
 
+  create_table "reconciliation_group_ui_states", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "account_id", null: false
+    t.integer "year", null: false
+    t.integer "month", null: false
+    t.string "group_type", limit: 20, null: false
+    t.boolean "is_collapsed", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_reconciliation_group_ui_states_on_account_id"
+    t.index ["user_id", "account_id", "year", "month", "group_type"], name: "idx_recon_group_ui_unique", unique: true
+    t.index ["user_id"], name: "index_reconciliation_group_ui_states_on_user_id"
+  end
+
   create_table "reconciliation_records", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "account_id", null: false
@@ -627,6 +641,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_19_200002) do
   add_foreign_key "payments", "spending_categories"
   add_foreign_key "payments", "spending_types", column: "spending_type_override_id", on_delete: :nullify
   add_foreign_key "payments", "users"
+  add_foreign_key "reconciliation_group_ui_states", "accounts"
+  add_foreign_key "reconciliation_group_ui_states", "users"
   add_foreign_key "reconciliation_records", "accounts"
   add_foreign_key "reconciliation_records", "users"
   add_foreign_key "spending_categories", "spending_types"

@@ -15,7 +15,9 @@ export default class extends Controller {
     "markReconciledBtn", "fixMarkReconciledBtn",
     "fixModeAmount", "fixModeGuidance",
     "fixPaymentsBody", "fixDepositsBody", "fixSuggestionsBody", "fixDepositSearch",
-    "adjustmentModal", "adjDate", "adjDescription", "adjAmount", "adjNotes", "adjError"
+    "adjustmentModal", "adjDate", "adjDescription", "adjAmount", "adjNotes", "adjError",
+    "paymentsContent", "depositsContent", "transfersContent", "adjustmentsContent",
+    "paymentsChevron", "depositsChevron", "transfersChevron", "adjustmentsChevron"
   ]
 
   static values = {
@@ -25,6 +27,8 @@ export default class extends Controller {
     statementCountsUrl: String,
     markReconciledUrl: String,
     balanceAdjustmentsUrl: String,
+    groupStatesUrl: String,
+    toggleGroupUrl: String,
     csrfToken: String,
     initialYear: Number,
     initialMonth: Number
@@ -35,6 +39,7 @@ export default class extends Controller {
     this.month = this.initialMonthValue
     this.data_cache = null
     this.isReadOnly = false
+    this._groupStates = {} // { payments: true/false, deposits: ..., transfers: ..., adjustments: ... }
 
     // Auto-select account if passed via query param (e.g., from Accounts dblclick)
     const params = new URLSearchParams(window.location.search)
@@ -119,6 +124,10 @@ export default class extends Controller {
       this._updateCounts(data)
       this._updateTotals(data)
       this._updateDifference()
+
+      // Fetch persisted group states, then apply collapse logic
+      await this._fetchGroupStates(accountId)
+      this._applyGroupStates(data)
     } catch (e) {
       console.error("Reconciliation fetch error:", e)
     }
@@ -157,6 +166,14 @@ export default class extends Controller {
         // Recalculate unreconciled counts
         this._updateCountsFromCache()
         this._updateDifference()
+
+        // Auto-collapse group if all entries are now reconciled
+        const groupType = type === "payment" ? "payments" : type === "deposit" ? "deposits" : type === "transfer" ? "transfers" : "adjustments"
+        const groupList = this.data_cache[groupType]
+        if (groupList && groupList.length > 0 && groupList.every(i => i.reconciled)) {
+          this._setGroupCollapsed(groupType, true)
+          this._persistGroupState(groupType, true)
+        }
       }
     } catch (e) {
       checkbox.checked = !reconciled
@@ -400,7 +417,107 @@ export default class extends Controller {
     })
   }
 
+  // ===================== GROUP COLLAPSE/EXPAND =====================
+
+  toggleGroup(event) {
+    // Don't toggle if clicking an input/select inside the header
+    if (event.target.tagName === "INPUT" || event.target.tagName === "SELECT") return
+
+    const group = event.currentTarget.dataset.group
+    const isCollapsed = !this._groupStates[group]
+    this._setGroupCollapsed(group, isCollapsed)
+    this._persistGroupState(group, isCollapsed)
+  }
+
+  toggleGroupKeydown(event) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault()
+      this.toggleGroup(event)
+    }
+  }
+
+  stopProp(event) {
+    event.stopPropagation()
+  }
+
   // ===================== PRIVATE METHODS =====================
+
+  async _fetchGroupStates(accountId) {
+    try {
+      const url = `${this.groupStatesUrlValue}?account_id=${accountId}`
+      const res = await fetch(url, { headers: { "Accept": "application/json" } })
+      if (res.ok) {
+        this._groupStates = await res.json()
+      }
+    } catch (e) {
+      // Use defaults on failure
+    }
+  }
+
+  _applyGroupStates(data) {
+    const groups = ["payments", "deposits", "transfers", "adjustments"]
+    for (const group of groups) {
+      const items = data[group]
+      const hasPersisted = this._groupStates[group] !== undefined
+
+      if (hasPersisted) {
+        // Use persisted preference
+        this._setGroupCollapsed(group, this._groupStates[group])
+      } else if (items.length === 0) {
+        // Auto-collapse empty groups
+        this._setGroupCollapsed(group, true)
+      } else if (items.every(i => i.reconciled)) {
+        // Auto-collapse fully reconciled groups
+        this._setGroupCollapsed(group, true)
+      } else {
+        // Default: expanded
+        this._setGroupCollapsed(group, false)
+      }
+    }
+  }
+
+  _setGroupCollapsed(group, collapsed) {
+    this._groupStates[group] = collapsed
+
+    const contentTarget = `${group}ContentTarget`
+    const chevronTarget = `${group}ChevronTarget`
+
+    if (this[`has${group.charAt(0).toUpperCase() + group.slice(1)}ContentTarget`]) {
+      const content = this[contentTarget]
+      const chevron = this[chevronTarget]
+
+      if (collapsed) {
+        content.classList.add("hidden")
+        chevron.style.transform = "rotate(-90deg)"
+      } else {
+        content.classList.remove("hidden")
+        chevron.style.transform = "rotate(0deg)"
+      }
+    }
+  }
+
+  async _persistGroupState(group, collapsed) {
+    const accountId = this.accountSelectTarget.value
+    if (!accountId) return
+
+    try {
+      await fetch(this.toggleGroupUrlValue, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "X-CSRF-Token": this.csrfTokenValue
+        },
+        body: JSON.stringify({
+          account_id: accountId,
+          group_type: group,
+          is_collapsed: collapsed
+        })
+      })
+    } catch (e) {
+      // Silently fail — UI already updated optimistically
+    }
+  }
 
   _renderPayments(payments) {
     if (payments.length === 0) {
