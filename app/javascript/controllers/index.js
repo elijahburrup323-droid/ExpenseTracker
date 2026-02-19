@@ -34,6 +34,7 @@ import ReportsController from "controllers/reports_controller"
 import ReportsMastersController from "controllers/reports_masters_controller"
 import MonthlyCashFlowController from "controllers/monthly_cash_flow_controller"
 import SpendingByCategoryController from "controllers/spending_by_category_controller"
+import SpendingByTypeController from "controllers/spending_by_type_controller"
 import TagsController from "controllers/tags_controller"
 import RecurringObligationsController from "controllers/recurring_obligations_controller"
 
@@ -71,5 +72,6 @@ application.register("reports", ReportsController)
 application.register("reports-masters", ReportsMastersController)
 application.register("monthly-cash-flow", MonthlyCashFlowController)
 application.register("spending-by-category", SpendingByCategoryController)
+application.register("spending-by-type", SpendingByTypeController)
 application.register("tags", TagsController)
 application.register("recurring-obligations", RecurringObligationsController)

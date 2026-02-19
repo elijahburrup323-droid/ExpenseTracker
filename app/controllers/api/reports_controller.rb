@@ -97,6 +97,32 @@ module Api
       render json: result
     end
 
+    # GET /api/reports/spending_by_type?year=YYYY&month=M&mode=regular|comparison&compare_prev=1&include_ytd=1
+    def spending_by_type
+      om = OpenMonthMaster.for_user(current_user)
+      year  = (params[:year]  || om.current_year).to_i
+      month = (params[:month] || om.current_month).to_i
+      mode  = params[:mode] || "regular"
+
+      current = type_spending_for_month(year, month)
+      result = current.merge(mode: mode)
+
+      if mode == "comparison"
+        if params[:compare_prev] == "1"
+          prev_month_start = Date.new(year, month, 1).prev_month
+          prev = type_spending_for_month(prev_month_start.year, prev_month_start.month)
+          result[:prev] = prev
+          result[:variance] = compute_type_spending_variance(current, prev)
+        end
+
+        if params[:include_ytd] == "1"
+          result[:ytd] = type_spending_ytd(year, month)
+        end
+      end
+
+      render json: result
+    end
+
     # GET /api/reports/recurring_obligations?year=YYYY&month=M&include_inactive=0|1
     def recurring_obligations
       om = OpenMonthMaster.for_user(current_user)
@@ -335,6 +361,138 @@ module Api
         total_spent: total_spent,
         transaction_count: transaction_count,
         categories: categories
+      }
+    end
+
+    # --- Spending by Type helpers ---
+
+    def type_spending_for_month(year, month)
+      month_start = Date.new(year, month, 1)
+      month_end   = month_start.next_month
+      range       = month_start...month_end
+
+      total_spent = current_user.payments
+        .where(payment_date: range, deleted_at: nil)
+        .sum(:amount).to_f.round(2)
+
+      transaction_count = current_user.payments
+        .where(payment_date: range, deleted_at: nil)
+        .count
+
+      types = current_user.payments
+        .where(payment_date: range, deleted_at: nil)
+        .joins("LEFT JOIN spending_categories ON spending_categories.id = payments.spending_category_id AND spending_categories.deleted_at IS NULL")
+        .joins("LEFT JOIN spending_types ON spending_types.id = spending_categories.spending_type_id AND spending_types.deleted_at IS NULL")
+        .group(
+          "spending_types.id",
+          "spending_types.name",
+          "spending_types.icon_key",
+          "spending_types.color_key"
+        )
+        .order(Arel.sql("SUM(payments.amount) DESC"))
+        .pluck(
+          Arel.sql("spending_types.id"),
+          Arel.sql("COALESCE(spending_types.name, 'None')"),
+          Arel.sql("spending_types.icon_key"),
+          Arel.sql("spending_types.color_key"),
+          Arel.sql("SUM(payments.amount)"),
+          Arel.sql("COUNT(payments.id)")
+        )
+        .map do |id, name, icon_key, color_key, amount, count|
+          amt = amount.to_f.round(2)
+          {
+            id: id,
+            name: name,
+            icon_key: icon_key,
+            color_key: color_key,
+            amount: amt,
+            pct: total_spent > 0 ? (amt / total_spent * 100).round(1) : 0.0,
+            count: count
+          }
+        end
+
+      {
+        month_label: month_start.strftime("%B %Y"),
+        year: year,
+        month: month,
+        total_spent: total_spent,
+        transaction_count: transaction_count,
+        types: types
+      }
+    end
+
+    def compute_type_spending_variance(current, prev)
+      curr_map = current[:types].each_with_object({}) { |t, h| h[t[:name]] = t }
+      prev_map = prev[:types].each_with_object({}) { |t, h| h[t[:name]] = t }
+      all_names = (curr_map.keys + prev_map.keys).uniq
+
+      types = all_names.sort_by { |n| -(curr_map[n]&.dig(:amount) || 0.0) }.map do |name|
+        c_amt = curr_map[name]&.dig(:amount) || 0.0
+        p_amt = prev_map[name]&.dig(:amount) || 0.0
+        diff = (c_amt - p_amt).round(2)
+        pct = p_amt.zero? ? nil : ((diff / p_amt.abs) * 100).round(1)
+        {
+          name: name,
+          icon_key: (curr_map[name] || prev_map[name])&.dig(:icon_key),
+          color_key: (curr_map[name] || prev_map[name])&.dig(:color_key),
+          dollar: diff,
+          percent: pct
+        }
+      end
+
+      total_diff = (current[:total_spent] - prev[:total_spent]).round(2)
+      total_pct = prev[:total_spent].zero? ? nil : ((total_diff / prev[:total_spent].abs) * 100).round(1)
+
+      { total: { dollar: total_diff, percent: total_pct }, types: types }
+    end
+
+    def type_spending_ytd(year, month)
+      ytd_start = Date.new(year, 1, 1)
+      ytd_end   = Date.new(year, month, 1).next_month
+      range     = ytd_start...ytd_end
+
+      total_spent = current_user.payments
+        .where(payment_date: range, deleted_at: nil)
+        .sum(:amount).to_f.round(2)
+
+      transaction_count = current_user.payments
+        .where(payment_date: range, deleted_at: nil)
+        .count
+
+      types = current_user.payments
+        .where(payment_date: range, deleted_at: nil)
+        .joins("LEFT JOIN spending_categories ON spending_categories.id = payments.spending_category_id AND spending_categories.deleted_at IS NULL")
+        .joins("LEFT JOIN spending_types ON spending_types.id = spending_categories.spending_type_id AND spending_types.deleted_at IS NULL")
+        .group(
+          "spending_types.id",
+          "spending_types.name",
+          "spending_types.icon_key",
+          "spending_types.color_key"
+        )
+        .order(Arel.sql("SUM(payments.amount) DESC"))
+        .pluck(
+          Arel.sql("spending_types.id"),
+          Arel.sql("COALESCE(spending_types.name, 'None')"),
+          Arel.sql("spending_types.icon_key"),
+          Arel.sql("spending_types.color_key"),
+          Arel.sql("SUM(payments.amount)"),
+          Arel.sql("COUNT(payments.id)")
+        )
+        .map do |id, name, icon_key, color_key, amount, count|
+          amt = amount.to_f.round(2)
+          {
+            id: id, name: name, icon_key: icon_key, color_key: color_key,
+            amount: amt,
+            pct: total_spent > 0 ? (amt / total_spent * 100).round(1) : 0.0,
+            count: count
+          }
+        end
+
+      {
+        label: "Jan \u2013 #{Date.new(year, month, 1).strftime('%b')} #{year}",
+        total_spent: total_spent,
+        transaction_count: transaction_count,
+        types: types
       }
     end
 

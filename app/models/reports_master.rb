@@ -4,7 +4,8 @@ class ReportsMaster < ApplicationRecord
   REGISTERED_ROUTES = [
     { label: "Monthly Cash Flow",      path: "/reports/monthly_cash_flow" },
     { label: "Spending by Category",   path: "/reports/spending_by_category" },
-    { label: "Recurring Obligations", path: "/reports/recurring_obligations" }
+    { label: "Recurring Obligations", path: "/reports/recurring_obligations" },
+    { label: "Spending by Type", path: "/reports/spending_by_type" }
   ].freeze
 
   VALID_ROUTE_PATHS = REGISTERED_ROUTES.map { |r| r[:path] }.freeze
