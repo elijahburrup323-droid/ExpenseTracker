@@ -1,6 +1,6 @@
 APP_VERSION = "1.3.18"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
-MANUAL_CHANGE_SEQ = 2  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 3  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
@@ -20,6 +20,10 @@ APP_ALL_VERSIONS = [
       "Reports: Income by Source options modal with date range, account filter, recurring toggle, and table/chart format (CM-6)",
       "Reports: Income by Source pie chart view with color-coded segments and legend (CM-6)",
       "Reports: Income by Source print support with BudgetHQ branding (CM-6)",
+      "Reports: New Net Worth Report — historical net worth by month with total assets, total liabilities, and month-over-month change (CM-7)",
+      "Reports: Net Worth Report options modal with date range, in-budget accounts toggle, and table/chart format (CM-7)",
+      "Reports: Net Worth Report line chart view showing net worth trend over time (CM-7)",
+      "Reports: Net Worth Report print support with BudgetHQ branding (CM-7)",
     ]
   },
   {

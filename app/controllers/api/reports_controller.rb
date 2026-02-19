@@ -151,6 +151,19 @@ module Api
       render json: result
     end
 
+    # GET /api/reports/net_worth_report?start_year=&start_month=&end_year=&end_month=&in_budget_only=0|1
+    def net_worth_report
+      om = OpenMonthMaster.for_user(current_user)
+      start_year  = (params[:start_year]  || om.current_year).to_i
+      start_month = (params[:start_month] || 1).to_i
+      end_year    = (params[:end_year]    || om.current_year).to_i
+      end_month   = (params[:end_month]   || om.current_month).to_i
+      in_budget_only = params[:in_budget_only] == "1"
+
+      result = net_worth_report_data(start_year, start_month, end_year, end_month, in_budget_only)
+      render json: result
+    end
+
     # GET /api/reports/recurring_obligations?year=YYYY&month=M&include_inactive=0|1
     def recurring_obligations
       om = OpenMonthMaster.for_user(current_user)
@@ -643,6 +656,80 @@ module Api
         start_label: range_start.strftime("%B %Y"),
         end_label: Date.new(end_year, end_month, 1).strftime("%B %Y"),
         account_name: account_id ? (current_user.accounts.find_by(id: account_id)&.name || "Unknown") : "All Accounts"
+      }
+    end
+
+    # --- Net Worth Report helpers ---
+
+    def net_worth_report_data(start_year, start_month, end_year, end_month, in_budget_only)
+      om = OpenMonthMaster.for_user(current_user)
+      open_year  = om.current_year
+      open_month = om.current_month
+
+      # Build month list
+      months = []
+      y, m = start_year, start_month
+      while y < end_year || (y == end_year && m <= end_month)
+        months << { year: y, month: m }
+        m += 1
+        if m > 12
+          m = 1
+          y += 1
+        end
+      end
+
+      # Determine which accounts to include
+      account_scope = current_user.accounts
+      account_scope = account_scope.where(include_in_budget: true) if in_budget_only
+      account_ids = account_scope.pluck(:id).to_set
+
+      # Preload all account_month_snapshots for the range
+      all_snapshots = current_user.account_month_snapshots.active
+        .where(
+          "(year > :sy OR (year = :sy AND month >= :sm)) AND (year < :ey OR (year = :ey AND month <= :em))",
+          sy: start_year, sm: start_month, ey: end_year, em: end_month
+        ).to_a
+      snapshots_by_period = all_snapshots.group_by { |s| [s.year, s.month] }
+
+      rows = months.map do |mo|
+        y_val, m_val = mo[:year], mo[:month]
+        is_open = (y_val == open_year && m_val == open_month)
+        is_closed = (y_val < open_year || (y_val == open_year && m_val < open_month))
+
+        next nil if !is_open && !is_closed
+
+        label = Date.new(y_val, m_val, 1).strftime("%B %Y")
+
+        if is_closed
+          snaps = (snapshots_by_period[[y_val, m_val]] || []).select { |s| account_ids.include?(s.account_id) }
+          total_assets = snaps.select { |s| s.ending_balance.to_f >= 0 }.sum { |s| s.ending_balance.to_f }.round(2)
+          total_liabilities = snaps.select { |s| s.ending_balance.to_f < 0 }.sum { |s| s.ending_balance.to_f }.round(2)
+          net_worth = (total_assets + total_liabilities).round(2)
+          { label: label, year: y_val, month: m_val, total_assets: total_assets, total_liabilities: total_liabilities, net_worth: net_worth, source: "snapshot" }
+        elsif is_open
+          balances = AccountBalanceService.balances_as_of(current_user, Date.today)
+          filtered = balances.select { |aid, _| account_ids.include?(aid) }
+          total_assets = filtered.values.select { |v| v >= 0 }.sum.to_f.round(2)
+          total_liabilities = filtered.values.select { |v| v < 0 }.sum.to_f.round(2)
+          net_worth = (total_assets + total_liabilities).round(2)
+          { label: label, year: y_val, month: m_val, total_assets: total_assets, total_liabilities: total_liabilities, net_worth: net_worth, source: "live" }
+        end
+      end.compact
+
+      # Compute month-over-month change
+      rows.each_with_index do |row, i|
+        if i == 0
+          row[:change] = nil
+        else
+          row[:change] = (row[:net_worth] - rows[i - 1][:net_worth]).round(2)
+        end
+      end
+
+      {
+        start_label: Date.new(start_year, start_month, 1).strftime("%B %Y"),
+        end_label: Date.new(end_year, end_month, 1).strftime("%B %Y"),
+        in_budget_only: in_budget_only,
+        months: rows
       }
     end
 

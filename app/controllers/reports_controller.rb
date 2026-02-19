@@ -31,4 +31,8 @@ class ReportsController < ApplicationController
   def income_by_source
     @open_month = OpenMonthMaster.for_user(current_user)
   end
+
+  def net_worth_report
+    @open_month = OpenMonthMaster.for_user(current_user)
+  end
 end

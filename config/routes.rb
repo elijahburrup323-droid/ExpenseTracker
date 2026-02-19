@@ -76,6 +76,7 @@ Rails.application.routes.draw do
   get "reports/spending_by_type", to: "reports#spending_by_type", as: :report_spending_by_type
   get "reports/account_balance_history", to: "reports#account_balance_history", as: :report_account_balance_history
   get "reports/income_by_source", to: "reports#income_by_source", as: :report_income_by_source
+  get "reports/net_worth_report", to: "reports#net_worth_report", as: :report_net_worth_report
 
   # Soft Close Month (HTML page)
   get "soft_close", to: "soft_close#index", as: :soft_close
@@ -187,6 +188,7 @@ Rails.application.routes.draw do
       get "spending_by_type", action: :spending_by_type
       get "account_balance_history", action: :account_balance_history
       get "income_by_source", action: :income_by_source
+      get "net_worth_report", action: :net_worth_report
     end
   end
 
