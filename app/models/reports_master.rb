@@ -9,7 +9,8 @@ class ReportsMaster < ApplicationRecord
     { label: "Account Balance History", path: "/reports/account_balance_history" },
     { label: "Income by Source", path: "/reports/income_by_source" },
     { label: "Net Worth Report", path: "/reports/net_worth_report" },
-    { label: "Soft Close Summary", path: "/reports/soft_close_summary" }
+    { label: "Soft Close Summary", path: "/reports/soft_close_summary" },
+    { label: "Reconciliation Summary", path: "/reports/reconciliation_summary" }
   ].freeze
 
   VALID_ROUTE_PATHS = REGISTERED_ROUTES.map { |r| r[:path] }.freeze

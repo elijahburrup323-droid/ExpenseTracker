@@ -39,4 +39,8 @@ class ReportsController < ApplicationController
   def soft_close_summary
     @open_month = OpenMonthMaster.for_user(current_user)
   end
+
+  def reconciliation_summary
+    @open_month = OpenMonthMaster.for_user(current_user)
+  end
 end

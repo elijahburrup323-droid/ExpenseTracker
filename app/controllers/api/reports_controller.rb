@@ -164,6 +164,17 @@ module Api
       render json: result
     end
 
+    # GET /api/reports/reconciliation_summary?year=YYYY&month=M&account_id=N
+    def reconciliation_summary
+      om = OpenMonthMaster.for_user(current_user)
+      year  = (params[:year]  || om.current_year).to_i
+      month = (params[:month] || om.current_month).to_i
+      account_id = params[:account_id].presence&.to_i
+
+      result = reconciliation_summary_data(year, month, account_id)
+      render json: result
+    end
+
     # GET /api/reports/soft_close_summary?year=YYYY&month=M
     def soft_close_summary
       om = OpenMonthMaster.for_user(current_user)
@@ -740,6 +751,89 @@ module Api
         end_label: Date.new(end_year, end_month, 1).strftime("%B %Y"),
         in_budget_only: in_budget_only,
         months: rows
+      }
+    end
+
+    # --- Reconciliation Summary helpers ---
+
+    def reconciliation_summary_data(year, month, account_id)
+      label = Date.new(year, month, 1).strftime("%B %Y")
+
+      unless account_id
+        return { exists: false, label: label, message: "Please select an account." }
+      end
+
+      account = current_user.accounts.find_by(id: account_id)
+      return { exists: false, label: label, message: "Account not found." } unless account
+
+      # Reconciliation record
+      recon = current_user.reconciliation_records.find_by(
+        account_id: account.id, year: year, month: month
+      )
+
+      # BudgetHQ balance: use snapshot for closed month, live for open
+      om = OpenMonthMaster.for_user(current_user)
+      is_open = (year == om.current_year && month == om.current_month)
+
+      if is_open
+        all_balances = AccountBalanceService.balances_as_of(current_user, Date.today)
+        budget_balance = (all_balances[account.id] || 0.0).round(2)
+      else
+        snap = current_user.account_month_snapshots.active.find_by(account_id: account.id, year: year, month: month)
+        budget_balance = snap ? snap.ending_balance.to_f.round(2) : nil
+      end
+
+      outside_balance = recon&.outside_balance&.to_f&.round(2)
+      difference = (budget_balance && outside_balance) ? (budget_balance - outside_balance).round(2) : nil
+      reconciled = recon&.status == "reconciled"
+
+      summary = {
+        account_name: account.name,
+        label: label,
+        budget_balance: budget_balance,
+        outside_balance: outside_balance,
+        difference: difference,
+        reconciled: reconciled,
+        reconciled_at: recon&.reconciled_at&.strftime("%B %d, %Y at %I:%M %p")
+      }
+
+      # Transaction detail
+      month_start = Date.new(year, month, 1)
+      month_end = month_start.next_month
+      range = month_start...month_end
+
+      payments = current_user.payments
+        .where(account_id: account.id, payment_date: range)
+        .order(payment_date: :asc, id: :asc)
+        .map { |p| { date: p.payment_date.to_s, description: p.description, amount: -p.amount.to_f.round(2), type: "Payment", reconciled: p.reconciled } }
+
+      deposits = current_user.income_entries
+        .where(account_id: account.id, entry_date: range)
+        .order(entry_date: :asc, id: :asc)
+        .map { |d| { date: d.entry_date.to_s, description: d.source_name, amount: d.amount.to_f.round(2), type: "Deposit", reconciled: d.reconciled } }
+
+      transfers_out = current_user.transfer_masters
+        .where(from_account_id: account.id, transfer_date: range)
+        .order(transfer_date: :asc, id: :asc)
+        .map { |t| to_acct = current_user.accounts.unscoped.find_by(id: t.to_account_id); { date: t.transfer_date.to_s, description: "Transfer to #{to_acct&.name || '[Deleted]'}", amount: -t.amount.to_f.round(2), type: "Transfer", reconciled: t.reconciled } }
+
+      transfers_in = current_user.transfer_masters
+        .where(to_account_id: account.id, transfer_date: range)
+        .order(transfer_date: :asc, id: :asc)
+        .map { |t| from_acct = current_user.accounts.unscoped.find_by(id: t.from_account_id); { date: t.transfer_date.to_s, description: "Transfer from #{from_acct&.name || '[Deleted]'}", amount: t.amount.to_f.round(2), type: "Transfer", reconciled: t.reconciled } }
+
+      adjustments = current_user.balance_adjustments
+        .where(account_id: account.id, adjustment_date: range)
+        .order(adjustment_date: :asc, id: :asc)
+        .map { |a| { date: a.adjustment_date.to_s, description: a.description, amount: a.amount.to_f.round(2), type: "Adjustment", reconciled: a.reconciled } }
+
+      transactions = (payments + deposits + transfers_out + transfers_in + adjustments).sort_by { |t| t[:date] }
+
+      {
+        exists: true,
+        label: label,
+        summary: summary,
+        transactions: transactions
       }
     end
 
