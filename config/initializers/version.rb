@@ -1,6 +1,6 @@
 APP_VERSION = "1.3.18"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
-MANUAL_CHANGE_SEQ = 3  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 4  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
@@ -24,6 +24,9 @@ APP_ALL_VERSIONS = [
       "Reports: Net Worth Report options modal with date range, in-budget accounts toggle, and table/chart format (CM-7)",
       "Reports: Net Worth Report line chart view showing net worth trend over time (CM-7)",
       "Reports: Net Worth Report print support with BudgetHQ branding (CM-7)",
+      "Reports: New Soft Close Summary report — snapshot data captured during month soft close with account detail, income/spending, and net worth sections (CM-8)",
+      "Reports: Soft Close Summary options modal with month selector and section visibility toggles (CM-8)",
+      "Reports: Soft Close Summary print support with BudgetHQ branding (CM-8)",
     ]
   },
   {

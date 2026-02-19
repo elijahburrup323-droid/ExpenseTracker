@@ -35,4 +35,8 @@ class ReportsController < ApplicationController
   def net_worth_report
     @open_month = OpenMonthMaster.for_user(current_user)
   end
+
+  def soft_close_summary
+    @open_month = OpenMonthMaster.for_user(current_user)
+  end
 end

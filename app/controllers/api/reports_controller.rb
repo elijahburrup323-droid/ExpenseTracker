@@ -164,6 +164,16 @@ module Api
       render json: result
     end
 
+    # GET /api/reports/soft_close_summary?year=YYYY&month=M
+    def soft_close_summary
+      om = OpenMonthMaster.for_user(current_user)
+      year  = (params[:year]  || om.current_year).to_i
+      month = (params[:month] || om.current_month).to_i
+
+      result = soft_close_summary_data(year, month)
+      render json: result
+    end
+
     # GET /api/reports/recurring_obligations?year=YYYY&month=M&include_inactive=0|1
     def recurring_obligations
       om = OpenMonthMaster.for_user(current_user)
@@ -730,6 +740,70 @@ module Api
         end_label: Date.new(end_year, end_month, 1).strftime("%B %Y"),
         in_budget_only: in_budget_only,
         months: rows
+      }
+    end
+
+    # --- Soft Close Summary helpers ---
+
+    def soft_close_summary_data(year, month)
+      label = Date.new(year, month, 1).strftime("%B %Y")
+
+      # Check if month was closed
+      close_record = current_user.close_month_masters.find_by(closed_year: year, closed_month: month)
+      unless close_record
+        return { exists: false, label: label, message: "No soft close snapshot exists for this month." }
+      end
+
+      # Section 1: Month Overview
+      overview = {
+        label: label,
+        closed_at: close_record.closed_at&.strftime("%B %d, %Y at %I:%M %p"),
+        closed_by: close_record.closed_by_user&.email || "System"
+      }
+
+      # Section 2: Account Balances (from account_month_snapshots)
+      snapshots = current_user.account_month_snapshots.active
+        .where(year: year, month: month)
+        .includes(:account)
+        .order("accounts.sort_order")
+      accounts = snapshots.map do |s|
+        beg = s.beginning_balance.to_f.round(2)
+        ending = s.ending_balance.to_f.round(2)
+        {
+          name: s.account&.name || "Deleted Account",
+          beginning_balance: beg,
+          ending_balance: ending,
+          change: (ending - beg).round(2)
+        }
+      end
+
+      # Section 3: Income & Spending (from dashboard_month_snapshot)
+      dash_snap = current_user.dashboard_month_snapshots.active.for_period(year, month).first
+      income_spending = if dash_snap
+        {
+          total_deposits: dash_snap.total_income.to_f.round(2),
+          total_payments: dash_snap.total_spent.to_f.round(2),
+          beginning_balance: dash_snap.beginning_balance.to_f.round(2),
+          ending_balance: dash_snap.ending_balance.to_f.round(2)
+        }
+      end
+
+      # Section 4: Net Worth (from snapshots)
+      total_assets = snapshots.select { |s| s.ending_balance.to_f >= 0 }.sum { |s| s.ending_balance.to_f }.round(2)
+      total_liabilities = snapshots.select { |s| s.ending_balance.to_f < 0 }.sum { |s| s.ending_balance.to_f }.round(2)
+      net_worth_val = (total_assets + total_liabilities).round(2)
+
+      {
+        exists: true,
+        label: label,
+        overview: overview,
+        accounts: accounts,
+        income_spending: income_spending,
+        net_worth: {
+          total_assets: total_assets,
+          total_liabilities: total_liabilities,
+          net_worth: net_worth_val
+        }
       }
     end
 
