@@ -11,4 +11,8 @@ class ReportsController < ApplicationController
   def monthly_cash_flow
     @open_month = OpenMonthMaster.for_user(current_user)
   end
+
+  def spending_by_category
+    @open_month = OpenMonthMaster.for_user(current_user)
+  end
 end

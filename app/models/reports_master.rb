@@ -2,7 +2,8 @@ class ReportsMaster < ApplicationRecord
   # Source-of-truth list of registered report routes.
   # Add new entries here as reports are implemented in routes.rb.
   REGISTERED_ROUTES = [
-    { label: "Monthly Cash Flow",  path: "/reports/monthly_cash_flow" }
+    { label: "Monthly Cash Flow",      path: "/reports/monthly_cash_flow" },
+    { label: "Spending by Category",   path: "/reports/spending_by_category" }
   ].freeze
 
   VALID_ROUTE_PATHS = REGISTERED_ROUTES.map { |r| r[:path] }.freeze

@@ -1,9 +1,19 @@
-APP_VERSION = "1.3.13"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+APP_VERSION = "1.3.14"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.14",
+    changes: [
+      "Reports: New Spending by Category report — category breakdown with icon, spending type, amount, percentage, and transaction count (CM-16)",
+      "Reports: Report options popup with Regular and Comparison modes, matching Monthly Cash Flow pattern (CM-16)",
+      "Reports: Comparison mode shows previous month variance ($, %) and optional YTD totals per category (CM-16)",
+      "Reports: Print button generates clean, print-optimized report with BudgetHQ branding and repeating headers (CM-16)",
+      "Reports: Spending by Category registered in reports table and accessible from Monthly > Reports menu (CM-16)",
+    ]
+  },
   {
     version: "1.3.13",
     changes: [

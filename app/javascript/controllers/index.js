@@ -33,6 +33,7 @@ import AccountTypeMastersController from "controllers/account_type_masters_contr
 import ReportsController from "controllers/reports_controller"
 import ReportsMastersController from "controllers/reports_masters_controller"
 import MonthlyCashFlowController from "controllers/monthly_cash_flow_controller"
+import SpendingByCategoryController from "controllers/spending_by_category_controller"
 
 application.register("flash", FlashController)
 application.register("dropdown", DropdownController)
@@ -67,3 +68,4 @@ application.register("account-type-masters", AccountTypeMastersController)
 application.register("reports", ReportsController)
 application.register("reports-masters", ReportsMastersController)
 application.register("monthly-cash-flow", MonthlyCashFlowController)
+application.register("spending-by-category", SpendingByCategoryController)
