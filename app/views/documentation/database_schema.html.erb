@@ -740,6 +740,53 @@ phone_verifications
     </div>
   </div>
 
+  <%# ── Recurring Obligations ── %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 mb-6 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">recurring_obligations</h2>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Recurring bills and expenses with frequency-based scheduling</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-100 dark:border-gray-700">
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Column</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Type</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Constraints</th>
+            <th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Description</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr><td class="px-6 py-2 font-mono text-xs text-gray-700 dark:text-gray-300">id</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">bigint</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">PK</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">Primary key</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-xs text-gray-700 dark:text-gray-300">user_id</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">bigint</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">FK &rarr; users, NOT NULL</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">Owner</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-xs text-gray-700 dark:text-gray-300">name</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">varchar(80)</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">NOT NULL</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">Obligation name (e.g., Mortgage, Car Payment)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-xs text-gray-700 dark:text-gray-300">description</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">varchar(255)</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400"></td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">Description text</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-xs text-gray-700 dark:text-gray-300">amount</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">decimal(12,2)</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">NOT NULL</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">Expected payment amount</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-xs text-gray-700 dark:text-gray-300">account_id</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">bigint</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">FK &rarr; accounts</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">Pay-from account (optional)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-xs text-gray-700 dark:text-gray-300">spending_category_id</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">bigint</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">FK &rarr; spending_categories</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">Spending category (optional)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-xs text-gray-700 dark:text-gray-300">frequency_master_id</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">bigint</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">FK &rarr; income_frequency_masters, NOT NULL</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">Frequency definition (Monthly, Quarterly, etc.)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-xs text-gray-700 dark:text-gray-300">due_day</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">integer</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400"></td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">Day of month due (1-31), overrides frequency</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-xs text-gray-700 dark:text-gray-300">start_date</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">date</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">NOT NULL</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">When the obligation begins</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-xs text-gray-700 dark:text-gray-300">use_flag</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">boolean</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">default: true</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">Active/inactive toggle</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-xs text-gray-700 dark:text-gray-300">notes</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">text</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400"></td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">Additional notes</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-xs text-gray-700 dark:text-gray-300">sort_order</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">integer</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">default: 0</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">Display ordering</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-xs text-gray-700 dark:text-gray-300">deleted_at</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">datetime</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400"></td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">Soft-delete timestamp</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-xs text-gray-700 dark:text-gray-300">created_at / updated_at</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">datetime</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">NOT NULL</td><td class="px-6 py-2 text-xs text-gray-500 dark:text-gray-400">Timestamps</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5">
+        <li>(user_id, deleted_at)</li>
+        <li>(user_id, start_date)</li>
+        <li>(account_id)</li>
+        <li>(spending_category_id)</li>
+        <li>(frequency_master_id)</li>
+      </ul>
+    </div>
+  </div>
+
   <%# ── Income Entries ── %>
   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 mb-6 overflow-hidden">
     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">

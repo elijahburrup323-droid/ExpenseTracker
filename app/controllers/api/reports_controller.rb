@@ -97,6 +97,17 @@ module Api
       render json: result
     end
 
+    # GET /api/reports/recurring_obligations?year=YYYY&month=M&include_inactive=0|1
+    def recurring_obligations
+      om = OpenMonthMaster.for_user(current_user)
+      year  = (params[:year]  || om.current_year).to_i
+      month = (params[:month] || om.current_month).to_i
+      include_inactive = params[:include_inactive] == "1"
+
+      result = obligations_for_month(year, month, include_inactive)
+      render json: result
+    end
+
     private
 
     def cash_flow_for_month(year, month)
@@ -324,6 +335,51 @@ module Api
         total_spent: total_spent,
         transaction_count: transaction_count,
         categories: categories
+      }
+    end
+
+    # --- Recurring Obligations helpers ---
+
+    def obligations_for_month(year, month, include_inactive)
+      month_start = Date.new(year, month, 1)
+
+      scope = current_user.recurring_obligations.ordered
+      scope = scope.active unless include_inactive
+
+      obligations = scope
+        .includes(:account, :frequency_master, spending_category: :spending_type)
+        .select { |ob| ob.falls_in_month?(year, month) }
+
+      rows = obligations.map do |ob|
+        due = ob.due_date_in_month(year, month)
+        {
+          id: ob.id,
+          due_date: due&.strftime("%Y-%m-%d"),
+          due_day_display: due&.strftime("%b %d"),
+          name: ob.name,
+          description: ob.description,
+          account_name: ob.account&.name || "Unassigned",
+          category_name: ob.spending_category&.name || "Uncategorized",
+          icon_key: ob.spending_category&.icon_key,
+          color_key: ob.spending_category&.color_key,
+          spending_type_name: ob.spending_category&.spending_type&.name || "None",
+          frequency_name: ob.frequency_master.name,
+          amount: ob.amount.to_f.round(2),
+          status: "Scheduled",
+          use_flag: ob.use_flag,
+          notes: ob.notes
+        }
+      end.sort_by { |r| r[:due_date] || "9999-12-31" }
+
+      total_amount = rows.sum { |r| r[:amount] }
+
+      {
+        month_label: month_start.strftime("%B %Y"),
+        year: year,
+        month: month,
+        total_obligations: rows.size,
+        total_expected: total_amount.round(2),
+        obligations: rows
       }
     end
   end

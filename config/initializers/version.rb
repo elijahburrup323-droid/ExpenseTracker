@@ -1,9 +1,19 @@
-APP_VERSION = "1.3.15"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+APP_VERSION = "1.3.16"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.16",
+    changes: [
+      "Database: New recurring_obligations table for tracking recurring bills and expenses (CM-2)",
+      "Reports: New Recurring Obligations report — lists expected obligations for selected month with due dates, frequency, and totals (CM-2)",
+      "Reports: Report options popup with include-inactive toggle, matching existing report pattern (CM-2)",
+      "Reports: Print button generates clean, print-optimized report with BudgetHQ branding (CM-2)",
+      "Reports: Recurring Obligations registered in reports table and accessible from Monthly > Reports menu (CM-2)",
+    ]
+  },
   {
     version: "1.3.15",
     changes: [

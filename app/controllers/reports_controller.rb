@@ -15,4 +15,8 @@ class ReportsController < ApplicationController
   def spending_by_category
     @open_month = OpenMonthMaster.for_user(current_user)
   end
+
+  def recurring_obligations
+    @open_month = OpenMonthMaster.for_user(current_user)
+  end
 end

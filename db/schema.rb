@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_19_300001) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_19_400002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -393,6 +393,30 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_19_300001) do
     t.index ["user_id"], name: "index_reconciliation_records_on_user_id"
   end
 
+  create_table "recurring_obligations", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "name", limit: 80, null: false
+    t.string "description", limit: 255
+    t.decimal "amount", precision: 12, scale: 2, null: false
+    t.bigint "account_id"
+    t.bigint "spending_category_id"
+    t.bigint "frequency_master_id", null: false
+    t.integer "due_day"
+    t.date "start_date", null: false
+    t.boolean "use_flag", default: true
+    t.text "notes"
+    t.integer "sort_order", default: 0
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_recurring_obligations_on_account_id"
+    t.index ["frequency_master_id"], name: "index_recurring_obligations_on_frequency_master_id"
+    t.index ["spending_category_id"], name: "index_recurring_obligations_on_spending_category_id"
+    t.index ["user_id", "deleted_at"], name: "index_recurring_obligations_on_user_id_and_deleted_at"
+    t.index ["user_id", "start_date"], name: "index_recurring_obligations_on_user_id_and_start_date"
+    t.index ["user_id"], name: "index_recurring_obligations_on_user_id"
+  end
+
   create_table "reports_masters", force: :cascade do |t|
     t.string "report_key", limit: 60, null: false
     t.string "title", limit: 120, null: false
@@ -650,6 +674,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_19_300001) do
   add_foreign_key "reconciliation_group_ui_states", "users"
   add_foreign_key "reconciliation_records", "accounts"
   add_foreign_key "reconciliation_records", "users"
+  add_foreign_key "recurring_obligations", "accounts"
+  add_foreign_key "recurring_obligations", "income_frequency_masters", column: "frequency_master_id"
+  add_foreign_key "recurring_obligations", "spending_categories"
+  add_foreign_key "recurring_obligations", "users"
   add_foreign_key "spending_categories", "spending_types"
   add_foreign_key "spending_categories", "users"
   add_foreign_key "spending_limits_history", "users"

@@ -72,6 +72,7 @@ Rails.application.routes.draw do
   get "reports", to: "reports#index", as: :reports
   get "reports/monthly_cash_flow", to: "reports#monthly_cash_flow", as: :report_monthly_cash_flow
   get "reports/spending_by_category", to: "reports#spending_by_category", as: :report_spending_by_category
+  get "reports/recurring_obligations", to: "reports#recurring_obligations", as: :report_recurring_obligations
 
   # Soft Close Month (HTML page)
   get "soft_close", to: "soft_close#index", as: :soft_close
@@ -179,6 +180,7 @@ Rails.application.routes.draw do
       put "reorder", action: :reorder
       get "monthly_cash_flow", action: :monthly_cash_flow
       get "spending_by_category", action: :spending_by_category
+      get "recurring_obligations", action: :recurring_obligations
     end
   end
 
