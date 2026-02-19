@@ -132,7 +132,9 @@ payments
  ├── belongs_to :user                  (user_id FK → users.id)
  ├── belongs_to :account               (account_id FK → accounts.id)
  ├── belongs_to :spending_category     (spending_category_id FK → spending_categories.id)
- └── belongs_to :spending_type_override (optional, FK → spending_types.id)
+ ├── belongs_to :spending_type_override (optional, FK → spending_types.id)
+ ├── has_many :tag_assignments         (polymorphic: taggable_type=Payment)
+ └── has_many :tags, through: :tag_assignments
 
 income_frequency_masters (global lookup, not user-scoped)
  ├── has_many :income_user_frequencies (income_user_frequencies.frequency_master_id)
@@ -1290,7 +1292,7 @@ phone_verifications
   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 mb-6 overflow-hidden">
     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
       <h2 class="text-lg font-semibold text-gray-900 dark:text-white">tags</h2>
-      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">User-defined tags for organizing accounts and other entities</p>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">User-defined tags for organizing accounts, payments, and other entities</p>
     </div>
     <div class="overflow-x-auto">
       <table class="min-w-full text-sm">
@@ -1316,7 +1318,7 @@ phone_verifications
   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 mb-6 overflow-hidden">
     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
       <h2 class="text-lg font-semibold text-gray-900 dark:text-white">tag_assignments</h2>
-      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Polymorphic join table connecting tags to taggable entities (accounts, etc.)</p>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Polymorphic join table connecting tags to taggable entities (accounts, payments, etc.)</p>
     </div>
     <div class="overflow-x-auto">
       <table class="min-w-full text-sm">

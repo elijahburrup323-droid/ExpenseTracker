@@ -10,6 +10,7 @@
      data-payments-categories-page-url-value="<%= spending_categories_path %>"
      data-payments-types-page-url-value="<%= spending_types_path %>"
      data-payments-suggestions-url-value="<%= suggestions_api_payments_path %>"
+     data-payments-tags-url-value="<%= api_tags_path %>"
 >
 
   <%# Page Header (sticky) %>
@@ -96,22 +97,24 @@
       .pf-reset      { grid-column: 4; grid-row: 1; }
       .pf-category   { grid-column: 1; grid-row: 2; }
       .pf-type       { grid-column: 2; grid-row: 2; max-width: 220px; }
+      .pf-tag        { grid-column: 3; grid-row: 2; }
       .pf-search     { grid-column: 1 / span 3; grid-row: 3; }
       .pf-search-btn { grid-column: 4; grid-row: 3; }
     }
     /* Desktop: >1279px — 2-row layout */
     @media (min-width: 1280px) {
       .payments-filter-grid {
-        grid-template-columns: auto auto auto auto auto auto;
+        grid-template-columns: auto auto auto auto auto auto auto;
       }
       .pf-start      { grid-column: 1; grid-row: 1; }
       .pf-end        { grid-column: 2; grid-row: 1; }
       .pf-account    { grid-column: 3; grid-row: 1; }
       .pf-category   { grid-column: 4; grid-row: 1; }
       .pf-type       { grid-column: 5; grid-row: 1; }
-      .pf-reset      { grid-column: 6; grid-row: 1; }
-      .pf-search     { grid-column: 1 / span 5; grid-row: 2; }
-      .pf-search-btn { grid-column: 6; grid-row: 2; }
+      .pf-tag        { grid-column: 6; grid-row: 1; }
+      .pf-reset      { grid-column: 7; grid-row: 1; }
+      .pf-search     { grid-column: 1 / span 6; grid-row: 2; }
+      .pf-search-btn { grid-column: 7; grid-row: 2; }
     }
     /* Modal date input — prevent iPad Safari overflow */
     .modal-date-input {
@@ -182,6 +185,15 @@
                 class="w-full h-11 rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2"
                 data-action="change->payments#applyFilters">
           <option value="">All Spending Types</option>
+        </select>
+      </div>
+      <%# Tag Filter %>
+      <div class="pf-tag" style="min-width: 120px;">
+        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Tag</label>
+        <select data-payments-target="filterTag"
+                class="w-full h-11 rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2"
+                data-action="change->payments#applyFilters">
+          <option value="">All Tags</option>
         </select>
       </div>
       <%# Search Input %>
@@ -314,6 +326,16 @@
             <ul id="payments-suggestions-list" role="listbox"
                 class="hidden absolute z-50 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-300 rounded-lg shadow-lg"
                 data-payments-target="suggestionsList"></ul>
+          </div>
+          <div class="relative" data-payments-target="modalTagsWrapper">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+            <div class="flex flex-wrap gap-1 mb-1" data-payments-target="modalTagsPills"></div>
+            <input type="text" placeholder="Search or create tags..." autocomplete="off"
+                   class="w-full rounded-lg border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2.5"
+                   data-payments-target="modalTagsInput"
+                   data-action="input->payments#onTagsInput focus->payments#onTagsFocus keydown->payments#onTagsKeydown">
+            <div class="hidden absolute z-50 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-300 rounded-lg shadow-lg"
+                 data-payments-target="modalTagsDropdown"></div>
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Payment Amount <span class="text-red-500">*</span></label>

@@ -13,6 +13,7 @@ module Api
 
       ActiveRecord::Base.transaction do
         if payment.save
+          sync_tags!(payment)
           account = payment.account
           account.balance -= payment.amount
           account.save!
@@ -37,6 +38,7 @@ module Api
         old_account = @payment.account
 
         if @payment.update(payment_params)
+          sync_tags!(@payment)
           old_account.balance += old_amount
           old_account.save!
 
@@ -140,6 +142,12 @@ module Api
 
       effective_type = override_type || cat_type
 
+      tags_data = if lookup && lookup[:payment_tags]
+                    (lookup[:payment_tags][p.id] || []).map { |t| { id: t.id, name: t.name, color_key: t.color_key } }
+                  else
+                    p.tags.map { |t| { id: t.id, name: t.name, color_key: t.color_key } }
+                  end
+
       p.as_json(only: [:id, :payment_date, :description, :notes, :amount, :sort_order])
         .merge(
           account_id: p.account_id,
@@ -148,7 +156,8 @@ module Api
           account_name: acct&.name || "[Deleted]",
           spending_category_name: cat&.name || "[Deleted]",
           spending_type_name: effective_type&.name || "Unknown",
-          spending_type_color_key: effective_type&.color_key || "blue"
+          spending_type_color_key: effective_type&.color_key || "blue",
+          tags: tags_data
         )
     end
 
@@ -161,11 +170,31 @@ module Api
         categories.values.map(&:spending_type_id).compact
       ).uniq
 
+      # Eager-load tags for all payments
+      payment_ids = payments.map(&:id)
+      assignments = TagAssignment.where(taggable_type: "Payment", taggable_id: payment_ids).includes(:tag)
+      payment_tags = {}
+      assignments.each do |ta|
+        next unless ta.tag && ta.tag.deleted_at.nil?
+        (payment_tags[ta.taggable_id] ||= []) << ta.tag
+      end
+
       {
         accounts: Account.unscoped.where(id: acct_ids).index_by(&:id),
         categories: categories,
-        types: SpendingType.unscoped.where(id: type_ids).index_by(&:id)
+        types: SpendingType.unscoped.where(id: type_ids).index_by(&:id),
+        payment_tags: payment_tags
       }
+    end
+
+    def sync_tags!(payment)
+      tag_ids = (params.dig(:payment, :tag_ids) || []).map(&:to_i).uniq
+      valid_tag_ids = current_user.tags.where(id: tag_ids).pluck(:id)
+      # Remove old assignments, add new ones
+      payment.tag_assignments.destroy_all
+      valid_tag_ids.each do |tid|
+        payment.tag_assignments.create!(user: current_user, tag_id: tid)
+      end
     end
   end
 end

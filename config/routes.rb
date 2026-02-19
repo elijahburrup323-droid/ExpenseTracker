@@ -44,6 +44,9 @@ Rails.application.routes.draw do
   # Payments (HTML page)
   resources :payments, only: [:index]
 
+  # Tags (HTML page)
+  resources :tags, only: [:index]
+
   # Account Type Masters (HTML page, agent-only)
   resources :account_type_masters, only: [:index]
 
@@ -89,6 +92,7 @@ Rails.application.routes.draw do
         get :suggestions
       end
     end
+    resources :tags, only: [:index, :create, :update, :destroy]
     resources :account_type_masters, only: [:index, :create, :update, :destroy] do
       member do
         get :can_delete

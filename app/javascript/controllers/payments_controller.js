@@ -1,5 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 import { escapeHtml, escapeAttr } from "controllers/shared/icon_catalog"
+import { TAG_COLORS } from "controllers/tags_controller"
 
 const TYPE_BADGE_COLORS = {
   blue:   { bg: "bg-blue-100 dark:bg-blue-900/40",   text: "text-blue-700 dark:text-blue-300" },
@@ -13,10 +14,11 @@ const DEFAULT_BADGE = { bg: "bg-gray-100 dark:bg-gray-700", text: "text-gray-700
 export default class extends Controller {
   static targets = [
     "tableBody", "tableHead", "addButton", "generateButton", "deleteModal", "deleteModalName",
-    "filterStartDate", "filterEndDate", "filterAccount", "filterCategory", "filterType", "filterSearch",
+    "filterStartDate", "filterEndDate", "filterAccount", "filterCategory", "filterType", "filterTag", "filterSearch",
     "filterCount", "total",
     "addModal", "addModalBody", "modalTitle", "modalDate", "modalAccount", "modalCategory", "modalType",
     "modalDescription", "modalAmount", "modalError",
+    "modalTagsWrapper", "modalTagsPills", "modalTagsInput", "modalTagsDropdown",
     "dateWarningModal", "dateWarningMessage",
     "deleteBlockedModal", "deleteBlockedMessage",
     "editBlockedModal", "editBlockedMessage",
@@ -25,7 +27,7 @@ export default class extends Controller {
   static values = {
     apiUrl: String, accountsUrl: String, categoriesUrl: String, typesUrl: String, csrfToken: String,
     accountsPageUrl: String, categoriesPageUrl: String, typesPageUrl: String, openMonthUrl: String,
-    suggestionsUrl: String
+    suggestionsUrl: String, tagsUrl: String
   }
 
   connect() {
@@ -33,6 +35,9 @@ export default class extends Controller {
     this.accounts = []
     this.categories = []
     this.spendingTypes = []
+    this.allTags = []
+    this.selectedTagIds = []
+    this._tagsDropdownIndex = -1
     this.state = "idle" // idle | adding | editing
     this.editingId = null
     this.deletingId = null
@@ -64,11 +69,20 @@ export default class extends Controller {
     }
     window.addEventListener("beforeunload", this._beforeUnloadHandler)
     document.addEventListener("turbo:before-visit", this._turboBeforeVisitHandler)
+
+    // Close tags dropdown when clicking outside
+    this._onDocClickTags = (e) => {
+      if (this.hasModalTagsWrapperTarget && !this.modalTagsWrapperTarget.contains(e.target)) {
+        this._hideTagsDropdown()
+      }
+    }
+    document.addEventListener("click", this._onDocClickTags)
   }
 
   disconnect() {
     window.removeEventListener("beforeunload", this._beforeUnloadHandler)
     document.removeEventListener("turbo:before-visit", this._turboBeforeVisitHandler)
+    if (this._onDocClickTags) document.removeEventListener("click", this._onDocClickTags)
   }
 
   // --- Default Date Range ---
@@ -174,16 +188,18 @@ export default class extends Controller {
 
   async fetchAll() {
     try {
-      const [paymentsRes, accountsRes, categoriesRes, typesRes] = await Promise.all([
+      const [paymentsRes, accountsRes, categoriesRes, typesRes, tagsRes] = await Promise.all([
         fetch(this.apiUrlValue, { headers: { "Accept": "application/json" } }),
         fetch(this.accountsUrlValue, { headers: { "Accept": "application/json" } }),
         fetch(this.categoriesUrlValue, { headers: { "Accept": "application/json" } }),
-        fetch(this.typesUrlValue, { headers: { "Accept": "application/json" } })
+        fetch(this.typesUrlValue, { headers: { "Accept": "application/json" } }),
+        fetch(this.tagsUrlValue, { headers: { "Accept": "application/json" } })
       ])
       if (paymentsRes.ok) this.payments = await paymentsRes.json()
       if (accountsRes.ok) this.accounts = await accountsRes.json()
       if (categoriesRes.ok) this.categories = await categoriesRes.json()
       if (typesRes.ok) this.spendingTypes = await typesRes.json()
+      if (tagsRes.ok) this.allTags = await tagsRes.json()
     } catch (e) {
       // silently fail
     }
@@ -207,6 +223,11 @@ export default class extends Controller {
         const desc = t.description ? ` — ${t.description}` : ""
         return `<option value="${t.name}">${escapeHtml(t.name)}${escapeHtml(desc)}</option>`
       }).join("")
+
+    if (this.hasFilterTagTarget) {
+      this.filterTagTarget.innerHTML = `<option value="">All Tags</option>` +
+        this.allTags.map(t => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join("")
+    }
   }
 
   _buildAccountOptions(selectedId = null) {
@@ -287,6 +308,7 @@ export default class extends Controller {
     this.filterAccountTarget.value = ""
     this.filterCategoryTarget.value = ""
     this.filterTypeTarget.value = ""
+    if (this.hasFilterTagTarget) this.filterTagTarget.value = ""
     this.filterSearchTarget.value = ""
     this.renderTable()
   }
@@ -297,6 +319,7 @@ export default class extends Controller {
     const accountId = this.filterAccountTarget.value
     const categoryId = this.filterCategoryTarget.value
     const typeName = this.filterTypeTarget.value
+    const tagId = this.hasFilterTagTarget ? this.filterTagTarget.value : ""
     const search = this.filterSearchTarget.value.trim()
 
     // Check for combination search pattern: =amount or (amount) (e.g. =56.74 or (56.74))
@@ -309,6 +332,7 @@ export default class extends Controller {
       if (accountId && p.account_id !== Number(accountId)) return false
       if (categoryId && p.spending_category_id !== Number(categoryId)) return false
       if (typeName && p.spending_type_name !== typeName) return false
+      if (tagId && !(p.tags || []).some(t => t.id === Number(tagId))) return false
       if (search && !comboMatch) {
         const lowerSearch = search.toLowerCase()
         const amountStr = String(parseFloat(p.amount || 0))
@@ -418,7 +442,7 @@ export default class extends Controller {
           "Accept": "application/json",
           "X-CSRF-Token": this.csrfTokenValue
         },
-        body: JSON.stringify({ payment: { account_id, spending_category_id, spending_type_override_id, payment_date, description, amount } })
+        body: JSON.stringify({ payment: { account_id, spending_category_id, spending_type_override_id, payment_date, description, amount, tag_ids: this.selectedTagIds } })
       })
 
       if (response.ok) {
@@ -514,7 +538,7 @@ export default class extends Controller {
           "Accept": "application/json",
           "X-CSRF-Token": this.csrfTokenValue
         },
-        body: JSON.stringify({ payment: { account_id, spending_category_id, spending_type_override_id, payment_date, description, amount } })
+        body: JSON.stringify({ payment: { account_id, spending_category_id, spending_type_override_id, payment_date, description, amount, tag_ids: this.selectedTagIds } })
       })
 
       if (response.ok) {
@@ -760,6 +784,185 @@ export default class extends Controller {
     return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${colors.bg} ${colors.text}">${escapeHtml(name)}</span>`
   }
 
+  _renderTagBadges(tags) {
+    if (!tags || tags.length === 0) return ""
+    return `<div class="flex flex-wrap gap-1 mt-1">${tags.map(t => {
+      const c = TAG_COLORS.find(tc => tc.key === t.color_key) || TAG_COLORS[0]
+      return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${c.bg} ${c.text}">${escapeHtml(t.name)}</span>`
+    }).join("")}</div>`
+  }
+
+  // --- Tags Multi-Select (Payment Modal) ---
+
+  onTagsFocus() {
+    this._showTagsDropdown()
+  }
+
+  onTagsInput() {
+    this._tagsDropdownIndex = -1
+    this._showTagsDropdown()
+  }
+
+  onTagsKeydown(event) {
+    if (event.key === "Escape") {
+      event.preventDefault()
+      event.stopPropagation()
+      this._hideTagsDropdown()
+      return
+    }
+    if (event.key === "ArrowDown") {
+      event.preventDefault()
+      this._tagsDropdownIndex++
+      this._showTagsDropdown()
+      return
+    }
+    if (event.key === "ArrowUp") {
+      event.preventDefault()
+      this._tagsDropdownIndex = Math.max(-1, this._tagsDropdownIndex - 1)
+      this._showTagsDropdown()
+      return
+    }
+    if (event.key === "Enter") {
+      event.preventDefault()
+      const items = this._getFilteredTagItems()
+      if (this._tagsDropdownIndex >= 0 && this._tagsDropdownIndex < items.length) {
+        const item = items[this._tagsDropdownIndex]
+        if (item.isCreate) {
+          this._quickCreateTag(item.name)
+        } else {
+          this._toggleTagSelection(item.id)
+        }
+      } else if (items.length === 1 && items[0].isCreate) {
+        this._quickCreateTag(items[0].name)
+      }
+      return
+    }
+    if (event.key === "Backspace" && !this.modalTagsInputTarget.value && this.selectedTagIds.length > 0) {
+      this.selectedTagIds.pop()
+      this._renderTagPills()
+      this._showTagsDropdown()
+    }
+  }
+
+  _getFilteredTagItems() {
+    const query = this.modalTagsInputTarget.value.trim().toLowerCase()
+    let items = this.allTags
+      .filter(t => !query || t.name.toLowerCase().includes(query))
+      .map(t => ({ id: t.id, name: t.name, color_key: t.color_key, selected: this.selectedTagIds.includes(t.id) }))
+
+    // Quick-create option if query doesn't match any existing tag exactly
+    if (query && !this.allTags.some(t => t.name.toLowerCase() === query)) {
+      items.push({ isCreate: true, name: this.modalTagsInputTarget.value.trim() })
+    }
+    return items
+  }
+
+  _showTagsDropdown() {
+    const items = this._getFilteredTagItems()
+    if (items.length === 0) { this._hideTagsDropdown(); return }
+
+    // Clamp index
+    if (this._tagsDropdownIndex >= items.length) this._tagsDropdownIndex = items.length - 1
+
+    let html = ""
+    items.forEach((item, i) => {
+      const active = i === this._tagsDropdownIndex ? "bg-brand-50 dark:bg-brand-900/30" : ""
+      if (item.isCreate) {
+        html += `<div class="px-3 py-2 text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 ${active} text-brand-600 dark:text-brand-400 font-medium"
+                      data-action="click->payments#quickCreateTagClick" data-name="${escapeAttr(item.name)}">
+          + Create "${escapeHtml(item.name)}"
+        </div>`
+      } else {
+        const c = TAG_COLORS.find(tc => tc.key === item.color_key) || TAG_COLORS[0]
+        const checkmark = item.selected ? `<svg class="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>` : `<span class="w-4"></span>`
+        html += `<div class="px-3 py-2 text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 ${active} flex items-center gap-2"
+                      data-action="click->payments#toggleTagClick" data-tag-id="${item.id}">
+          ${checkmark}
+          <span class="w-2.5 h-2.5 rounded-full ${c.dot} flex-shrink-0"></span>
+          <span>${escapeHtml(item.name)}</span>
+        </div>`
+      }
+    })
+
+    this.modalTagsDropdownTarget.innerHTML = html
+    this.modalTagsDropdownTarget.classList.remove("hidden")
+  }
+
+  _hideTagsDropdown() {
+    this.modalTagsDropdownTarget.classList.add("hidden")
+    this._tagsDropdownIndex = -1
+  }
+
+  toggleTagClick(event) {
+    const tagId = Number(event.currentTarget.dataset.tagId)
+    this._toggleTagSelection(tagId)
+  }
+
+  _toggleTagSelection(tagId) {
+    const idx = this.selectedTagIds.indexOf(tagId)
+    if (idx >= 0) {
+      this.selectedTagIds.splice(idx, 1)
+    } else {
+      this.selectedTagIds.push(tagId)
+    }
+    this._renderTagPills()
+    this._showTagsDropdown()
+  }
+
+  removeTag(event) {
+    const tagId = Number(event.currentTarget.dataset.tagId)
+    this.selectedTagIds = this.selectedTagIds.filter(id => id !== tagId)
+    this._renderTagPills()
+    if (!this.modalTagsDropdownTarget.classList.contains("hidden")) {
+      this._showTagsDropdown()
+    }
+  }
+
+  _renderTagPills() {
+    const html = this.selectedTagIds.map(id => {
+      const tag = this.allTags.find(t => t.id === id)
+      if (!tag) return ""
+      const c = TAG_COLORS.find(tc => tc.key === tag.color_key) || TAG_COLORS[0]
+      return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${c.bg} ${c.text}">
+        ${escapeHtml(tag.name)}
+        <button type="button" class="hover:opacity-70" data-tag-id="${tag.id}" data-action="click->payments#removeTag">&times;</button>
+      </span>`
+    }).join("")
+    this.modalTagsPillsTarget.innerHTML = html
+  }
+
+  async quickCreateTagClick(event) {
+    const name = event.currentTarget.dataset.name
+    await this._quickCreateTag(name)
+  }
+
+  async _quickCreateTag(name) {
+    try {
+      const response = await fetch(this.tagsUrlValue, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "X-CSRF-Token": this.csrfTokenValue
+        },
+        body: JSON.stringify({ tag: { name, color_key: "blue" } })
+      })
+      if (response.ok) {
+        const newTag = await response.json()
+        this.allTags.push(newTag)
+        this.selectedTagIds.push(newTag.id)
+        this.modalTagsInputTarget.value = ""
+        this._renderTagPills()
+        this._showTagsDropdown()
+      } else {
+        const data = await response.json()
+        this._showModalError(data.errors?.[0] || "Failed to create tag")
+      }
+    } catch (e) {
+      this._showModalError("Network error creating tag")
+    }
+  }
+
   _buildTypeOptions(selectedId = null) {
     return this.spendingTypes.map(t => {
       const sel = selectedId != null && t.id === selectedId ? "selected" : ""
@@ -790,7 +993,10 @@ export default class extends Controller {
       <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${escapeHtml(payment.account_name || "")}</td>
       <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${escapeHtml(payment.spending_category_name || "")}</td>
       <td class="px-4 py-3 text-sm">${this._renderTypeBadge(payment.spending_type_color_key, payment.spending_type_name || "")}</td>
-      <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">${escapeHtml(payment.description)}</td>
+      <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
+        ${escapeHtml(payment.description)}
+        ${this._renderTagBadges(payment.tags || [])}
+      </td>
       <td class="px-4 py-3 text-sm text-gray-900 dark:text-white text-right font-mono">${this._formatBalance(payment.amount)}</td>
       <td class="px-4 py-3 text-right space-x-2 whitespace-nowrap">
         <button type="button"
@@ -841,14 +1047,16 @@ export default class extends Controller {
 
   async _refreshDropdownData() {
     try {
-      const [accountsRes, categoriesRes, typesRes] = await Promise.all([
+      const [accountsRes, categoriesRes, typesRes, tagsRes] = await Promise.all([
         fetch(this.accountsUrlValue, { headers: { "Accept": "application/json" } }),
         fetch(this.categoriesUrlValue, { headers: { "Accept": "application/json" } }),
-        fetch(this.typesUrlValue, { headers: { "Accept": "application/json" } })
+        fetch(this.typesUrlValue, { headers: { "Accept": "application/json" } }),
+        fetch(this.tagsUrlValue, { headers: { "Accept": "application/json" } })
       ])
       if (accountsRes.ok) this.accounts = await accountsRes.json()
       if (categoriesRes.ok) this.categories = await categoriesRes.json()
       if (typesRes.ok) this.spendingTypes = await typesRes.json()
+      if (tagsRes.ok) this.allTags = await tagsRes.json()
     } catch (e) {}
     // Rebuild the dropdowns in the add/edit row
     this._rebuildInlineDropdowns()
@@ -898,6 +1106,10 @@ export default class extends Controller {
     this.modalTypeTarget.value = ""
     this.modalDescriptionTarget.value = ""
     this.modalAmountTarget.value = ""
+    this.selectedTagIds = []
+    this.modalTagsInputTarget.value = ""
+    this._renderTagPills()
+    this._hideTagsDropdown()
     this.modalErrorTarget.classList.add("hidden")
     this.modalErrorTarget.textContent = ""
 
@@ -932,6 +1144,10 @@ export default class extends Controller {
     this.modalTypeTarget.value = payment.spending_type_override_id ? String(payment.spending_type_override_id) : ""
     this.modalDescriptionTarget.value = payment.description || ""
     this.modalAmountTarget.value = parseFloat(payment.amount) || ""
+    this.selectedTagIds = (payment.tags || []).map(t => t.id)
+    this.modalTagsInputTarget.value = ""
+    this._renderTagPills()
+    this._hideTagsDropdown()
     this.modalErrorTarget.classList.add("hidden")
     this.modalErrorTarget.textContent = ""
 
@@ -1191,6 +1407,11 @@ export default class extends Controller {
       if (cat) filterParts.push(`Category: ${cat.name}`)
     }
     if (typeName) filterParts.push(`Type: ${typeName}`)
+    const tagFilterId = this.hasFilterTagTarget ? this.filterTagTarget.value : ""
+    if (tagFilterId) {
+      const tag = this.allTags.find(t => t.id === Number(tagFilterId))
+      if (tag) filterParts.push(`Tag: ${tag.name}`)
+    }
     if (search) filterParts.push(`Search: "${search}"`)
 
     const sortLabel = {

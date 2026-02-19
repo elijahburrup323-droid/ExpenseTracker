@@ -1,9 +1,19 @@
-APP_VERSION = "1.3.14"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+APP_VERSION = "1.3.15"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.15",
+    changes: [
+      "Payments: Tags system — create, edit, and delete user-defined tags for labeling payments (CM-1)",
+      "Payments: Multi-select tag picker in Add/Edit Payment modal with quick-create support (CM-1)",
+      "Payments: Tag filter on Payments list — filter by tag with total reflecting filtered results (CM-1)",
+      "Payments: Tag badges displayed on payment rows in the description column (CM-1)",
+      "Navigation: New Tags maintenance screen under Payments menu with color picker and modal CRUD (CM-1)",
+    ]
+  },
   {
     version: "1.3.14",
     changes: [
