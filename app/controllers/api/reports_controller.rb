@@ -123,6 +123,20 @@ module Api
       render json: result
     end
 
+    # GET /api/reports/account_balance_history?account_id=&start_year=&start_month=&end_year=&end_month=&closed_only=0|1
+    def account_balance_history
+      om = OpenMonthMaster.for_user(current_user)
+      account_id  = params[:account_id].presence&.to_i
+      start_year  = (params[:start_year]  || om.current_year).to_i
+      start_month = (params[:start_month] || 1).to_i
+      end_year    = (params[:end_year]    || om.current_year).to_i
+      end_month   = (params[:end_month]   || om.current_month).to_i
+      closed_only = params[:closed_only] == "1"
+
+      result = balance_history(account_id, start_year, start_month, end_year, end_month, closed_only, om)
+      render json: result
+    end
+
     # GET /api/reports/recurring_obligations?year=YYYY&month=M&include_inactive=0|1
     def recurring_obligations
       om = OpenMonthMaster.for_user(current_user)
@@ -493,6 +507,86 @@ module Api
         total_spent: total_spent,
         transaction_count: transaction_count,
         types: types
+      }
+    end
+
+    # --- Account Balance History helpers ---
+
+    def balance_history(account_id, start_year, start_month, end_year, end_month, closed_only, om)
+      # Build month list (max 60)
+      months = []
+      d = Date.new(start_year, start_month, 1)
+      end_d = Date.new(end_year, end_month, 1)
+      while d <= end_d && months.size < 60
+        months << { year: d.year, month: d.month }
+        d = d.next_month
+      end
+
+      open_year = om.current_year
+      open_month = om.current_month
+
+      # Determine account name for display
+      account_name = "All Accounts"
+      if account_id
+        acct = current_user.accounts.find_by(id: account_id)
+        account_name = acct&.name || "Unknown Account"
+      end
+
+      # Preload all snapshots in range for efficiency
+      snapshot_scope = current_user.account_month_snapshots.active.includes(:account)
+      snapshot_scope = snapshot_scope.where(account_id: account_id) if account_id
+      all_snapshots = snapshot_scope.where(
+        "(year > :sy OR (year = :sy AND month >= :sm)) AND (year < :ey OR (year = :ey AND month <= :em))",
+        sy: start_year, sm: start_month, ey: end_year, em: end_month
+      ).to_a
+
+      # Group snapshots by (year, month)
+      snapshots_by_period = all_snapshots.group_by { |s| [s.year, s.month] }
+
+      rows = months.map do |m|
+        y, mo = m[:year], m[:month]
+        is_open = (y == open_year && mo == open_month)
+        is_closed = (y < open_year || (y == open_year && mo < open_month))
+
+        # Skip open month if closed_only
+        next nil if closed_only && is_open
+        # Skip future months
+        next nil if !is_open && !is_closed
+
+        label = Date.new(y, mo, 1).strftime("%B %Y")
+
+        if is_closed
+          snaps = snapshots_by_period[[y, mo]] || []
+          if snaps.empty?
+            { label: label, year: y, month: mo, beginning_balance: nil, ending_balance: nil, change: nil, source: "no_data" }
+          else
+            beg = snaps.sum { |s| s.beginning_balance.to_f }.round(2)
+            ending = snaps.sum { |s| s.ending_balance.to_f }.round(2)
+            { label: label, year: y, month: mo, beginning_balance: beg, ending_balance: ending, change: (ending - beg).round(2), source: "snapshot" }
+          end
+        elsif is_open
+          month_start = Date.new(y, mo, 1)
+          beg_balances = AccountBalanceService.balances_as_of(current_user, month_start - 1.day)
+          end_balances = AccountBalanceService.balances_as_of(current_user, Date.today)
+
+          if account_id
+            beg = (beg_balances[account_id] || 0.0).round(2)
+            ending = (end_balances[account_id] || 0.0).round(2)
+          else
+            beg = beg_balances.values.sum.to_f.round(2)
+            ending = end_balances.values.sum.to_f.round(2)
+          end
+
+          { label: label, year: y, month: mo, beginning_balance: beg, ending_balance: ending, change: (ending - beg).round(2), source: "live" }
+        end
+      end.compact
+
+      {
+        account_name: account_name,
+        account_id: account_id,
+        start_label: Date.new(start_year, start_month, 1).strftime("%B %Y"),
+        end_label: Date.new(end_year, end_month, 1).strftime("%B %Y"),
+        months: rows
       }
     end
 

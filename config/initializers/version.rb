@@ -1,6 +1,6 @@
 APP_VERSION = "1.3.18"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
-MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 1  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
@@ -12,6 +12,10 @@ APP_ALL_VERSIONS = [
       "Reports: Comparison mode shows previous month variance ($, %) and optional YTD totals per spending type (CM-4)",
       "Reports: Print button generates clean, print-optimized report with BudgetHQ branding (CM-4)",
       "Reports: Spending by Type registered in reports table and accessible from Monthly > Reports menu (CM-4)",
+      "Reports: New Account Balance History report — historical balances by month with snapshot data for closed months and live calculations for open month (CM-5)",
+      "Reports: Account Balance History options modal with account selection, date range, table/chart output format, and closed-months-only toggle (CM-5)",
+      "Reports: Account Balance History chart view with SVG line chart showing month-over-month ending balances (CM-5)",
+      "Reports: Account Balance History print support with BudgetHQ branding (CM-5)",
     ]
   },
   {
