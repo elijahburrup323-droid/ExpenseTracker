@@ -111,13 +111,16 @@
                       class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                       rows="2" placeholder="Short description of the report"></textarea>
           </div>
-          <%# Route Path %>
+          <%# Route Path (Dropdown — sourced from ReportsMaster::REGISTERED_ROUTES) %>
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Route Path <span class="text-gray-400">(optional)</span></label>
-            <input type="text" data-reports-masters-target="modalRoutePath"
-                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-                   placeholder="e.g. /monthly/reports/cash-flow"
-                   data-action="keydown->reports-masters#modalKeydown">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Route Path <span class="text-gray-400">(blank = Coming Soon)</span></label>
+            <select data-reports-masters-target="modalRoutePath"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500">
+              <option value="">None (Coming Soon)</option>
+              <% ReportsMaster::REGISTERED_ROUTES.each do |route| %>
+                <option value="<%= route[:path] %>"><%= route[:label] %> — <%= route[:path] %></option>
+              <% end %>
+            </select>
           </div>
           <%# Slot Assignment %>
           <div>

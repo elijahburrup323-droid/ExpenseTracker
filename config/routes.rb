@@ -100,6 +100,7 @@ Rails.application.routes.draw do
       collection do
         get :slots
         post :add_slot
+        get :route_options
       end
     end
     resources :user_account_types, only: [:index, :update]

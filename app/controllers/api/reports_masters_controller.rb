@@ -73,6 +73,10 @@ module Api
       render json: { slot_number: next_num }, status: :created
     end
 
+    def route_options
+      render json: ReportsMaster::REGISTERED_ROUTES
+    end
+
     private
 
     def require_agent

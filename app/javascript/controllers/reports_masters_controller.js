@@ -114,6 +114,28 @@ export default class extends Controller {
     this._renderIconGrid(this.selectedIconKey)
   }
 
+  // --- Route Path Dropdown ---
+
+  _resetRoutePathDropdown(currentPath) {
+    const select = this.modalRoutePathTarget
+    // Remove any previously injected legacy option
+    const legacy = select.querySelector('option[data-legacy]')
+    if (legacy) legacy.remove()
+
+    // Check if currentPath exists in the dropdown options
+    if (currentPath && !Array.from(select.options).some(o => o.value === currentPath)) {
+      // Inject a legacy/invalid option so the user sees the current value
+      const opt = document.createElement("option")
+      opt.value = currentPath
+      opt.textContent = `Invalid/Legacy Route — ${currentPath}`
+      opt.dataset.legacy = "true"
+      opt.className = "text-red-600"
+      select.insertBefore(opt, select.options[1]) // after "None (Coming Soon)"
+    }
+
+    select.value = currentPath
+  }
+
   // --- Slot Dropdown ---
 
   _populateSlotDropdown(currentSlot, currentReportKey) {
@@ -143,7 +165,7 @@ export default class extends Controller {
     this.modalReportKeyTarget.classList.remove("bg-gray-100", "dark:bg-gray-600")
     this.modalCategoryTarget.value = ""
     this.modalDescriptionTarget.value = ""
-    this.modalRoutePathTarget.value = ""
+    this._resetRoutePathDropdown("")
     this.modalAccentStyleTarget.value = "brand"
     this.modalIconKeyTarget.value = ""
     this.modalErrorTarget.classList.add("hidden")
@@ -167,7 +189,7 @@ export default class extends Controller {
     this.modalReportKeyTarget.classList.add("bg-gray-100", "dark:bg-gray-600")
     this.modalCategoryTarget.value = master.category
     this.modalDescriptionTarget.value = master.description || ""
-    this.modalRoutePathTarget.value = master.route_path || ""
+    this._resetRoutePathDropdown(master.route_path || "")
     this.modalAccentStyleTarget.value = master.accent_style || "brand"
     this.modalIconKeyTarget.value = master.icon_key || ""
     this.modalErrorTarget.classList.add("hidden")
@@ -194,6 +216,13 @@ export default class extends Controller {
     if (!title) { this._showModalError("Title is required."); return }
     if (!report_key) { this._showModalError("Report Key is required."); return }
     if (!category) { this._showModalError("Category is required."); return }
+
+    // Reject legacy/invalid route paths
+    const selectedRouteOption = this.modalRoutePathTarget.selectedOptions[0]
+    if (selectedRouteOption && selectedRouteOption.dataset.legacy) {
+      this._showModalError("Route path is invalid. Please select a registered route or 'None'.")
+      return
+    }
 
     const body = {
       reports_master: {

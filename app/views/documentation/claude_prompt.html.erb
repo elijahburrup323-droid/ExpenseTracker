@@ -96,7 +96,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 - **income_entries** — user-scoped income transactions. Auto-generated from due recurrings via IncomeEntry.generate_due_entries_for(user). Has received_flag toggle. When received_flag is toggled ON, account balance is adjusted (same transactional pattern as payments). Income entries with received_flag=true for budget accounts are summed into Dashboard Card 4 as "Income".
 
 ### Reports System
-- **reports_masters** — global report definitions (report_key unique, title, category, description, icon_key, accent_style, route_path, is_active, sort_order_default). Managed via Admin &gt; Reports Maintenance. Replaces the hardcoded REPORT_DEFINITIONS constant.
+- **reports_masters** — global report definitions (report_key unique, title, category, description, icon_key, accent_style, route_path, is_active, sort_order_default). Managed via Admin &gt; Reports Maintenance. Replaces the hardcoded REPORT_DEFINITIONS constant. route_path is a dropdown sourced from ReportsMaster::REGISTERED_ROUTES (not free-text); null = Coming Soon. Server-side validation rejects unregistered paths.
 - **reports_slots_masters** — defines available slot positions on the Reports menu (slot_number PK, is_active). Currently 9, expandable via admin.
 - **reports_menu_layouts** — default slot-to-report mapping (slot_number unique FK, report_key unique FK, is_active). Maps which report appears in which slot for new users.
 - **user_report_layouts** — per-user slot assignments (user_id, slot_number, report_key). Seeded from reports_menu_layouts on first visit. Drag-and-drop reorder persists here.

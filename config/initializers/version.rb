@@ -28,6 +28,8 @@ APP_ALL_VERSIONS = [
       "Database: New reconciliation_group_ui_states table for persisted collapse preferences (CM-9)",
       "Reports/Dashboard: Critical grid CSS loaded in head to prevent single-column flash on Turbo navigation (CM-11)",
       "Reports: Monthly Cash Flow card link now includes relative_url_root prefix — resolves 404 on production (CM-12)",
+      "Admin: Reports Maintenance Route Path field converted from free-text to dropdown sourced from REGISTERED_ROUTES constant (CM-13)",
+      "Admin: Server-side validation rejects unregistered route paths; legacy/invalid routes shown with warning on edit (CM-13)",
     ]
   },
   {
