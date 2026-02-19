@@ -137,6 +137,20 @@ module Api
       render json: result
     end
 
+    # GET /api/reports/income_by_source?start_year=&start_month=&end_year=&end_month=&account_id=&include_recurring=0|1
+    def income_by_source
+      om = OpenMonthMaster.for_user(current_user)
+      start_year  = (params[:start_year]  || om.current_year).to_i
+      start_month = (params[:start_month] || 1).to_i
+      end_year    = (params[:end_year]    || om.current_year).to_i
+      end_month   = (params[:end_month]   || om.current_month).to_i
+      account_id  = params[:account_id].presence&.to_i
+      include_recurring = params[:include_recurring] != "0"
+
+      result = income_by_source_data(start_year, start_month, end_year, end_month, account_id, include_recurring)
+      render json: result
+    end
+
     # GET /api/reports/recurring_obligations?year=YYYY&month=M&include_inactive=0|1
     def recurring_obligations
       om = OpenMonthMaster.for_user(current_user)
@@ -587,6 +601,48 @@ module Api
         start_label: Date.new(start_year, start_month, 1).strftime("%B %Y"),
         end_label: Date.new(end_year, end_month, 1).strftime("%B %Y"),
         months: rows
+      }
+    end
+
+    # --- Income by Source helpers ---
+
+    def income_by_source_data(start_year, start_month, end_year, end_month, account_id, include_recurring)
+      range_start = Date.new(start_year, start_month, 1)
+      range_end   = Date.new(end_year, end_month, 1).next_month
+      range       = range_start...range_end
+
+      scope = current_user.income_entries.where(entry_date: range, deleted_at: nil)
+      scope = scope.where(account_id: account_id) if account_id
+      scope = scope.where(income_recurring_id: nil) unless include_recurring
+
+      total_income = scope.sum(:amount).to_f.round(2)
+      total_count = scope.count
+
+      sources = scope
+        .group(:source_name)
+        .order(Arel.sql("SUM(amount) DESC"))
+        .pluck(
+          Arel.sql("source_name"),
+          Arel.sql("SUM(amount)"),
+          Arel.sql("COUNT(*)")
+        )
+        .map do |name, amount, count|
+          amt = amount.to_f.round(2)
+          {
+            name: name,
+            amount: amt,
+            count: count,
+            pct: total_income > 0 ? (amt / total_income * 100).round(1) : 0.0
+          }
+        end
+
+      {
+        sources: sources,
+        total_income: total_income,
+        total_count: total_count,
+        start_label: range_start.strftime("%B %Y"),
+        end_label: Date.new(end_year, end_month, 1).strftime("%B %Y"),
+        account_name: account_id ? (current_user.accounts.find_by(id: account_id)&.name || "Unknown") : "All Accounts"
       }
     end
 

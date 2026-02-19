@@ -38,6 +38,7 @@ import SpendingByTypeController from "controllers/spending_by_type_controller"
 import TagsController from "controllers/tags_controller"
 import RecurringObligationsController from "controllers/recurring_obligations_controller"
 import AccountBalanceHistoryController from "controllers/account_balance_history_controller"
+import IncomeBySourceController from "controllers/income_by_source_controller"
 
 application.register("flash", FlashController)
 application.register("dropdown", DropdownController)
@@ -77,3 +78,4 @@ application.register("spending-by-type", SpendingByTypeController)
 application.register("tags", TagsController)
 application.register("recurring-obligations", RecurringObligationsController)
 application.register("account-balance-history", AccountBalanceHistoryController)
+application.register("income-by-source", IncomeBySourceController)

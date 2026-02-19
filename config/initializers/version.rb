@@ -1,6 +1,6 @@
 APP_VERSION = "1.3.18"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
-MANUAL_CHANGE_SEQ = 1  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 2  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
@@ -16,6 +16,10 @@ APP_ALL_VERSIONS = [
       "Reports: Account Balance History options modal with account selection, date range, table/chart output format, and closed-months-only toggle (CM-5)",
       "Reports: Account Balance History chart view with SVG line chart showing month-over-month ending balances (CM-5)",
       "Reports: Account Balance History print support with BudgetHQ branding (CM-5)",
+      "Reports: New Income by Source report — deposits grouped by source with amounts, counts, and percentages (CM-6)",
+      "Reports: Income by Source options modal with date range, account filter, recurring toggle, and table/chart format (CM-6)",
+      "Reports: Income by Source pie chart view with color-coded segments and legend (CM-6)",
+      "Reports: Income by Source print support with BudgetHQ branding (CM-6)",
     ]
   },
   {

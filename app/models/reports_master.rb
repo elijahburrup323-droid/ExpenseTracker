@@ -6,7 +6,8 @@ class ReportsMaster < ApplicationRecord
     { label: "Spending by Category",   path: "/reports/spending_by_category" },
     { label: "Recurring Obligations", path: "/reports/recurring_obligations" },
     { label: "Spending by Type", path: "/reports/spending_by_type" },
-    { label: "Account Balance History", path: "/reports/account_balance_history" }
+    { label: "Account Balance History", path: "/reports/account_balance_history" },
+    { label: "Income by Source", path: "/reports/income_by_source" }
   ].freeze
 
   VALID_ROUTE_PATHS = REGISTERED_ROUTES.map { |r| r[:path] }.freeze

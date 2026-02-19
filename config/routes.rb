@@ -75,6 +75,7 @@ Rails.application.routes.draw do
   get "reports/recurring_obligations", to: "reports#recurring_obligations", as: :report_recurring_obligations
   get "reports/spending_by_type", to: "reports#spending_by_type", as: :report_spending_by_type
   get "reports/account_balance_history", to: "reports#account_balance_history", as: :report_account_balance_history
+  get "reports/income_by_source", to: "reports#income_by_source", as: :report_income_by_source
 
   # Soft Close Month (HTML page)
   get "soft_close", to: "soft_close#index", as: :soft_close
@@ -185,6 +186,7 @@ Rails.application.routes.draw do
       get "recurring_obligations", action: :recurring_obligations
       get "spending_by_type", action: :spending_by_type
       get "account_balance_history", action: :account_balance_history
+      get "income_by_source", action: :income_by_source
     end
   end
 

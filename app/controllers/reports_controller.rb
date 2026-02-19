@@ -27,4 +27,8 @@ class ReportsController < ApplicationController
   def account_balance_history
     @open_month = OpenMonthMaster.for_user(current_user)
   end
+
+  def income_by_source
+    @open_month = OpenMonthMaster.for_user(current_user)
+  end
 end
