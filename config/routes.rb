@@ -47,6 +47,9 @@ Rails.application.routes.draw do
   # Tags (HTML page)
   resources :tags, only: [:index]
 
+  # Payment Recurrings (HTML page)
+  resources :payment_recurrings, only: [:index]
+
   # Account Type Masters (HTML page, agent-only)
   resources :account_type_masters, only: [:index]
 
@@ -100,6 +103,7 @@ Rails.application.routes.draw do
       end
     end
     resources :tags, only: [:index, :create, :update, :destroy]
+    resources :payment_recurrings, only: [:index, :create, :update, :destroy]
     resources :account_type_masters, only: [:index, :create, :update, :destroy] do
       member do
         get :can_delete

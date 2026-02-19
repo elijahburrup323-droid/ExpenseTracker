@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_19_500006) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_19_500008) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -319,6 +319,30 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_19_500006) do
     t.index ["user_id"], name: "idx_open_month_user", unique: true
   end
 
+  create_table "payment_recurrings", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "name", limit: 80, null: false
+    t.string "description", limit: 255
+    t.decimal "amount", precision: 12, scale: 2, null: false
+    t.bigint "account_id", null: false
+    t.bigint "spending_category_id", null: false
+    t.bigint "frequency_master_id", null: false
+    t.date "next_date", null: false
+    t.boolean "use_flag", default: true
+    t.text "memo"
+    t.integer "sort_order", default: 0
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_payment_recurrings_on_account_id"
+    t.index ["frequency_master_id"], name: "index_payment_recurrings_on_frequency_master_id"
+    t.index ["spending_category_id"], name: "index_payment_recurrings_on_spending_category_id"
+    t.index ["user_id", "account_id"], name: "index_payment_recurrings_on_user_id_and_account_id"
+    t.index ["user_id", "next_date"], name: "index_payment_recurrings_on_user_id_and_next_date"
+    t.index ["user_id", "sort_order"], name: "index_payment_recurrings_on_user_id_and_sort_order"
+    t.index ["user_id"], name: "index_payment_recurrings_on_user_id"
+  end
+
   create_table "payments", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "account_id", null: false
@@ -333,7 +357,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_19_500006) do
     t.datetime "updated_at", null: false
     t.bigint "spending_type_override_id"
     t.boolean "reconciled", default: false, null: false
+    t.bigint "payment_recurring_id"
     t.index ["account_id"], name: "index_payments_on_account_id"
+    t.index ["payment_recurring_id"], name: "index_payments_on_payment_recurring_id"
     t.index ["spending_category_id"], name: "index_payments_on_spending_category_id"
     t.index ["user_id", "payment_date"], name: "index_payments_on_user_id_and_payment_date"
     t.index ["user_id", "sort_order"], name: "index_payments_on_user_id_and_sort_order"
@@ -666,7 +692,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_19_500006) do
   add_foreign_key "net_worth_snapshots", "users"
   add_foreign_key "open_month_masters", "users"
   add_foreign_key "open_month_masters", "users", column: "locked_by_user_id"
+  add_foreign_key "payment_recurrings", "accounts"
+  add_foreign_key "payment_recurrings", "income_frequency_masters", column: "frequency_master_id"
+  add_foreign_key "payment_recurrings", "spending_categories"
+  add_foreign_key "payment_recurrings", "users"
   add_foreign_key "payments", "accounts"
+  add_foreign_key "payments", "payment_recurrings"
   add_foreign_key "payments", "spending_categories"
   add_foreign_key "payments", "spending_types", column: "spending_type_override_id", on_delete: :nullify
   add_foreign_key "payments", "users"

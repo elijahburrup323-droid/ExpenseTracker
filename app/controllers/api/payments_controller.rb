@@ -1,6 +1,7 @@
 module Api
   class PaymentsController < BaseController
     before_action :set_payment, only: [:update, :destroy]
+    before_action :generate_due_payments, only: [:index]
 
     def index
       payments = current_user.payments.ordered.to_a
@@ -107,6 +108,12 @@ module Api
       rows.map { |r| { description: r.description } }
     end
 
+    def generate_due_payments
+      Payment.generate_due_payments_for(current_user)
+    rescue => e
+      Rails.logger.warn("generate_due_payments error: #{e.message}")
+    end
+
     def set_payment
       @payment = current_user.payments.find_by(id: params[:id])
       render_not_found unless @payment
@@ -157,6 +164,7 @@ module Api
           spending_category_name: cat&.name || "[Deleted]",
           spending_type_name: effective_type&.name || "Unknown",
           spending_type_color_key: effective_type&.color_key || "blue",
+          payment_recurring_id: p.payment_recurring_id,
           tags: tags_data
         )
     end

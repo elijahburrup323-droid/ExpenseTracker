@@ -134,6 +134,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 /spending_types ........ Spending Types CRUD screen
 /spending_categories ... Categories CRUD screen
 /payments .............. Payments CRUD screen (with advanced filtering & combination search)
+/payment_recurrings .... Recurring Payments CRUD screen (scheduled payment obligations with auto-generation)
 /income_entries ........ Deposits CRUD screen (with Generate Data button)
 /income_recurrings ..... Recurring Deposits CRUD screen
 /income_user_frequencies Frequencies toggle screen
@@ -166,7 +167,8 @@ API endpoints (all under /api/):
   /api/transfer_masters ....... CRUD (with transactional balance updates on both from/to accounts)
   /api/reconciliation ......... data (GET), toggle (PATCH), outside_balance (PUT), statement_counts (PUT), mark_reconciled (PUT), group_states (GET), toggle_group (PUT)
   /api/balance_adjustments .... create, update, destroy (with balance updates)
-  /api/payments ............... CRUD (with transactional balance updates; auto-attaches category default tags in Add mode)
+  /api/payments ............... CRUD (with transactional balance updates; auto-attaches category default tags in Add mode; auto-generates due recurring payments on index)
+  /api/payment_recurrings ..... CRUD (recurring payment obligations with frequency, account, category; use_flag toggle; soft-delete)
   /api/income_frequency_masters  CRUD + GET :id/can_delete (admin-only, delete blocked if in use by any user)
   /api/income_user_frequencies  index + update (use_flag toggle per frequency)
   /api/income_recurrings ...... CRUD
@@ -215,6 +217,7 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 - **income_frequency_masters_controller.js** — CRUD with inline editing, active toggle, sort_order editing (admin-only). Delete action checks server-side in-use status (via /can_delete endpoint) — blocks with "Can't Delete" modal if frequency is referenced by any user, otherwise shows standard delete-confirm modal. Active toggle is the sole activation control (no Deactivate/Reactivate buttons). UI text renamed from "Income Entries" to "Deposits" throughout.
 - **income_user_frequencies_controller.js** — use_flag toggle list with "View All" filter toggle (OFF = show only enabled frequencies, ON = show all master frequencies; purely a view filter, no bulk API call)
 - **income_recurrings_controller.js** — CRUD with frequency/account selects, generate dummy data
+- **payment_recurrings_controller.js** — CRUD for recurring payment obligations with account, category, and frequency selects, use_flag toggle, generate dummy data. Mirrors income_recurrings pattern. Auto-generation of due payments happens in payments_controller on index load.
 - **income_entries_controller.js** — CRUD with received toggle (opens edit on amount), auto-advance cursor between fields on change, Generate Data button
 - **admin_users_controller.js** — Admin user management with search, admin toggle (admin-only)
 - **quotes_controller.js** — Admin CRUD for system quotes (add, edit, delete, active toggle). Quotes are displayed on sign-in page (random active) and in header bar (daily quote cached in session). Replaces the former hardcoded 200-quote rotation.

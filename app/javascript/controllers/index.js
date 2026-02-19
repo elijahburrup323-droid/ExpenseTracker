@@ -42,6 +42,7 @@ import IncomeBySourceController from "controllers/income_by_source_controller"
 import NetWorthReportController from "controllers/net_worth_report_controller"
 import SoftCloseSummaryController from "controllers/soft_close_summary_controller"
 import ReconciliationSummaryController from "controllers/reconciliation_summary_controller"
+import PaymentRecurringsController from "controllers/payment_recurrings_controller"
 
 application.register("flash", FlashController)
 application.register("dropdown", DropdownController)
@@ -85,3 +86,4 @@ application.register("income-by-source", IncomeBySourceController)
 application.register("net-worth-report", NetWorthReportController)
 application.register("soft-close-summary", SoftCloseSummaryController)
 application.register("reconciliation-summary", ReconciliationSummaryController)
+application.register("payment-recurrings", PaymentRecurringsController)

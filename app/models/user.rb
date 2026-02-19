@@ -12,6 +12,7 @@ class User < ApplicationRecord
   has_many :income_user_frequencies, dependent: :destroy
   has_many :income_recurrings, dependent: :destroy
   has_many :income_entries, dependent: :destroy
+  has_many :payment_recurrings, dependent: :destroy
   has_many :user_emails, dependent: :destroy
   has_many :user_phones, dependent: :destroy
   has_many :net_worth_snapshots, dependent: :destroy

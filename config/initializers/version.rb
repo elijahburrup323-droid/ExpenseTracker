@@ -1,6 +1,6 @@
 APP_VERSION = "1.3.18"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
-MANUAL_CHANGE_SEQ = 5  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 6  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
@@ -30,6 +30,12 @@ APP_ALL_VERSIONS = [
       "Reports: New Reconciliation Report — account reconciliation summary with transaction detail, reconciled flags, and balance comparison (CM-9)",
       "Reports: Reconciliation Report options modal with account/month selectors and detail toggles (CM-9)",
       "Reports: Reconciliation Report print support with BudgetHQ branding (CM-9)",
+      "Payments: New Recurring Payments screen — full CRUD for scheduled payment obligations (CM-10)",
+      "Payments: Recurring Payments table with inline add/edit, use toggle, frequency, account, and category columns (CM-10)",
+      "Payments: Auto-generation engine — due recurring payments automatically create payment entries when Payments screen loads (CM-10)",
+      "Payments: Generated payments linked via payment_recurring_id FK for traceability (CM-10)",
+      "Database: New payment_recurrings table with frequency, account, category, and soft-delete support (CM-10)",
+      "Navigation: Recurring Payments added under Payments sidebar group (CM-10)",
     ]
   },
   {

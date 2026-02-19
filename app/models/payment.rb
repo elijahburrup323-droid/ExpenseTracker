@@ -3,6 +3,7 @@ class Payment < ApplicationRecord
   belongs_to :account
   belongs_to :spending_category
   belongs_to :spending_type_override, class_name: 'SpendingType', optional: true
+  belongs_to :payment_recurring, optional: true
   has_many :tag_assignments, as: :taggable, dependent: :destroy
   has_many :tags, through: :tag_assignments
 
@@ -16,5 +17,29 @@ class Payment < ApplicationRecord
 
   def soft_delete!
     update_columns(deleted_at: Time.current)
+  end
+
+  def self.generate_due_payments_for(user)
+    generated = []
+    user.payment_recurrings.due.each do |recurring|
+      next if user.payments.exists?(payment_recurring_id: recurring.id, payment_date: recurring.next_date)
+
+      payment = user.payments.create!(
+        payment_recurring: recurring,
+        description: recurring.name,
+        notes: recurring.memo,
+        payment_date: recurring.next_date,
+        amount: recurring.amount,
+        account_id: recurring.account_id,
+        spending_category_id: recurring.spending_category_id,
+        sort_order: recurring.sort_order
+      )
+      account = payment.account
+      account.balance -= payment.amount
+      account.save!
+      generated << payment
+      recurring.advance_next_date!
+    end
+    generated
   end
 end
