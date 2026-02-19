@@ -407,7 +407,7 @@ phone_verifications
   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 mb-6 overflow-hidden">
     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
       <h2 class="text-lg font-semibold text-gray-900 dark:text-white">account_type_masters</h2>
-      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Global account type lookup table &mdash; admin-managed, shared across all users</p>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Account type definitions &mdash; system types (owner_user_id NULL) are admin-managed; custom types (owner_user_id set) are per-user with soft-delete</p>
     </div>
     <div class="overflow-x-auto">
       <table class="min-w-full text-sm">
@@ -427,6 +427,8 @@ phone_verifications
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">is_active</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">boolean</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Active flag (default: true)</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">sort_order</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">integer</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Display order (default: 0)</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">created_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Record created</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">owner_user_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">nullable</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; users</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">NULL = system type; set = user-created custom type</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">deleted_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Soft-delete timestamp for custom types</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">updated_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Record last updated</td></tr>
         </tbody>
       </table>
@@ -434,7 +436,8 @@ phone_verifications
     <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
       <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Indexes</p>
       <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5">
-        <li>UNIQUE (normalized_key) &mdash; <span class="text-gray-400 dark:text-gray-500">case-insensitive dedup</span></li>
+        <li>UNIQUE (normalized_key) WHERE owner_user_id IS NULL AND deleted_at IS NULL &mdash; <span class="text-gray-400 dark:text-gray-500">system types dedup</span></li>
+        <li>UNIQUE (owner_user_id, normalized_key) WHERE owner_user_id IS NOT NULL AND deleted_at IS NULL &mdash; <span class="text-gray-400 dark:text-gray-500">custom types per-user dedup</span></li>
         <li>(sort_order, display_name)</li>
       </ul>
     </div>

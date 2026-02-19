@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_19_200003) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_19_300001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -36,7 +36,11 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_19_200003) do
     t.integer "sort_order", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["normalized_key"], name: "index_account_type_masters_on_normalized_key", unique: true
+    t.bigint "owner_user_id"
+    t.datetime "deleted_at"
+    t.index ["normalized_key"], name: "idx_atm_system_normalized_key_unique", unique: true, where: "((owner_user_id IS NULL) AND (deleted_at IS NULL))"
+    t.index ["owner_user_id", "normalized_key"], name: "idx_atm_user_normalized_key_unique", unique: true, where: "((owner_user_id IS NOT NULL) AND (deleted_at IS NULL))"
+    t.index ["owner_user_id"], name: "index_account_type_masters_on_owner_user_id"
     t.index ["sort_order"], name: "index_account_type_masters_on_sort_order"
   end
 
@@ -608,6 +612,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_19_200003) do
 
   add_foreign_key "account_month_snapshots", "accounts"
   add_foreign_key "account_month_snapshots", "users"
+  add_foreign_key "account_type_masters", "users", column: "owner_user_id"
   add_foreign_key "account_types", "users"
   add_foreign_key "accounts", "account_type_masters"
   add_foreign_key "accounts", "account_types"

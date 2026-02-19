@@ -103,7 +103,7 @@ Rails.application.routes.draw do
         get :route_options
       end
     end
-    resources :user_account_types, only: [:index, :update]
+    resources :user_account_types, only: [:index, :create, :update, :destroy]
     resources :income_frequency_masters, only: [:index, :create, :update, :destroy] do
       member do
         get :can_delete

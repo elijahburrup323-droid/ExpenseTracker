@@ -11,6 +11,14 @@
       <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Choose which account types are available in your dropdowns</p>
     </div>
     <div class="flex items-center space-x-3">
+      <button type="button"
+              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition"
+              data-action="click->account-types#openAddModal">
+        <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+        </svg>
+        + Custom Type
+      </button>
       <span class="text-sm text-gray-500 dark:text-gray-400">View All</span>
       <button type="button"
               class="relative inline-flex h-7 w-14 items-center rounded-full transition-colors bg-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-300"
@@ -32,11 +40,12 @@
           <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Name</th>
           <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
           <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-20">Use</th>
+          <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">Actions</th>
         </tr>
       </thead>
       <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700" data-account-types-target="tableBody">
         <tr>
-          <td colspan="3" class="px-6 py-8 text-center text-sm text-gray-400 dark:text-gray-500">Loading...</td>
+          <td colspan="4" class="px-6 py-8 text-center text-sm text-gray-400 dark:text-gray-500">Loading...</td>
         </tr>
       </tbody>
     </table>
@@ -50,8 +59,64 @@
       </svg>
       <p class="ml-3 text-sm text-blue-700 dark:text-blue-300">
         Toggle account types on or off to control which options appear in your Account Type dropdown.
-        Click the description text to customize it for your account. Use the "View All" toggle to see all available types.
+        Click the description text to customize it. Use "+ Custom Type" to create your own account types.
       </p>
+    </div>
+  </div>
+
+  <%# Add/Edit Custom Type Modal %>
+  <div class="hidden fixed inset-0 z-50 overflow-y-auto" data-account-types-target="modal">
+    <div class="flex min-h-full items-center justify-center p-4">
+      <div class="fixed inset-0 bg-black/50 transition-opacity" data-action="click->account-types#closeModal"></div>
+      <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg p-6 ring-1 ring-gray-200 dark:ring-gray-700">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4" data-account-types-target="modalTitle">Add Custom Type</h3>
+        <div class="space-y-4">
+          <%# Name %>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name <span class="text-red-500">*</span></label>
+            <input type="text" data-account-types-target="modalName"
+                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                   placeholder="e.g. Investment"
+                   maxlength="80"
+                   data-action="keydown->account-types#modalKeydown">
+          </div>
+          <%# Description %>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+            <input type="text" data-account-types-target="modalDescription"
+                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                   placeholder="e.g. Brokerage or 401k account"
+                   maxlength="255"
+                   data-action="keydown->account-types#modalKeydown">
+          </div>
+          <%# Error %>
+          <div data-account-types-target="modalError" class="hidden text-sm text-red-600 dark:text-red-400"></div>
+        </div>
+        <div class="flex justify-end space-x-3 mt-6">
+          <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition"
+                  data-action="click->account-types#closeModal">Cancel</button>
+          <button type="button" class="px-4 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg transition"
+                  data-action="click->account-types#saveModal">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%# Delete Confirmation Modal %>
+  <div class="hidden fixed inset-0 z-50 overflow-y-auto" data-account-types-target="deleteModal">
+    <div class="flex min-h-full items-center justify-center p-4">
+      <div class="fixed inset-0 bg-black/50 transition-opacity" data-action="click->account-types#closeDeleteModal"></div>
+      <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-sm p-6 ring-1 ring-gray-200 dark:ring-gray-700">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Delete Custom Type</h3>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Are you sure you want to delete <strong data-account-types-target="deleteModalName"></strong>? This cannot be undone.</p>
+        <div data-account-types-target="deleteModalError" class="hidden text-sm text-red-600 dark:text-red-400 mb-4"></div>
+        <div class="flex justify-end space-x-3">
+          <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition"
+                  data-action="click->account-types#closeDeleteModal">Cancel</button>
+          <button type="button" class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition"
+                  data-action="click->account-types#executeDelete">Delete</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>

@@ -30,6 +30,9 @@ APP_ALL_VERSIONS = [
       "Reports: Monthly Cash Flow card link now includes relative_url_root prefix — resolves 404 on production (CM-12)",
       "Admin: Reports Maintenance Route Path field converted from free-text to dropdown sourced from REGISTERED_ROUTES constant (CM-13)",
       "Admin: Server-side validation rejects unregistered route paths; legacy/invalid routes shown with warning on edit (CM-13)",
+      "Account Types: Full CRUD for custom account types — Add, Edit, and Soft-Delete via modal (CM-15)",
+      "Account Types: Custom types appear in Accounts dropdown alongside system types; in-use deletion protection (CM-15)",
+      "Database: Added owner_user_id and deleted_at columns to account_type_masters for custom type support (CM-15)",
     ]
   },
   {
