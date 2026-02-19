@@ -2,6 +2,8 @@ class SpendingCategory < ApplicationRecord
   belongs_to :user
   belongs_to :spending_type
   has_many :payments
+  has_many :tag_assignments, as: :taggable, dependent: :destroy
+  has_many :tags, through: :tag_assignments
 
   default_scope { where(deleted_at: nil) }
 

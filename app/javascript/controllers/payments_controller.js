@@ -19,6 +19,7 @@ export default class extends Controller {
     "addModal", "addModalBody", "modalTitle", "modalDate", "modalAccount", "modalCategory", "modalType",
     "modalDescription", "modalAmount", "modalError",
     "modalTagsWrapper", "modalTagsPills", "modalTagsInput", "modalTagsDropdown",
+    "categoryTagPrompt",
     "dateWarningModal", "dateWarningMessage",
     "deleteBlockedModal", "deleteBlockedMessage",
     "editBlockedModal", "editBlockedMessage",
@@ -1110,6 +1111,7 @@ export default class extends Controller {
     this.modalTagsInputTarget.value = ""
     this._renderTagPills()
     this._hideTagsDropdown()
+    this._hideCategoryTagPrompt()
     this.modalErrorTarget.classList.add("hidden")
     this.modalErrorTarget.textContent = ""
 
@@ -1148,6 +1150,7 @@ export default class extends Controller {
     this.modalTagsInputTarget.value = ""
     this._renderTagPills()
     this._hideTagsDropdown()
+    this._hideCategoryTagPrompt()
     this.modalErrorTarget.classList.add("hidden")
     this.modalErrorTarget.textContent = ""
 
@@ -1215,13 +1218,61 @@ export default class extends Controller {
   onModalCategoryChange(event) {
     const categoryId = event.target.value
     if (categoryId && categoryId !== "new") {
-      // Auto-select the matching spending type
       const cat = this.categories.find(c => c.id === Number(categoryId))
+      // Auto-select the matching spending type
       if (cat && cat.spending_type_id) {
         this.modalTypeTarget.value = String(cat.spending_type_id)
       }
+
+      // Auto-attach default tags
+      const defaultTagIds = cat?.default_tag_ids || []
+      if (defaultTagIds.length > 0) {
+        if (this.state === "adding") {
+          // In Add mode: auto-populate default tags (merge, no duplicates)
+          for (const tid of defaultTagIds) {
+            if (!this.selectedTagIds.includes(tid)) {
+              this.selectedTagIds.push(tid)
+            }
+          }
+          this._renderTagPills()
+        } else if (this.state === "editing") {
+          // In Edit mode: show prompt, don't silently overwrite
+          this._pendingDefaultTagIds = defaultTagIds
+          this._showCategoryTagPrompt()
+        }
+      }
+
       setTimeout(() => this.modalDescriptionTarget.focus(), 50)
     }
+  }
+
+  _showCategoryTagPrompt() {
+    if (this.hasCategoryTagPromptTarget) {
+      this.categoryTagPromptTarget.classList.remove("hidden")
+    }
+  }
+
+  _hideCategoryTagPrompt() {
+    if (this.hasCategoryTagPromptTarget) {
+      this.categoryTagPromptTarget.classList.add("hidden")
+    }
+    this._pendingDefaultTagIds = null
+  }
+
+  applyCategoryTags() {
+    if (this._pendingDefaultTagIds) {
+      for (const tid of this._pendingDefaultTagIds) {
+        if (!this.selectedTagIds.includes(tid)) {
+          this.selectedTagIds.push(tid)
+        }
+      }
+      this._renderTagPills()
+    }
+    this._hideCategoryTagPrompt()
+  }
+
+  ignoreCategoryTags() {
+    this._hideCategoryTagPrompt()
   }
 
   // --- Date Validation Against Open Month ---

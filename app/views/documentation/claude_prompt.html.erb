@@ -157,7 +157,7 @@ The app uses a sidebar navigation layout. All CRUD screens are single-page with 
 
 API endpoints (all under /api/):
   /api/spending_types ......... CRUD
-  /api/spending_categories .... CRUD
+  /api/spending_categories .... CRUD (response includes default_tag_ids; create/update accept tag_ids for category-level default tags)
   /api/spending_limits ........ GET (index by scope_type+yyyymm), POST (set/update), DELETE (soft-delete)
   /api/account_types .......... CRUD (legacy)
   /api/account_type_masters ... CRUD + GET :id/can_delete (admin-only, delete blocked if in use by any user)
@@ -166,7 +166,7 @@ API endpoints (all under /api/):
   /api/transfer_masters ....... CRUD (with transactional balance updates on both from/to accounts)
   /api/reconciliation ......... data (GET), toggle (PATCH), outside_balance (PUT), statement_counts (PUT), mark_reconciled (PUT), group_states (GET), toggle_group (PUT)
   /api/balance_adjustments .... create, update, destroy (with balance updates)
-  /api/payments ............... CRUD (with transactional balance updates)
+  /api/payments ............... CRUD (with transactional balance updates; auto-attaches category default tags in Add mode)
   /api/income_frequency_masters  CRUD + GET :id/can_delete (admin-only, delete blocked if in use by any user)
   /api/income_user_frequencies  index + update (use_flag toggle per frequency)
   /api/income_recurrings ...... CRUD
@@ -199,7 +199,7 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 - **theme_controller.js** — dark/light mode toggle
 - **otp_controller.js** — 6-digit OTP input with auto-submit
 - **spending_types_controller.js** — CRUD with icon/color picker, generate dummy data
-- **spending_categories_controller.js** — CRUD with type select, debt toggle
+- **spending_categories_controller.js** — CRUD with type select, debt toggle, default tags multi-select (tags auto-attach to payments created with this category)
 - **account_types_controller.js** — Toggle screen for user account types. Fetches from /api/user_account_types, displays master type name and description, toggle switch enables/disables each type for the user. View All toggle switches between enabled-only and all available types (matching Frequencies pattern). Click-to-edit descriptions with Save/Cancel/Reset buttons — custom descriptions stored per user via custom_description column, Reset clears to master description. No CRUD — types are managed by admin via Acct Type Masters.
 - **account_type_masters_controller.js** — Admin CRUD for global account type masters: Add/Edit modal with name + description + active toggle, Delete with in-use protection (can_delete endpoint), Cannot-Delete modal when type is referenced by users. Similar pattern to income_frequency_masters_controller.js.
 - **accounts_controller.js** — CRUD with type select, budget toggle, generate dummy data. Add Account validates effective_date against the current open month: client-side date picker is constrained to the open month's date range, server-side returns 409 Conflict if effective_date falls outside the open month. Double-clicking an account name navigates to Account Reconciliation with that account pre-selected via ?account_id= query param.

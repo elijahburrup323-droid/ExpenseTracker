@@ -4,7 +4,8 @@
      data-spending-categories-types-url-value="<%= api_spending_types_path %>"
      data-spending-categories-limits-url-value="<%= api_spending_limits_path %>"
      data-spending-categories-csrf-token-value="<%= form_authenticity_token %>"
-     data-spending-categories-types-page-url-value="<%= spending_types_path %>">
+     data-spending-categories-types-page-url-value="<%= spending_types_path %>"
+     data-spending-categories-tags-url-value="<%= api_tags_path %>">
 
   <%# Page Header (sticky) %>
   <div class="sticky top-14 z-20 bg-gray-50 dark:bg-gray-900 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-2 border-b border-gray-200 dark:border-gray-700 shadow-sm">
@@ -145,6 +146,19 @@
                   role="switch" aria-checked="false" title="Debt: No">
             <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform translate-x-1"></span>
           </button>
+        </div>
+
+        <%# Default Tags %>
+        <div class="mb-4 relative" data-spending-categories-target="modalTagsWrapper">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Default Tags</label>
+          <p class="text-xs text-gray-400 dark:text-gray-500 mb-1">Tags auto-applied to new payments using this category</p>
+          <div class="flex flex-wrap gap-1 mb-1" data-spending-categories-target="modalTagsPills"></div>
+          <input type="text" placeholder="Search or create tags..." autocomplete="off"
+                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2"
+                 data-spending-categories-target="modalTagsInput"
+                 data-action="input->spending-categories#onTagsInput focus->spending-categories#onTagsFocus keydown->spending-categories#onTagsKeydown">
+          <div class="hidden absolute z-50 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg"
+               data-spending-categories-target="modalTagsDropdown"></div>
         </div>
 
         <%# Error %>

@@ -1,5 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 import { ICON_CATALOG, COLOR_OPTIONS, renderIconSvg, defaultIconSvg, iconFor, escapeHtml, escapeAttr } from "controllers/shared/icon_catalog"
+import { TAG_COLORS } from "controllers/tags_controller"
 
 export default class extends Controller {
   static targets = [
@@ -7,13 +8,17 @@ export default class extends Controller {
     "deleteModal", "deleteModalName",
     "categoryModal", "modalTitle", "modalName", "modalDescription",
     "modalType", "modalDebt", "modalIconPicker", "modalError",
+    "modalTagsWrapper", "modalTagsPills", "modalTagsInput", "modalTagsDropdown",
     "limitModal", "limitModalName", "limitModalValue", "limitModalError", "limitModalRemoveBtn"
   ]
-  static values = { apiUrl: String, typesUrl: String, limitsUrl: String, csrfToken: String, typesPageUrl: String }
+  static values = { apiUrl: String, typesUrl: String, limitsUrl: String, csrfToken: String, typesPageUrl: String, tagsUrl: String }
 
   connect() {
     this.categories = []
     this.spendingTypes = []
+    this.allTags = []
+    this.selectedTagIds = []
+    this._tagsDropdownIndex = -1
     this.state = "idle" // idle | adding | editing
     this.editingId = null
     this.deletingId = null
@@ -30,6 +35,10 @@ export default class extends Controller {
         this.iconPickerOpen = false
         this._rerenderIconPicker()
       }
+      // Close tags dropdown when clicking outside
+      if (this.hasModalTagsWrapperTarget && !this.modalTagsWrapperTarget.contains(e.target)) {
+        this._hideTagsDropdown()
+      }
     }
     document.addEventListener("click", this._onDocumentClick)
   }
@@ -43,12 +52,17 @@ export default class extends Controller {
 
   async fetchAll() {
     try {
-      const [catRes, typesRes] = await Promise.all([
+      const fetches = [
         fetch(this.apiUrlValue, { headers: { "Accept": "application/json" } }),
         fetch(this.typesUrlValue, { headers: { "Accept": "application/json" } })
-      ])
-      if (catRes.ok) this.categories = await catRes.json()
-      if (typesRes.ok) this.spendingTypes = await typesRes.json()
+      ]
+      if (this.tagsUrlValue) {
+        fetches.push(fetch(this.tagsUrlValue, { headers: { "Accept": "application/json" } }))
+      }
+      const results = await Promise.all(fetches)
+      if (results[0].ok) this.categories = await results[0].json()
+      if (results[1].ok) this.spendingTypes = await results[1].json()
+      if (results[2] && results[2].ok) this.allTags = await results[2].json()
     } catch (e) {
       // silently fail, show empty table
     }
@@ -149,6 +163,10 @@ export default class extends Controller {
     this._setModalDebt(false)
     this._updateModalIconPreview()
     this._hideModalError()
+    this.selectedTagIds = []
+    this.modalTagsInputTarget.value = ""
+    this._renderTagPills()
+    this._hideTagsDropdown()
     this.categoryModalTarget.classList.remove("hidden")
     this._registerModalEscape()
     this.modalNameTarget.focus()
@@ -173,6 +191,10 @@ export default class extends Controller {
     this._setModalDebt(cat.is_debt)
     this._updateModalIconPreview()
     this._hideModalError()
+    this.selectedTagIds = [...(cat.default_tag_ids || [])]
+    this.modalTagsInputTarget.value = ""
+    this._renderTagPills()
+    this._hideTagsDropdown()
     this.categoryModalTarget.classList.remove("hidden")
     this._registerModalEscape()
     this.modalNameTarget.focus()
@@ -183,6 +205,7 @@ export default class extends Controller {
     this.state = "idle"
     this.editingId = null
     this.iconPickerOpen = false
+    this._hideTagsDropdown()
     this._unregisterModalEscape()
   }
 
@@ -219,7 +242,8 @@ export default class extends Controller {
         body: JSON.stringify({ spending_category: {
           name, description, spending_type_id, is_debt,
           icon_key: this.selectedIconKey,
-          color_key: this.selectedColorKey
+          color_key: this.selectedColorKey,
+          tag_ids: this.selectedTagIds
         }})
       })
 
@@ -265,7 +289,8 @@ export default class extends Controller {
         body: JSON.stringify({ spending_category: {
           name, description, spending_type_id, is_debt,
           icon_key: this.selectedIconKey,
-          color_key: this.selectedColorKey
+          color_key: this.selectedColorKey,
+          tag_ids: this.selectedTagIds
         }})
       })
 
@@ -422,6 +447,178 @@ export default class extends Controller {
         <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Icon</p>
         <div class="grid grid-cols-8 gap-1">${iconsHtml}</div>
       </div>`
+  }
+
+  // --- Tags Multi-Select ---
+
+  onTagsFocus() {
+    this._showTagsDropdown()
+  }
+
+  onTagsInput() {
+    this._tagsDropdownIndex = -1
+    this._showTagsDropdown()
+  }
+
+  onTagsKeydown(event) {
+    if (event.key === "Escape") {
+      event.preventDefault()
+      event.stopPropagation()
+      this._hideTagsDropdown()
+      return
+    }
+    if (event.key === "ArrowDown") {
+      event.preventDefault()
+      this._tagsDropdownIndex++
+      this._showTagsDropdown()
+      return
+    }
+    if (event.key === "ArrowUp") {
+      event.preventDefault()
+      this._tagsDropdownIndex = Math.max(-1, this._tagsDropdownIndex - 1)
+      this._showTagsDropdown()
+      return
+    }
+    if (event.key === "Enter") {
+      event.preventDefault()
+      const items = this._getFilteredTagItems()
+      if (this._tagsDropdownIndex >= 0 && this._tagsDropdownIndex < items.length) {
+        const item = items[this._tagsDropdownIndex]
+        if (item.isCreate) {
+          this._quickCreateTag(item.name)
+        } else {
+          this._toggleTagSelection(item.id)
+        }
+      } else if (items.length === 1 && items[0].isCreate) {
+        this._quickCreateTag(items[0].name)
+      }
+      return
+    }
+    if (event.key === "Backspace" && !this.modalTagsInputTarget.value && this.selectedTagIds.length > 0) {
+      this.selectedTagIds.pop()
+      this._renderTagPills()
+      this._showTagsDropdown()
+    }
+  }
+
+  _getFilteredTagItems() {
+    const query = this.modalTagsInputTarget.value.trim().toLowerCase()
+    let items = this.allTags
+      .filter(t => !query || t.name.toLowerCase().includes(query))
+      .map(t => ({ id: t.id, name: t.name, color_key: t.color_key, selected: this.selectedTagIds.includes(t.id) }))
+
+    if (query && !this.allTags.some(t => t.name.toLowerCase() === query)) {
+      items.push({ isCreate: true, name: this.modalTagsInputTarget.value.trim() })
+    }
+    return items
+  }
+
+  _showTagsDropdown() {
+    const items = this._getFilteredTagItems()
+    if (items.length === 0) { this._hideTagsDropdown(); return }
+
+    if (this._tagsDropdownIndex >= items.length) this._tagsDropdownIndex = items.length - 1
+
+    let html = ""
+    items.forEach((item, i) => {
+      const active = i === this._tagsDropdownIndex ? "bg-brand-50 dark:bg-brand-900/30" : ""
+      if (item.isCreate) {
+        html += `<div class="px-3 py-2 text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 ${active} text-brand-600 dark:text-brand-400 font-medium"
+                      data-action="click->spending-categories#quickCreateTagClick" data-name="${escapeAttr(item.name)}">
+          + Create "${escapeHtml(item.name)}"
+        </div>`
+      } else {
+        const c = TAG_COLORS.find(tc => tc.key === item.color_key) || TAG_COLORS[0]
+        const checkmark = item.selected ? `<svg class="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>` : `<span class="w-4"></span>`
+        html += `<div class="px-3 py-2 text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 ${active} flex items-center gap-2"
+                      data-action="click->spending-categories#toggleTagClick" data-tag-id="${item.id}">
+          ${checkmark}
+          <span class="w-2.5 h-2.5 rounded-full ${c.dot} flex-shrink-0"></span>
+          <span>${escapeHtml(item.name)}</span>
+        </div>`
+      }
+    })
+
+    this.modalTagsDropdownTarget.innerHTML = html
+    this.modalTagsDropdownTarget.classList.remove("hidden")
+  }
+
+  _hideTagsDropdown() {
+    if (this.hasModalTagsDropdownTarget) {
+      this.modalTagsDropdownTarget.classList.add("hidden")
+    }
+    this._tagsDropdownIndex = -1
+  }
+
+  toggleTagClick(event) {
+    const tagId = Number(event.currentTarget.dataset.tagId)
+    this._toggleTagSelection(tagId)
+  }
+
+  _toggleTagSelection(tagId) {
+    const idx = this.selectedTagIds.indexOf(tagId)
+    if (idx >= 0) {
+      this.selectedTagIds.splice(idx, 1)
+    } else {
+      this.selectedTagIds.push(tagId)
+    }
+    this._renderTagPills()
+    this._showTagsDropdown()
+  }
+
+  removeTag(event) {
+    const tagId = Number(event.currentTarget.dataset.tagId)
+    this.selectedTagIds = this.selectedTagIds.filter(id => id !== tagId)
+    this._renderTagPills()
+    if (this.hasModalTagsDropdownTarget && !this.modalTagsDropdownTarget.classList.contains("hidden")) {
+      this._showTagsDropdown()
+    }
+  }
+
+  _renderTagPills() {
+    const html = this.selectedTagIds.map(id => {
+      const tag = this.allTags.find(t => t.id === id)
+      if (!tag) return ""
+      const c = TAG_COLORS.find(tc => tc.key === tag.color_key) || TAG_COLORS[0]
+      return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${c.bg} ${c.text}">
+        ${escapeHtml(tag.name)}
+        <button type="button" class="hover:opacity-70" data-tag-id="${tag.id}" data-action="click->spending-categories#removeTag">&times;</button>
+      </span>`
+    }).join("")
+    this.modalTagsPillsTarget.innerHTML = html
+  }
+
+  async quickCreateTagClick(event) {
+    const name = event.currentTarget.dataset.name
+    await this._quickCreateTag(name)
+  }
+
+  async _quickCreateTag(name) {
+    if (!this.tagsUrlValue) return
+    try {
+      const response = await fetch(this.tagsUrlValue, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "X-CSRF-Token": this.csrfTokenValue
+        },
+        body: JSON.stringify({ tag: { name, color_key: "blue" } })
+      })
+      if (response.ok) {
+        const newTag = await response.json()
+        this.allTags.push(newTag)
+        this.selectedTagIds.push(newTag.id)
+        this.modalTagsInputTarget.value = ""
+        this._renderTagPills()
+        this._showTagsDropdown()
+      } else {
+        const data = await response.json()
+        this._showModalError(data.errors?.[0] || "Failed to create tag")
+      }
+    } catch (e) {
+      this._showModalError("Network error creating tag")
+    }
   }
 
   // --- Debt Toggle ---
@@ -595,10 +792,16 @@ export default class extends Controller {
       : `<button type="button" class="text-xs text-brand-600 dark:text-brand-400 hover:underline"
                  data-id="${cat.id}" data-action="click->spending-categories#startSettingLimit">Set</button>`
 
+    // Render default tag pills for this category
+    const tagPills = this._renderRowTagPills(cat.default_tag_ids || [])
+
     return `<tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
       <td class="px-6 py-4">${iconFor(cat.icon_key, cat.color_key)}</td>
       <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">${escapeHtml(cat.name)}</td>
-      <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">${escapeHtml(cat.description || "")}</td>
+      <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+        ${escapeHtml(cat.description || "")}
+        ${tagPills}
+      </td>
       <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 w-48 max-w-[12rem] truncate">${escapeHtml(cat.spending_type_name || "")}</td>
       <td class="px-6 py-4 text-center">${debtToggle}</td>
       <td class="px-6 py-4 text-center">${limitHtml}</td>
@@ -619,6 +822,17 @@ export default class extends Controller {
         </button>
       </td>
     </tr>`
+  }
+
+  _renderRowTagPills(tagIds) {
+    if (!tagIds || tagIds.length === 0) return ""
+    const pills = tagIds.map(id => {
+      const tag = this.allTags.find(t => t.id === id)
+      if (!tag) return ""
+      const c = TAG_COLORS.find(tc => tc.key === tag.color_key) || TAG_COLORS[0]
+      return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${c.bg} ${c.text}">${escapeHtml(tag.name)}</span>`
+    }).filter(Boolean).join("")
+    return pills ? `<div class="flex flex-wrap gap-1 mt-1">${pills}</div>` : ""
   }
 
   // --- Limit Modal ---

@@ -3,11 +3,8 @@ module Api
     before_action :set_spending_category, only: [:update, :destroy]
 
     def index
-      categories = current_user.spending_categories.includes(:spending_type).ordered
-      render json: categories.map { |c|
-        c.as_json(only: [:id, :name, :description, :spending_type_id, :is_debt, :icon_key, :color_key, :sort_order])
-          .merge("spending_type_name" => c.spending_type.name)
-      }
+      categories = current_user.spending_categories.includes(:spending_type, :tags).ordered
+      render json: categories.map { |c| category_json(c) }
     end
 
     def create
@@ -16,9 +13,8 @@ module Api
       category.sort_order = max_sort + 1
 
       if category.save
-        render json: category.as_json(only: [:id, :name, :description, :spending_type_id, :is_debt, :icon_key, :color_key, :sort_order])
-          .merge("spending_type_name" => category.spending_type.name),
-          status: :created
+        sync_category_tags!(category)
+        render json: category_json(category), status: :created
       else
         render_errors(category)
       end
@@ -26,8 +22,8 @@ module Api
 
     def update
       if @spending_category.update(update_params)
-        render json: @spending_category.as_json(only: [:id, :name, :description, :spending_type_id, :is_debt, :icon_key, :color_key, :sort_order])
-          .merge("spending_type_name" => @spending_category.spending_type.name)
+        sync_category_tags!(@spending_category)
+        render json: category_json(@spending_category)
       else
         render_errors(@spending_category)
       end
@@ -54,6 +50,23 @@ module Api
 
     def update_params
       params.require(:spending_category).permit(:name, :description, :spending_type_id, :is_debt, :icon_key, :color_key)
+    end
+
+    def category_json(c)
+      c.as_json(only: [:id, :name, :description, :spending_type_id, :is_debt, :icon_key, :color_key, :sort_order])
+        .merge(
+          "spending_type_name" => c.spending_type.name,
+          "default_tag_ids" => c.tags.map(&:id)
+        )
+    end
+
+    def sync_category_tags!(category)
+      tag_ids = (params.dig(:spending_category, :tag_ids) || []).map(&:to_i).uniq
+      valid_tag_ids = current_user.tags.where(id: tag_ids).pluck(:id)
+      category.tag_assignments.destroy_all
+      valid_tag_ids.each do |tid|
+        category.tag_assignments.create!(user: current_user, tag_id: tid)
+      end
     end
   end
 end

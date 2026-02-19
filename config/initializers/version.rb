@@ -1,9 +1,18 @@
-APP_VERSION = "1.3.16"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+APP_VERSION = "1.3.17"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.17",
+    changes: [
+      "Spending Categories: Default Tags selector — assign tags that auto-attach to new payments (CM-3)",
+      "Spending Categories: Multi-select tag picker with search, pills, and quick-create in Add/Edit modal (CM-3)",
+      "Payments: Auto-attach category default tags when selecting a category in Add Payment modal (CM-3)",
+      "Payments: Category-change prompt in Edit Payment modal — Apply or Ignore default tags on category switch (CM-3)",
+    ]
+  },
   {
     version: "1.3.16",
     changes: [
