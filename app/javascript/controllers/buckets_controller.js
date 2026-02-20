@@ -3,7 +3,7 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = [
     "tableBody", "addButton", "accountFilter",
-    "entryModal", "modalTitle", "modalAccount", "modalName", "modalTarget", "modalBalance", "modalBalanceRow", "modalPriority", "modalError",
+    "entryModal", "modalTitle", "modalAccount", "modalName", "modalTargetAmt", "modalBalance", "modalBalanceRow", "modalPriority", "modalError",
     "fundModal", "fundFrom", "fundFromBalance", "fundToName", "fundAmount", "fundError",
     "deleteModal", "deleteModalName"
   ]
@@ -72,7 +72,7 @@ export default class extends Controller {
     this.modalTitleTarget.textContent = "Add Bucket"
     this._rebuildModalAccountDropdown()
     this.modalNameTarget.value = ""
-    this.modalTargetTarget.value = ""
+    this.modalTargetAmtTarget.value = ""
     this.modalBalanceTarget.value = ""
     this.modalPriorityTarget.value = "0"
     this.modalBalanceRowTarget.classList.remove("hidden")
@@ -101,7 +101,7 @@ export default class extends Controller {
     this._rebuildModalAccountDropdown()
     this.modalAccountTarget.value = String(bucket.account_id || "")
     this.modalNameTarget.value = bucket.name || ""
-    this.modalTargetTarget.value = bucket.target_amount != null ? bucket.target_amount : ""
+    this.modalTargetAmtTarget.value = bucket.target_amount != null ? bucket.target_amount : ""
     this.modalPriorityTarget.value = bucket.priority || 0
     this.modalBalanceRowTarget.classList.add("hidden") // Don't allow balance edit
     this.modalErrorTarget.classList.add("hidden")
@@ -126,7 +126,7 @@ export default class extends Controller {
   async saveNew() {
     const account_id = this.modalAccountTarget.value
     const name = this.modalNameTarget.value.trim()
-    const target_amount = this.modalTargetTarget.value.trim() || null
+    const target_amount = this.modalTargetAmtTarget.value.trim() || null
     const current_balance = this.modalBalanceTarget.value.trim() || "0"
     const priority = this.modalPriorityTarget.value.trim() || "0"
 
@@ -162,7 +162,7 @@ export default class extends Controller {
   async saveEdit() {
     const account_id = this.modalAccountTarget.value
     const name = this.modalNameTarget.value.trim()
-    const target_amount = this.modalTargetTarget.value.trim() || null
+    const target_amount = this.modalTargetAmtTarget.value.trim() || null
     const priority = this.modalPriorityTarget.value.trim() || "0"
 
     if (!account_id) { this._showModalError("Account is required"); return }
