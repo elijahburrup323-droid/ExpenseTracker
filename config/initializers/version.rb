@@ -36,6 +36,9 @@ APP_ALL_VERSIONS = [
       "Payments: Generated payments linked via payment_recurring_id FK for traceability (CM-10)",
       "Database: New payment_recurrings table with frequency, account, category, and soft-delete support (CM-10)",
       "Navigation: Recurring Payments added under Payments sidebar group (CM-10)",
+      "Dashboard: Drag-and-drop cards now grab from anywhere on the card surface — no more tiny handle icon (CM-11)",
+      "Dashboard: True two-card swap on drag — only the dragged card and drop target exchange positions, no other cards shift (CM-11)",
+      "Dashboard: Touch-friendly drag with delay and threshold to prevent accidental drags on mobile/tablet (CM-11)",
     ]
   },
   {

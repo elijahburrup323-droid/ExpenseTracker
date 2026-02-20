@@ -48,6 +48,28 @@
       .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
       @media (min-width: 640px) { .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
       @media (min-width: 768px) { .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+      /* Dashboard drag-and-drop: grab anywhere */
+      [data-dashboard-target="slotWrapper"] { cursor: grab; }
+      [data-dashboard-target="slotWrapper"]:active { cursor: grabbing; }
+      [data-dashboard-target="slotWrapper"] a,
+      [data-dashboard-target="slotWrapper"] button,
+      [data-dashboard-target="slotWrapper"] select { cursor: pointer; }
+
+      /* Swap target highlight */
+      .dashboard-swap-highlight {
+        outline: 2px dashed #a855f7;
+        outline-offset: 2px;
+        border-radius: 0.75rem;
+        opacity: 0.85;
+      }
+
+      /* Drag ghost styling */
+      .sortable-drag {
+        opacity: 0.85;
+        box-shadow: 0 10px 25px -3px rgba(0,0,0,0.15), 0 4px 6px -4px rgba(0,0,0,0.1);
+        transform: rotate(1.5deg);
+      }
     </style>
   </head>
   <body class="font-sans bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">

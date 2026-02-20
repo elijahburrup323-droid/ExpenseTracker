@@ -224,8 +224,14 @@ export default class extends Controller {
     if (!this.hasCardsGridTarget) return
     this.sortable = Sortable.create(this.cardsGridTarget, {
       animation: 150,
-      handle: ".drag-handle",
+      swap: true,
+      swapClass: "dashboard-swap-highlight",
       ghostClass: "opacity-30",
+      filter: "a, button, select, input, textarea, label, .no-drag",
+      preventOnFilter: false,
+      delay: 150,
+      delayOnTouchOnly: true,
+      touchStartThreshold: 5,
       onEnd: () => this._onSortEnd(),
     })
   }
@@ -354,9 +360,6 @@ export default class extends Controller {
       let html = `
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center">
-            <span class="drag-handle cursor-grab text-gray-300 hover:text-gray-500 dark:text-gray-600 dark:hover:text-gray-400 mr-2">
-              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><circle cx="8" cy="4" r="1.5"/><circle cx="16" cy="4" r="1.5"/><circle cx="8" cy="12" r="1.5"/><circle cx="16" cy="12" r="1.5"/><circle cx="8" cy="20" r="1.5"/><circle cx="16" cy="20" r="1.5"/></svg>
-            </span>
             <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Accounts</h2>
           </div>
           <span class="text-sm font-semibold text-gray-900 dark:text-white">Total: ${this._currency(total)}</span>
