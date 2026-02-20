@@ -396,6 +396,13 @@
                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2.5">
           </div>
           <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+            <input type="text" maxlength="255" placeholder="Optional short description..."
+                   data-payments-target="childCategoryDesc"
+                   data-action="keydown->payments#handleChildCategoryKeydown"
+                   class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2.5">
+          </div>
+          <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Spending Type <span class="text-red-500">*</span></label>
             <select data-payments-target="childCategoryType"
                     data-action="keydown->payments#handleChildCategoryKeydown"

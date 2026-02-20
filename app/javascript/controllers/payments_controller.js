@@ -24,7 +24,7 @@ export default class extends Controller {
     "deleteBlockedModal", "deleteBlockedMessage",
     "editBlockedModal", "editBlockedMessage",
     "suggestionsList",
-    "categoryChildModal", "childCategoryName", "childCategoryType", "childCategoryError"
+    "categoryChildModal", "childCategoryName", "childCategoryDesc", "childCategoryType", "childCategoryError"
   ]
   static values = {
     apiUrl: String, accountsUrl: String, categoriesUrl: String, typesUrl: String, csrfToken: String,
@@ -1649,6 +1649,7 @@ export default class extends Controller {
 
     // Reset fields
     this.childCategoryNameTarget.value = ""
+    this.childCategoryDescTarget.value = ""
     this.childCategoryTypeTarget.value = ""
     this.childCategoryErrorTarget.classList.add("hidden")
     this.childCategoryErrorTarget.textContent = ""
@@ -1678,7 +1679,8 @@ export default class extends Controller {
       return
     }
 
-    const body = { spending_category: { name, spending_type_id: Number(typeId) } }
+    const description = this.childCategoryDescTarget.value.trim() || name
+    const body = { spending_category: { name, description, spending_type_id: Number(typeId) } }
 
     try {
       const res = await fetch(this.categoriesUrlValue, {
