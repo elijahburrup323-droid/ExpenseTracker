@@ -15,6 +15,7 @@ module Api
       ActiveRecord::Base.transaction do
         if payment.save
           sync_tags!(payment)
+          learn_category_defaults!(payment)
           account = payment.account
           account.balance -= payment.amount
           account.save!
@@ -40,6 +41,7 @@ module Api
 
         if @payment.update(payment_params)
           sync_tags!(@payment)
+          learn_category_defaults!(@payment)
           old_account.balance += old_amount
           old_account.save!
 
@@ -202,6 +204,23 @@ module Api
       payment.tag_assignments.destroy_all
       valid_tag_ids.each do |tid|
         payment.tag_assignments.create!(user: current_user, tag_id: tid)
+      end
+    end
+
+    def learn_category_defaults!(payment)
+      return unless payment.spending_category_id.present?
+
+      category = SpendingCategory.find_by(id: payment.spending_category_id, user_id: current_user.id)
+      return unless category
+
+      payment_tag_ids = payment.tag_assignments.pluck(:tag_id)
+      return if payment_tag_ids.empty?
+
+      existing_default_tag_ids = category.tag_assignments.pluck(:tag_id)
+      new_tag_ids = payment_tag_ids - existing_default_tag_ids
+
+      new_tag_ids.each do |tid|
+        category.tag_assignments.create!(user: current_user, tag_id: tid)
       end
     end
   end

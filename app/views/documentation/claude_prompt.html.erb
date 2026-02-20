@@ -167,7 +167,7 @@ API endpoints (all under /api/):
   /api/transfer_masters ....... CRUD (with transactional balance updates on both from/to accounts)
   /api/reconciliation ......... data (GET), toggle (PATCH), outside_balance (PUT), statement_counts (PUT), mark_reconciled (PUT), group_states (GET), toggle_group (PUT)
   /api/balance_adjustments .... create, update, destroy (with balance updates)
-  /api/payments ............... CRUD (with transactional balance updates; auto-attaches category default tags in Add mode; auto-generates due recurring payments on index)
+  /api/payments ............... CRUD (with transactional balance updates; auto-attaches category default tags in Add mode; auto-learns category defaults from payment tags on create/update; auto-generates due recurring payments on index)
   /api/payment_recurrings ..... CRUD (recurring payment obligations with frequency, account, category; use_flag toggle; soft-delete)
   /api/income_frequency_masters  CRUD + GET :id/can_delete (admin-only, delete blocked if in use by any user)
   /api/income_user_frequencies  index + update (use_flag toggle per frequency)
