@@ -1,6 +1,6 @@
 APP_VERSION = "1.3.18"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
-MANUAL_CHANGE_SEQ = 6  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 7  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
@@ -53,6 +53,7 @@ APP_ALL_VERSIONS = [
       "Reports: Shared tag_filter.js module provides reusable tag filter UI, query string builder, and applied tags rendering for all analytical reports (CM-1)",
       "Reports: Print output includes applied tag names when tag filter is active (CM-1)",
       "Models: IncomeEntry now supports tag associations via polymorphic tag_assignments for Income by Source tag filtering (CM-1)",
+      "Income: Recurring Deposits converted from inline table-row editing to modal-based Add/Edit CRUD for consistency with Deposits screen (CM-3)",
     ]
   },
   {

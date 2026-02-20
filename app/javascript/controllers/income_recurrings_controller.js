@@ -1,7 +1,11 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["tableBody", "addButton", "generateButton", "deleteModal", "deleteModalName"]
+  static targets = [
+    "tableBody", "addButton", "generateButton", "deleteModal", "deleteModalName",
+    "entryModal", "modalTitle", "modalName", "modalDescription", "modalAmount",
+    "modalAccount", "modalFrequency", "modalNextDate", "modalError"
+  ]
   static values = { apiUrl: String, accountsUrl: String, frequenciesUrl: String, csrfToken: String }
 
   connect() {
@@ -12,6 +16,12 @@ export default class extends Controller {
     this.editingId = null
     this.deletingId = null
     this.fetchAll()
+  }
+
+  disconnect() {
+    if (this._modalEscapeHandler) {
+      document.removeEventListener("keydown", this._modalEscapeHandler)
+    }
   }
 
   // --- Data Fetching ---
@@ -100,33 +110,74 @@ export default class extends Controller {
     this.renderTable()
   }
 
-  // --- State Transitions ---
+  // --- Modal Operations ---
 
   startAdding() {
-    if (this.state === "adding") return
-    if (this.state !== "idle") { this.state = "idle"; this.editingId = null }
+    if (this.state !== "idle") return
     this.state = "adding"
-    this.renderTable()
-    const nameInput = this.tableBodyTarget.querySelector("input[name='name']")
-    if (nameInput) nameInput.focus()
+
+    this.modalTitleTarget.textContent = "Add Deposit Source"
+    this.modalNameTarget.value = ""
+    this.modalDescriptionTarget.value = ""
+    this.modalAmountTarget.value = ""
+    this._rebuildAccountDropdown()
+    this._rebuildFrequencyDropdown()
+    this.modalNextDateTarget.value = new Date().toISOString().split("T")[0]
+    this.modalErrorTarget.classList.add("hidden")
+
+    this.entryModalTarget.classList.remove("hidden")
+    this._registerModalEscape()
+    setTimeout(() => this.modalNameTarget.focus(), 50)
   }
 
-  cancelAdding() {
+  startEditing(event) {
+    if (this.state !== "idle") return
+    const id = Number(event.currentTarget.dataset.id)
+    const rec = this.recurrings.find(r => r.id === id)
+    if (!rec) return
+
+    this.state = "editing"
+    this.editingId = id
+
+    this.modalTitleTarget.textContent = "Edit Deposit Source"
+    this.modalNameTarget.value = rec.name || ""
+    this.modalDescriptionTarget.value = rec.description || ""
+    this.modalAmountTarget.value = parseFloat(rec.amount) || ""
+    this._rebuildAccountDropdown()
+    this.modalAccountTarget.value = String(rec.account_id || "")
+    this._rebuildFrequencyDropdown()
+    this.modalFrequencyTarget.value = String(rec.frequency_master_id || "")
+    this.modalNextDateTarget.value = rec.next_date || ""
+    this.modalErrorTarget.classList.add("hidden")
+
+    this.entryModalTarget.classList.remove("hidden")
+    this._registerModalEscape()
+    setTimeout(() => this.modalNameTarget.focus(), 50)
+  }
+
+  cancelModal() {
+    this.entryModalTarget.classList.add("hidden")
     this.state = "idle"
-    this.renderTable()
+    this.editingId = null
+    this._unregisterModalEscape()
+  }
+
+  saveModal() {
+    if (this.state === "adding") this.saveNew()
+    else if (this.state === "editing") this.saveEdit()
   }
 
   async saveNew() {
-    const name = this._val("name")
-    const description = this._val("description")
-    const amount = this._val("amount") || "0"
-    const account_id = this._selectVal("account_id") || null
-    const frequency_master_id = this._selectVal("frequency_master_id")
-    const next_date = this._val("next_date")
+    const name = this.modalNameTarget.value.trim()
+    const description = this.modalDescriptionTarget.value.trim()
+    const amount = this.modalAmountTarget.value.trim() || "0"
+    const account_id = this.modalAccountTarget.value || null
+    const frequency_master_id = this.modalFrequencyTarget.value
+    const next_date = this.modalNextDateTarget.value
 
-    if (!name) { this.showRowError("Name is required"); return }
-    if (!frequency_master_id) { this.showRowError("Frequency is required"); return }
-    if (!next_date) { this.showRowError("Next Date is required"); return }
+    if (!name) { this._showModalError("Name is required"); this.modalNameTarget.focus(); return }
+    if (!frequency_master_id) { this._showModalError("Frequency is required"); this.modalFrequencyTarget.focus(); return }
+    if (!next_date) { this._showModalError("Next Date is required"); this.modalNextDateTarget.focus(); return }
 
     try {
       const response = await fetch(this.apiUrlValue, {
@@ -142,44 +193,28 @@ export default class extends Controller {
       if (response.ok) {
         const newRec = await response.json()
         this.recurrings.push(newRec)
-        this.state = "idle"
+        this.cancelModal()
         this.renderTable()
       } else {
         const data = await response.json()
-        this.showRowError(data.errors?.[0] || "Failed to save")
+        this._showModalError(data.errors?.[0] || "Failed to save")
       }
     } catch (e) {
-      this.showRowError("Network error")
+      this._showModalError("Network error")
     }
   }
 
-  startEditing(event) {
-    if (this.state !== "idle") { this.state = "idle"; this.editingId = null }
-    const id = Number(event.currentTarget.dataset.id)
-    this.state = "editing"
-    this.editingId = id
-    this.renderTable()
-    const nameInput = this.tableBodyTarget.querySelector("input[name='name']")
-    if (nameInput) nameInput.focus()
-  }
-
-  cancelEditing() {
-    this.state = "idle"
-    this.editingId = null
-    this.renderTable()
-  }
-
   async saveEdit() {
-    const name = this._val("name")
-    const description = this._val("description")
-    const amount = this._val("amount") || "0"
-    const account_id = this._selectVal("account_id") || null
-    const frequency_master_id = this._selectVal("frequency_master_id")
-    const next_date = this._val("next_date")
+    const name = this.modalNameTarget.value.trim()
+    const description = this.modalDescriptionTarget.value.trim()
+    const amount = this.modalAmountTarget.value.trim() || "0"
+    const account_id = this.modalAccountTarget.value || null
+    const frequency_master_id = this.modalFrequencyTarget.value
+    const next_date = this.modalNextDateTarget.value
 
-    if (!name) { this.showRowError("Name is required"); return }
-    if (!frequency_master_id) { this.showRowError("Frequency is required"); return }
-    if (!next_date) { this.showRowError("Next Date is required"); return }
+    if (!name) { this._showModalError("Name is required"); this.modalNameTarget.focus(); return }
+    if (!frequency_master_id) { this._showModalError("Frequency is required"); this.modalFrequencyTarget.focus(); return }
+    if (!next_date) { this._showModalError("Next Date is required"); this.modalNextDateTarget.focus(); return }
 
     try {
       const response = await fetch(`${this.apiUrlValue}/${this.editingId}`, {
@@ -196,20 +231,21 @@ export default class extends Controller {
         const updated = await response.json()
         const idx = this.recurrings.findIndex(r => r.id === this.editingId)
         if (idx !== -1) this.recurrings[idx] = updated
-        this.state = "idle"
-        this.editingId = null
+        this.cancelModal()
         this.renderTable()
       } else {
         const data = await response.json()
-        this.showRowError(data.errors?.[0] || "Failed to save")
+        this._showModalError(data.errors?.[0] || "Failed to save")
       }
     } catch (e) {
-      this.showRowError("Network error")
+      this._showModalError("Network error")
     }
   }
 
+  // --- Delete ---
+
   confirmDelete(event) {
-    if (this.state !== "idle") { this.state = "idle"; this.editingId = null; this.renderTable() }
+    if (this.state !== "idle") return
     const id = Number(event.currentTarget.dataset.id)
     const rec = this.recurrings.find(r => r.id === id)
     if (!rec) return
@@ -302,12 +338,10 @@ export default class extends Controller {
   handleKeydown(event) {
     if (event.key === "Enter") {
       event.preventDefault()
-      if (this.state === "adding") this.saveNew()
-      else if (this.state === "editing") this.saveEdit()
+      this.saveModal()
     } else if (event.key === "Escape") {
       event.preventDefault()
-      if (this.state === "adding") this.cancelAdding()
-      else if (this.state === "editing") this.cancelEditing()
+      this.cancelModal()
     }
   }
 
@@ -316,19 +350,11 @@ export default class extends Controller {
   renderTable() {
     let html = ""
 
-    if (this.state === "adding") {
-      html += this._renderAddRow()
-    }
-
     for (const rec of this.recurrings) {
-      if (this.state === "editing" && rec.id === this.editingId) {
-        html += this._renderEditRow(rec)
-      } else {
-        html += this._renderDisplayRow(rec)
-      }
+      html += this._renderDisplayRow(rec)
     }
 
-    if (this.recurrings.length === 0 && this.state !== "adding") {
+    if (this.recurrings.length === 0) {
       html = `<tr><td colspan="8" class="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">No deposit sources yet. Click "Add Deposit Source" to create one.</td></tr>`
     }
 
@@ -348,7 +374,7 @@ export default class extends Controller {
       <td class="px-4 py-4 text-sm font-medium text-gray-900 dark:text-white">${this._esc(rec.name)}</td>
       <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">${this._esc(rec.description || "")}</td>
       <td class="px-4 py-4 text-sm text-gray-900 dark:text-white text-right font-mono">${this._formatAmount(rec.amount)}</td>
-      <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">${this._esc(rec.account_name || "—")}</td>
+      <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">${this._esc(rec.account_name || "\u2014")}</td>
       <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">${this._esc(rec.frequency_name || "")}</td>
       <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">${rec.next_date || ""}</td>
       <td class="px-4 py-4 text-center">${useToggle}</td>
@@ -371,166 +397,48 @@ export default class extends Controller {
     </tr>`
   }
 
-  _renderAddRow() {
-    const accOptions = this.accounts.map(a => `<option value="${a.id}">${this._esc(a.name)}</option>`).join("")
-    const freqOptions = this.frequencies.map(f => `<option value="${f.frequency_master_id}">${this._esc(f.name)}</option>`).join("")
-    const today = new Date().toISOString().split("T")[0]
+  // --- Dropdown Builders ---
 
-    return `<tr class="bg-brand-50/40 dark:bg-brand-900/20">
-      <td class="px-4 py-3">
-        <input type="text" name="name" value="" placeholder="Source Name" maxlength="80"
-               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-               data-action="keydown->income-recurrings#handleKeydown">
-      </td>
-      <td class="px-4 py-3">
-        <input type="text" name="description" value="" placeholder="Description" maxlength="255"
-               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-               data-action="keydown->income-recurrings#handleKeydown">
-      </td>
-      <td class="px-4 py-3">
-        <div class="flex items-center">
-          <span class="text-sm text-gray-500 dark:text-gray-400 mr-1">$</span>
-          <input type="number" name="amount" value="" placeholder="0.00" step="0.01"
-                 class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5 text-right"
-                 data-action="keydown->income-recurrings#handleKeydown">
-        </div>
-      </td>
-      <td class="px-4 py-3">
-        <select name="account_id"
-                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5">
-          <option value="">No Account</option>
-          ${accOptions}
-        </select>
-      </td>
-      <td class="px-4 py-3">
-        <select name="frequency_master_id"
-                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-                data-action="keydown->income-recurrings#handleKeydown">
-          <option value="">Select frequency...</option>
-          ${freqOptions}
-        </select>
-      </td>
-      <td class="px-4 py-3">
-        <input type="date" name="next_date" value="${today}"
-               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-               data-action="keydown->income-recurrings#handleKeydown">
-      </td>
-      <td class="px-4 py-3 text-center">
-        ${this._renderUseToggle(true)}
-      </td>
-      <td class="px-4 py-3 text-right space-x-2 whitespace-nowrap">
-        <button type="button"
-                class="inline-flex items-center justify-center w-9 h-9 rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
-                data-action="click->income-recurrings#saveNew"
-                title="Save">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 21v-8H7v8"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 3v5h8"/></svg>
-        </button>
-        <button type="button"
-                class="inline-flex items-center justify-center w-9 h-9 rounded-md text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 transition"
-                data-action="click->income-recurrings#cancelAdding"
-                title="Cancel">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        </button>
-      </td>
-    </tr>
-    <tr class="hidden" data-income-recurrings-target="rowError">
-      <td colspan="8" class="px-4 py-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30"></td>
-    </tr>`
+  _rebuildAccountDropdown() {
+    let html = `<option value="">No Account</option>`
+    html += this.accounts.map(a => `<option value="${a.id}">${this._esc(a.name)}</option>`).join("")
+    this.modalAccountTarget.innerHTML = html
   }
 
-  _renderEditRow(rec) {
-    const accOptions = this.accounts.map(a => {
-      const selected = a.id === rec.account_id ? "selected" : ""
-      return `<option value="${a.id}" ${selected}>${this._esc(a.name)}</option>`
-    }).join("")
-    const freqOptions = this.frequencies.map(f => {
-      const selected = f.frequency_master_id === rec.frequency_master_id ? "selected" : ""
-      return `<option value="${f.frequency_master_id}" ${selected}>${this._esc(f.name)}</option>`
-    }).join("")
-    const amtVal = parseFloat(rec.amount) || ""
+  _rebuildFrequencyDropdown() {
+    let html = `<option value="">Select frequency...</option>`
+    html += this.frequencies.map(f => `<option value="${f.frequency_master_id}">${this._esc(f.name)}</option>`).join("")
+    this.modalFrequencyTarget.innerHTML = html
+  }
 
-    return `<tr class="bg-brand-50/40 dark:bg-brand-900/20">
-      <td class="px-4 py-3">
-        <input type="text" name="name" value="${this._escAttr(rec.name)}" placeholder="Source Name" maxlength="80"
-               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-               data-action="keydown->income-recurrings#handleKeydown">
-      </td>
-      <td class="px-4 py-3">
-        <input type="text" name="description" value="${this._escAttr(rec.description || "")}" placeholder="Description" maxlength="255"
-               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-               data-action="keydown->income-recurrings#handleKeydown">
-      </td>
-      <td class="px-4 py-3">
-        <div class="flex items-center">
-          <span class="text-sm text-gray-500 dark:text-gray-400 mr-1">$</span>
-          <input type="number" name="amount" value="${amtVal}" placeholder="0.00" step="0.01"
-                 class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5 text-right"
-                 data-action="keydown->income-recurrings#handleKeydown">
-        </div>
-      </td>
-      <td class="px-4 py-3">
-        <select name="account_id"
-                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5">
-          <option value="">No Account</option>
-          ${accOptions}
-        </select>
-      </td>
-      <td class="px-4 py-3">
-        <select name="frequency_master_id"
-                class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-                data-action="keydown->income-recurrings#handleKeydown">
-          <option value="">Select frequency...</option>
-          ${freqOptions}
-        </select>
-      </td>
-      <td class="px-4 py-3">
-        <input type="date" name="next_date" value="${rec.next_date || ""}"
-               class="w-full rounded-md border-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-1.5"
-               data-action="keydown->income-recurrings#handleKeydown">
-      </td>
-      <td class="px-4 py-3 text-center">
-        ${this._renderUseToggle(rec.use_flag)}
-      </td>
-      <td class="px-4 py-3 text-right space-x-2 whitespace-nowrap">
-        <button type="button"
-                class="inline-flex items-center justify-center w-9 h-9 rounded-md text-white bg-brand-600 hover:bg-brand-700 transition"
-                data-action="click->income-recurrings#saveEdit"
-                title="Save">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 21v-8H7v8"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 3v5h8"/></svg>
-        </button>
-        <button type="button"
-                class="inline-flex items-center justify-center w-9 h-9 rounded-md text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 transition"
-                data-action="click->income-recurrings#cancelEditing"
-                title="Cancel">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        </button>
-      </td>
-    </tr>
-    <tr class="hidden" data-income-recurrings-target="rowError">
-      <td colspan="8" class="px-4 py-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30"></td>
-    </tr>`
+  // --- Modal Helpers ---
+
+  _showModalError(message) {
+    this.modalErrorTarget.classList.remove("hidden")
+    this.modalErrorTarget.querySelector("p").textContent = message
+  }
+
+  _registerModalEscape() {
+    this._modalEscapeHandler = (e) => {
+      if (e.key === "Escape") {
+        e.preventDefault()
+        this.cancelModal()
+      }
+    }
+    document.addEventListener("keydown", this._modalEscapeHandler)
+  }
+
+  _unregisterModalEscape() {
+    if (this._modalEscapeHandler) {
+      document.removeEventListener("keydown", this._modalEscapeHandler)
+      this._modalEscapeHandler = null
+    }
   }
 
   // --- Helpers ---
 
-  _val(name) { return this.tableBodyTarget.querySelector(`input[name='${name}']`)?.value?.trim() }
-  _selectVal(name) { return this.tableBodyTarget.querySelector(`select[name='${name}']`)?.value }
-
   _esc(str) {
     if (!str) return ""
     return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
-  }
-
-  _escAttr(str) {
-    if (!str) return ""
-    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;")
-  }
-
-  showRowError(message) {
-    const errorRow = this.tableBodyTarget.querySelector("[data-income-recurrings-target='rowError']")
-    if (errorRow) {
-      errorRow.classList.remove("hidden")
-      errorRow.querySelector("td").textContent = message
-    }
   }
 }
