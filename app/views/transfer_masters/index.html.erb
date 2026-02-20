@@ -3,7 +3,8 @@
      data-transfer-masters-api-url-value="<%= api_transfer_masters_path %>"
      data-transfer-masters-accounts-url-value="<%= api_accounts_path %>"
      data-transfer-masters-csrf-token-value="<%= form_authenticity_token %>"
-     data-transfer-masters-open-month-url-value="<%= api_open_month_master_path %>">
+     data-transfer-masters-open-month-url-value="<%= api_open_month_master_path %>"
+     data-transfer-masters-buckets-url-value="<%= api_buckets_path %>">
 
   <%# Page Header (sticky) %>
   <div class="sticky top-14 z-20 bg-gray-50 dark:bg-gray-900 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-2 border-b border-gray-200 dark:border-gray-700 shadow-sm">
@@ -80,16 +81,32 @@
             <label class="block text-sm font-medium text-gray-700 mb-1">From <span class="text-red-500">*</span></label>
             <select data-transfer-masters-target="modalFrom"
                     class="w-full rounded-lg border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2.5"
-                    data-action="keydown->transfer-masters#handleModalKeydown">
+                    data-action="keydown->transfer-masters#handleModalKeydown change->transfer-masters#onFromAccountChange">
               <option value="">Select account...</option>
+            </select>
+          </div>
+          <div class="hidden" data-transfer-masters-target="modalFromBucketRow">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">From Bucket</label>
+            <select data-transfer-masters-target="modalFromBucket"
+                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2.5"
+                    data-action="keydown->transfer-masters#handleModalKeydown">
+              <option value="">No bucket (whole account)</option>
             </select>
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">To <span class="text-red-500">*</span></label>
             <select data-transfer-masters-target="modalTo"
                     class="w-full rounded-lg border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2.5"
-                    data-action="keydown->transfer-masters#handleModalKeydown">
+                    data-action="keydown->transfer-masters#handleModalKeydown change->transfer-masters#onToAccountChange">
               <option value="">Select account...</option>
+            </select>
+          </div>
+          <div class="hidden" data-transfer-masters-target="modalToBucketRow">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">To Bucket</label>
+            <select data-transfer-masters-target="modalToBucket"
+                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2.5"
+                    data-action="keydown->transfer-masters#handleModalKeydown">
+              <option value="">Default bucket</option>
             </select>
           </div>
           <div>

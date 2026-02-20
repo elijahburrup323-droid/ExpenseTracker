@@ -22,6 +22,7 @@ module Api
           to_acct.balance += transfer.amount
           to_acct.save!
 
+          apply_transfer_bucket_transactions(transfer)
           flag_open_month_has_data(transfer.transfer_date, "transfer")
           render json: transfer_json(transfer), status: :created
         else
@@ -36,6 +37,9 @@ module Api
         old_amount = @transfer.amount
         old_from = @transfer.from_account
         old_to = @transfer.to_account
+
+        old_from_bucket_id = @transfer.from_bucket_id
+        old_to_bucket_id = @transfer.to_bucket_id
 
         if @transfer.update(transfer_params)
           # Reverse old transfer
@@ -52,6 +56,10 @@ module Api
           new_to = @transfer.reload.to_account
           new_to.balance += @transfer.amount
           new_to.save!
+
+          # Reverse old bucket transactions and apply new ones
+          reverse_transfer_bucket_transactions(old_from_bucket_id, old_to_bucket_id, old_amount, @transfer)
+          apply_transfer_bucket_transactions(@transfer)
 
           render json: transfer_json(@transfer)
         else
@@ -71,6 +79,7 @@ module Api
         to_acct.balance -= @transfer.amount
         to_acct.save!
 
+        reverse_transfer_bucket_transactions(@transfer.from_bucket_id, @transfer.to_bucket_id, @transfer.amount, @transfer)
         @transfer.destroy!
       end
       head :no_content
@@ -84,7 +93,7 @@ module Api
     end
 
     def transfer_params
-      params.require(:transfer_master).permit(:transfer_date, :from_account_id, :to_account_id, :amount, :memo)
+      params.require(:transfer_master).permit(:transfer_date, :from_account_id, :to_account_id, :amount, :memo, :from_bucket_id, :to_bucket_id)
     end
 
     def flag_open_month_has_data(record_date, source)
@@ -116,8 +125,81 @@ module Api
           from_account_color_key: from_acct&.color_key,
           to_account_name: to_acct&.name || "[Deleted]",
           to_account_icon_key: to_acct&.icon_key,
-          to_account_color_key: to_acct&.color_key
+          to_account_color_key: to_acct&.color_key,
+          from_bucket_id: t.from_bucket_id,
+          to_bucket_id: t.to_bucket_id,
+          from_bucket_name: t.from_bucket_id.present? ? t.from_bucket&.name : nil,
+          to_bucket_name: t.to_bucket_id.present? ? t.to_bucket&.name : nil
         )
+    end
+
+    def apply_transfer_bucket_transactions(transfer)
+      if transfer.from_bucket_id.present?
+        bucket = current_user.buckets.find(transfer.from_bucket_id)
+        bucket.record_transaction!(
+          direction: "OUT",
+          amount: transfer.amount,
+          source_type: "TRANSFER",
+          source_id: transfer.id,
+          memo: "Transfer out to #{transfer.to_account&.name}",
+          txn_date: transfer.transfer_date
+        )
+      end
+
+      if transfer.to_bucket_id.present?
+        bucket = current_user.buckets.find(transfer.to_bucket_id)
+        bucket.record_transaction!(
+          direction: "IN",
+          amount: transfer.amount,
+          source_type: "TRANSFER",
+          source_id: transfer.id,
+          memo: "Transfer in from #{transfer.from_account&.name}",
+          txn_date: transfer.transfer_date
+        )
+      elsif transfer.to_account&.buckets&.active&.exists?
+        # If to-account has buckets but no specific bucket chosen, add to default
+        default_bucket = current_user.buckets.find_by(account_id: transfer.to_account_id, is_default: true)
+        if default_bucket
+          default_bucket.record_transaction!(
+            direction: "IN",
+            amount: transfer.amount,
+            source_type: "TRANSFER",
+            source_id: transfer.id,
+            memo: "Transfer in from #{transfer.from_account&.name} (default bucket)",
+            txn_date: transfer.transfer_date
+          )
+        end
+      end
+    end
+
+    def reverse_transfer_bucket_transactions(from_bucket_id, to_bucket_id, amount, transfer)
+      if from_bucket_id.present?
+        bucket = current_user.buckets.find_by(id: from_bucket_id)
+        if bucket
+          bucket.record_transaction!(
+            direction: "IN",
+            amount: amount,
+            source_type: "TRANSFER",
+            source_id: transfer.id,
+            memo: "Reversed: transfer edit/delete",
+            txn_date: transfer.transfer_date
+          )
+        end
+      end
+
+      if to_bucket_id.present?
+        bucket = current_user.buckets.find_by(id: to_bucket_id)
+        if bucket
+          bucket.record_transaction!(
+            direction: "OUT",
+            amount: amount,
+            source_type: "TRANSFER",
+            source_id: transfer.id,
+            memo: "Reversed: transfer edit/delete",
+            txn_date: transfer.transfer_date
+          )
+        end
+      end
     end
   end
 end

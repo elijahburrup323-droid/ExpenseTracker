@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_19_500008) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_20_500003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -99,6 +99,41 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_19_500008) do
     t.index ["account_id"], name: "index_balance_adjustments_on_account_id"
     t.index ["user_id", "adjustment_date"], name: "index_balance_adjustments_on_user_id_and_adjustment_date"
     t.index ["user_id"], name: "index_balance_adjustments_on_user_id"
+  end
+
+  create_table "bucket_transactions", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "bucket_id", null: false
+    t.date "txn_date", null: false
+    t.string "direction", limit: 3, null: false
+    t.decimal "amount", precision: 12, scale: 2, null: false
+    t.string "source_type", limit: 30, null: false
+    t.bigint "source_id"
+    t.string "memo", limit: 255
+    t.datetime "created_at", null: false
+    t.index ["bucket_id", "txn_date"], name: "index_bucket_transactions_on_bucket_id_and_txn_date"
+    t.index ["bucket_id"], name: "index_bucket_transactions_on_bucket_id"
+    t.index ["source_type", "source_id"], name: "index_bucket_transactions_on_source_type_and_source_id"
+    t.index ["user_id"], name: "index_bucket_transactions_on_user_id"
+  end
+
+  create_table "buckets", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "account_id", null: false
+    t.string "name", limit: 80, null: false
+    t.boolean "is_default", default: false, null: false
+    t.integer "priority", default: 0, null: false
+    t.decimal "target_amount", precision: 12, scale: 2
+    t.decimal "current_balance", precision: 12, scale: 2, default: "0.0", null: false
+    t.boolean "is_active", default: true, null: false
+    t.integer "sort_order", default: 0, null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_buckets_on_account_id"
+    t.index ["user_id", "account_id"], name: "index_buckets_on_user_id_and_account_id"
+    t.index ["user_id", "is_default"], name: "index_buckets_on_user_id_and_is_default", where: "(deleted_at IS NULL)"
+    t.index ["user_id"], name: "index_buckets_on_user_id"
   end
 
   create_table "bug_reports", force: :cascade do |t|
@@ -358,7 +393,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_19_500008) do
     t.bigint "spending_type_override_id"
     t.boolean "reconciled", default: false, null: false
     t.bigint "payment_recurring_id"
+    t.bigint "bucket_id"
+    t.boolean "is_bucket_execution", default: false, null: false
     t.index ["account_id"], name: "index_payments_on_account_id"
+    t.index ["bucket_id"], name: "index_payments_on_bucket_id"
     t.index ["payment_recurring_id"], name: "index_payments_on_payment_recurring_id"
     t.index ["spending_category_id"], name: "index_payments_on_spending_category_id"
     t.index ["user_id", "payment_date"], name: "index_payments_on_user_id_and_payment_date"
@@ -561,8 +599,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_19_500008) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "reconciled", default: false, null: false
+    t.bigint "from_bucket_id"
+    t.bigint "to_bucket_id"
     t.index ["from_account_id"], name: "index_transfer_masters_on_from_account_id"
+    t.index ["from_bucket_id"], name: "index_transfer_masters_on_from_bucket_id"
     t.index ["to_account_id"], name: "index_transfer_masters_on_to_account_id"
+    t.index ["to_bucket_id"], name: "index_transfer_masters_on_to_bucket_id"
     t.index ["transfer_date"], name: "index_transfer_masters_on_transfer_date"
     t.index ["user_id"], name: "index_transfer_masters_on_user_id"
   end
@@ -669,6 +711,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_19_500008) do
   add_foreign_key "accounts", "users"
   add_foreign_key "balance_adjustments", "accounts"
   add_foreign_key "balance_adjustments", "users"
+  add_foreign_key "bucket_transactions", "buckets"
+  add_foreign_key "bucket_transactions", "users"
+  add_foreign_key "buckets", "accounts"
+  add_foreign_key "buckets", "users"
   add_foreign_key "close_month_masters", "users"
   add_foreign_key "dashboard_card_account_rule_tags", "dashboard_card_account_rules"
   add_foreign_key "dashboard_card_account_rule_tags", "tags"
@@ -697,6 +743,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_19_500008) do
   add_foreign_key "payment_recurrings", "spending_categories"
   add_foreign_key "payment_recurrings", "users"
   add_foreign_key "payments", "accounts"
+  add_foreign_key "payments", "buckets"
   add_foreign_key "payments", "payment_recurrings"
   add_foreign_key "payments", "spending_categories"
   add_foreign_key "payments", "spending_types", column: "spending_type_override_id", on_delete: :nullify
@@ -718,6 +765,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_19_500008) do
   add_foreign_key "tags", "users"
   add_foreign_key "transfer_masters", "accounts", column: "from_account_id"
   add_foreign_key "transfer_masters", "accounts", column: "to_account_id"
+  add_foreign_key "transfer_masters", "buckets", column: "from_bucket_id"
+  add_foreign_key "transfer_masters", "buckets", column: "to_bucket_id"
   add_foreign_key "transfer_masters", "users"
   add_foreign_key "user_account_types", "account_type_masters"
   add_foreign_key "user_account_types", "users"

@@ -4,6 +4,7 @@ class Payment < ApplicationRecord
   belongs_to :spending_category
   belongs_to :spending_type_override, class_name: 'SpendingType', optional: true
   belongs_to :payment_recurring, optional: true
+  belongs_to :bucket, optional: true
   has_many :tag_assignments, as: :taggable, dependent: :destroy
   has_many :tags, through: :tag_assignments
 

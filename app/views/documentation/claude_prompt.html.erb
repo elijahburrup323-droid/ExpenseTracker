@@ -218,6 +218,7 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 - **income_user_frequencies_controller.js** — use_flag toggle list with "View All" filter toggle (OFF = show only enabled frequencies, ON = show all master frequencies; purely a view filter, no bulk API call)
 - **income_recurrings_controller.js** — Modal-based Add/Edit CRUD for recurring deposit sources with frequency/account selects, inline use_flag toggle, delete confirmation modal, generate dummy data
 - **payment_recurrings_controller.js** — CRUD for recurring payment obligations with account, category, and frequency selects, use_flag toggle, generate dummy data. Mirrors income_recurrings pattern. Auto-generation of due payments happens in payments_controller on index load.
+- **buckets_controller.js** — Modal-based CRUD for virtual allocation containers within accounts. Account filter dropdown, fund/move money between buckets, target progress bars, active toggle. Default bucket per account catches unassigned funds.
 - **income_entries_controller.js** — CRUD with received toggle (opens edit on amount), auto-advance cursor between fields on change, Generate Data button
 - **admin_users_controller.js** — Admin user management with search, admin toggle (admin-only)
 - **quotes_controller.js** — Admin CRUD for system quotes (add, edit, delete, active toggle). Quotes are displayed on sign-in page (random active) and in header bar (daily quote cached in session). Replaces the former hardcoded 200-quote rotation.

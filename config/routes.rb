@@ -50,6 +50,9 @@ Rails.application.routes.draw do
   # Payment Recurrings (HTML page)
   resources :payment_recurrings, only: [:index]
 
+  # Buckets (HTML page)
+  resources :buckets, only: [:index]
+
   # Account Type Masters (HTML page, agent-only)
   resources :account_type_masters, only: [:index]
 
@@ -104,6 +107,11 @@ Rails.application.routes.draw do
     end
     resources :tags, only: [:index, :create, :update, :destroy]
     resources :payment_recurrings, only: [:index, :create, :update, :destroy]
+    resources :buckets, only: [:index, :create, :update, :destroy] do
+      member do
+        post :fund
+      end
+    end
     resources :account_type_masters, only: [:index, :create, :update, :destroy] do
       member do
         get :can_delete

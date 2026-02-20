@@ -12,6 +12,15 @@ module Api
     def create
       payment = current_user.payments.build(payment_params)
 
+      # Validate bucket execution before save
+      if payment.is_bucket_execution && payment.bucket_id.present?
+        bucket = current_user.buckets.find_by(id: payment.bucket_id)
+        return render json: { errors: ["Bucket not found"] }, status: :unprocessable_entity unless bucket
+        if bucket.current_balance < (payment.amount || 0)
+          return render json: { errors: ["Insufficient bucket balance ($#{bucket.current_balance} available)"] }, status: :unprocessable_entity
+        end
+      end
+
       ActiveRecord::Base.transaction do
         if payment.save
           sync_tags!(payment)
@@ -19,6 +28,7 @@ module Api
           account = payment.account
           account.balance -= payment.amount
           account.save!
+          handle_bucket_execution_create(payment) if payment.is_bucket_execution && payment.bucket_id.present?
           flag_open_month_has_data(payment.payment_date, "payment")
           render json: payment_json(payment), status: :created
         else
@@ -38,6 +48,8 @@ module Api
       ActiveRecord::Base.transaction do
         old_amount = @payment.amount
         old_account = @payment.account
+        old_bucket_id = @payment.bucket_id
+        old_was_bucket_execution = @payment.is_bucket_execution
 
         if @payment.update(payment_params)
           sync_tags!(@payment)
@@ -48,6 +60,8 @@ module Api
           new_account = @payment.reload.account
           new_account.balance -= @payment.amount
           new_account.save!
+
+          handle_bucket_execution_update(@payment, old_bucket_id, old_was_bucket_execution, old_amount)
 
           render json: payment_json(@payment)
         else
@@ -62,6 +76,7 @@ module Api
         account = @payment.account
         account.balance += @payment.amount
         account.save!
+        reverse_bucket_execution(@payment) if @payment.is_bucket_execution && @payment.bucket_id.present?
         @payment.soft_delete!
       end
       head :no_content
@@ -122,7 +137,7 @@ module Api
     end
 
     def payment_params
-      params.require(:payment).permit(:account_id, :spending_category_id, :payment_date, :description, :notes, :amount, :spending_type_override_id)
+      params.require(:payment).permit(:account_id, :spending_category_id, :payment_date, :description, :notes, :amount, :spending_type_override_id, :bucket_id, :is_bucket_execution)
     end
 
     def flag_open_month_has_data(record_date, source)
@@ -157,6 +172,15 @@ module Api
                     p.tags.map { |t| { id: t.id, name: t.name, color_key: t.color_key } }
                   end
 
+      bucket_name = nil
+      if p.bucket_id.present?
+        bucket_name = if lookup && lookup[:buckets]
+                        lookup[:buckets][p.bucket_id]&.name
+                      else
+                        p.bucket&.name
+                      end
+      end
+
       p.as_json(only: [:id, :payment_date, :description, :notes, :amount, :sort_order])
         .merge(
           account_id: p.account_id,
@@ -167,6 +191,9 @@ module Api
           spending_type_name: effective_type&.name || "Unknown",
           spending_type_color_key: effective_type&.color_key || "blue",
           payment_recurring_id: p.payment_recurring_id,
+          bucket_id: p.bucket_id,
+          is_bucket_execution: p.is_bucket_execution,
+          bucket_name: bucket_name,
           tags: tags_data
         )
     end
@@ -189,11 +216,14 @@ module Api
         (payment_tags[ta.taggable_id] ||= []) << ta.tag
       end
 
+      bucket_ids = payments.map(&:bucket_id).compact.uniq
+
       {
         accounts: Account.unscoped.where(id: acct_ids).index_by(&:id),
         categories: categories,
         types: SpendingType.unscoped.where(id: type_ids).index_by(&:id),
-        payment_tags: payment_tags
+        payment_tags: payment_tags,
+        buckets: bucket_ids.any? ? Bucket.unscoped.where(id: bucket_ids).index_by(&:id) : {}
       }
     end
 
@@ -222,6 +252,99 @@ module Api
       new_tag_ids.each do |tid|
         category.tag_assignments.create!(user: current_user, tag_id: tid)
       end
+    end
+
+    # --- Bucket Execution Helpers ---
+
+    def handle_bucket_execution_create(payment)
+      bucket = current_user.buckets.find(payment.bucket_id)
+
+      # Auto-transfer if bucket account differs from payment account
+      if bucket.account_id != payment.account_id
+        create_bucket_auto_transfer(bucket, payment)
+      end
+
+      bucket.record_transaction!(
+        direction: "OUT",
+        amount: payment.amount,
+        source_type: "PAYMENT_EXECUTION",
+        source_id: payment.id,
+        memo: "Payment: #{payment.description}",
+        txn_date: payment.payment_date
+      )
+    end
+
+    def handle_bucket_execution_update(payment, old_bucket_id, old_was_bucket_execution, old_amount)
+      # Reverse old bucket execution
+      if old_was_bucket_execution && old_bucket_id.present?
+        old_bucket = current_user.buckets.find(old_bucket_id)
+        old_bucket.record_transaction!(
+          direction: "IN",
+          amount: old_amount,
+          source_type: "PAYMENT_EXECUTION",
+          source_id: payment.id,
+          memo: "Reversed: payment edit",
+          txn_date: payment.payment_date
+        )
+        cleanup_bucket_auto_transfer(payment)
+      end
+
+      # Apply new bucket execution
+      if payment.is_bucket_execution && payment.bucket_id.present?
+        handle_bucket_execution_create(payment)
+      end
+    end
+
+    def reverse_bucket_execution(payment)
+      bucket = current_user.buckets.find(payment.bucket_id)
+      bucket.record_transaction!(
+        direction: "IN",
+        amount: payment.amount,
+        source_type: "PAYMENT_EXECUTION",
+        source_id: payment.id,
+        memo: "Reversed: payment deleted",
+        txn_date: payment.payment_date
+      )
+      cleanup_bucket_auto_transfer(payment)
+    end
+
+    def create_bucket_auto_transfer(bucket, payment)
+      from_account = bucket.account
+      to_account = payment.account
+
+      current_user.transfer_masters.create!(
+        from_account_id: from_account.id,
+        to_account_id: to_account.id,
+        amount: payment.amount,
+        transfer_date: payment.payment_date,
+        memo: "Auto: bucket execution (payment ##{payment.id})",
+        from_bucket_id: bucket.id
+      )
+
+      from_account.reload
+      from_account.balance -= payment.amount
+      from_account.save!
+      to_account.reload
+      to_account.balance += payment.amount
+      to_account.save!
+    end
+
+    def cleanup_bucket_auto_transfer(payment)
+      transfer = current_user.transfer_masters.find_by(
+        "memo LIKE ?", "%bucket execution (payment ##{payment.id})%"
+      )
+      return unless transfer
+
+      from_account = transfer.from_account
+      to_account = transfer.to_account
+      from_account.reload
+      from_account.balance += transfer.amount
+      from_account.save!
+      to_account.reload
+      to_account.balance -= transfer.amount
+      to_account.save!
+
+      transfer.soft_delete!
     end
   end
 end

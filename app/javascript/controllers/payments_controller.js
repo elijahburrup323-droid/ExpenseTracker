@@ -24,12 +24,13 @@ export default class extends Controller {
     "deleteBlockedModal", "deleteBlockedMessage",
     "editBlockedModal", "editBlockedMessage",
     "suggestionsList",
+    "modalBucketRow", "modalBucketToggle", "modalBucketSelect", "modalBucket", "modalBucketBalance",
     "categoryChildModal", "childCategoryName", "childCategoryDesc", "childCategoryType", "childCategoryError"
   ]
   static values = {
     apiUrl: String, accountsUrl: String, categoriesUrl: String, typesUrl: String, csrfToken: String,
     accountsPageUrl: String, categoriesPageUrl: String, typesPageUrl: String, openMonthUrl: String,
-    suggestionsUrl: String, tagsUrl: String
+    suggestionsUrl: String, tagsUrl: String, bucketsUrl: String
   }
 
   connect() {
@@ -39,6 +40,7 @@ export default class extends Controller {
     this.spendingTypes = []
     this.allTags = []
     this.selectedTagIds = []
+    this.accountBuckets = []
     this._tagsDropdownIndex = -1
     this.state = "idle" // idle | adding | editing
     this.editingId = null
@@ -444,7 +446,7 @@ export default class extends Controller {
           "Accept": "application/json",
           "X-CSRF-Token": this.csrfTokenValue
         },
-        body: JSON.stringify({ payment: { account_id, spending_category_id, spending_type_override_id, payment_date, description, amount, tag_ids: this.selectedTagIds } })
+        body: JSON.stringify({ payment: { account_id, spending_category_id, spending_type_override_id, payment_date, description, amount, tag_ids: this.selectedTagIds, ...this._getBucketPayload() } })
       })
 
       if (response.ok) {
@@ -501,7 +503,7 @@ export default class extends Controller {
 
     this.state = "editing"
     this.editingId = id
-    this._openEditModal(payment)
+    await this._openEditModal(payment)
   }
 
   closeEditBlocked() {
@@ -540,7 +542,7 @@ export default class extends Controller {
           "Accept": "application/json",
           "X-CSRF-Token": this.csrfTokenValue
         },
-        body: JSON.stringify({ payment: { account_id, spending_category_id, spending_type_override_id, payment_date, description, amount, tag_ids: this.selectedTagIds } })
+        body: JSON.stringify({ payment: { account_id, spending_category_id, spending_type_override_id, payment_date, description, amount, tag_ids: this.selectedTagIds, ...this._getBucketPayload() } })
       })
 
       if (response.ok) {
@@ -1020,6 +1022,68 @@ export default class extends Controller {
   }
 
 
+  // --- Bucket Execution ---
+
+  async _fetchBucketsForAccount(accountId) {
+    if (!this.bucketsUrlValue) { this._resetBucketFields(); return }
+    try {
+      const res = await fetch(`${this.bucketsUrlValue}?account_id=${accountId}`, { headers: { "Accept": "application/json" } })
+      if (res.ok) {
+        this.accountBuckets = (await res.json()).filter(b => b.is_active)
+      } else {
+        this.accountBuckets = []
+      }
+    } catch (e) {
+      this.accountBuckets = []
+    }
+    if (this.accountBuckets.length > 0 && this.hasModalBucketRowTarget) {
+      this.modalBucketRowTarget.classList.remove("hidden")
+      this.modalBucketTarget.innerHTML = `<option value="">Select bucket...</option>` +
+        this.accountBuckets.map(b => `<option value="${b.id}">${escapeHtml(b.name)} ($${parseFloat(b.current_balance).toFixed(2)})</option>`).join("")
+    } else {
+      this._resetBucketFields()
+    }
+  }
+
+  toggleBucketExecution() {
+    if (!this.hasModalBucketSelectTarget) return
+    if (this.modalBucketToggleTarget.checked) {
+      this.modalBucketSelectTarget.classList.remove("hidden")
+    } else {
+      this.modalBucketSelectTarget.classList.add("hidden")
+      this.modalBucketTarget.value = ""
+      if (this.hasModalBucketBalanceTarget) this.modalBucketBalanceTarget.textContent = ""
+    }
+  }
+
+  onBucketChange() {
+    const bucketId = Number(this.modalBucketTarget.value)
+    if (!bucketId) {
+      if (this.hasModalBucketBalanceTarget) this.modalBucketBalanceTarget.textContent = ""
+      return
+    }
+    const bucket = this.accountBuckets.find(b => b.id === bucketId)
+    if (bucket && this.hasModalBucketBalanceTarget) {
+      this.modalBucketBalanceTarget.textContent = `Available: $${parseFloat(bucket.current_balance).toFixed(2)}`
+    }
+  }
+
+  _resetBucketFields() {
+    if (this.hasModalBucketRowTarget) this.modalBucketRowTarget.classList.add("hidden")
+    if (this.hasModalBucketToggleTarget) this.modalBucketToggleTarget.checked = false
+    if (this.hasModalBucketSelectTarget) this.modalBucketSelectTarget.classList.add("hidden")
+    if (this.hasModalBucketTarget) this.modalBucketTarget.value = ""
+    if (this.hasModalBucketBalanceTarget) this.modalBucketBalanceTarget.textContent = ""
+    this.accountBuckets = []
+  }
+
+  _getBucketPayload() {
+    if (this.hasModalBucketToggleTarget && this.modalBucketToggleTarget.checked && this.hasModalBucketTarget && this.modalBucketTarget.value) {
+      return { bucket_id: Number(this.modalBucketTarget.value), is_bucket_execution: true }
+    }
+    return { bucket_id: null, is_bucket_execution: false }
+  }
+
   // --- "New" Dropdown Handler ---
 
   handleNewDropdown(event) {
@@ -1120,6 +1184,7 @@ export default class extends Controller {
     this._renderTagPills()
     this._hideTagsDropdown()
     this._hideCategoryTagPrompt()
+    this._resetBucketFields()
     this.modalErrorTarget.classList.add("hidden")
     this.modalErrorTarget.textContent = ""
 
@@ -1142,7 +1207,7 @@ export default class extends Controller {
     }, 50)
   }
 
-  _openEditModal(payment) {
+  async _openEditModal(payment) {
     this.modalTitleTarget.textContent = "Edit Payment"
 
     // Populate dropdowns with existing values selected
@@ -1162,6 +1227,7 @@ export default class extends Controller {
     this._renderTagPills()
     this._hideTagsDropdown()
     this._hideCategoryTagPrompt()
+    this._resetBucketFields()
     this.modalErrorTarget.classList.add("hidden")
     this.modalErrorTarget.textContent = ""
 
@@ -1179,6 +1245,17 @@ export default class extends Controller {
 
     // Focus description field
     setTimeout(() => this.modalDescriptionTarget.focus(), 50)
+
+    // Fetch buckets and pre-populate (async, after modal is visible)
+    if (payment.account_id) {
+      await this._fetchBucketsForAccount(payment.account_id)
+      if (payment.is_bucket_execution && payment.bucket_id) {
+        if (this.hasModalBucketToggleTarget) this.modalBucketToggleTarget.checked = true
+        if (this.hasModalBucketSelectTarget) this.modalBucketSelectTarget.classList.remove("hidden")
+        if (this.hasModalBucketTarget) this.modalBucketTarget.value = String(payment.bucket_id)
+        this.onBucketChange()
+      }
+    }
   }
 
   _showModalError(message) {
@@ -1222,10 +1299,14 @@ export default class extends Controller {
   }
 
   onModalAccountChange(event) {
-    if (this.state !== "adding") return
     const val = event.target.value
     if (val && val !== "" && val !== "new") {
-      setTimeout(() => this.modalCategoryTarget.focus(), 50)
+      this._fetchBucketsForAccount(Number(val))
+      if (this.state === "adding") {
+        setTimeout(() => this.modalCategoryTarget.focus(), 50)
+      }
+    } else {
+      this._resetBucketFields()
     }
   }
 

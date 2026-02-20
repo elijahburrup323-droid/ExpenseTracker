@@ -5,6 +5,7 @@ export default class extends Controller {
   static targets = [
     "tableBody", "paginationInfo", "addButton",
     "modal", "modalTitle", "modalFrom", "modalTo", "modalDate", "modalAmount", "modalMemo", "modalError", "modalSaveButton",
+    "modalFromBucketRow", "modalFromBucket", "modalToBucketRow", "modalToBucket",
     "deleteModal",
     "dateWarningModal", "dateWarningMessage", "deleteBlockedModal", "deleteBlockedMessage"
   ]
@@ -13,7 +14,8 @@ export default class extends Controller {
     apiUrl: String,
     accountsUrl: String,
     csrfToken: String,
-    openMonthUrl: String
+    openMonthUrl: String,
+    bucketsUrl: String
   }
 
   transfers = []
@@ -25,6 +27,9 @@ export default class extends Controller {
 
   _skipDateValidation = false
   _pendingSave = null
+
+  fromBuckets = []
+  toBuckets = []
 
   connect() {
     this.fetchAll()
@@ -122,12 +127,13 @@ export default class extends Controller {
     this.modalDateTarget.value = new Date().toISOString().slice(0, 10)
     this.modalAmountTarget.value = ""
     this.modalMemoTarget.value = ""
+    this._resetBucketFields()
     this.hideModalError()
     this.modalTarget.classList.remove("hidden")
     this.modalFromTarget.focus()
   }
 
-  openEditModal(event) {
+  async openEditModal(event) {
     const id = parseInt(event.currentTarget.dataset.id)
     const transfer = this.transfers.find(t => t.id === id)
     if (!transfer) return
@@ -139,9 +145,24 @@ export default class extends Controller {
     this.modalDateTarget.value = transfer.transfer_date
     this.modalAmountTarget.value = transfer.amount
     this.modalMemoTarget.value = transfer.memo || ""
+    this._resetBucketFields()
     this.hideModalError()
     this.modalTarget.classList.remove("hidden")
     this.modalFromTarget.focus()
+
+    // Fetch and pre-populate bucket dropdowns
+    if (transfer.from_account_id) {
+      await this._fetchBucketsFor(transfer.from_account_id, "from")
+      if (transfer.from_bucket_id && this.hasModalFromBucketTarget) {
+        this.modalFromBucketTarget.value = String(transfer.from_bucket_id)
+      }
+    }
+    if (transfer.to_account_id) {
+      await this._fetchBucketsFor(transfer.to_account_id, "to")
+      if (transfer.to_bucket_id && this.hasModalToBucketTarget) {
+        this.modalToBucketTarget.value = String(transfer.to_bucket_id)
+      }
+    }
   }
 
   closeModal() {
@@ -168,6 +189,70 @@ export default class extends Controller {
     }
   }
 
+  // ── Bucket Helpers ──
+
+  async _fetchBucketsFor(accountId, side) {
+    if (!this.bucketsUrlValue || !accountId) {
+      if (side === "from") { this.fromBuckets = []; this._hideBucketRow("from") }
+      else { this.toBuckets = []; this._hideBucketRow("to") }
+      return
+    }
+    try {
+      const res = await fetch(`${this.bucketsUrlValue}?account_id=${accountId}`, { headers: { "Accept": "application/json" } })
+      const buckets = res.ok ? (await res.json()).filter(b => b.is_active) : []
+      if (side === "from") {
+        this.fromBuckets = buckets
+        this._populateBucketDropdown("from", buckets)
+      } else {
+        this.toBuckets = buckets
+        this._populateBucketDropdown("to", buckets)
+      }
+    } catch (e) {
+      if (side === "from") { this.fromBuckets = []; this._hideBucketRow("from") }
+      else { this.toBuckets = []; this._hideBucketRow("to") }
+    }
+  }
+
+  _populateBucketDropdown(side, buckets) {
+    if (buckets.length === 0) { this._hideBucketRow(side); return }
+    const rowTarget = side === "from" ? this.modalFromBucketRowTarget : this.modalToBucketRowTarget
+    const selectTarget = side === "from" ? this.modalFromBucketTarget : this.modalToBucketTarget
+    const defaultLabel = side === "from" ? "No bucket (whole account)" : "Default bucket"
+    selectTarget.innerHTML = `<option value="">${defaultLabel}</option>` +
+      buckets.map(b => `<option value="${b.id}">${escapeHtml(b.name)} ($${parseFloat(b.current_balance).toFixed(2)})</option>`).join("")
+    rowTarget.classList.remove("hidden")
+  }
+
+  _hideBucketRow(side) {
+    if (side === "from" && this.hasModalFromBucketRowTarget) {
+      this.modalFromBucketRowTarget.classList.add("hidden")
+      this.modalFromBucketTarget.value = ""
+    }
+    if (side === "to" && this.hasModalToBucketRowTarget) {
+      this.modalToBucketRowTarget.classList.add("hidden")
+      this.modalToBucketTarget.value = ""
+    }
+  }
+
+  _resetBucketFields() {
+    this.fromBuckets = []
+    this.toBuckets = []
+    this._hideBucketRow("from")
+    this._hideBucketRow("to")
+  }
+
+  onFromAccountChange(event) {
+    const val = event.target.value
+    if (val) { this._fetchBucketsFor(Number(val), "from") }
+    else { this._hideBucketRow("from"); this.fromBuckets = [] }
+  }
+
+  onToAccountChange(event) {
+    const val = event.target.value
+    if (val) { this._fetchBucketsFor(Number(val), "to") }
+    else { this._hideBucketRow("to"); this.toBuckets = [] }
+  }
+
   // ── Save (Create / Update) ──
 
   async saveTransfer() {
@@ -190,13 +275,18 @@ export default class extends Controller {
     }
     this._skipDateValidation = false
 
+    const fromBucketId = this.hasModalFromBucketTarget ? this.modalFromBucketTarget.value || null : null
+    const toBucketId = this.hasModalToBucketTarget ? this.modalToBucketTarget.value || null : null
+
     const body = {
       transfer_master: {
         from_account_id: fromId,
         to_account_id: toId,
         transfer_date: date,
         amount: amount,
-        memo: memo || null
+        memo: memo || null,
+        from_bucket_id: fromBucketId,
+        to_bucket_id: toBucketId
       }
     }
 

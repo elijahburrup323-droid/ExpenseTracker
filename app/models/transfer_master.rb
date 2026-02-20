@@ -2,6 +2,8 @@ class TransferMaster < ApplicationRecord
   belongs_to :user
   belongs_to :from_account, class_name: "Account"
   belongs_to :to_account, class_name: "Account"
+  belongs_to :from_bucket, class_name: "Bucket", optional: true
+  belongs_to :to_bucket, class_name: "Bucket", optional: true
 
   validates :transfer_date, presence: true
   validates :amount, presence: true, numericality: { greater_than: 0 }

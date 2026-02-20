@@ -1,6 +1,6 @@
 APP_VERSION = "1.3.18"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
-MANUAL_CHANGE_SEQ = 7  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 8  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
@@ -54,6 +54,15 @@ APP_ALL_VERSIONS = [
       "Reports: Print output includes applied tag names when tag filter is active (CM-1)",
       "Models: IncomeEntry now supports tag associations via polymorphic tag_assignments for Income by Source tag filtering (CM-1)",
       "Income: Recurring Deposits converted from inline table-row editing to modal-based Add/Edit CRUD for consistency with Deposits screen (CM-3)",
+      "Buckets: New allocation-required containers within accounts — earmark money for specific purposes like Vacation Fund or Emergency Fund (CM-1)",
+      "Buckets: Full CRUD management screen with account filter, target progress bars, fund/move money between buckets, and active toggle (CM-1)",
+      "Buckets: Default bucket per account catches unassigned funds — first bucket auto-set as default, cannot delete default without reassigning (CM-1)",
+      "Buckets: Bucket execution on Payments — checkbox + dropdown to deduct from a specific bucket when making a payment (CM-1)",
+      "Buckets: Auto-transfer when bucket execution crosses accounts — if bucket's account differs from payment account, transfer is auto-created (CM-1)",
+      "Buckets: Transfer bucket allocation — optional From Bucket and To Bucket dropdowns on transfers, with auto-deposit to default bucket (CM-1)",
+      "Buckets: Transaction audit ledger tracks all bucket balance changes with direction, source type, and memo (CM-1)",
+      "Database: New buckets and bucket_transactions tables; bucket_id/is_bucket_execution on payments, from_bucket_id/to_bucket_id on transfers (CM-1)",
+      "Navigation: Buckets added under Accounts sidebar group (CM-1)",
     ]
   },
   {
