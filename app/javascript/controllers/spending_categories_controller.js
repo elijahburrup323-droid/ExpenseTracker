@@ -631,7 +631,7 @@ export default class extends Controller {
     btn.dataset.checked = String(nowOn)
     btn.setAttribute("aria-checked", String(nowOn))
     btn.title = nowOn ? "Debt: Yes" : "Debt: No"
-    btn.className = btn.className.replace(nowOn ? "bg-gray-300" : "bg-purple-600", nowOn ? "bg-purple-600" : "bg-gray-300")
+    btn.className = btn.className.replace(nowOn ? "bg-gray-300" : "bg-brand-600", nowOn ? "bg-brand-600" : "bg-gray-300")
     const knob = btn.querySelector("span")
     knob.className = knob.className.replace(nowOn ? "translate-x-1" : "translate-x-7", nowOn ? "translate-x-7" : "translate-x-1")
 
@@ -663,7 +663,7 @@ export default class extends Controller {
       btn.dataset.checked = String(wasOn)
       btn.setAttribute("aria-checked", String(wasOn))
       btn.title = wasOn ? "Debt: Yes" : "Debt: No"
-      btn.className = btn.className.replace(wasOn ? "bg-gray-300" : "bg-purple-600", wasOn ? "bg-purple-600" : "bg-gray-300")
+      btn.className = btn.className.replace(wasOn ? "bg-gray-300" : "bg-brand-600", wasOn ? "bg-brand-600" : "bg-gray-300")
       const knob = btn.querySelector("span")
       knob.className = knob.className.replace(wasOn ? "translate-x-1" : "translate-x-7", wasOn ? "translate-x-7" : "translate-x-1")
     }
@@ -675,7 +675,7 @@ export default class extends Controller {
     btn.dataset.checked = String(isOn)
     btn.setAttribute("aria-checked", String(isOn))
     btn.title = isOn ? "Debt: Yes" : "Debt: No"
-    btn.className = btn.className.replace(isOn ? "bg-gray-300" : "bg-purple-600", isOn ? "bg-purple-600" : "bg-gray-300")
+    btn.className = btn.className.replace(isOn ? "bg-gray-300" : "bg-brand-600", isOn ? "bg-brand-600" : "bg-gray-300")
     const knob = btn.querySelector("span")
     knob.className = knob.className.replace(isOn ? "translate-x-1" : "translate-x-7", isOn ? "translate-x-7" : "translate-x-1")
   }
@@ -935,7 +935,7 @@ export default class extends Controller {
   }
 
   _renderDebtToggle(isOn, catId = null) {
-    const bg = isOn ? "bg-purple-600" : "bg-gray-300"
+    const bg = isOn ? "bg-brand-600" : "bg-gray-300"
     const knobTranslate = isOn ? "translate-x-7" : "translate-x-1"
     const dataId = catId ? `data-id="${catId}"` : ""
     return `<button type="button"

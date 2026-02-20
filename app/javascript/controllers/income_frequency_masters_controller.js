@@ -220,7 +220,7 @@ export default class extends Controller {
     btn.dataset.checked = String(nowActive)
     btn.setAttribute("aria-checked", String(nowActive))
     btn.title = nowActive ? "Active" : "Inactive"
-    btn.className = btn.className.replace(nowActive ? "bg-gray-300" : "bg-purple-600", nowActive ? "bg-purple-600" : "bg-gray-300")
+    btn.className = btn.className.replace(nowActive ? "bg-gray-300" : "bg-brand-600", nowActive ? "bg-brand-600" : "bg-gray-300")
     const knob = btn.querySelector("span")
     knob.className = knob.className.replace(nowActive ? "translate-x-1" : "translate-x-7", nowActive ? "translate-x-7" : "translate-x-1")
 
@@ -239,7 +239,7 @@ export default class extends Controller {
       // Revert
       btn.dataset.checked = String(!nowActive)
       btn.setAttribute("aria-checked", String(!nowActive))
-      btn.className = btn.className.replace(!nowActive ? "bg-gray-300" : "bg-purple-600", !nowActive ? "bg-purple-600" : "bg-gray-300")
+      btn.className = btn.className.replace(!nowActive ? "bg-gray-300" : "bg-brand-600", !nowActive ? "bg-brand-600" : "bg-gray-300")
       knob.className = knob.className.replace(!nowActive ? "translate-x-1" : "translate-x-7", !nowActive ? "translate-x-7" : "translate-x-1")
     }
   }
@@ -305,7 +305,7 @@ export default class extends Controller {
   }
 
   _activeToggle(isOn, id) {
-    const bg = isOn ? "bg-purple-600" : "bg-gray-300"
+    const bg = isOn ? "bg-brand-600" : "bg-gray-300"
     const knob = isOn ? "translate-x-7" : "translate-x-1"
     return `<button type="button"
       class="relative inline-flex h-7 w-14 items-center rounded-full transition-colors ${bg} focus:outline-none focus:ring-2 focus:ring-purple-300"

@@ -392,7 +392,7 @@ export default class extends Controller {
 <html>
 <head>
   <meta charset="utf-8">
-  <title>BudgetHQ \u2013 Spending by Type</title>
+  <title>MyBudgetHQ \u2013 Spending by Type</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #111; padding: 32px; font-size: 11px; }
@@ -425,7 +425,7 @@ export default class extends Controller {
     <div class="header-left">
       <div class="logo">B</div>
       <div>
-        <div class="brand">BudgetHQ <span>Spending by Type</span></div>
+        <div class="brand">MyBudgetHQ <span>Spending by Type</span></div>
       </div>
     </div>
     <div class="date-printed">Printed ${escapeHtml(today)}</div>
@@ -443,7 +443,7 @@ export default class extends Controller {
     <tbody>${tableRows}</tbody>
   </table>
 
-  <div class="footer">BudgetHQ &mdash; Generated on ${escapeHtml(today)}</div>
+  <div class="footer">MyBudgetHQ &mdash; Generated on ${escapeHtml(today)}</div>
 
   <script>window.onload = function() { window.print(); }<\/script>
 </body>

@@ -1,11 +1,50 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-accent-theme="<%= user_signed_in? ? current_user.accent_theme_key : 'purple' %>">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>BudgetHQ</title>
+    <title>MyBudgetHQ</title>
     <%= csrf_meta_tags %>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tailwindcss/typography@0.5.10/dist/typography.min.css">
+    <%# Accent theme CSS variables — each palette has 10 stops keyed by data-accent-theme on <html> %>
+    <style>
+      :root, [data-accent-theme="purple"] {
+        --brand-50:  #faf5ff; --brand-100: #f3e8ff; --brand-200: #e9d5ff;
+        --brand-300: #d8b4fe; --brand-400: #c084fc; --brand-500: #a855f7;
+        --brand-600: #9333ea; --brand-700: #7e22ce; --brand-800: #6b21a8;
+        --brand-900: #581c87;
+      }
+      [data-accent-theme="navy"] {
+        --brand-50:  #eff6ff; --brand-100: #dbeafe; --brand-200: #bfdbfe;
+        --brand-300: #93c5fd; --brand-400: #60a5fa; --brand-500: #3b82f6;
+        --brand-600: #2563eb; --brand-700: #1d4ed8; --brand-800: #1e40af;
+        --brand-900: #1e3a5f;
+      }
+      [data-accent-theme="teal"] {
+        --brand-50:  #f0fdfa; --brand-100: #ccfbf1; --brand-200: #99f6e4;
+        --brand-300: #5eead4; --brand-400: #2dd4bf; --brand-500: #14b8a6;
+        --brand-600: #0d9488; --brand-700: #0f766e; --brand-800: #115e59;
+        --brand-900: #134e4a;
+      }
+      [data-accent-theme="charcoal"] {
+        --brand-50:  #f8fafc; --brand-100: #f1f5f9; --brand-200: #e2e8f0;
+        --brand-300: #cbd5e1; --brand-400: #94a3b8; --brand-500: #64748b;
+        --brand-600: #475569; --brand-700: #334155; --brand-800: #1e293b;
+        --brand-900: #0f172a;
+      }
+      [data-accent-theme="deep_green"] {
+        --brand-50:  #f0fdf4; --brand-100: #dcfce7; --brand-200: #bbf7d0;
+        --brand-300: #86efac; --brand-400: #4ade80; --brand-500: #22c55e;
+        --brand-600: #16a34a; --brand-700: #15803d; --brand-800: #166534;
+        --brand-900: #14532d;
+      }
+      [data-accent-theme="burgundy"] {
+        --brand-50:  #fff1f2; --brand-100: #ffe4e6; --brand-200: #fecdd3;
+        --brand-300: #fda4af; --brand-400: #fb7185; --brand-500: #f43f5e;
+        --brand-600: #e11d48; --brand-700: #be123c; --brand-800: #9f1239;
+        --brand-900: #881337;
+      }
+    </style>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -14,16 +53,16 @@
           extend: {
             colors: {
               brand: {
-                50:  '#faf5ff',
-                100: '#f3e8ff',
-                200: '#e9d5ff',
-                300: '#d8b4fe',
-                400: '#c084fc',
-                500: '#a855f7',
-                600: '#9333ea',
-                700: '#7e22ce',
-                800: '#6b21a8',
-                900: '#581c87',
+                50:  'var(--brand-50)',
+                100: 'var(--brand-100)',
+                200: 'var(--brand-200)',
+                300: 'var(--brand-300)',
+                400: 'var(--brand-400)',
+                500: 'var(--brand-500)',
+                600: 'var(--brand-600)',
+                700: 'var(--brand-700)',
+                800: 'var(--brand-800)',
+                900: 'var(--brand-900)',
               }
             },
             fontFamily: {
@@ -59,7 +98,7 @@
       /* Swap target highlight — no opacity/transform (breaks preserve-3d on flip cards) */
       .dashboard-swap-highlight,
       .reports-swap-highlight {
-        outline: 3px dashed #a855f7;
+        outline: 3px dashed var(--brand-500);
         outline-offset: 2px;
         border-radius: 0.75rem;
       }
@@ -116,7 +155,7 @@
 
                 <div class="h-5 w-px bg-gray-300 dark:bg-gray-600"></div>
 
-                <%# Profile dropdown (Theme, Settings, Logout) %>
+                <%# Profile dropdown (Theme, Theme Settings, Settings, Logout) %>
                 <div class="relative" data-controller="dropdown">
                   <button type="button"
                           class="flex items-center space-x-2 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
@@ -143,6 +182,15 @@
                         <span>Toggle Theme</span>
                       </button>
                     </div>
+                    <%# Theme Settings %>
+                    <div class="px-1">
+                      <%= link_to theme_settings_path, class: "flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition" do %>
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+                        </svg>
+                        <span>Theme Settings</span>
+                      <% end %>
+                    </div>
                     <%# Settings %>
                     <div class="px-1">
                       <%= link_to edit_user_registration_path, class: "flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition" do %>
@@ -155,7 +203,7 @@
                     </div>
                     <%# Upgrade %>
                     <div class="px-1">
-                      <%= link_to pricing_path, class: "flex items-center space-x-3 px-3 py-2 text-sm text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded-md transition" do %>
+                      <%= link_to pricing_path, class: "flex items-center space-x-3 px-3 py-2 text-sm text-brand-600 dark:text-brand-400 hover:bg-brand-50 rounded-md transition" do %>
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M5 3l7 4 7-4v11a2 2 0 01-1.03 1.75L12 19l-5.97-3.25A2 2 0 015 14V3z"/>
                         </svg>

@@ -29,7 +29,7 @@ export default class extends Controller {
     const btn = this.toggleAllButtonTarget
     btn.dataset.checked = String(this._viewAll)
     btn.setAttribute("aria-checked", String(this._viewAll))
-    btn.className = btn.className.replace(this._viewAll ? "bg-gray-300" : "bg-purple-600", this._viewAll ? "bg-purple-600" : "bg-gray-300")
+    btn.className = btn.className.replace(this._viewAll ? "bg-gray-300" : "bg-brand-600", this._viewAll ? "bg-brand-600" : "bg-gray-300")
     const knob = btn.querySelector("span")
     knob.className = knob.className.replace(this._viewAll ? "translate-x-1" : "translate-x-7", this._viewAll ? "translate-x-7" : "translate-x-1")
   }
@@ -43,7 +43,7 @@ export default class extends Controller {
   // --- Use Toggle ---
 
   _renderUseToggle(isOn, freqId, frequencyMasterId) {
-    const bg = isOn ? "bg-purple-600" : "bg-gray-300"
+    const bg = isOn ? "bg-brand-600" : "bg-gray-300"
     const knobTranslate = isOn ? "translate-x-7" : "translate-x-1"
     const dataId = freqId ? `data-id="${freqId}"` : ""
     const dataMasterId = frequencyMasterId ? `data-master-id="${frequencyMasterId}"` : ""
@@ -65,7 +65,7 @@ export default class extends Controller {
     btn.dataset.checked = String(nowOn)
     btn.setAttribute("aria-checked", String(nowOn))
     btn.title = nowOn ? "Use: Yes" : "Use: No"
-    btn.className = btn.className.replace(nowOn ? "bg-gray-300" : "bg-purple-600", nowOn ? "bg-purple-600" : "bg-gray-300")
+    btn.className = btn.className.replace(nowOn ? "bg-gray-300" : "bg-brand-600", nowOn ? "bg-brand-600" : "bg-gray-300")
     const knob = btn.querySelector("span")
     knob.className = knob.className.replace(nowOn ? "translate-x-1" : "translate-x-7", nowOn ? "translate-x-7" : "translate-x-1")
 
@@ -110,7 +110,7 @@ export default class extends Controller {
       btn.dataset.checked = String(wasOn)
       btn.setAttribute("aria-checked", String(wasOn))
       btn.title = wasOn ? "Use: Yes" : "Use: No"
-      btn.className = btn.className.replace(wasOn ? "bg-gray-300" : "bg-purple-600", wasOn ? "bg-purple-600" : "bg-gray-300")
+      btn.className = btn.className.replace(wasOn ? "bg-gray-300" : "bg-brand-600", wasOn ? "bg-brand-600" : "bg-gray-300")
       knob.className = knob.className.replace(wasOn ? "translate-x-1" : "translate-x-7", wasOn ? "translate-x-7" : "translate-x-1")
     }
   }

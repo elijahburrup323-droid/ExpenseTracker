@@ -42,7 +42,7 @@ export default class extends Controller {
     const btn = this.toggleAllButtonTarget
     btn.dataset.checked = String(this._viewAll)
     btn.setAttribute("aria-checked", String(this._viewAll))
-    btn.className = btn.className.replace(this._viewAll ? "bg-gray-300" : "bg-purple-600", this._viewAll ? "bg-purple-600" : "bg-gray-300")
+    btn.className = btn.className.replace(this._viewAll ? "bg-gray-300" : "bg-brand-600", this._viewAll ? "bg-brand-600" : "bg-gray-300")
     const knob = btn.querySelector("span")
     knob.className = knob.className.replace(this._viewAll ? "translate-x-1" : "translate-x-7", this._viewAll ? "translate-x-7" : "translate-x-1")
   }

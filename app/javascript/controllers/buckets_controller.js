@@ -377,7 +377,7 @@ export default class extends Controller {
     const target = b.target_amount != null ? this._formatAmount(b.target_amount) : "\u2014"
     const defaultBadge = b.is_default ? `<span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300">Default</span>` : ""
 
-    const activeBg = b.is_active ? "bg-purple-600" : "bg-gray-300"
+    const activeBg = b.is_active ? "bg-brand-600" : "bg-gray-300"
     const activeKnob = b.is_active ? "translate-x-7" : "translate-x-1"
 
     // Progress bar

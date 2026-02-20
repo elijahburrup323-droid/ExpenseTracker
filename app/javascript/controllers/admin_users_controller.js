@@ -58,7 +58,7 @@ export default class extends Controller {
     btn.dataset.checked = String(nowAdmin)
     btn.setAttribute("aria-checked", String(nowAdmin))
     btn.title = nowAdmin ? "Admin: Yes" : "Admin: No"
-    btn.className = btn.className.replace(nowAdmin ? "bg-gray-300" : "bg-purple-600", nowAdmin ? "bg-purple-600" : "bg-gray-300")
+    btn.className = btn.className.replace(nowAdmin ? "bg-gray-300" : "bg-brand-600", nowAdmin ? "bg-brand-600" : "bg-gray-300")
     const knob = btn.querySelector("span")
     knob.className = knob.className.replace(nowAdmin ? "translate-x-1" : "translate-x-7", nowAdmin ? "translate-x-7" : "translate-x-1")
 
@@ -82,7 +82,7 @@ export default class extends Controller {
       btn.dataset.checked = String(wasAdmin)
       btn.setAttribute("aria-checked", String(wasAdmin))
       btn.title = wasAdmin ? "Admin: Yes" : "Admin: No"
-      btn.className = btn.className.replace(wasAdmin ? "bg-gray-300" : "bg-purple-600", wasAdmin ? "bg-purple-600" : "bg-gray-300")
+      btn.className = btn.className.replace(wasAdmin ? "bg-gray-300" : "bg-brand-600", wasAdmin ? "bg-brand-600" : "bg-gray-300")
       knob.className = knob.className.replace(wasAdmin ? "translate-x-1" : "translate-x-7", wasAdmin ? "translate-x-7" : "translate-x-1")
     }
   }
@@ -90,7 +90,7 @@ export default class extends Controller {
   // --- Rendering ---
 
   _renderAdminToggle(isAdmin, userId) {
-    const bg = isAdmin ? "bg-purple-600" : "bg-gray-300"
+    const bg = isAdmin ? "bg-brand-600" : "bg-gray-300"
     const knobTranslate = isAdmin ? "translate-x-7" : "translate-x-1"
     return `<button type="button"
       class="relative inline-flex h-7 w-14 items-center rounded-full transition-colors ${bg} focus:outline-none focus:ring-2 focus:ring-purple-300"

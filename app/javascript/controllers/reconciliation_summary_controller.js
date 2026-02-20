@@ -133,7 +133,7 @@ export default class extends Controller {
             <div class="text-sm font-bold text-gray-900 dark:text-white mt-1">${escapeHtml(s.label)}</div>
           </div>
           <div>
-            <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">BudgetHQ Balance</div>
+            <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">MyBudgetHQ Balance</div>
             <div class="text-sm font-bold text-gray-900 dark:text-white mt-1">${s.budget_balance !== null ? fmt(s.budget_balance) : "N/A"}</div>
           </div>
           <div>
@@ -218,7 +218,7 @@ export default class extends Controller {
       <table><tbody>
         <tr><td><strong>Account</strong></td><td>${escapeHtml(s.account_name)}</td></tr>
         <tr><td><strong>Month</strong></td><td>${escapeHtml(s.label)}</td></tr>
-        <tr><td><strong>BudgetHQ Balance</strong></td><td style="font-family:monospace;">${s.budget_balance !== null ? fmt(s.budget_balance) : "N/A"}</td></tr>
+        <tr><td><strong>MyBudgetHQ Balance</strong></td><td style="font-family:monospace;">${s.budget_balance !== null ? fmt(s.budget_balance) : "N/A"}</td></tr>
         <tr><td><strong>External Balance</strong></td><td style="font-family:monospace;">${s.outside_balance !== null ? fmt(s.outside_balance) : "Not Entered"}</td></tr>
         <tr><td><strong>Difference</strong></td><td style="font-family:monospace;${s.difference !== null && s.difference !== 0 ? "color:#dc2626;" : "color:#16a34a;"}">${s.difference !== null ? fmt(s.difference) : "\u2014"}</td></tr>
         <tr><td><strong>Status</strong></td><td>${s.reconciled ? "Reconciled" : "Not Reconciled"}</td></tr>
@@ -253,7 +253,7 @@ export default class extends Controller {
 <html>
 <head>
   <meta charset="utf-8">
-  <title>BudgetHQ \u2013 Reconciliation Report</title>
+  <title>MyBudgetHQ \u2013 Reconciliation Report</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #111; padding: 32px; font-size: 11px; }
@@ -276,12 +276,12 @@ export default class extends Controller {
   <div class="header">
     <div class="header-left">
       <div class="logo">B</div>
-      <div><div class="brand">BudgetHQ <span>Reconciliation Report</span></div></div>
+      <div><div class="brand">MyBudgetHQ <span>Reconciliation Report</span></div></div>
     </div>
     <div class="date-printed">Printed ${escapeHtml(today)}</div>
   </div>
   ${sections}
-  <div class="footer">BudgetHQ &mdash; Generated on ${escapeHtml(today)}</div>
+  <div class="footer">MyBudgetHQ &mdash; Generated on ${escapeHtml(today)}</div>
   <script>window.onload = function() { window.print(); }<\/script>
 </body>
 </html>`

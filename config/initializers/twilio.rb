@@ -15,7 +15,7 @@ module TwilioService
       client.messages.create(
         from: ENV["TWILIO_PHONE_NUMBER"],
         to: phone_number,
-        body: "Your BudgetHQ verification code is: #{code}. Valid for 10 minutes."
+        body: "Your MyBudgetHQ verification code is: #{code}. Valid for 10 minutes."
       )
     end
 

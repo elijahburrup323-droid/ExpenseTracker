@@ -392,7 +392,7 @@ export default class extends Controller {
     const unmatched_p = this.data_cache.payments.filter(p => !p.reconciled)
     const unmatched_d = this.data_cache.deposits.filter(d => !d.reconciled)
 
-    // Compare statement counts vs BudgetHQ counts
+    // Compare statement counts vs MyBudgetHQ counts
     const stmtPayments = parseInt(this.paymentStatementCountTarget.value) || 0
     const stmtDeposits = parseInt(this.depositStatementCountTarget.value) || 0
     const bhqPayments = this.data_cache.payments.length
@@ -400,13 +400,13 @@ export default class extends Controller {
 
     if (stmtPayments > 0 && stmtPayments !== bhqPayments) {
       suggestions.push({
-        text: `Payment count mismatch: Statement has ${stmtPayments}, BudgetHQ has ${bhqPayments}`,
+        text: `Payment count mismatch: Statement has ${stmtPayments}, MyBudgetHQ has ${bhqPayments}`,
         type: "warning"
       })
     }
     if (stmtDeposits > 0 && stmtDeposits !== bhqDeposits) {
       suggestions.push({
-        text: `Deposit count mismatch: Statement has ${stmtDeposits}, BudgetHQ has ${bhqDeposits}`,
+        text: `Deposit count mismatch: Statement has ${stmtDeposits}, MyBudgetHQ has ${bhqDeposits}`,
         type: "warning"
       })
     }
@@ -671,9 +671,9 @@ export default class extends Controller {
     // Guidance
     const guidance = []
     if (diff < 0) {
-      guidance.push("BudgetHQ balance is higher than your statement. You may have a missing payment or an extra deposit in BudgetHQ.")
+      guidance.push("MyBudgetHQ balance is higher than your statement. You may have a missing payment or an extra deposit in MyBudgetHQ.")
     } else {
-      guidance.push("Your statement balance is higher than BudgetHQ. You may be missing a deposit or have an extra payment in BudgetHQ.")
+      guidance.push("Your statement balance is higher than MyBudgetHQ. You may be missing a deposit or have an extra payment in MyBudgetHQ.")
     }
     this.fixModeGuidanceTarget.textContent = guidance.join(" ")
 

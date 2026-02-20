@@ -23,6 +23,9 @@ Rails.application.routes.draw do
   # Pricing / Upgrade
   get "pricing", to: "pricing#index", as: :pricing
 
+  # Theme Settings
+  get "settings/theme", to: "theme_settings#index", as: :theme_settings
+
   # Spending Types (HTML page)
   resources :spending_types, only: [:index]
 
@@ -185,6 +188,9 @@ Rails.application.routes.draw do
         post :populate
       end
     end
+    # Theme API
+    put "theme", to: "theme#update", as: :theme
+
     # Diagnostic endpoint (admin only)
     get "diagnose_send", to: "diagnose#test_send"
 

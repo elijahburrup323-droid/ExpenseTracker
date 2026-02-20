@@ -45,6 +45,7 @@ import ReconciliationSummaryController from "controllers/reconciliation_summary_
 import PaymentRecurringsController from "controllers/payment_recurrings_controller"
 import BucketsController from "controllers/buckets_controller"
 import SpendingByTagController from "controllers/spending_by_tag_controller"
+import ThemeSettingsController from "controllers/theme_settings_controller"
 
 application.register("flash", FlashController)
 application.register("dropdown", DropdownController)
@@ -91,3 +92,4 @@ application.register("reconciliation-summary", ReconciliationSummaryController)
 application.register("payment-recurrings", PaymentRecurringsController)
 application.register("buckets", BucketsController)
 application.register("spending-by-tag", SpendingByTagController)
+application.register("theme-settings", ThemeSettingsController)

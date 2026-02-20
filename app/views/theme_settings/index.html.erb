@@ -1,0 +1,76 @@
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6" data-controller="theme-settings"
+     data-theme-settings-api-url-value="<%= api_theme_path %>"
+     data-theme-settings-csrf-token-value="<%= form_authenticity_token %>"
+     data-theme-settings-current-value="<%= current_user.accent_theme_key %>">
+
+  <%# Header %>
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Theme Settings</h1>
+    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Choose an accent color theme. This changes the sidebar, buttons, and other accent highlights.</p>
+  </div>
+
+  <%# Theme cards %>
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Accent Theme</h2>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" data-theme-settings-target="themeGrid">
+      <% [
+        { key: "purple",     label: "Default Purple",  dark: "#7e22ce", light: "#a855f7" },
+        { key: "navy",       label: "Navy",            dark: "#1d4ed8", light: "#3b82f6" },
+        { key: "teal",       label: "Teal",            dark: "#0f766e", light: "#14b8a6" },
+        { key: "charcoal",   label: "Charcoal",        dark: "#334155", light: "#64748b" },
+        { key: "deep_green", label: "Deep Green",      dark: "#15803d", light: "#22c55e" },
+        { key: "burgundy",   label: "Burgundy",        dark: "#be123c", light: "#f43f5e" },
+      ].each do |theme| %>
+        <button type="button"
+                class="theme-card group relative flex items-center space-x-4 p-4 rounded-xl border-2 transition-all duration-200 hover:shadow-md min-h-[4rem] <%= current_user.accent_theme_key == theme[:key] ? 'border-brand-500 ring-2 ring-brand-200 dark:ring-brand-800 bg-brand-50 dark:bg-brand-900/20' : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-white dark:bg-gray-800' %>"
+                data-theme-key="<%= theme[:key] %>"
+                data-action="click->theme-settings#selectTheme">
+          <%# Gradient swatch %>
+          <div class="w-12 h-12 rounded-lg flex-shrink-0 shadow-inner" style="background: linear-gradient(135deg, <%= theme[:dark] %>, <%= theme[:light] %>);"></div>
+          <%# Label %>
+          <div class="flex-1 text-left">
+            <span class="text-sm font-semibold text-gray-900 dark:text-white"><%= theme[:label] %></span>
+            <% if current_user.accent_theme_key == theme[:key] %>
+              <span class="block text-xs text-brand-600 dark:text-brand-400 font-medium" data-theme-settings-target="currentLabel">Current</span>
+            <% end %>
+          </div>
+          <%# Checkmark for selected %>
+          <div class="<%= current_user.accent_theme_key == theme[:key] ? '' : 'hidden' %> flex-shrink-0" data-theme-settings-target="checkmark" data-for="<%= theme[:key] %>">
+            <svg class="h-6 w-6 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+            </svg>
+          </div>
+        </button>
+      <% end %>
+    </div>
+
+    <%# Action buttons %>
+    <div class="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+      <p class="text-sm text-gray-500 dark:text-gray-400" data-theme-settings-target="status"></p>
+      <div class="flex space-x-3">
+        <button type="button"
+                class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+                data-action="click->theme-settings#cancel">Cancel</button>
+        <button type="button"
+                class="px-4 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg shadow-sm transition disabled:opacity-50"
+                data-action="click->theme-settings#save"
+                data-theme-settings-target="saveBtn"
+                disabled>Save</button>
+      </div>
+    </div>
+  </div>
+
+  <%# Info box %>
+  <div class="mt-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+    <div class="flex items-start space-x-3">
+      <svg class="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <div class="text-sm text-blue-700 dark:text-blue-300">
+        <p class="font-medium mb-1">About Accent Themes</p>
+        <p>Accent themes change the sidebar gradient, buttons, toggles, and other highlight colors. They do not affect financial colors (green for income, red for expenses) or text readability. Your selection is saved to your account and applies across all devices.</p>
+      </div>
+    </div>
+  </div>
+</div>

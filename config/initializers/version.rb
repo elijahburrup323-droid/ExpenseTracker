@@ -1,6 +1,6 @@
 APP_VERSION = "1.3.18"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
-MANUAL_CHANGE_SEQ = 15  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 16  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
@@ -10,26 +10,26 @@ APP_ALL_VERSIONS = [
       "Reports: New Spending by Type report — spending breakdown by Need, Want, Savings/Investment with amounts, percentages, and transaction counts (CM-4)",
       "Reports: Report options popup with Regular and Comparison modes, matching existing report pattern (CM-4)",
       "Reports: Comparison mode shows previous month variance ($, %) and optional YTD totals per spending type (CM-4)",
-      "Reports: Print button generates clean, print-optimized report with BudgetHQ branding (CM-4)",
+      "Reports: Print button generates clean, print-optimized report with MyBudgetHQ branding (CM-4)",
       "Reports: Spending by Type registered in reports table and accessible from Monthly > Reports menu (CM-4)",
       "Reports: New Account Balance History report — historical balances by month with snapshot data for closed months and live calculations for open month (CM-5)",
       "Reports: Account Balance History options modal with account selection, date range, table/chart output format, and closed-months-only toggle (CM-5)",
       "Reports: Account Balance History chart view with SVG line chart showing month-over-month ending balances (CM-5)",
-      "Reports: Account Balance History print support with BudgetHQ branding (CM-5)",
+      "Reports: Account Balance History print support with MyBudgetHQ branding (CM-5)",
       "Reports: New Income by Source report — deposits grouped by source with amounts, counts, and percentages (CM-6)",
       "Reports: Income by Source options modal with date range, account filter, recurring toggle, and table/chart format (CM-6)",
       "Reports: Income by Source pie chart view with color-coded segments and legend (CM-6)",
-      "Reports: Income by Source print support with BudgetHQ branding (CM-6)",
+      "Reports: Income by Source print support with MyBudgetHQ branding (CM-6)",
       "Reports: New Net Worth Report — historical net worth by month with total assets, total liabilities, and month-over-month change (CM-7)",
       "Reports: Net Worth Report options modal with date range, in-budget accounts toggle, and table/chart format (CM-7)",
       "Reports: Net Worth Report line chart view showing net worth trend over time (CM-7)",
-      "Reports: Net Worth Report print support with BudgetHQ branding (CM-7)",
+      "Reports: Net Worth Report print support with MyBudgetHQ branding (CM-7)",
       "Reports: New Soft Close Summary report — snapshot data captured during month soft close with account detail, income/spending, and net worth sections (CM-8)",
       "Reports: Soft Close Summary options modal with month selector and section visibility toggles (CM-8)",
-      "Reports: Soft Close Summary print support with BudgetHQ branding (CM-8)",
+      "Reports: Soft Close Summary print support with MyBudgetHQ branding (CM-8)",
       "Reports: New Reconciliation Report — account reconciliation summary with transaction detail, reconciled flags, and balance comparison (CM-9)",
       "Reports: Reconciliation Report options modal with account/month selectors and detail toggles (CM-9)",
-      "Reports: Reconciliation Report print support with BudgetHQ branding (CM-9)",
+      "Reports: Reconciliation Report print support with MyBudgetHQ branding (CM-9)",
       "Payments: New Recurring Payments screen — full CRUD for scheduled payment obligations (CM-10)",
       "Payments: Recurring Payments table with inline add/edit, use toggle, frequency, account, and category columns (CM-10)",
       "Payments: Auto-generation engine — due recurring payments automatically create payment entries when Payments screen loads (CM-10)",
@@ -73,9 +73,15 @@ APP_ALL_VERSIONS = [
       "Reports: New Spending by Tag report — spending breakdown grouped by tag with colored dots, amounts, percentages, and transaction counts (CM-2)",
       "Reports: Spending by Tag options modal with Regular and Comparison modes including previous month variance and YTD totals (CM-2)",
       "Reports: Spending by Tag includes Untagged category for payments without tags (CM-2)",
-      "Reports: Spending by Tag print support with BudgetHQ branding (CM-2)",
+      "Reports: Spending by Tag print support with MyBudgetHQ branding (CM-2)",
       "Dashboard: Tag filter dropdown — filter Spending Overview, Income & Spending, and Recent Activity cards by selected tags without affecting account balances or net worth (CM-2)",
       "Dashboard: Tag filter visual indicator with ring highlight when active, multi-select checkboxes, and Clear button (CM-2)",
+      "Theme: Accent color presets — 6 curated themes (Purple, Navy, Teal, Charcoal, Deep Green, Burgundy) that change sidebar, buttons, and toggles via CSS variables (CM-7)",
+      "Theme: New Theme Settings screen accessible from Profile dropdown — select, preview, and save accent theme with instant client-side preview (CM-7)",
+      "Theme: Server-persisted accent_theme_key on users table — theme loads on every page via data-accent-theme attribute on html element (CM-7)",
+      "Rebrand: All user-facing text changed from BudgetHQ to MyBudgetHQ — navbar logo, page title, footer, email templates, SMS messages, report print headers, and static pages (CM-7)",
+      "Rebrand: Email addresses updated from support@budgethq.app to support@mybudgethq.app (CM-7)",
+      "Theme: Toggle ON-state colors changed from hardcoded purple-600 to theme-aware brand-600 across all screens with toggles (CM-7)",
     ]
   },
   {
@@ -93,7 +99,7 @@ APP_ALL_VERSIONS = [
       "Database: New recurring_obligations table for tracking recurring bills and expenses (CM-2)",
       "Reports: New Recurring Obligations report — lists expected obligations for selected month with due dates, frequency, and totals (CM-2)",
       "Reports: Report options popup with include-inactive toggle, matching existing report pattern (CM-2)",
-      "Reports: Print button generates clean, print-optimized report with BudgetHQ branding (CM-2)",
+      "Reports: Print button generates clean, print-optimized report with MyBudgetHQ branding (CM-2)",
       "Reports: Recurring Obligations registered in reports table and accessible from Monthly > Reports menu (CM-2)",
     ]
   },
@@ -113,7 +119,7 @@ APP_ALL_VERSIONS = [
       "Reports: New Spending by Category report — category breakdown with icon, spending type, amount, percentage, and transaction count (CM-16)",
       "Reports: Report options popup with Regular and Comparison modes, matching Monthly Cash Flow pattern (CM-16)",
       "Reports: Comparison mode shows previous month variance ($, %) and optional YTD totals per category (CM-16)",
-      "Reports: Print button generates clean, print-optimized report with BudgetHQ branding and repeating headers (CM-16)",
+      "Reports: Print button generates clean, print-optimized report with MyBudgetHQ branding and repeating headers (CM-16)",
       "Reports: Spending by Category registered in reports table and accessible from Monthly > Reports menu (CM-16)",
     ]
   },
@@ -243,7 +249,7 @@ APP_ALL_VERSIONS = [
     version: "1.3.1",
     changes: [
       "Account Reconciliation: New screen under Accounts menu for reconciling individual accounts per month",
-      "Account Reconciliation: Compare BudgetHQ balance against external/statement balance with real-time difference",
+      "Account Reconciliation: Compare MyBudgetHQ balance against external/statement balance with real-time difference",
       "Account Reconciliation: Checkbox-driven reconciliation for Payments, Deposits, Transfers, and Balance Adjustments",
       "Account Reconciliation: Fix Mode with guided troubleshooting — Unmatched Payments, Deposits, and Suggested Fixes",
       "Account Reconciliation: Add Balance Adjustments directly from reconciliation screen",
@@ -417,7 +423,7 @@ APP_ALL_VERSIONS = [
       "Upgrade menu item added to profile dropdown (header + sidebar)",
       "Subscribe and Renew buttons on Settings page now link to pricing page",
       "CSV Upload/Import feature on all 9 data screens (admin only)",
-      "Payments Print button generates print-friendly report with BudgetHQ header",
+      "Payments Print button generates print-friendly report with MyBudgetHQ header",
       "Template download format selection: CSV or Excel with localStorage persistence",
     ]
   },
@@ -426,7 +432,7 @@ APP_ALL_VERSIONS = [
     changes: [
       "CSV Upload/Import feature on all 9 data screens (admin only)",
       "Download template, upload CSV, validate inline, batch import via API",
-      "Payments Print button generates print-friendly report with BudgetHQ header",
+      "Payments Print button generates print-friendly report with MyBudgetHQ header",
       "Print mirrors current filters, sorting, and shows totals",
     ]
   },
