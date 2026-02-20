@@ -196,6 +196,32 @@ module Api
       render json: result
     end
 
+    # GET /api/reports/spending_by_tag?year=YYYY&month=M&mode=regular|comparison&compare_prev=1&include_ytd=1
+    def spending_by_tag
+      om = OpenMonthMaster.for_user(current_user)
+      year  = (params[:year]  || om.current_year).to_i
+      month = (params[:month] || om.current_month).to_i
+      mode  = params[:mode] || "regular"
+
+      current = tag_spending_for_month(year, month)
+      result = current.merge(mode: mode)
+
+      if mode == "comparison"
+        if params[:compare_prev] == "1"
+          prev_month_start = Date.new(year, month, 1).prev_month
+          prev = tag_spending_for_month(prev_month_start.year, prev_month_start.month)
+          result[:prev] = prev
+          result[:variance] = compute_tag_spending_variance(current, prev)
+        end
+
+        if params[:include_ytd] == "1"
+          result[:ytd] = tag_spending_ytd(year, month)
+        end
+      end
+
+      render json: result
+    end
+
     private
 
     # --- Tag filtering helpers ---
@@ -966,6 +992,153 @@ module Api
         total_obligations: rows.size,
         total_expected: total_amount.round(2),
         obligations: rows
+      }
+    end
+
+    # --- Spending by Tag helpers ---
+
+    def tag_spending_for_month(year, month)
+      month_start = Date.new(year, month, 1)
+      month_end   = month_start.next_month
+      range       = month_start...month_end
+
+      base = current_user.payments.where(payment_date: range, deleted_at: nil)
+        .joins("INNER JOIN tag_assignments ON tag_assignments.taggable_type = 'Payment' AND tag_assignments.taggable_id = payments.id")
+        .joins("INNER JOIN tags ON tags.id = tag_assignments.tag_id AND tags.deleted_at IS NULL AND tags.user_id = payments.user_id")
+
+      total_spent = base.sum("payments.amount").to_f.round(2)
+      transaction_count = base.distinct.count("payments.id")
+
+      tags = base
+        .group("tags.id", "tags.name", "tags.color_key")
+        .order(Arel.sql("SUM(payments.amount) DESC"))
+        .pluck(
+          Arel.sql("tags.id"),
+          Arel.sql("tags.name"),
+          Arel.sql("tags.color_key"),
+          Arel.sql("SUM(payments.amount)"),
+          Arel.sql("COUNT(DISTINCT payments.id)")
+        )
+        .map do |id, name, color_key, amount, count|
+          amt = amount.to_f.round(2)
+          {
+            id: id,
+            name: name,
+            color_key: color_key,
+            amount: amt,
+            pct: total_spent > 0 ? (amt / total_spent * 100).round(1) : 0.0,
+            count: count
+          }
+        end
+
+      # Also count untagged payments
+      all_payments = current_user.payments.where(payment_date: range, deleted_at: nil)
+      tagged_ids = TagAssignment.where(taggable_type: "Payment", taggable_id: all_payments.select(:id)).select(:taggable_id)
+      untagged = all_payments.where.not(id: tagged_ids)
+      untagged_total = untagged.sum(:amount).to_f.round(2)
+      untagged_count = untagged.count
+
+      if untagged_count > 0
+        full_total = (total_spent + untagged_total).round(2)
+        # Recalculate percentages with full total
+        tags.each { |t| t[:pct] = full_total > 0 ? (t[:amount] / full_total * 100).round(1) : 0.0 }
+        tags << {
+          id: nil,
+          name: "Untagged",
+          color_key: "gray",
+          amount: untagged_total,
+          pct: full_total > 0 ? (untagged_total / full_total * 100).round(1) : 0.0,
+          count: untagged_count
+        }
+        total_spent = full_total
+        transaction_count = all_payments.count
+      end
+
+      {
+        month_label: month_start.strftime("%B %Y"),
+        year: year,
+        month: month,
+        total_spent: total_spent,
+        transaction_count: transaction_count,
+        tags: tags
+      }
+    end
+
+    def compute_tag_spending_variance(current, prev)
+      curr_map = current[:tags].each_with_object({}) { |t, h| h[t[:name]] = t }
+      prev_map = prev[:tags].each_with_object({}) { |t, h| h[t[:name]] = t }
+      all_names = (curr_map.keys + prev_map.keys).uniq
+
+      tags = all_names.sort_by { |n| -(curr_map[n]&.dig(:amount) || 0.0) }.map do |name|
+        c_amt = curr_map[name]&.dig(:amount) || 0.0
+        p_amt = prev_map[name]&.dig(:amount) || 0.0
+        diff = (c_amt - p_amt).round(2)
+        pct = p_amt.zero? ? nil : ((diff / p_amt.abs) * 100).round(1)
+        {
+          name: name,
+          color_key: (curr_map[name] || prev_map[name])&.dig(:color_key),
+          dollar: diff,
+          percent: pct
+        }
+      end
+
+      total_diff = (current[:total_spent] - prev[:total_spent]).round(2)
+      total_pct = prev[:total_spent].zero? ? nil : ((total_diff / prev[:total_spent].abs) * 100).round(1)
+
+      { total: { dollar: total_diff, percent: total_pct }, tags: tags }
+    end
+
+    def tag_spending_ytd(year, month)
+      ytd_start = Date.new(year, 1, 1)
+      ytd_end   = Date.new(year, month, 1).next_month
+      range     = ytd_start...ytd_end
+
+      base = current_user.payments.where(payment_date: range, deleted_at: nil)
+        .joins("INNER JOIN tag_assignments ON tag_assignments.taggable_type = 'Payment' AND tag_assignments.taggable_id = payments.id")
+        .joins("INNER JOIN tags ON tags.id = tag_assignments.tag_id AND tags.deleted_at IS NULL AND tags.user_id = payments.user_id")
+
+      total_spent = base.sum("payments.amount").to_f.round(2)
+      transaction_count = base.distinct.count("payments.id")
+
+      tags = base
+        .group("tags.id", "tags.name", "tags.color_key")
+        .order(Arel.sql("SUM(payments.amount) DESC"))
+        .pluck(
+          Arel.sql("tags.id"),
+          Arel.sql("tags.name"),
+          Arel.sql("tags.color_key"),
+          Arel.sql("SUM(payments.amount)"),
+          Arel.sql("COUNT(DISTINCT payments.id)")
+        )
+        .map do |id, name, color_key, amount, count|
+          amt = amount.to_f.round(2)
+          {
+            id: id, name: name, color_key: color_key, amount: amt,
+            pct: total_spent > 0 ? (amt / total_spent * 100).round(1) : 0.0,
+            count: count
+          }
+        end
+
+      # Untagged
+      all_payments = current_user.payments.where(payment_date: range, deleted_at: nil)
+      tagged_ids = TagAssignment.where(taggable_type: "Payment", taggable_id: all_payments.select(:id)).select(:taggable_id)
+      untagged = all_payments.where.not(id: tagged_ids)
+      untagged_total = untagged.sum(:amount).to_f.round(2)
+      untagged_count = untagged.count
+
+      if untagged_count > 0
+        full_total = (total_spent + untagged_total).round(2)
+        tags.each { |t| t[:pct] = full_total > 0 ? (t[:amount] / full_total * 100).round(1) : 0.0 }
+        tags << { id: nil, name: "Untagged", color_key: "gray", amount: untagged_total, pct: full_total > 0 ? (untagged_total / full_total * 100).round(1) : 0.0, count: untagged_count }
+        total_spent = full_total
+        transaction_count = all_payments.count
+      end
+
+      {
+        label: "Jan \u2013 #{Date.new(year, month, 1).strftime('%b')} #{year}",
+        total_spent: total_spent,
+        transaction_count: transaction_count,
+        tags: tags
       }
     end
   end

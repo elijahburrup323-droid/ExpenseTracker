@@ -85,6 +85,7 @@ Rails.application.routes.draw do
   get "reports/net_worth_report", to: "reports#net_worth_report", as: :report_net_worth_report
   get "reports/soft_close_summary", to: "reports#soft_close_summary", as: :report_soft_close_summary
   get "reports/reconciliation_summary", to: "reports#reconciliation_summary", as: :report_reconciliation_summary
+  get "reports/spending_by_tag", to: "reports#spending_by_tag", as: :report_spending_by_tag
 
   # Soft Close Month (HTML page)
   get "soft_close", to: "soft_close#index", as: :soft_close
@@ -206,6 +207,7 @@ Rails.application.routes.draw do
       get "net_worth_report", action: :net_worth_report
       get "soft_close_summary", action: :soft_close_summary
       get "reconciliation_summary", action: :reconciliation_summary
+      get "spending_by_tag", action: :spending_by_tag
     end
   end
 

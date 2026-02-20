@@ -29,11 +29,15 @@ module Api
                            .includes(dashboard_card: :dashboard_card_account_rule)
                            .order(:slot_number)
 
+      # Tag filter (optional, only affects spending_overview, income_spending, recent_activity)
+      tag_ids = Array(params[:tag_ids]).map(&:to_i).reject(&:zero?)
+
       context = {
         month_start: month_start, month_end: month_end,
         as_of_date: as_of_date, all_balances: all_balances,
         beg_balances: beg_balances,
-        budget_accounts: budget_accounts, budget_ids: budget_ids
+        budget_accounts: budget_accounts, budget_ids: budget_ids,
+        tag_ids: tag_ids
       }
 
       slots_data = slots.filter_map do |slot|
@@ -121,21 +125,26 @@ module Api
       end
     end
 
-    def compute_spending_overview(ctx)
-      spent = current_user.payments
-                          .where(payment_date: ctx[:month_start]...ctx[:month_end])
-                          .sum(:amount).to_f
+    def tag_filtered_scope(scope, tag_ids, taggable_type = "Payment")
+      return scope if tag_ids.blank?
+      scope.where(id: TagAssignment.where(taggable_type: taggable_type, tag_id: tag_ids).select(:taggable_id))
+    end
 
-      by_category = current_user.payments
-        .where(payment_date: ctx[:month_start]...ctx[:month_end])
+    def compute_spending_overview(ctx)
+      base_payments = tag_filtered_scope(
+        current_user.payments.where(payment_date: ctx[:month_start]...ctx[:month_end]),
+        ctx[:tag_ids]
+      )
+      spent = base_payments.sum(:amount).to_f
+
+      by_category = base_payments
         .joins(:spending_category)
         .group("spending_categories.id", "spending_categories.name", "spending_categories.icon_key", "spending_categories.color_key")
         .order(Arel.sql("SUM(payments.amount) DESC"))
         .pluck(Arel.sql("spending_categories.id, spending_categories.name, spending_categories.icon_key, spending_categories.color_key, SUM(payments.amount)"))
         .map { |id, name, icon_key, color_key, total| { id: id, name: name, icon_key: icon_key, color_key: color_key, amount: total.to_f, pct: spent > 0 ? (total.to_f / spent * 100).round(1) : 0.0 } }
 
-      by_type = current_user.payments
-        .where(payment_date: ctx[:month_start]...ctx[:month_end])
+      by_type = base_payments
         .joins(spending_category: :spending_type)
         .group("spending_types.id", "spending_types.name", "spending_types.icon_key", "spending_types.color_key")
         .order(Arel.sql("SUM(payments.amount) DESC"))
@@ -195,15 +204,19 @@ module Api
 
     def compute_income_spending(ctx)
       beginning_balance = ctx[:beg_balances].select { |id, _| ctx[:budget_ids].include?(id) }.values.sum.to_f.round(2)
-      expenses = current_user.payments
-                             .where(account_id: ctx[:budget_accounts].select(:id))
-                             .where(payment_date: ctx[:month_start]...ctx[:month_end])
-                             .sum(:amount).to_f
-      income = current_user.income_entries
-                           .where(account_id: ctx[:budget_accounts].select(:id))
-                           .where(received_flag: true)
-                           .where(entry_date: ctx[:month_start]...ctx[:month_end])
-                           .sum(:amount).to_f
+      expenses = tag_filtered_scope(
+        current_user.payments
+          .where(account_id: ctx[:budget_accounts].select(:id))
+          .where(payment_date: ctx[:month_start]...ctx[:month_end]),
+        ctx[:tag_ids]
+      ).sum(:amount).to_f
+      income = tag_filtered_scope(
+        current_user.income_entries
+          .where(account_id: ctx[:budget_accounts].select(:id))
+          .where(received_flag: true)
+          .where(entry_date: ctx[:month_start]...ctx[:month_end]),
+        ctx[:tag_ids], "IncomeEntry"
+      ).sum(:amount).to_f
       new_accounts = ctx[:budget_accounts]
                        .where(created_at: ctx[:month_start].beginning_of_day...ctx[:month_end].beginning_of_day)
                        .where.not(beginning_balance: 0)
@@ -215,12 +228,15 @@ module Api
     end
 
     def compute_recent_activity(ctx)
-      recent = current_user.payments
-                           .where(payment_date: ctx[:month_start]...ctx[:month_end])
-                           .order(payment_date: :desc, sort_order: :desc)
-                           .includes(:account, spending_category: :spending_type)
-                           .limit(5)
-                           .map { |p| { date: p.payment_date.strftime("%-m/%-d"), description: p.description, amount: p.amount.to_f } }
+      base = tag_filtered_scope(
+        current_user.payments.where(payment_date: ctx[:month_start]...ctx[:month_end]),
+        ctx[:tag_ids]
+      )
+      recent = base
+                 .order(payment_date: :desc, sort_order: :desc)
+                 .includes(:account, spending_category: :spending_type)
+                 .limit(5)
+                 .map { |p| { date: p.payment_date.strftime("%-m/%-d"), description: p.description, amount: p.amount.to_f } }
 
       { recent: recent }
     end

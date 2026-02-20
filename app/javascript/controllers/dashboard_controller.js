@@ -4,22 +4,37 @@ import Sortable from "sortablejs"
 export default class extends Controller {
   static targets = [
     "monthLabel", "prevBtn", "nextBtn",
-    "cardsGrid", "slotWrapper"
+    "cardsGrid", "slotWrapper",
+    "tagFilterWrapper", "tagFilterBtn", "tagFilterLabel", "tagFilterDropdown", "tagCheckboxList"
   ]
-  static values = { apiUrl: String, reorderUrl: String, openMonthUrl: String, month: Number, year: Number }
+  static values = { apiUrl: String, reorderUrl: String, openMonthUrl: String, tagsUrl: String, month: Number, year: Number }
 
   connect() {
     this.currentMonth = this.monthValue
     this.currentYear = this.yearValue
     this.expandedCardType = null
+    this._selectedTagIds = []
+    this._allTags = []
     this._updateArrowState()
     this._initSortable()
+    this._loadTags()
 
     // ESC key to collapse expanded card
     this._escHandler = (e) => {
       if (e.key === "Escape" && this.expandedCardType) this._collapseCard()
     }
     document.addEventListener("keydown", this._escHandler)
+
+    // Close tag dropdown on outside click
+    this._outsideClickHandler = (e) => {
+      if (this.hasTagFilterDropdownTarget &&
+          !this.tagFilterDropdownTarget.classList.contains("hidden") &&
+          this.hasTagFilterWrapperTarget &&
+          !this.tagFilterWrapperTarget.contains(e.target)) {
+        this.tagFilterDropdownTarget.classList.add("hidden")
+      }
+    }
+    document.addEventListener("click", this._outsideClickHandler)
 
     // If the persisted month differs from current real month, fetch the correct data
     const now = new Date()
@@ -30,6 +45,7 @@ export default class extends Controller {
 
   disconnect() {
     if (this._escHandler) document.removeEventListener("keydown", this._escHandler)
+    if (this._outsideClickHandler) document.removeEventListener("click", this._outsideClickHandler)
     if (this.sortable) this.sortable.destroy()
   }
 
@@ -78,10 +94,89 @@ export default class extends Controller {
     } catch (e) { /* silently fail */ }
   }
 
+  // --- Tag Filter ---
+
+  async _loadTags() {
+    if (!this.tagsUrlValue) return
+    try {
+      const res = await fetch(this.tagsUrlValue, { headers: { "Accept": "application/json" } })
+      if (res.ok) this._allTags = await res.json()
+    } catch (e) { /* silently fail */ }
+    this._renderTagCheckboxes()
+  }
+
+  _renderTagCheckboxes() {
+    if (!this.hasTagCheckboxListTarget) return
+    if (this._allTags.length === 0) {
+      this.tagCheckboxListTarget.innerHTML = `<p class="text-sm text-gray-400 italic">No tags yet</p>`
+      return
+    }
+    const TAG_COLORS = {
+      blue: "bg-blue-500", green: "bg-green-500", gold: "bg-yellow-500", red: "bg-red-500",
+      purple: "bg-purple-500", pink: "bg-pink-500", indigo: "bg-indigo-500", teal: "bg-teal-500",
+      orange: "bg-orange-500", gray: "bg-gray-400"
+    }
+    this.tagCheckboxListTarget.innerHTML = this._allTags.map(t => {
+      const checked = this._selectedTagIds.includes(t.id) ? "checked" : ""
+      const dotCls = TAG_COLORS[t.color_key] || TAG_COLORS.gray
+      return `<label class="flex items-center space-x-2 px-2 py-1 rounded hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+        <input type="checkbox" value="${t.id}" ${checked}
+               class="h-3.5 w-3.5 rounded text-brand-600 focus:ring-brand-500 border-gray-300 dark:border-gray-600"
+               data-action="change->dashboard#onTagCheckboxChange">
+        <span class="inline-block w-2.5 h-2.5 rounded-full ${dotCls} flex-shrink-0"></span>
+        <span class="text-sm text-gray-700 dark:text-gray-300 truncate">${this._escHtml(t.name)}</span>
+      </label>`
+    }).join("")
+  }
+
+  _escHtml(str) {
+    if (!str) return ""
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+  }
+
+  toggleTagFilter(event) {
+    event.stopPropagation()
+    if (!this.hasTagFilterDropdownTarget) return
+    this.tagFilterDropdownTarget.classList.toggle("hidden")
+  }
+
+  onTagCheckboxChange(event) {
+    const id = Number(event.target.value)
+    if (event.target.checked) {
+      if (!this._selectedTagIds.includes(id)) this._selectedTagIds.push(id)
+    } else {
+      this._selectedTagIds = this._selectedTagIds.filter(x => x !== id)
+    }
+    this._updateTagFilterLabel()
+    this._fetchAndRender()
+  }
+
+  clearTagFilter() {
+    this._selectedTagIds = []
+    this._renderTagCheckboxes()
+    this._updateTagFilterLabel()
+    this._fetchAndRender()
+  }
+
+  _updateTagFilterLabel() {
+    if (!this.hasTagFilterLabelTarget) return
+    const count = this._selectedTagIds.length
+    if (count === 0) {
+      this.tagFilterLabelTarget.textContent = "Filter by Tag"
+      this.tagFilterBtnTarget.classList.remove("ring-2", "ring-brand-500", "border-brand-500")
+    } else {
+      this.tagFilterLabelTarget.textContent = `${count} Tag${count > 1 ? "s" : ""} Active`
+      this.tagFilterBtnTarget.classList.add("ring-2", "ring-brand-500", "border-brand-500")
+    }
+  }
+
   // --- Fetch & Render ---
 
   async _fetchAndRender() {
-    const url = `${this.apiUrlValue}?month=${this.currentMonth}&year=${this.currentYear}`
+    let url = `${this.apiUrlValue}?month=${this.currentMonth}&year=${this.currentYear}`
+    if (this._selectedTagIds.length > 0) {
+      url += this._selectedTagIds.map(id => `&tag_ids[]=${id}`).join("")
+    }
     try {
       const res = await fetch(url, { headers: { "Accept": "application/json" } })
       if (!res.ok) return

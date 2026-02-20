@@ -3,8 +3,34 @@
      data-dashboard-api-url-value="<%= api_dashboard_card_data_path %>"
      data-dashboard-reorder-url-value="<%= api_dashboard_reorder_slots_path %>"
      data-dashboard-open-month-url-value="<%= api_open_month_master_path %>"
+     data-dashboard-tags-url-value="<%= api_tags_path %>"
      data-dashboard-month-value="<%= @open_month.current_month %>"
      data-dashboard-year-value="<%= @open_month.current_year %>">
+
+  <%# Tag Filter Toolbar %>
+  <div class="flex items-center justify-end mb-3">
+    <div class="relative" data-dashboard-target="tagFilterWrapper">
+      <button type="button"
+              class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+              data-action="click->dashboard#toggleTagFilter"
+              data-dashboard-target="tagFilterBtn">
+        <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+        </svg>
+        <span data-dashboard-target="tagFilterLabel">Filter by Tag</span>
+      </button>
+      <div class="hidden absolute right-0 top-full mt-1 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-30 p-3"
+           data-dashboard-target="tagFilterDropdown">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Tags</span>
+          <button type="button" class="text-xs text-brand-600 dark:text-brand-400 hover:underline" data-action="click->dashboard#clearTagFilter">Clear</button>
+        </div>
+        <div data-dashboard-target="tagCheckboxList" class="max-h-48 overflow-y-auto space-y-1">
+          <p class="text-sm text-gray-400 italic">Loading...</p>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <%# ===== 6-CARD GRID (3 x 2, equal size) ===== %>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6" data-dashboard-target="cardsGrid">

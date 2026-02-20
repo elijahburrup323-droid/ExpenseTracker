@@ -1,6 +1,6 @@
 APP_VERSION = "1.3.18"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
-MANUAL_CHANGE_SEQ = 14  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 15  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
@@ -70,6 +70,12 @@ APP_ALL_VERSIONS = [
       "Reconciliation: Diagnostic Assistant panel appears when difference is not zero — analyzes count mismatches, single-match transactions, duplicates, subset sums, transposition errors, decimal shifts, sign errors, bank fees, and cross-account matches (CM-5)",
       "Payments: Recurring Payments converted from inline table-row editing to modal-based Add/Edit CRUD for consistency with Deposits and Deposit Sources screens (CM-2)",
       "Reports: Reports Menu header made sticky under the global Hello DJ header — stays visible while scrolling report cards, matching Payments screen pattern (CM-6)",
+      "Reports: New Spending by Tag report — spending breakdown grouped by tag with colored dots, amounts, percentages, and transaction counts (CM-2)",
+      "Reports: Spending by Tag options modal with Regular and Comparison modes including previous month variance and YTD totals (CM-2)",
+      "Reports: Spending by Tag includes Untagged category for payments without tags (CM-2)",
+      "Reports: Spending by Tag print support with BudgetHQ branding (CM-2)",
+      "Dashboard: Tag filter dropdown — filter Spending Overview, Income & Spending, and Recent Activity cards by selected tags without affecting account balances or net worth (CM-2)",
+      "Dashboard: Tag filter visual indicator with ring highlight when active, multi-select checkboxes, and Clear button (CM-2)",
     ]
   },
   {

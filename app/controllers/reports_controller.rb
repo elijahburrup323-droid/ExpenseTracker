@@ -43,4 +43,8 @@ class ReportsController < ApplicationController
   def reconciliation_summary
     @open_month = OpenMonthMaster.for_user(current_user)
   end
+
+  def spending_by_tag
+    @open_month = OpenMonthMaster.for_user(current_user)
+  end
 end
