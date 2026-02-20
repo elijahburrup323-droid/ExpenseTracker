@@ -1,6 +1,6 @@
 APP_VERSION = "1.3.18"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
-MANUAL_CHANGE_SEQ = 13  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 14  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
@@ -69,6 +69,7 @@ APP_ALL_VERSIONS = [
       "Reconciliation: Auto-reconcile triggers automatically when difference equals $0.00 — no manual button click required (CM-4)",
       "Reconciliation: Diagnostic Assistant panel appears when difference is not zero — analyzes count mismatches, single-match transactions, duplicates, subset sums, transposition errors, decimal shifts, sign errors, bank fees, and cross-account matches (CM-5)",
       "Payments: Recurring Payments converted from inline table-row editing to modal-based Add/Edit CRUD for consistency with Deposits and Deposit Sources screens (CM-2)",
+      "Reports: Reports Menu header made sticky under the global Hello DJ header — stays visible while scrolling report cards, matching Payments screen pattern (CM-6)",
     ]
   },
   {

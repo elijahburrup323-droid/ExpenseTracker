@@ -2,17 +2,19 @@
      data-controller="reports"
      data-reports-reorder-url-value="<%= api_reports_reorder_path %>">
 
-  <%# Page header %>
-  <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-    <div>
-      <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Reports</h2>
-      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">View financial summaries and historical insights for the selected month.</p>
-    </div>
-    <div class="flex items-center space-x-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-      <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-      </svg>
-      <span><%= @month_label %></span>
+  <%# Page header (sticky) %>
+  <div class="sticky top-14 z-20 bg-gray-50 dark:bg-gray-900 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-2 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Reports</h1>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">View financial summaries and historical insights for the selected month.</p>
+      </div>
+      <div class="flex items-center space-x-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+        <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        <span><%= @month_label %></span>
+      </div>
     </div>
   </div>
 
