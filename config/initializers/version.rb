@@ -46,6 +46,8 @@ APP_ALL_VERSIONS = [
       "Dashboard: Explicit drag artifact cleanup on drop end — removes leftover highlight classes, z-index, and inline styles from all cards (CM-4)",
       "Reports: Monthly Cash Flow report now includes new account starting balances as a one-time income inflow for the month the account was created (CM-1)",
       "Reports: Monthly Cash Flow YTD and comparison modes include new account starting balances in variance calculations (CM-1)",
+      "Payments: Create Category inline from Add/Edit Payment modal via child modal — no more broken new-tab behavior (CM-4)",
+      "Payments: Child modal auto-selects new category after save and triggers default tag + spending type auto-population (CM-4)",
     ]
   },
   {

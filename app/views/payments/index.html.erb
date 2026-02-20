@@ -374,6 +374,53 @@
     </div>
   </div>
 
+  <%# Category Child Modal — create category without leaving Add Payment %>
+  <div class="hidden fixed inset-0 z-[60]" data-payments-target="categoryChildModal">
+    <div class="fixed inset-0 bg-gray-500/75 dark:bg-gray-900/80 transition-opacity" data-action="click->payments#cancelCategoryChild"></div>
+    <div class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
+        <div class="flex items-center justify-between px-6 pt-5 pb-0">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Add Category</h3>
+          <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition" data-action="click->payments#cancelCategoryChild">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="px-6 py-4 space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category Name <span class="text-red-500">*</span></label>
+            <input type="text" maxlength="80" placeholder="e.g. Groceries, Gas, Rent..."
+                   data-payments-target="childCategoryName"
+                   data-action="keydown->payments#handleChildCategoryKeydown"
+                   class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2.5">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Spending Type</label>
+            <select data-payments-target="childCategoryType"
+                    data-action="keydown->payments#handleChildCategoryKeydown"
+                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2.5">
+              <option value="">Select type...</option>
+            </select>
+          </div>
+          <div class="hidden rounded-lg bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 dark:text-red-400" data-payments-target="childCategoryError"></div>
+        </div>
+        <div class="flex justify-end space-x-3 px-6 pb-5 pt-2">
+          <button type="button"
+                  class="px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition"
+                  data-action="click->payments#cancelCategoryChild">
+            Cancel
+          </button>
+          <button type="button"
+                  class="px-4 py-2.5 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition"
+                  data-action="click->payments#saveCategoryChild">
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <%# Date Warning Modal — payment date outside open month %>
   <div class="hidden fixed inset-0 z-50" data-payments-target="dateWarningModal">
     <div class="fixed inset-0 bg-gray-500/75 dark:bg-gray-900/80 transition-opacity"></div>

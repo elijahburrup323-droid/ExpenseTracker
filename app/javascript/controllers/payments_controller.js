@@ -23,7 +23,8 @@ export default class extends Controller {
     "dateWarningModal", "dateWarningMessage",
     "deleteBlockedModal", "deleteBlockedMessage",
     "editBlockedModal", "editBlockedMessage",
-    "suggestionsList"
+    "suggestionsList",
+    "categoryChildModal", "childCategoryName", "childCategoryType", "childCategoryError"
   ]
   static values = {
     apiUrl: String, accountsUrl: String, categoriesUrl: String, typesUrl: String, csrfToken: String,
@@ -1024,10 +1025,17 @@ export default class extends Controller {
   handleNewDropdown(event) {
     if (event.target.value !== "new") return
     const name = event.target.name
+
+    // Category: open inline child modal instead of new tab
+    if (name === "spending_category_id") {
+      event.target.value = ""
+      this._openCategoryChildModal()
+      return
+    }
+
     let url = null
     let label = ""
     if (name === "account_id") { url = this.accountsPageUrlValue; label = "Account" }
-    else if (name === "spending_category_id") { url = this.categoriesPageUrlValue; label = "Category" }
     else if (name === "spending_type_override_id") { url = this.typesPageUrlValue; label = "Spending Type" }
     if (url) {
       this._openInNewTab(url)
@@ -1118,9 +1126,12 @@ export default class extends Controller {
     // Show modal
     this.addModalTarget.classList.remove("hidden")
 
-    // Global Escape handler for the modal
+    // Global Escape handler for the modal (child modal gets priority)
     this._modalEscapeHandler = (e) => {
-      if (e.key === "Escape") { e.preventDefault(); this.cancelModal() }
+      if (e.key === "Escape") {
+        e.preventDefault()
+        if (this._childCategoryOpen) { this.cancelCategoryChild() } else { this.cancelModal() }
+      }
     }
     document.addEventListener("keydown", this._modalEscapeHandler)
 
@@ -1157,9 +1168,12 @@ export default class extends Controller {
     // Show modal
     this.addModalTarget.classList.remove("hidden")
 
-    // Global Escape handler
+    // Global Escape handler (child modal gets priority)
     this._modalEscapeHandler = (e) => {
-      if (e.key === "Escape") { e.preventDefault(); this.cancelModal() }
+      if (e.key === "Escape") {
+        e.preventDefault()
+        if (this._childCategoryOpen) { this.cancelCategoryChild() } else { this.cancelModal() }
+      }
     }
     document.addEventListener("keydown", this._modalEscapeHandler)
 
@@ -1622,6 +1636,95 @@ export default class extends Controller {
       return `"${value.replace(/"/g, '""')}"`
     }
     return value
+  }
+
+  // --- Category Child Modal ---
+
+  _openCategoryChildModal() {
+    // Populate spending type dropdown
+    const typeOpts = this.spendingTypes.map(t =>
+      `<option value="${t.id}">${escapeHtml(t.name)}</option>`
+    ).join("")
+    this.childCategoryTypeTarget.innerHTML = `<option value="">Select type...</option>${typeOpts}`
+
+    // Reset fields
+    this.childCategoryNameTarget.value = ""
+    this.childCategoryTypeTarget.value = ""
+    this.childCategoryErrorTarget.classList.add("hidden")
+    this.childCategoryErrorTarget.textContent = ""
+
+    // Show child modal, make parent modal inert
+    this._childCategoryOpen = true
+    this.categoryChildModalTarget.classList.remove("hidden")
+    this.addModalTarget.style.pointerEvents = "none"
+
+    setTimeout(() => this.childCategoryNameTarget.focus(), 50)
+  }
+
+  async saveCategoryChild() {
+    const name = this.childCategoryNameTarget.value.trim()
+    if (!name) {
+      this.childCategoryErrorTarget.textContent = "Category name is required."
+      this.childCategoryErrorTarget.classList.remove("hidden")
+      this.childCategoryNameTarget.focus()
+      return
+    }
+
+    const typeId = this.childCategoryTypeTarget.value
+    const body = { spending_category: { name } }
+    if (typeId) body.spending_category.spending_type_id = Number(typeId)
+
+    try {
+      const res = await fetch(this.categoriesUrlValue, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "X-CSRF-Token": this.csrfTokenValue
+        },
+        body: JSON.stringify(body)
+      })
+
+      if (res.ok) {
+        const newCat = await res.json()
+        // Add to local categories, rebuild dropdown, auto-select
+        this.categories.push(newCat)
+        this.categories.sort((a, b) => a.name.localeCompare(b.name))
+        this._rebuildInlineDropdowns()
+        this.modalCategoryTarget.value = String(newCat.id)
+
+        // Trigger category change behavior (auto-select type + default tags)
+        this.onModalCategoryChange({ target: this.modalCategoryTarget })
+
+        this._closeCategoryChild()
+      } else {
+        const data = await res.json()
+        const msg = data.errors?.[0] || "Failed to create category."
+        this.childCategoryErrorTarget.textContent = msg
+        this.childCategoryErrorTarget.classList.remove("hidden")
+      }
+    } catch (e) {
+      this.childCategoryErrorTarget.textContent = "Network error. Please try again."
+      this.childCategoryErrorTarget.classList.remove("hidden")
+    }
+  }
+
+  cancelCategoryChild() {
+    this._closeCategoryChild()
+    this.modalCategoryTarget.value = ""
+  }
+
+  _closeCategoryChild() {
+    this._childCategoryOpen = false
+    this.categoryChildModalTarget.classList.add("hidden")
+    this.addModalTarget.style.pointerEvents = ""
+  }
+
+  handleChildCategoryKeydown(event) {
+    if (event.key === "Enter") {
+      event.preventDefault()
+      this.saveCategoryChild()
+    }
   }
 
 }
