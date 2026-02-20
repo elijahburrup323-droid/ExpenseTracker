@@ -128,6 +128,9 @@ export default class extends Controller {
       // Fetch persisted group states, then apply collapse logic
       await this._fetchGroupStates(accountId)
       this._applyGroupStates(data)
+
+      // Auto-reconcile: if difference is $0.00 and not already reconciled
+      this._checkAutoReconcile(data)
     } catch (e) {
       console.error("Reconciliation fetch error:", e)
     }
@@ -271,6 +274,11 @@ export default class extends Controller {
     const accountId = this.accountSelectTarget.value
     if (!accountId) return
 
+    // Disable button to prevent double-submission
+    this.markReconciledBtnTarget.disabled = true
+    const origText = this.markReconciledBtnTarget.textContent
+    this.markReconciledBtnTarget.textContent = "Reconciling..."
+
     try {
       const res = await fetch(this.markReconciledUrlValue, {
         method: "PUT",
@@ -292,9 +300,13 @@ export default class extends Controller {
         this.fetchData()
       } else {
         alert(data.error || "Failed to mark as reconciled.")
+        this.markReconciledBtnTarget.disabled = false
+        this.markReconciledBtnTarget.textContent = origText
       }
     } catch (e) {
       alert("Network error. Please try again.")
+      this.markReconciledBtnTarget.disabled = false
+      this.markReconciledBtnTarget.textContent = origText
     }
   }
 
@@ -725,6 +737,21 @@ export default class extends Controller {
           : "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
       return `<div class="p-3 rounded-lg ${colors}"><p class="text-xs">${this._esc(s.text)}</p></div>`
     }).join("")
+  }
+
+  _checkAutoReconcile(data) {
+    if (this.isReadOnly) return
+    if (data.recon_status === "reconciled") return
+    if (!this.externalBalanceTarget.value) return
+
+    const budgetBal = data.budget_balance || 0
+    const externalBal = parseFloat(this.externalBalanceTarget.value) || 0
+    const diff = Math.abs(externalBal - budgetBal)
+
+    if (diff < 0.005) {
+      // Auto-trigger reconciliation
+      this.markReconciled()
+    }
   }
 
   _currency(val) {

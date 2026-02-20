@@ -247,7 +247,9 @@ module Api
 
       # Verify difference is zero
       month_start = Date.new(year, month, 1)
-      as_of = month_start.next_month - 1.day
+      month_end = month_start.next_month
+      range = month_start...month_end
+      as_of = month_end - 1.day
       all_balances = AccountBalanceService.balances_as_of(current_user, as_of)
       budget_balance = (all_balances[account.id] || 0.0).round(2)
       outside = recon.outside_balance.to_f.round(2)
@@ -257,11 +259,32 @@ module Api
         return render json: { error: "Cannot mark as reconciled. Difference is #{diff}." }, status: :unprocessable_entity
       end
 
-      recon.update!(
-        status: "reconciled",
-        reconciled_at: Time.current,
-        reconciled_by: current_user.id
-      )
+      ActiveRecord::Base.transaction do
+        # Mark all transactions for this account/month as reconciled
+        current_user.payments
+          .where(account_id: account.id, payment_date: range)
+          .update_all(reconciled: true)
+
+        current_user.income_entries
+          .where(account_id: account.id, entry_date: range)
+          .update_all(reconciled: true)
+
+        current_user.transfer_masters
+          .where(from_account_id: account.id, transfer_date: range)
+          .or(current_user.transfer_masters.where(to_account_id: account.id, transfer_date: range))
+          .update_all(reconciled: true)
+
+        current_user.balance_adjustments
+          .where(account_id: account.id, adjustment_date: range)
+          .update_all(reconciled: true)
+
+        # Update header record
+        recon.update!(
+          status: "reconciled",
+          reconciled_at: Time.current,
+          reconciled_by: current_user.id
+        )
+      end
 
       render json: { success: true, status: "reconciled" }
     end
