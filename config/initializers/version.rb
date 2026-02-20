@@ -42,6 +42,8 @@ APP_ALL_VERSIONS = [
       "Payments: Auto-learn category default tags — saving a payment with tags automatically adds those tags as defaults for the selected category (CM-6)",
       "Payments: Backfill rake task (tags:backfill_category_defaults) derives category defaults from historical tagged payments (CM-6)",
       "Dashboard: Accounts card and Net Worth card now always include ALL active accounts regardless of creation date or budget inclusion flag (CM-3)",
+      "Dashboard: Fixed card swap rendering bug — removed opacity and transform from drag/swap CSS that created stacking context conflicts with flip card perspective (CM-4)",
+      "Dashboard: Explicit drag artifact cleanup on drop end — removes leftover highlight classes, z-index, and inline styles from all cards (CM-4)",
     ]
   },
   {

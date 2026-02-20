@@ -232,7 +232,21 @@ export default class extends Controller {
       delay: 150,
       delayOnTouchOnly: true,
       touchStartThreshold: 5,
-      onEnd: () => this._onSortEnd(),
+      onEnd: (evt) => {
+        this._cleanupDragArtifacts()
+        this._onSortEnd()
+      },
+    })
+  }
+
+  _cleanupDragArtifacts() {
+    if (!this.hasCardsGridTarget) return
+    this.cardsGridTarget.querySelectorAll("[data-dashboard-target='slotWrapper']").forEach(el => {
+      el.classList.remove("dashboard-swap-highlight", "opacity-30", "sortable-drag", "sortable-ghost")
+      el.style.removeProperty("z-index")
+      el.style.removeProperty("position")
+      el.style.removeProperty("transform")
+      el.style.removeProperty("opacity")
     })
   }
 

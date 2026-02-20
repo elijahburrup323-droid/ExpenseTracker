@@ -56,19 +56,16 @@
       [data-dashboard-target="slotWrapper"] button,
       [data-dashboard-target="slotWrapper"] select { cursor: pointer; }
 
-      /* Swap target highlight */
+      /* Swap target highlight — no opacity/transform (breaks preserve-3d on flip cards) */
       .dashboard-swap-highlight {
-        outline: 2px dashed #a855f7;
+        outline: 3px dashed #a855f7;
         outline-offset: 2px;
         border-radius: 0.75rem;
-        opacity: 0.85;
       }
 
-      /* Drag ghost styling */
+      /* Drag ghost styling — no opacity/transform (breaks perspective on flip cards) */
       .sortable-drag {
-        opacity: 0.85;
         box-shadow: 0 10px 25px -3px rgba(0,0,0,0.15), 0 4px 6px -4px rgba(0,0,0,0.1);
-        transform: rotate(1.5deg);
       }
     </style>
   </head>
