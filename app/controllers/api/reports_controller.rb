@@ -198,6 +198,29 @@ module Api
 
     private
 
+    # --- Tag filtering helpers ---
+
+    def active_tag_ids
+      @active_tag_ids ||= Array(params[:tag_ids]).map(&:to_i).reject(&:zero?)
+    end
+
+    def tag_filtered_payments(scope)
+      return scope if active_tag_ids.empty?
+      scope.where(id: TagAssignment.where(taggable_type: "Payment", tag_id: active_tag_ids).select(:taggable_id))
+    end
+
+    def tag_filtered_income(scope)
+      return scope if active_tag_ids.empty?
+      scope.where(id: TagAssignment.where(taggable_type: "IncomeEntry", tag_id: active_tag_ids).select(:taggable_id))
+    end
+
+    def tag_names_for_response
+      return [] if active_tag_ids.empty?
+      current_user.tags.where(id: active_tag_ids).order(:sort_order, :name).pluck(:name, :color_key).map do |name, color_key|
+        { name: name, color_key: color_key }
+      end
+    end
+
     def cash_flow_for_month(year, month)
       month_start = Date.new(year, month, 1)
       month_end   = month_start.next_month
@@ -206,13 +229,11 @@ module Api
       beg_balances = AccountBalanceService.balances_as_of(current_user, month_start - 1.day)
       beginning_balance = beg_balances.values.sum.to_f.round(2)
 
-      deposits_total = current_user.income_entries
-        .where(entry_date: range, deleted_at: nil)
-        .sum(:amount).to_f.round(2)
+      income_base = tag_filtered_income(current_user.income_entries.where(entry_date: range, deleted_at: nil))
+      payment_base = tag_filtered_payments(current_user.payments.where(payment_date: range, deleted_at: nil))
 
-      payments_total = current_user.payments
-        .where(payment_date: range, deleted_at: nil)
-        .sum(:amount).to_f.round(2)
+      deposits_total = income_base.sum(:amount).to_f.round(2)
+      payments_total = payment_base.sum(:amount).to_f.round(2)
 
       new_accounts = current_user.accounts
         .where(created_at: month_start.beginning_of_day...month_end.beginning_of_day)
@@ -224,17 +245,15 @@ module Api
       net_cash_flow = (deposits_total + new_accounts_total - payments_total).round(2)
       ending_balance = (beginning_balance + net_cash_flow).round(2)
 
-      deposits_by_account = current_user.income_entries
+      deposits_by_account = income_base
         .joins("LEFT JOIN accounts ON accounts.id = income_entries.account_id")
-        .where(entry_date: range, deleted_at: nil)
         .group("COALESCE(accounts.name, 'Unassigned')")
         .sum(:amount)
         .transform_values { |v| v.to_f.round(2) }
         .sort_by { |_, v| -v }
 
-      payments_by_category = current_user.payments
+      payments_by_category = payment_base
         .joins("LEFT JOIN spending_categories ON spending_categories.id = payments.spending_category_id")
-        .where(payment_date: range, deleted_at: nil)
         .group("COALESCE(spending_categories.name, 'Uncategorized')")
         .sum(:amount)
         .transform_values { |v| v.to_f.round(2) }
@@ -252,7 +271,8 @@ module Api
         net_cash_flow: net_cash_flow,
         ending_balance: ending_balance,
         deposits_by_account: deposits_by_account,
-        payments_by_category: payments_by_category
+        payments_by_category: payments_by_category,
+        applied_tags: tag_names_for_response
       }
     end
 
@@ -277,12 +297,12 @@ module Api
       beg_balances = AccountBalanceService.balances_as_of(current_user, ytd_start - 1.day)
       beginning_balance = beg_balances.values.sum.to_f.round(2)
 
-      deposits_total = current_user.income_entries
-        .where(entry_date: range, deleted_at: nil)
+      deposits_total = tag_filtered_income(current_user.income_entries
+        .where(entry_date: range, deleted_at: nil))
         .sum(:amount).to_f.round(2)
 
-      payments_total = current_user.payments
-        .where(payment_date: range, deleted_at: nil)
+      payments_total = tag_filtered_payments(current_user.payments
+        .where(payment_date: range, deleted_at: nil))
         .sum(:amount).to_f.round(2)
 
       new_accounts_total = current_user.accounts
@@ -311,16 +331,12 @@ module Api
       month_end   = month_start.next_month
       range       = month_start...month_end
 
-      total_spent = current_user.payments
-        .where(payment_date: range, deleted_at: nil)
-        .sum(:amount).to_f.round(2)
+      base = tag_filtered_payments(current_user.payments.where(payment_date: range, deleted_at: nil))
 
-      transaction_count = current_user.payments
-        .where(payment_date: range, deleted_at: nil)
-        .count
+      total_spent = base.sum(:amount).to_f.round(2)
+      transaction_count = base.count
 
-      categories = current_user.payments
-        .where(payment_date: range, deleted_at: nil)
+      categories = base
         .joins("LEFT JOIN spending_categories ON spending_categories.id = payments.spending_category_id AND spending_categories.deleted_at IS NULL")
         .joins("LEFT JOIN spending_types ON spending_types.id = spending_categories.spending_type_id AND spending_types.deleted_at IS NULL")
         .group(
@@ -360,7 +376,8 @@ module Api
         month: month,
         total_spent: total_spent,
         transaction_count: transaction_count,
-        categories: categories
+        categories: categories,
+        applied_tags: tag_names_for_response
       }
     end
 
@@ -394,16 +411,12 @@ module Api
       ytd_end   = Date.new(year, month, 1).next_month
       range     = ytd_start...ytd_end
 
-      total_spent = current_user.payments
-        .where(payment_date: range, deleted_at: nil)
-        .sum(:amount).to_f.round(2)
+      base = tag_filtered_payments(current_user.payments.where(payment_date: range, deleted_at: nil))
 
-      transaction_count = current_user.payments
-        .where(payment_date: range, deleted_at: nil)
-        .count
+      total_spent = base.sum(:amount).to_f.round(2)
+      transaction_count = base.count
 
-      categories = current_user.payments
-        .where(payment_date: range, deleted_at: nil)
+      categories = base
         .joins("LEFT JOIN spending_categories ON spending_categories.id = payments.spending_category_id AND spending_categories.deleted_at IS NULL")
         .joins("LEFT JOIN spending_types ON spending_types.id = spending_categories.spending_type_id AND spending_types.deleted_at IS NULL")
         .group(
@@ -448,16 +461,12 @@ module Api
       month_end   = month_start.next_month
       range       = month_start...month_end
 
-      total_spent = current_user.payments
-        .where(payment_date: range, deleted_at: nil)
-        .sum(:amount).to_f.round(2)
+      base = tag_filtered_payments(current_user.payments.where(payment_date: range, deleted_at: nil))
 
-      transaction_count = current_user.payments
-        .where(payment_date: range, deleted_at: nil)
-        .count
+      total_spent = base.sum(:amount).to_f.round(2)
+      transaction_count = base.count
 
-      types = current_user.payments
-        .where(payment_date: range, deleted_at: nil)
+      types = base
         .joins("LEFT JOIN spending_categories ON spending_categories.id = payments.spending_category_id AND spending_categories.deleted_at IS NULL")
         .joins("LEFT JOIN spending_types ON spending_types.id = spending_categories.spending_type_id AND spending_types.deleted_at IS NULL")
         .group(
@@ -494,7 +503,8 @@ module Api
         month: month,
         total_spent: total_spent,
         transaction_count: transaction_count,
-        types: types
+        types: types,
+        applied_tags: tag_names_for_response
       }
     end
 
@@ -528,16 +538,12 @@ module Api
       ytd_end   = Date.new(year, month, 1).next_month
       range     = ytd_start...ytd_end
 
-      total_spent = current_user.payments
-        .where(payment_date: range, deleted_at: nil)
-        .sum(:amount).to_f.round(2)
+      base = tag_filtered_payments(current_user.payments.where(payment_date: range, deleted_at: nil))
 
-      transaction_count = current_user.payments
-        .where(payment_date: range, deleted_at: nil)
-        .count
+      total_spent = base.sum(:amount).to_f.round(2)
+      transaction_count = base.count
 
-      types = current_user.payments
-        .where(payment_date: range, deleted_at: nil)
+      types = base
         .joins("LEFT JOIN spending_categories ON spending_categories.id = payments.spending_category_id AND spending_categories.deleted_at IS NULL")
         .joins("LEFT JOIN spending_types ON spending_types.id = spending_categories.spending_type_id AND spending_types.deleted_at IS NULL")
         .group(
@@ -663,6 +669,7 @@ module Api
       scope = current_user.income_entries.where(entry_date: range, deleted_at: nil)
       scope = scope.where(account_id: account_id) if account_id
       scope = scope.where(income_recurring_id: nil) unless include_recurring
+      scope = tag_filtered_income(scope)
 
       total_income = scope.sum(:amount).to_f.round(2)
       total_count = scope.count
@@ -691,7 +698,8 @@ module Api
         total_count: total_count,
         start_label: range_start.strftime("%B %Y"),
         end_label: Date.new(end_year, end_month, 1).strftime("%B %Y"),
-        account_name: account_id ? (current_user.accounts.find_by(id: account_id)&.name || "Unknown") : "All Accounts"
+        account_name: account_id ? (current_user.accounts.find_by(id: account_id)&.name || "Unknown") : "All Accounts",
+        applied_tags: tag_names_for_response
       }
     end
 

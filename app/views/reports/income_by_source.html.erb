@@ -3,7 +3,8 @@
      data-income-by-source-api-url-value="<%= api_reports_income_by_source_path %>"
      data-income-by-source-accounts-url-value="<%= api_accounts_path %>"
      data-income-by-source-year-value="<%= @open_month.current_year %>"
-     data-income-by-source-month-value="<%= @open_month.current_month %>">
+     data-income-by-source-month-value="<%= @open_month.current_month %>"
+     data-income-by-source-tags-url-value="<%= api_tags_path %>">
 
   <%# Report Options Modal %>
   <div data-income-by-source-target="optionsModal"
@@ -81,6 +82,14 @@
           </div>
         </div>
 
+        <%# Tag Filter %>
+        <div class="mb-5">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Filter by Tags</label>
+          <div data-income-by-source-target="tagFilterContainer">
+            <p class="text-sm text-gray-400 dark:text-gray-500 italic">Loading tags...</p>
+          </div>
+        </div>
+
         <%# Validation Error %>
         <div data-income-by-source-target="optionsError" class="hidden mb-4 text-sm text-red-600 dark:text-red-400"></div>
 
@@ -114,6 +123,7 @@
         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
           <span data-income-by-source-target="reportSubtitle">Loading...</span>
         </p>
+        <div data-income-by-source-target="appliedTagsBanner"></div>
       </div>
       <div class="flex items-center space-x-2">
         <button type="button"

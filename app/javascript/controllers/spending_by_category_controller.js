@@ -1,5 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 import { renderIconSvg } from "controllers/shared/icon_catalog"
+import { fetchTags, renderTagFilterCheckboxes, tagIdsQueryString, renderAppliedTagsBanner, renderAppliedTagsPrint } from "controllers/shared/tag_filter"
 
 function fmt(amount) {
   const n = parseFloat(amount) || 0
@@ -36,14 +37,50 @@ export default class extends Controller {
     "optionsModal", "typeRegular", "typeComparison", "comparisonOptions",
     "comparePrev", "includeYtd", "comparisonError",
     "reportContent", "monthLabel", "modeLabel", "summaryHead", "summaryBody",
-    "statTotal", "statCount"
+    "statTotal", "statCount",
+    "tagFilterContainer", "tagSearchInput", "tagCheckboxList", "appliedTagsBanner"
   ]
-  static values = { apiUrl: String, year: Number, month: Number, monthLabel: String }
+  static values = { apiUrl: String, year: Number, month: Number, monthLabel: String, tagsUrl: String }
 
   connect() {
     this._mode = "regular"
     this._comparePrev = true
     this._includeYtd = false
+    this._selectedTagIds = []
+    this._allTags = []
+    this._ensureTagsLoaded()
+  }
+
+  // --- Tag Filter ---
+
+  async _ensureTagsLoaded() {
+    if (this._allTags.length > 0 || !this.tagsUrlValue) return
+    this._allTags = await fetchTags(this.tagsUrlValue)
+    if (this.hasTagFilterContainerTarget) this._renderTagFilter()
+  }
+
+  _renderTagFilter() {
+    this.tagFilterContainerTarget.innerHTML = renderTagFilterCheckboxes(
+      this._allTags, this._selectedTagIds, "spending-by-category"
+    )
+  }
+
+  onTagCheckboxChange(event) {
+    const id = Number(event.target.value)
+    if (event.target.checked) {
+      if (!this._selectedTagIds.includes(id)) this._selectedTagIds.push(id)
+    } else {
+      this._selectedTagIds = this._selectedTagIds.filter(x => x !== id)
+    }
+  }
+
+  onTagSearchInput() {
+    if (!this.hasTagSearchInputTarget) return
+    const query = this.tagSearchInputTarget.value.trim().toLowerCase()
+    this.tagCheckboxListTarget.querySelectorAll(".tag-filter-item").forEach(el => {
+      const name = el.dataset.tagName || ""
+      el.style.display = (!query || name.includes(query)) ? "" : "none"
+    })
   }
 
   // --- Modal Logic ---
@@ -71,6 +108,7 @@ export default class extends Controller {
       this.comparisonOptionsTarget.classList.add("hidden")
     }
     this.comparisonErrorTarget.classList.add("hidden")
+    if (this.hasTagFilterContainerTarget && this._allTags.length > 0) this._renderTagFilter()
     this.optionsModalTarget.style.display = ""
     this.reportContentTargets.forEach(el => el.style.display = "none")
   }
@@ -107,6 +145,7 @@ export default class extends Controller {
         if (this._comparePrev) url += "&compare_prev=1"
         if (this._includeYtd) url += "&include_ytd=1"
       }
+      url += tagIdsQueryString(this._selectedTagIds)
       const res = await fetch(url, { headers: { "Accept": "application/json" } })
       if (!res.ok) return
       this._data = await res.json()
@@ -121,6 +160,9 @@ export default class extends Controller {
   render() {
     const d = this._data
     this.monthLabelTarget.textContent = d.month_label
+    if (this.hasAppliedTagsBannerTarget) {
+      this.appliedTagsBannerTarget.innerHTML = renderAppliedTagsBanner(d.applied_tags)
+    }
 
     if (this._mode === "comparison") {
       this.modeLabelTarget.textContent = "Comparison"
@@ -397,6 +439,7 @@ export default class extends Controller {
     <p><strong>Month:</strong> ${escapeHtml(d.month_label)}</p>
     <p><strong>Report Type:</strong> ${escapeHtml(modeText)}</p>
     <p><strong>Total Spent:</strong> ${fmt(d.total_spent)} &nbsp;|&nbsp; <strong>Transactions:</strong> ${d.transaction_count}</p>
+    ${renderAppliedTagsPrint(d.applied_tags)}
   </div>
 
   <table>

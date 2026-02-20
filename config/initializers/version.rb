@@ -48,6 +48,11 @@ APP_ALL_VERSIONS = [
       "Reports: Monthly Cash Flow YTD and comparison modes include new account starting balances in variance calculations (CM-1)",
       "Payments: Create Category inline from Add/Edit Payment modal via child modal — no more broken new-tab behavior (CM-4)",
       "Payments: Child modal auto-selects new category after save and triggers default tag + spending type auto-population (CM-4)",
+      "Reports: Tag filtering on Spending by Category, Spending by Type, Monthly Cash Flow, and Income by Source reports — filter transactions by selected tags via options modal (CM-1)",
+      "Reports: Applied tags banner displays colored tag pills on report header when tag filter is active (CM-1)",
+      "Reports: Shared tag_filter.js module provides reusable tag filter UI, query string builder, and applied tags rendering for all analytical reports (CM-1)",
+      "Reports: Print output includes applied tag names when tag filter is active (CM-1)",
+      "Models: IncomeEntry now supports tag associations via polymorphic tag_assignments for Income by Source tag filtering (CM-1)",
     ]
   },
   {

@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { fetchTags, renderTagFilterCheckboxes, tagIdsQueryString, renderAppliedTagsBanner, renderAppliedTagsPrint } from "controllers/shared/tag_filter"
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"]
 
@@ -26,14 +27,50 @@ export default class extends Controller {
     "formatTable", "formatChart", "optionsError",
     "reportSubtitle", "tableContainer", "chartContainer",
     "tableHead", "tableBody",
-    "statTotal", "statSources"
+    "statTotal", "statSources",
+    "tagFilterContainer", "tagSearchInput", "tagCheckboxList", "appliedTagsBanner"
   ]
-  static values = { apiUrl: String, accountsUrl: String, year: Number, month: Number }
+  static values = { apiUrl: String, accountsUrl: String, year: Number, month: Number, tagsUrl: String }
 
   async connect() {
     this._format = "table"
+    this._selectedTagIds = []
+    this._allTags = []
     this._populateDateSelectors()
     await this._fetchAccounts()
+    this._ensureTagsLoaded()
+  }
+
+  // --- Tag Filter ---
+
+  async _ensureTagsLoaded() {
+    if (this._allTags.length > 0 || !this.tagsUrlValue) return
+    this._allTags = await fetchTags(this.tagsUrlValue)
+    if (this.hasTagFilterContainerTarget) this._renderTagFilter()
+  }
+
+  _renderTagFilter() {
+    this.tagFilterContainerTarget.innerHTML = renderTagFilterCheckboxes(
+      this._allTags, this._selectedTagIds, "income-by-source"
+    )
+  }
+
+  onTagCheckboxChange(event) {
+    const id = Number(event.target.value)
+    if (event.target.checked) {
+      if (!this._selectedTagIds.includes(id)) this._selectedTagIds.push(id)
+    } else {
+      this._selectedTagIds = this._selectedTagIds.filter(x => x !== id)
+    }
+  }
+
+  onTagSearchInput() {
+    if (!this.hasTagSearchInputTarget) return
+    const query = this.tagSearchInputTarget.value.trim().toLowerCase()
+    this.tagCheckboxListTarget.querySelectorAll(".tag-filter-item").forEach(el => {
+      const name = el.dataset.tagName || ""
+      el.style.display = (!query || name.includes(query)) ? "" : "none"
+    })
   }
 
   _populateDateSelectors() {
@@ -69,6 +106,7 @@ export default class extends Controller {
 
   showOptions() {
     this.optionsErrorTarget.classList.add("hidden")
+    if (this.hasTagFilterContainerTarget && this._allTags.length > 0) this._renderTagFilter()
     this.optionsModalTarget.style.display = ""
     this.reportContentTargets.forEach(el => el.style.display = "none")
   }
@@ -110,6 +148,7 @@ export default class extends Controller {
 
       let url = `${this.apiUrlValue}?start_year=${startYear}&start_month=${startMonth}&end_year=${endYear}&end_month=${endMonth}&include_recurring=${includeRecurring}`
       if (accountId) url += `&account_id=${accountId}`
+      url += tagIdsQueryString(this._selectedTagIds)
 
       const res = await fetch(url, { headers: { "Accept": "application/json" } })
       if (!res.ok) return
@@ -123,6 +162,9 @@ export default class extends Controller {
   render() {
     const d = this._data
     this.reportSubtitleTarget.textContent = `${escapeHtml(d.account_name)} \u2014 ${escapeHtml(d.start_label)} to ${escapeHtml(d.end_label)}`
+    if (this.hasAppliedTagsBannerTarget) {
+      this.appliedTagsBannerTarget.innerHTML = renderAppliedTagsBanner(d.applied_tags)
+    }
 
     this.statTotalTarget.innerHTML = `
       <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Income</div>
@@ -282,6 +324,7 @@ export default class extends Controller {
     <p><strong>Account:</strong> ${escapeHtml(d.account_name)}</p>
     <p><strong>Date Range:</strong> ${escapeHtml(d.start_label)} to ${escapeHtml(d.end_label)}</p>
     <p><strong>Total Income:</strong> ${fmt(d.total_income)} &nbsp;|&nbsp; <strong>Sources:</strong> ${d.sources.length} &nbsp;|&nbsp; <strong>Deposits:</strong> ${d.total_count}</p>
+    ${renderAppliedTagsPrint(d.applied_tags)}
   </div>
   <table>
     <thead><tr>

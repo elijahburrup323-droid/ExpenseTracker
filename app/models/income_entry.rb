@@ -4,6 +4,9 @@ class IncomeEntry < ApplicationRecord
   belongs_to :account, optional: true
   belongs_to :frequency_master, class_name: "IncomeFrequencyMaster", optional: true
 
+  has_many :tag_assignments, as: :taggable, dependent: :destroy
+  has_many :tags, through: :tag_assignments
+
   default_scope { where(deleted_at: nil) }
 
   scope :ordered, -> { order(entry_date: :desc, sort_order: :asc) }
