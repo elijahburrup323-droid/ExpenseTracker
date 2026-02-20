@@ -44,6 +44,8 @@ APP_ALL_VERSIONS = [
       "Dashboard: Accounts card and Net Worth card now always include ALL active accounts regardless of creation date or budget inclusion flag (CM-3)",
       "Dashboard: Fixed card swap rendering bug — removed opacity and transform from drag/swap CSS that created stacking context conflicts with flip card perspective (CM-4)",
       "Dashboard: Explicit drag artifact cleanup on drop end — removes leftover highlight classes, z-index, and inline styles from all cards (CM-4)",
+      "Reports: Monthly Cash Flow report now includes new account starting balances as a one-time income inflow for the month the account was created (CM-1)",
+      "Reports: Monthly Cash Flow YTD and comparison modes include new account starting balances in variance calculations (CM-1)",
     ]
   },
   {

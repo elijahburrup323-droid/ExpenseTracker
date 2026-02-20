@@ -214,7 +214,14 @@ module Api
         .where(payment_date: range, deleted_at: nil)
         .sum(:amount).to_f.round(2)
 
-      net_cash_flow = (deposits_total - payments_total).round(2)
+      new_accounts = current_user.accounts
+        .where(created_at: month_start.beginning_of_day...month_end.beginning_of_day)
+        .where.not(beginning_balance: 0)
+        .order(:created_at)
+        .map { |a| { name: a.name, beginning_balance: a.beginning_balance.to_f.round(2) } }
+      new_accounts_total = new_accounts.sum { |a| a[:beginning_balance] }.round(2)
+
+      net_cash_flow = (deposits_total + new_accounts_total - payments_total).round(2)
       ending_balance = (beginning_balance + net_cash_flow).round(2)
 
       deposits_by_account = current_user.income_entries
@@ -239,6 +246,8 @@ module Api
         month: month,
         beginning_balance: beginning_balance,
         total_deposits: deposits_total,
+        new_accounts: new_accounts,
+        new_accounts_total: new_accounts_total,
         total_payments: payments_total,
         net_cash_flow: net_cash_flow,
         ending_balance: ending_balance,
@@ -248,7 +257,7 @@ module Api
     end
 
     def compute_variance(current, prev)
-      fields = [:beginning_balance, :total_deposits, :total_payments, :net_cash_flow, :ending_balance]
+      fields = [:beginning_balance, :total_deposits, :new_accounts_total, :total_payments, :net_cash_flow, :ending_balance]
       result = {}
       fields.each do |f|
         c = current[f].to_f
@@ -276,13 +285,19 @@ module Api
         .where(payment_date: range, deleted_at: nil)
         .sum(:amount).to_f.round(2)
 
-      net_cash_flow = (deposits_total - payments_total).round(2)
+      new_accounts_total = current_user.accounts
+        .where(created_at: ytd_start.beginning_of_day...ytd_end.beginning_of_day)
+        .where.not(beginning_balance: 0)
+        .sum(:beginning_balance).to_f.round(2)
+
+      net_cash_flow = (deposits_total + new_accounts_total - payments_total).round(2)
       ending_balance = (beginning_balance + net_cash_flow).round(2)
 
       {
         label: "Jan – #{Date.new(year, month, 1).strftime('%b')} #{year}",
         beginning_balance: beginning_balance,
         total_deposits: deposits_total,
+        new_accounts_total: new_accounts_total,
         total_payments: payments_total,
         net_cash_flow: net_cash_flow,
         ending_balance: ending_balance

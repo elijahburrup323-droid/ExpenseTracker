@@ -146,6 +146,7 @@ export default class extends Controller {
     this.summaryBodyTarget.innerHTML = `
       ${this._summaryRow("Beginning Balance", d.beginning_balance, "")}
       ${this._summaryRow("Total Deposits", d.total_deposits, "deposit")}
+      ${d.new_accounts_total ? this._summaryRow("New Account Starting Balances", d.new_accounts_total, "deposit") : ""}
       ${this._summaryRow("Total Payments", d.total_payments, "payment")}
       ${this._summaryRow("Net Cash Flow", d.net_cash_flow, "net")}
       ${this._summaryRow("Ending Balance", d.ending_balance, "ending")}`
@@ -172,12 +173,14 @@ export default class extends Controller {
     const fields = [
       { key: "beginning_balance", label: "Beginning Balance", style: "" },
       { key: "total_deposits", label: "Total Deposits", style: "deposit" },
+      { key: "new_accounts_total", label: "New Account Starting Balances", style: "deposit", conditional: true },
       { key: "total_payments", label: "Total Payments", style: "payment" },
       { key: "net_cash_flow", label: "Net Cash Flow", style: "net" },
       { key: "ending_balance", label: "Ending Balance", style: "ending" }
     ]
 
     this.summaryBodyTarget.innerHTML = fields.map(f => {
+      if (f.conditional && !d[f.key] && !(d.prev && d.prev[f.key])) return ""
       return this._comparisonRow(f.label, f.key, d, f.style)
     }).join("")
   }
