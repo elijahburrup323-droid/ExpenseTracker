@@ -176,6 +176,7 @@ Rails.application.routes.draw do
       put "mark_reconciled", action: :mark_reconciled
       get "group_states", action: :group_states
       put "toggle_group", action: :toggle_group
+      get "diagnostics", action: :diagnostics
     end
     resources :balance_adjustments, only: [:create, :update, :destroy]
     resources :net_worth_snapshots, only: [:index] do

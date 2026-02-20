@@ -6,6 +6,7 @@
      data-reconciliation-mark-reconciled-url-value="<%= api_reconciliation_mark_reconciled_path %>"
      data-reconciliation-group-states-url-value="<%= api_reconciliation_group_states_path %>"
      data-reconciliation-toggle-group-url-value="<%= api_reconciliation_toggle_group_path %>"
+     data-reconciliation-diagnostics-url-value="<%= api_reconciliation_diagnostics_path %>"
      data-reconciliation-balance-adjustments-url-value="<%= api_balance_adjustments_path %>"
      data-reconciliation-csrf-token-value="<%= form_authenticity_token %>"
      data-reconciliation-initial-year-value="<%= @open_month.current_year %>"
@@ -115,6 +116,19 @@
             Fix Mode
           </button>
         </div>
+      </div>
+    </div>
+
+    <%# ---- DIAGNOSTIC ASSISTANT PANEL (shown when difference != 0) ---- %>
+    <div data-reconciliation-target="diagnosticPanel" class="hidden mt-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-700 overflow-hidden">
+      <div class="px-5 py-3 border-b border-amber-200 dark:border-amber-700 flex items-center space-x-2">
+        <svg class="h-5 w-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+        </svg>
+        <h3 class="text-sm font-semibold text-amber-800 dark:text-amber-300">Reconciliation Diagnostic Assistant</h3>
+      </div>
+      <div class="p-5 space-y-4" data-reconciliation-target="diagnosticContent">
+        <p class="text-sm text-amber-700 dark:text-amber-300">Analyzing transactions...</p>
       </div>
     </div>
 

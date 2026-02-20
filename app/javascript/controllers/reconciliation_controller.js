@@ -17,7 +17,8 @@ export default class extends Controller {
     "fixPaymentsBody", "fixDepositsBody", "fixSuggestionsBody", "fixDepositSearch",
     "adjustmentModal", "adjDate", "adjDescription", "adjAmount", "adjNotes", "adjError",
     "paymentsContent", "depositsContent", "transfersContent", "adjustmentsContent",
-    "paymentsChevron", "depositsChevron", "transfersChevron", "adjustmentsChevron"
+    "paymentsChevron", "depositsChevron", "transfersChevron", "adjustmentsChevron",
+    "diagnosticPanel", "diagnosticContent"
   ]
 
   static values = {
@@ -26,6 +27,7 @@ export default class extends Controller {
     outsideBalanceUrl: String,
     statementCountsUrl: String,
     markReconciledUrl: String,
+    diagnosticsUrl: String,
     balanceAdjustmentsUrl: String,
     groupStatesUrl: String,
     toggleGroupUrl: String,
@@ -640,6 +642,7 @@ export default class extends Controller {
       this.fixModeBtnTarget.classList.add("hidden")
       this.markReconciledBtnTarget.disabled = false
       if (this.hasFixMarkReconciledBtnTarget) this.fixMarkReconciledBtnTarget.disabled = false
+      this._showDiagnosticPanel(false)
     } else {
       const sign = diff > 0 ? "+" : "-"
       this.differenceDisplayTarget.textContent = `${sign}${this._currency(parseFloat(absDiff))}`
@@ -648,6 +651,7 @@ export default class extends Controller {
       if (!this.isReadOnly) this.fixModeBtnTarget.classList.remove("hidden")
       this.markReconciledBtnTarget.disabled = true
       if (this.hasFixMarkReconciledBtnTarget) this.fixMarkReconciledBtnTarget.disabled = true
+      this._showDiagnosticPanel(true)
     }
 
     // Also check if external balance is empty
@@ -737,6 +741,74 @@ export default class extends Controller {
           : "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
       return `<div class="p-3 rounded-lg ${colors}"><p class="text-xs">${this._esc(s.text)}</p></div>`
     }).join("")
+  }
+
+  async _fetchDiagnostics() {
+    const accountId = this.accountSelectTarget.value
+    if (!accountId || !this.hasDiagnosticPanelTarget) return
+
+    try {
+      const url = `${this.diagnosticsUrlValue}?account_id=${accountId}`
+      const res = await fetch(url, { headers: { "Accept": "application/json" } })
+      if (!res.ok) return
+
+      const data = await res.json()
+      this._renderDiagnostics(data)
+    } catch (e) {
+      // Silently fail
+    }
+  }
+
+  _renderDiagnostics(data) {
+    const sections = []
+
+    if (data.count_issues?.length > 0) {
+      sections.push(this._diagnosticSection("Count Issues", data.count_issues, "red"))
+    }
+    if (data.amount_issues?.length > 0) {
+      sections.push(this._diagnosticSection("Amount Issues", data.amount_issues, "amber"))
+    }
+    if (data.cross_account?.length > 0) {
+      sections.push(this._diagnosticSection("Cross-Account Matches", data.cross_account, "blue"))
+    }
+
+    if (sections.length === 0) {
+      this.diagnosticContentTarget.innerHTML = `<p class="text-sm text-amber-600 dark:text-amber-400">No specific issues detected. Review transactions manually.</p>`
+    } else {
+      this.diagnosticContentTarget.innerHTML = sections.join("")
+    }
+  }
+
+  _diagnosticSection(title, items, color) {
+    const colorMap = {
+      red: { bg: "bg-red-50 dark:bg-red-900/20", text: "text-red-700 dark:text-red-300", border: "border-red-200 dark:border-red-700", icon: "text-red-500" },
+      amber: { bg: "bg-amber-50 dark:bg-amber-900/20", text: "text-amber-700 dark:text-amber-300", border: "border-amber-200 dark:border-amber-700", icon: "text-amber-500" },
+      blue: { bg: "bg-blue-50 dark:bg-blue-900/20", text: "text-blue-700 dark:text-blue-300", border: "border-blue-200 dark:border-blue-700", icon: "text-blue-500" }
+    }
+    const c = colorMap[color] || colorMap.amber
+
+    const itemsHtml = items.map(item => {
+      const severityIcon = item.severity === "warning"
+        ? `<svg class="h-4 w-4 ${c.icon} flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>`
+        : `<svg class="h-4 w-4 ${c.icon} flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`
+
+      return `<div class="flex items-start space-x-2 py-1">${severityIcon}<p class="text-xs ${c.text}">${this._esc(item.message)}</p></div>`
+    }).join("")
+
+    return `<div class="space-y-1">
+      <h4 class="text-xs font-semibold uppercase tracking-wider ${c.text}">${this._esc(title)}</h4>
+      ${itemsHtml}
+    </div>`
+  }
+
+  _showDiagnosticPanel(show) {
+    if (!this.hasDiagnosticPanelTarget) return
+    if (show) {
+      this.diagnosticPanelTarget.classList.remove("hidden")
+      this._fetchDiagnostics()
+    } else {
+      this.diagnosticPanelTarget.classList.add("hidden")
+    }
   }
 
   _checkAutoReconcile(data) {

@@ -1,6 +1,6 @@
 APP_VERSION = "1.3.18"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
-MANUAL_CHANGE_SEQ = 11  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 12  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
@@ -67,6 +67,7 @@ APP_ALL_VERSIONS = [
       "Reports: Drag-and-drop card reordering now matches Dashboard — drag from anywhere on card, swap mode, touch-friendly with delay (CM-3)",
       "Reconciliation: Mark as Reconciled now marks all individual transactions (payments, deposits, transfers, adjustments) as reconciled in a single transaction (CM-4)",
       "Reconciliation: Auto-reconcile triggers automatically when difference equals $0.00 — no manual button click required (CM-4)",
+      "Reconciliation: Diagnostic Assistant panel appears when difference is not zero — analyzes count mismatches, single-match transactions, duplicates, subset sums, transposition errors, decimal shifts, sign errors, bank fees, and cross-account matches (CM-5)",
     ]
   },
   {
