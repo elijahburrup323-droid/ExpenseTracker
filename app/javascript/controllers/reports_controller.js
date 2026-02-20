@@ -32,9 +32,25 @@ export default class extends Controller {
 
     this.sortable = Sortable.create(this.cardsGridTarget, {
       animation: 150,
-      handle: ".drag-handle",
+      swap: true,
+      swapClass: "reports-swap-highlight",
       ghostClass: "opacity-30",
-      onEnd: () => this._onSortEnd(),
+      filter: "a, button, select, input, textarea, label, .no-drag",
+      preventOnFilter: false,
+      delay: 150,
+      delayOnTouchOnly: true,
+      touchStartThreshold: 5,
+      onEnd: () => {
+        this._cleanupDragArtifacts()
+        this._onSortEnd()
+      },
+    })
+  }
+
+  _cleanupDragArtifacts() {
+    if (!this.hasCardsGridTarget) return
+    this.cardsGridTarget.querySelectorAll("[data-reports-target='cardWrapper']").forEach(el => {
+      el.classList.remove("reports-swap-highlight", "opacity-30", "sortable-drag", "sortable-ghost")
     })
   }
 

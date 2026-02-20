@@ -1,6 +1,6 @@
 APP_VERSION = "1.3.18"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
-MANUAL_CHANGE_SEQ = 9  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 10  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
@@ -64,6 +64,7 @@ APP_ALL_VERSIONS = [
       "Database: New buckets and bucket_transactions tables; bucket_id/is_bucket_execution on payments, from_bucket_id/to_bucket_id on transfers (CM-1)",
       "Navigation: Buckets added under Accounts sidebar group (CM-1)",
       "Data: Backfill payment tags from spending category default tags — all existing payments now inherit category auto-tags (CM-2)",
+      "Reports: Drag-and-drop card reordering now matches Dashboard — drag from anywhere on card, swap mode, touch-friendly with delay (CM-3)",
     ]
   },
   {
