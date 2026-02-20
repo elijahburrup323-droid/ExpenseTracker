@@ -41,6 +41,7 @@ APP_ALL_VERSIONS = [
       "Dashboard: Touch-friendly drag with delay and threshold to prevent accidental drags on mobile/tablet (CM-11)",
       "Payments: Auto-learn category default tags — saving a payment with tags automatically adds those tags as defaults for the selected category (CM-6)",
       "Payments: Backfill rake task (tags:backfill_category_defaults) derives category defaults from historical tagged payments (CM-6)",
+      "Dashboard: Accounts card and Net Worth card now always include ALL active accounts regardless of creation date or budget inclusion flag (CM-3)",
     ]
   },
   {

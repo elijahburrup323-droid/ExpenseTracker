@@ -166,11 +166,10 @@ module Api
     end
 
     def compute_accounts_overview(ctx)
-      accounts_for_month = current_user.accounts
-                             .where("accounts.created_at <= ?", ctx[:as_of_date].end_of_day)
-                             .includes(:account_type).ordered
-      accounts_list = accounts_for_month.map do |a|
-        { name: a.name, balance: (ctx[:all_balances][a.id] || 0).to_f.round(2) }
+      all_accounts = current_user.accounts.includes(:account_type).ordered
+      accounts_list = all_accounts.map do |a|
+        bal = ctx[:all_balances][a.id]
+        { name: a.name, balance: (bal || a.balance).to_f.round(2) }
       end
       accounts_total = accounts_list.sum { |a| a[:balance] }.round(2)
 
@@ -178,7 +177,7 @@ module Api
     end
 
     def compute_net_worth(ctx)
-      net_worth_val = ctx[:all_balances].values.sum.to_f.round(2)
+      net_worth_val = current_user.accounts.sum(:balance).to_f.round(2)
       snapshots = current_user.net_worth_snapshots.recent(6).to_a.sort_by(&:snapshot_date)
       if snapshots.size >= 2
         prev_amount = snapshots[-2].amount.to_f
