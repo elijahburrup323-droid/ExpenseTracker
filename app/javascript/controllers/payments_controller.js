@@ -1671,8 +1671,14 @@ export default class extends Controller {
     }
 
     const typeId = this.childCategoryTypeTarget.value
-    const body = { spending_category: { name } }
-    if (typeId) body.spending_category.spending_type_id = Number(typeId)
+    if (!typeId) {
+      this.childCategoryErrorTarget.textContent = "Spending type is required."
+      this.childCategoryErrorTarget.classList.remove("hidden")
+      this.childCategoryTypeTarget.focus()
+      return
+    }
+
+    const body = { spending_category: { name, spending_type_id: Number(typeId) } }
 
     try {
       const res = await fetch(this.categoriesUrlValue, {
