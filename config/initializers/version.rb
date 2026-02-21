@@ -1,6 +1,6 @@
 APP_VERSION = "1.3.18"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
-MANUAL_CHANGE_SEQ = 20  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 21  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
@@ -88,6 +88,10 @@ APP_ALL_VERSIONS = [
       "Buckets: Table columns reordered — Account displayed before Bucket Name for account-first grouping (CM-1)",
       "Buckets: Default sort by Account A-Z then Bucket Name A-Z on initial load and after data refresh (CM-1)",
       "Buckets: All column headers (Account, Name, Balance, Target, Active) are now clickable and sortable with ascending/descending chevron indicators (CM-1)",
+      "Social Security Benefit Planner: Multi-age comparison — enter 2+ claiming ages (years + months) to compare side-by-side with monthly benefit, lifetime value, and notes (CM-SS2)",
+      "Social Security Benefit Planner: Break-even analysis — pairwise crossover ages computed via month-by-month cumulative simulation with plain-English winner explanations (CM-SS2)",
+      "Social Security Benefit Planner: Cumulative benefit line chart dynamically renders one line per compared claim age with color-coded legend (CM-SS2)",
+      "Social Security Benefit Planner: Recommendation narrative summarizes optimal strategy and break-even takeaway in 2-3 sentences (CM-SS2)",
     ]
   },
   {
