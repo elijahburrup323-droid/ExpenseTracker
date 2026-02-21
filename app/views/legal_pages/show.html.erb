@@ -26,7 +26,19 @@
 
     <%# Right content area %>
     <div class="flex-1 min-w-0" data-legal-toc-target="content">
-      <%= @page.content.html_safe %>
+      <% sections = @page.legal_page_sections.active.ordered %>
+      <% if sections.any? %>
+        <% sections.each do |section| %>
+          <div class="mb-8">
+            <h2 id="section-<%= section.section_number %>" class="text-xl font-semibold text-gray-900 dark:text-white mb-3"><%= section.section_number %>. <%= section.section_title %></h2>
+            <div class="prose dark:prose-invert max-w-none text-sm text-gray-700 dark:text-gray-300">
+              <%= section.section_body.html_safe %>
+            </div>
+          </div>
+        <% end %>
+      <% else %>
+        <%= @page.content.html_safe %>
+      <% end %>
     </div>
   </div>
 </div>

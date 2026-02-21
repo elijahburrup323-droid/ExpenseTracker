@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_21_500001) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_21_500002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -312,6 +312,20 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_21_500001) do
     t.index ["frequency_master_id"], name: "index_income_user_frequencies_on_frequency_master_id"
     t.index ["user_id", "frequency_master_id"], name: "idx_income_user_freq_unique", unique: true
     t.index ["user_id"], name: "index_income_user_frequencies_on_user_id"
+  end
+
+  create_table "legal_page_sections", force: :cascade do |t|
+    t.bigint "legal_page_id", null: false
+    t.integer "section_number", null: false
+    t.string "section_title", null: false
+    t.text "section_body", null: false
+    t.integer "display_order", default: 0, null: false
+    t.boolean "is_active", default: true, null: false
+    t.bigint "updated_by"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["legal_page_id", "display_order"], name: "idx_legal_sections_page_order"
+    t.index ["legal_page_id"], name: "index_legal_page_sections_on_legal_page_id"
   end
 
   create_table "legal_pages", force: :cascade do |t|
@@ -737,6 +751,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_21_500001) do
   add_foreign_key "income_recurrings", "users"
   add_foreign_key "income_user_frequencies", "income_frequency_masters", column: "frequency_master_id"
   add_foreign_key "income_user_frequencies", "users"
+  add_foreign_key "legal_page_sections", "legal_pages"
   add_foreign_key "net_worth_snapshots", "users"
   add_foreign_key "open_month_masters", "users"
   add_foreign_key "open_month_masters", "users", column: "locked_by_user_id"

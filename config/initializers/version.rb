@@ -1,6 +1,6 @@
 APP_VERSION = "1.3.18"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
-MANUAL_CHANGE_SEQ = 27  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 28  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
@@ -103,6 +103,10 @@ APP_ALL_VERSIONS = [
       "Transfers: Bucket badge now per-side — FROM shows badge when from_bucket_id set, TO shows badge when to_bucket_id set, both when both (CM-022126-06)",
       "Social Security Benefit Planner: PIA label clarified — now reads 'Benefit at Full Retirement Age (PIA)' with inline FRA reference below the field (CM-022126-08)",
       "Social Security Benefit Planner: Claim age inputs changed from stacked to single-row grid layout — Years and Months on one line with column headers (CM-022126-08)",
+      "Admin: Legal Page Maintenance — new CRUD screens for Terms of Service and Privacy Policy sections with table, add/edit modal, active toggle, and delete confirmation (CM-022126-07)",
+      "Legal Pages: Public view now renders from database-driven sections instead of monolithic HTML content column (CM-022126-07)",
+      "Database: New legal_page_sections table with section_number, title, body, display_order, active flag, and audit tracking (CM-022126-07)",
+      "Navigation: Terms Maint. and Privacy Maint. links added under Admin sidebar group (CM-022126-07)",
     ]
   },
   {

@@ -1,0 +1,154 @@
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+     data-controller="legal-page-admin"
+     data-legal-page-admin-api-url-value="<%= api_legal_page_sections_path(@page.slug) %>"
+     data-legal-page-admin-preview-url-value="<%= legal_page_path(@page.slug) %>"
+     data-legal-page-admin-csrf-token-value="<%= form_authenticity_token %>">
+
+  <%# Page Header (sticky) %>
+  <div class="sticky top-14 z-20 bg-gray-50 dark:bg-gray-900 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-2 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white"><%= @page.title %> Maintenance</h1>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Manage sections for the <%= @page.title %> page</p>
+      </div>
+      <div class="flex items-center space-x-2">
+        <a href="<%= legal_page_path(@page.slug) %>" target="_blank"
+           class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+          <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+          </svg>
+          Preview
+        </a>
+        <button type="button"
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition"
+                data-action="click->legal-page-admin#openAddModal">
+          <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+          </svg>
+          Add Section
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <%# Table %>
+  <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden ring-1 ring-gray-200 dark:ring-gray-700">
+    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+      <thead class="bg-gray-50 dark:bg-gray-800">
+        <tr>
+          <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-16">Order</th>
+          <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-12">#</th>
+          <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Section Title</th>
+          <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-16">Active</th>
+          <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-32">Updated</th>
+          <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-36">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700" data-legal-page-admin-target="tableBody">
+        <tr>
+          <td colspan="6" class="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">Loading...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <%# Add / Edit Section Modal %>
+  <div class="hidden fixed inset-0 z-50" data-legal-page-admin-target="modal">
+    <div class="fixed inset-0 bg-gray-500/75 dark:bg-gray-900/80 transition-opacity"></div>
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full p-6 max-h-[90vh] overflow-y-auto">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4" data-legal-page-admin-target="modalTitle">Add Section</h3>
+
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <%# Section Number %>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Section Number <span class="text-red-500">*</span></label>
+              <input type="number" step="1" min="1" placeholder="1"
+                     class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2"
+                     data-legal-page-admin-target="modalNumber">
+            </div>
+            <%# Display Order %>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Display Order <span class="text-red-500">*</span></label>
+              <input type="number" step="1" min="0" placeholder="1"
+                     class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2"
+                     data-legal-page-admin-target="modalOrder">
+            </div>
+          </div>
+
+          <%# Section Title %>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Section Title <span class="text-red-500">*</span></label>
+            <input type="text" maxlength="200" placeholder="e.g. Introduction"
+                   class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2"
+                   data-legal-page-admin-target="modalTitle2">
+          </div>
+
+          <%# Section Body (HTML) %>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Section Body (HTML) <span class="text-red-500">*</span></label>
+            <textarea rows="12"
+                      class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2 font-mono text-xs"
+                      data-legal-page-admin-target="modalBody"
+                      placeholder="Enter HTML content..."></textarea>
+          </div>
+
+          <%# Error Display %>
+          <div class="hidden rounded-md bg-red-50 dark:bg-red-900/30 p-3" data-legal-page-admin-target="modalError">
+            <p class="text-sm text-red-600 dark:text-red-400"></p>
+          </div>
+        </div>
+
+        <%# Footer Buttons %>
+        <div class="mt-6 flex justify-end space-x-3">
+          <button type="button"
+                  class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+                  data-action="click->legal-page-admin#closeModal">
+            Cancel
+          </button>
+          <button type="button"
+                  class="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 transition"
+                  data-action="click->legal-page-admin#saveModal">
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%# Delete Confirmation Modal %>
+  <div class="hidden fixed inset-0 z-50" data-legal-page-admin-target="deleteModal">
+    <div class="fixed inset-0 bg-gray-500/75 dark:bg-gray-900/80 transition-opacity"></div>
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+        <div class="flex items-start">
+          <div class="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-full bg-red-100 dark:bg-red-900/30">
+            <svg class="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+            </svg>
+          </div>
+          <div class="ml-4">
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white">Delete Section</h3>
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              Are you sure you want to delete section "<span class="font-medium text-gray-700 dark:text-gray-300" data-legal-page-admin-target="deleteModalName"></span>"? This action cannot be undone.
+            </p>
+          </div>
+        </div>
+        <div class="mt-6 flex justify-end space-x-3">
+          <button type="button"
+                  class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+                  data-action="click->legal-page-admin#closeDeleteModal">
+            Cancel
+          </button>
+          <button type="button"
+                  class="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 transition"
+                  data-action="click->legal-page-admin#executeDelete">
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

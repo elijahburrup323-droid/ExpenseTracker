@@ -1,4 +1,6 @@
 class LegalPage < ApplicationRecord
+  has_many :legal_page_sections, dependent: :destroy
+
   validates :slug, presence: true, uniqueness: true
   validates :title, presence: true
 

@@ -203,6 +203,11 @@ Rails.application.routes.draw do
       put "reorder_slots", action: :reorder_slots
     end
 
+    # Legal Page Sections API (agent-only)
+    scope "legal_pages/:slug" do
+      resources :legal_page_sections, only: [:index, :create, :update, :destroy], path: "sections"
+    end
+
     # Reports API
     scope :reports, controller: "reports", as: :reports do
       get "layout", action: :layout
@@ -261,6 +266,9 @@ Rails.application.routes.draw do
   get "documentation/test-coverage", to: "documentation#test_coverage", as: :documentation_test_coverage
   get "documentation/environment-variables", to: "documentation#environment_variables", as: :documentation_environment_variables
   get "documentation/ruby-project-breakdown", to: "documentation#ruby_project_breakdown", as: :documentation_ruby_project_breakdown
+
+  # Legal page admin (agent-only)
+  get "admin/legal/:slug", to: "legal_pages_admin#index", as: :legal_pages_admin
 
   # Legal / static pages
   get "pages/:slug", to: "legal_pages#show", as: :legal_page
