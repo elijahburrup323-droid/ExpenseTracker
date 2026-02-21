@@ -33,12 +33,12 @@
   </div>
 
   <%# ===== 6-CARD GRID (3 x 2, equal size) ===== %>
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6" data-dashboard-target="cardsGrid">
+  <div class="grid grid-cols-1 md:grid-cols-3 md:[grid-auto-rows:1fr] gap-6" data-dashboard-target="cardsGrid">
 
     <% @slots.each do |slot| %>
       <% card = slot.dashboard_card %>
       <% next unless card&.is_active %>
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col"
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col overflow-hidden"
            <% if %w[spending_overview accounts_overview].include?(card.card_type) %>style="perspective: 1000px;"<% end %>
            data-dashboard-target="slotWrapper"
            data-slot-number="<%= slot.slot_number %>"

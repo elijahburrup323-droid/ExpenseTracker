@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_20_500005) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_20_500006) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -694,6 +694,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_20_500005) do
     t.boolean "subscription_active", default: false, null: false
     t.date "subscription_start_date"
     t.date "subscription_expiration_date"
+    t.string "accent_theme_key", limit: 20, default: "purple", null: false
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["phone_number"], name: "index_users_on_phone_number", unique: true

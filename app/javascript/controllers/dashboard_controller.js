@@ -539,9 +539,9 @@ export default class extends Controller {
           const color = pieColorsHex[i % pieColorsHex.length]
           const pct = total > 0 ? Math.round(a.balance / total * 100) : 0
           html += `
-            <div class="flex items-center text-xs px-1">
+            <div class="flex items-center text-xs px-1 min-w-0">
               <span class="w-2 h-2 rounded-full flex-shrink-0" style="background:${color}"></span>
-              <span class="text-gray-700 dark:text-gray-300 truncate ml-1.5">${this._esc(a.name)} &mdash; ${this._currency(a.balance)} &mdash; ${pct}%</span>
+              <span class="text-gray-700 dark:text-gray-300 truncate ml-1.5 min-w-0">${this._esc(a.name)} &mdash; ${this._currency(a.balance)} &mdash; ${pct}%</span>
             </div>`
         })
         html += `</div>`
