@@ -59,14 +59,24 @@
   <%# Table %>
   <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden ring-1 ring-gray-200 dark:ring-gray-700">
     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-      <thead class="bg-gray-50 dark:bg-gray-800">
+      <thead class="bg-gray-50 dark:bg-gray-800" data-accounts-target="tableHead">
         <tr>
           <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-10"></th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Name</th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Institution</th>
-          <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Balance</th>
-          <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">In Budget</th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 transition select-none" data-sort-field="name" data-action="click->accounts#toggleSort">
+            <span class="inline-flex items-center space-x-1"><span>Name</span><span data-sort-icon="name" class="text-gray-300 dark:text-gray-600"></span></span>
+          </th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 transition select-none" data-sort-field="type" data-action="click->accounts#toggleSort">
+            <span class="inline-flex items-center space-x-1"><span>Type</span><span data-sort-icon="type" class="text-gray-300 dark:text-gray-600"></span></span>
+          </th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 transition select-none" data-sort-field="institution" data-action="click->accounts#toggleSort">
+            <span class="inline-flex items-center space-x-1"><span>Institution</span><span data-sort-icon="institution" class="text-gray-300 dark:text-gray-600"></span></span>
+          </th>
+          <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 transition select-none" data-sort-field="balance" data-action="click->accounts#toggleSort">
+            <span class="inline-flex items-center justify-end space-x-1"><span>Balance</span><span data-sort-icon="balance" class="text-gray-300 dark:text-gray-600"></span></span>
+          </th>
+          <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 transition select-none" data-sort-field="in_budget" data-action="click->accounts#toggleSort">
+            <span class="inline-flex items-center justify-center space-x-1"><span>In Budget</span><span data-sort-icon="in_budget" class="text-gray-300 dark:text-gray-600"></span></span>
+          </th>
           <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-28">Actions</th>
         </tr>
       </thead>

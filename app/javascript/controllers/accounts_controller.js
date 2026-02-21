@@ -3,7 +3,7 @@ import { ICON_CATALOG, COLOR_OPTIONS, renderIconSvg, defaultIconSvg, iconFor, es
 
 export default class extends Controller {
   static targets = [
-    "tableBody", "addButton", "generateButton", "deleteModal", "deleteModalName",
+    "tableBody", "tableHead", "addButton", "generateButton", "deleteModal", "deleteModalName",
     "blockedDeleteModal", "blockedDeleteBody", "blockedDeleteButtons", "total",
     "monthClosedModal", "monthClosedMessage",
     "accountModal", "modalTitle", "modalName", "modalDate", "modalDateRow",
@@ -21,6 +21,8 @@ export default class extends Controller {
     this.selectedIconKey = null
     this.selectedColorKey = "blue"
     this.iconPickerOpen = false
+    this.sortField = null
+    this.sortDir = "asc"
     this.fetchAll()
 
     this._onDocumentClick = (e) => {
@@ -608,12 +610,81 @@ export default class extends Controller {
     }
   }
 
+  // --- Sorting ---
+
+  toggleSort(event) {
+    const field = event.currentTarget.dataset.sortField
+    if (!field) return
+    if (this.sortField === field) {
+      this.sortDir = this.sortDir === "asc" ? "desc" : "asc"
+    } else {
+      this.sortField = field
+      this.sortDir = "asc"
+    }
+    this._updateSortIcons()
+    this.renderTable()
+  }
+
+  _getSortedAccounts() {
+    if (!this.sortField) return [...this.accounts]
+
+    const sorted = [...this.accounts]
+    const dir = this.sortDir === "asc" ? 1 : -1
+
+    sorted.sort((a, b) => {
+      let valA, valB
+      switch (this.sortField) {
+        case "name":
+          valA = (a.name || "").toLowerCase()
+          valB = (b.name || "").toLowerCase()
+          return valA < valB ? -dir : valA > valB ? dir : 0
+        case "type":
+          valA = (a.account_type_description || a.account_type_name || "").toLowerCase()
+          valB = (b.account_type_description || b.account_type_name || "").toLowerCase()
+          return valA < valB ? -dir : valA > valB ? dir : 0
+        case "institution":
+          valA = (a.institution || "").toLowerCase()
+          valB = (b.institution || "").toLowerCase()
+          return valA < valB ? -dir : valA > valB ? dir : 0
+        case "balance":
+          valA = parseFloat(a.balance) || 0
+          valB = parseFloat(b.balance) || 0
+          return (valA - valB) * dir
+        case "in_budget":
+          valA = a.include_in_budget ? 1 : 0
+          valB = b.include_in_budget ? 1 : 0
+          return (valA - valB) * dir
+        default:
+          return 0
+      }
+    })
+    return sorted
+  }
+
+  _updateSortIcons() {
+    if (!this.hasTableHeadTarget) return
+    const icons = this.tableHeadTarget.querySelectorAll("[data-sort-icon]")
+    icons.forEach(icon => {
+      const field = icon.dataset.sortIcon
+      if (field === this.sortField) {
+        icon.innerHTML = this.sortDir === "asc"
+          ? `<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>`
+          : `<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>`
+        icon.className = "text-brand-600 dark:text-brand-400"
+      } else {
+        icon.innerHTML = ""
+        icon.className = "text-gray-300 dark:text-gray-600"
+      }
+    })
+  }
+
   // --- Rendering (display-only) ---
 
   renderTable() {
     let html = ""
+    const sorted = this._getSortedAccounts()
 
-    for (const acc of this.accounts) {
+    for (const acc of sorted) {
       html += this.renderDisplayRow(acc)
     }
 
