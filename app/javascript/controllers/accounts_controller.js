@@ -548,7 +548,7 @@ export default class extends Controller {
       class="budget-toggle relative inline-flex h-7 w-14 items-center rounded-full transition-colors ${bg} focus:outline-none focus:ring-2 focus:ring-brand-300"
       data-checked="${isOn}" ${dataId}
       data-action="click->accounts#toggleBudget"
-      role="switch" aria-checked="${isOn}" title="${isOn ? 'In Budget: Yes' : 'In Budget: No'}">
+      role="switch" aria-checked="${isOn}" title="${isOn ? 'In Spending Overview: Yes' : 'In Spending Overview: No'}">
       <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${knobTranslate}"></span>
     </button>`
   }
@@ -560,7 +560,7 @@ export default class extends Controller {
 
     btn.dataset.checked = String(nowOn)
     btn.setAttribute("aria-checked", String(nowOn))
-    btn.title = nowOn ? "In Budget: Yes" : "In Budget: No"
+    btn.title = nowOn ? "In Spending Overview: Yes" : "In Spending Overview: No"
     btn.className = btn.className.replace(nowOn ? "bg-gray-300" : "bg-brand-600", nowOn ? "bg-brand-600" : "bg-gray-300")
     const knob = btn.querySelector("span")
     knob.className = knob.className.replace(nowOn ? "translate-x-1" : "translate-x-7", nowOn ? "translate-x-7" : "translate-x-1")
@@ -586,7 +586,7 @@ export default class extends Controller {
       } catch (e) {
         btn.dataset.checked = String(wasOn)
         btn.setAttribute("aria-checked", String(wasOn))
-        btn.title = wasOn ? "In Budget: Yes" : "In Budget: No"
+        btn.title = wasOn ? "In Spending Overview: Yes" : "In Spending Overview: No"
         btn.className = btn.className.replace(wasOn ? "bg-gray-300" : "bg-brand-600", wasOn ? "bg-brand-600" : "bg-gray-300")
         knob.className = knob.className.replace(wasOn ? "translate-x-1" : "translate-x-7", wasOn ? "translate-x-7" : "translate-x-1")
       }

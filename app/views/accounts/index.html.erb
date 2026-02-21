@@ -28,7 +28,7 @@
               { key: "account_type", label: "Account Type", required: true, type: "lookup", lookupKey: "account_type_id" },
               { key: "institution", label: "Institution", required: false, type: "text", max: 80 },
               { key: "balance", label: "Balance", required: true, type: "number" },
-              { key: "include_in_budget", label: "In Budget", required: false, type: "boolean" }
+              { key: "include_in_budget", label: "In Spending Overview", required: false, type: "boolean" }
             ].to_json,
             lookups_json: { account_type: api_account_types_path }.to_json,
             csrf_token: form_authenticity_token %>
@@ -75,7 +75,7 @@
             <span class="inline-flex items-center justify-end space-x-1"><span>Balance</span><span data-sort-icon="balance" class="text-gray-300 dark:text-gray-600"></span></span>
           </th>
           <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 transition select-none" data-sort-field="in_budget" data-action="click->accounts#toggleSort">
-            <span class="inline-flex items-center justify-center space-x-1"><span>In Budget</span><span data-sort-icon="in_budget" class="text-gray-300 dark:text-gray-600"></span></span>
+            <span class="inline-flex items-center justify-center space-x-1"><span>In Spending Overview</span><span data-sort-icon="in_budget" class="text-gray-300 dark:text-gray-600"></span></span>
           </th>
           <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-28">Actions</th>
         </tr>
@@ -96,7 +96,7 @@
       </svg>
       <p class="ml-3 text-sm text-blue-700 dark:text-blue-300">
         Accounts represent your real financial accounts (e.g., Checking at Bank of America, Savings at Ally Bank).
-        Toggle "In Budget" to include or exclude an account from your budget overview.
+        Toggle "In Spending Overview" to include or exclude an account from the Spending Overview card on your dashboard.
       </p>
     </div>
   </div>
@@ -259,9 +259,9 @@
             </div>
           </div>
 
-          <%# Include in Budget %>
+          <%# Include in Spending Overview %>
           <div class="flex items-center justify-between">
-            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Include in Budget Overview</label>
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Include in Spending Overview</label>
             <div data-accounts-target="modalBudget"></div>
           </div>
 
