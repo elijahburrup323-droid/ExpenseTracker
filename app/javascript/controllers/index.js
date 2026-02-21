@@ -46,6 +46,7 @@ import PaymentRecurringsController from "controllers/payment_recurrings_controll
 import BucketsController from "controllers/buckets_controller"
 import SpendingByTagController from "controllers/spending_by_tag_controller"
 import ThemeSettingsController from "controllers/theme_settings_controller"
+import SsPlannerController from "controllers/ss_planner_controller"
 
 application.register("flash", FlashController)
 application.register("dropdown", DropdownController)
@@ -93,3 +94,4 @@ application.register("payment-recurrings", PaymentRecurringsController)
 application.register("buckets", BucketsController)
 application.register("spending-by-tag", SpendingByTagController)
 application.register("theme-settings", ThemeSettingsController)
+application.register("ss-planner", SsPlannerController)
