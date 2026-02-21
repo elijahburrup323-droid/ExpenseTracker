@@ -218,7 +218,8 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 - **income_user_frequencies_controller.js** — use_flag toggle list with "View All" filter toggle (OFF = show only enabled frequencies, ON = show all master frequencies; purely a view filter, no bulk API call)
 - **income_recurrings_controller.js** — Modal-based Add/Edit CRUD for recurring deposit sources with frequency/account selects, inline use_flag toggle, delete confirmation modal, generate dummy data
 - **payment_recurrings_controller.js** — CRUD for recurring payment obligations with account, category, and frequency selects, use_flag toggle, generate dummy data. Mirrors income_recurrings pattern. Auto-generation of due payments happens in payments_controller on index load.
-- **buckets_controller.js** — Modal-based CRUD for virtual allocation containers within accounts. Account filter dropdown, fund/move money between buckets, target progress bars, active toggle. Default bucket per account catches unassigned funds.
+- **buckets_controller.js** — Modal-based CRUD for virtual allocation containers within accounts. Account filter dropdown, fund/move money between buckets, target progress bars, active toggle. Default bucket per account catches unassigned funds. Account change blocked for default buckets (must reassign default first). Delete transfers remaining balance to default bucket before soft-deleting.
+- **Dashboard buckets card** — Dashboard Card 6 shows top 5 buckets by balance with count, total balance, and progress bars. Server-rendered on initial load (`@buckets_summary` in DashboardController), AJAX-updated on month navigation via `compute_buckets` in API DashboardController and `_renderBuckets` JS renderer.
 - **income_entries_controller.js** — CRUD with received toggle (opens edit on amount), auto-advance cursor between fields on change, Generate Data button
 - **admin_users_controller.js** — Admin user management with search, admin toggle (admin-only)
 - **quotes_controller.js** — Admin CRUD for system quotes (add, edit, delete, active toggle). Quotes are displayed on sign-in page (random active) and in header bar (daily quote cached in session). Replaces the former hardcoded 200-quote rotation.
@@ -469,5 +470,50 @@ After each deploy, run:
 - Routes: `config/routes.rb`
 - Layout: `app/views/layouts/application.html.erb`
 - Sidebar: `app/views/shared/_sidebar.html.erb`
-- This prompt: `app/views/documentation/claude_prompt.html.erb`</div>
+- This prompt: `app/views/documentation/claude_prompt.html.erb`
+
+## BugStopper Workflow
+
+When the user says **"BugStopper"**, execute this automated adversarial testing and bug-fixing workflow:
+
+### Phase 1: Planning (READ-ONLY)
+1. Read `config/initializers/version.rb` to identify the current APP_VERSION
+2. Review recent commits (`git log --oneline -20`) to understand what changed
+3. Scan API controllers for endpoints without input validation or missing rescue blocks
+4. Scan models for missing presence/numericality/scope validations
+5. Identify highest-risk areas: new features, complex business logic, cross-model operations
+6. Produce a prioritized list of ~50-80 test cases organized by: API boundary, business logic, security, state corruption
+
+### Phase 2: Test Creation
+1. Create Playwright test files in `tests/local-bugstopper-*.spec.js`
+2. Each file targets one domain (e.g., buckets, reconciliation, reports, tags, security)
+3. All tests run against `http://localhost:3000/expensetracker` using `test@example.com` / `password123`
+4. All API calls use `page.evaluate` with CSRF token extraction from `meta[name="csrf-token"]`
+5. Focus on adversarial inputs: nulls, empty strings, negative numbers, very long strings, XSS payloads, invalid foreign keys, cross-user IDs, boundary values (0, -1, MAX_INT)
+6. Focus on state corruption: delete a parent record then operate on children; race conditions on concurrent operations
+
+### Phase 3: Execution and Bug Fixing
+1. Start Rails server if not running: `bin/dev` or `bundle exec rails server -p 3000`
+2. Run: `npx playwright test tests/local-bugstopper-*.spec.js --project=chromium`
+3. Catalog all failures
+4. For each failure: diagnose root cause, fix in the appropriate controller/model, re-run the specific test
+5. Re-run full suite to confirm no regressions
+
+### Phase 4: Documentation
+1. Create bug report docx at `G:\My Drive\ExpenseTracker\2. In Process\BugStopper_BugReport_{MMYYYY}_{Sequence}.docx`
+2. Include: test inventory, pass/fail results, bug descriptions, fixes applied, severity ratings
+3. Update this claude_prompt if any architectural changes were made
+
+### Phase 5: Verification
+1. Re-run full test suite — all tests must pass
+2. Verify no regressions on existing local tests
+3. Commit all changes with descriptive message
+
+### Known High-Risk Patterns to Always Test
+- `Date.new(year, month, 1)` with user-controlled params (month=0, month=13, month=-1 cause ArgumentError)
+- `belongs_to :account` without validating account belongs to current_user (cross-user data leak)
+- Negative amounts on `numericality: true` fields (allows negative, may invert business logic)
+- Soft-deleted parent records accessed by children via default_scope (NoMethodError on nil)
+- Error messages that echo user input (XSS vector if rendered as HTML)
+- Missing rescue blocks on Date/Integer parsing in controller actions</div>
 </div>

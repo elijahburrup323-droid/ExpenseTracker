@@ -14,6 +14,11 @@ module Api
 
     def create
       bucket = current_user.buckets.build(bucket_params)
+      initial_balance = bucket.current_balance.to_f
+
+      if initial_balance < 0
+        return render json: { errors: ["Current balance cannot be negative"] }, status: :unprocessable_entity
+      end
 
       ActiveRecord::Base.transaction do
         # Auto-assign sort_order
@@ -25,12 +30,14 @@ module Api
           bucket.is_default = true
         end
 
+        bucket.current_balance = 0
+
         if bucket.save
-          # If initial balance provided, record transaction
-          if bucket.current_balance > 0
+          # If initial balance provided, record transaction (sets current_balance correctly)
+          if initial_balance > 0
             bucket.record_transaction!(
               direction: "IN",
-              amount: bucket.current_balance,
+              amount: initial_balance,
               source_type: "INITIAL",
               memo: "Initial bucket allocation",
               txn_date: Date.current
@@ -46,6 +53,14 @@ module Api
 
     def update
       ActiveRecord::Base.transaction do
+        # Block account change on default buckets
+        if @bucket.is_default && bucket_params[:account_id].present? &&
+           bucket_params[:account_id].to_i != @bucket.account_id
+          render json: { errors: ["Cannot change account for the default bucket. Reassign the default first."] }, status: :unprocessable_entity
+          raise ActiveRecord::Rollback
+          return
+        end
+
         if @bucket.update(bucket_params)
           render json: bucket_json(@bucket)
         else
@@ -62,19 +77,20 @@ module Api
 
       ActiveRecord::Base.transaction do
         # Transfer remaining balance to default bucket
-        if @bucket.current_balance > 0
+        transfer_amount = @bucket.current_balance.to_f
+        if transfer_amount > 0
           default_bucket = current_user.buckets.find_by(account_id: @bucket.account_id, is_default: true)
           if default_bucket
             @bucket.record_transaction!(
               direction: "OUT",
-              amount: @bucket.current_balance,
+              amount: transfer_amount,
               source_type: "ADJUSTMENT",
               memo: "Balance transferred to default bucket on deletion",
               txn_date: Date.current
             )
             default_bucket.record_transaction!(
               direction: "IN",
-              amount: @bucket.current_balance,
+              amount: transfer_amount,
               source_type: "ADJUSTMENT",
               memo: "Balance received from deleted bucket '#{@bucket.name}'",
               txn_date: Date.current

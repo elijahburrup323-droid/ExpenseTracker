@@ -12,7 +12,7 @@ class PaymentRecurring < ApplicationRecord
   scope :due, -> { where("next_date <= ?", Date.today).where(use_flag: true) }
 
   validates :name, presence: true, length: { maximum: 80 }
-  validates :amount, presence: true, numericality: true
+  validates :amount, presence: true, numericality: { greater_than: 0 }
   validates :next_date, presence: true
 
   def soft_delete!

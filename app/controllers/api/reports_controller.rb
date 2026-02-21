@@ -46,6 +46,7 @@ module Api
 
     # GET /api/reports/monthly_cash_flow?year=YYYY&month=M&mode=regular|comparison&compare_prev=1&include_ytd=1
     def monthly_cash_flow
+      return unless validate_date_params!
       om = OpenMonthMaster.for_user(current_user)
       year  = (params[:year]  || om.current_year).to_i
       month = (params[:month] || om.current_month).to_i
@@ -73,6 +74,7 @@ module Api
 
     # GET /api/reports/spending_by_category?year=YYYY&month=M&mode=regular|comparison&compare_prev=1&include_ytd=1
     def spending_by_category
+      return unless validate_date_params!
       om = OpenMonthMaster.for_user(current_user)
       year  = (params[:year]  || om.current_year).to_i
       month = (params[:month] || om.current_month).to_i
@@ -99,6 +101,7 @@ module Api
 
     # GET /api/reports/spending_by_type?year=YYYY&month=M&mode=regular|comparison&compare_prev=1&include_ytd=1
     def spending_by_type
+      return unless validate_date_params!
       om = OpenMonthMaster.for_user(current_user)
       year  = (params[:year]  || om.current_year).to_i
       month = (params[:month] || om.current_month).to_i
@@ -125,6 +128,7 @@ module Api
 
     # GET /api/reports/account_balance_history?account_id=&start_year=&start_month=&end_year=&end_month=&closed_only=0|1
     def account_balance_history
+      return unless validate_range_date_params!
       om = OpenMonthMaster.for_user(current_user)
       account_id  = params[:account_id].presence&.to_i
       start_year  = (params[:start_year]  || om.current_year).to_i
@@ -139,6 +143,7 @@ module Api
 
     # GET /api/reports/income_by_source?start_year=&start_month=&end_year=&end_month=&account_id=&include_recurring=0|1
     def income_by_source
+      return unless validate_range_date_params!
       om = OpenMonthMaster.for_user(current_user)
       start_year  = (params[:start_year]  || om.current_year).to_i
       start_month = (params[:start_month] || 1).to_i
@@ -153,6 +158,7 @@ module Api
 
     # GET /api/reports/net_worth_report?start_year=&start_month=&end_year=&end_month=&in_budget_only=0|1
     def net_worth_report
+      return unless validate_range_date_params!
       om = OpenMonthMaster.for_user(current_user)
       start_year  = (params[:start_year]  || om.current_year).to_i
       start_month = (params[:start_month] || 1).to_i
@@ -166,6 +172,7 @@ module Api
 
     # GET /api/reports/reconciliation_summary?year=YYYY&month=M&account_id=N
     def reconciliation_summary
+      return unless validate_date_params!
       om = OpenMonthMaster.for_user(current_user)
       year  = (params[:year]  || om.current_year).to_i
       month = (params[:month] || om.current_month).to_i
@@ -177,6 +184,7 @@ module Api
 
     # GET /api/reports/soft_close_summary?year=YYYY&month=M
     def soft_close_summary
+      return unless validate_date_params!
       om = OpenMonthMaster.for_user(current_user)
       year  = (params[:year]  || om.current_year).to_i
       month = (params[:month] || om.current_month).to_i
@@ -187,6 +195,7 @@ module Api
 
     # GET /api/reports/recurring_obligations?year=YYYY&month=M&include_inactive=0|1
     def recurring_obligations
+      return unless validate_date_params!
       om = OpenMonthMaster.for_user(current_user)
       year  = (params[:year]  || om.current_year).to_i
       month = (params[:month] || om.current_month).to_i
@@ -198,6 +207,7 @@ module Api
 
     # GET /api/reports/spending_by_tag?year=YYYY&month=M&mode=regular|comparison&compare_prev=1&include_ytd=1
     def spending_by_tag
+      return unless validate_date_params!
       om = OpenMonthMaster.for_user(current_user)
       year  = (params[:year]  || om.current_year).to_i
       month = (params[:month] || om.current_month).to_i
@@ -223,6 +233,35 @@ module Api
     end
 
     private
+
+    def validate_date_params!
+      year = params[:year]&.to_i
+      month = params[:month]&.to_i
+      return true unless params[:year].present? || params[:month].present?
+
+      if (params[:month].present? && !(1..12).include?(month)) ||
+         (params[:year].present? && !(2000..2100).include?(year))
+        render json: { error: "Invalid date parameters" }, status: :bad_request
+        return false
+      end
+      true
+    end
+
+    def validate_range_date_params!
+      [:start_month, :end_month].each do |key|
+        if params[key].present? && !(1..12).include?(params[key].to_i)
+          render json: { error: "Invalid date parameters" }, status: :bad_request
+          return false
+        end
+      end
+      [:start_year, :end_year].each do |key|
+        if params[key].present? && !(2000..2100).include?(params[key].to_i)
+          render json: { error: "Invalid date parameters" }, status: :bad_request
+          return false
+        end
+      end
+      true
+    end
 
     # --- Tag filtering helpers ---
 

@@ -23,6 +23,7 @@ class Payment < ApplicationRecord
   def self.generate_due_payments_for(user)
     generated = []
     user.payment_recurrings.due.each do |recurring|
+      next unless recurring.account  # Skip if account was soft-deleted
       next if user.payments.exists?(payment_recurring_id: recurring.id, payment_date: recurring.next_date)
 
       payment = user.payments.create!(

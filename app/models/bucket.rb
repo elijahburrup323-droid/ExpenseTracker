@@ -16,10 +16,12 @@ class Bucket < ApplicationRecord
     conditions: -> { where(deleted_at: nil) },
     message: "has already been taken for this account"
   }
-  validates :current_balance, numericality: true
+  validates :current_balance, numericality: { greater_than_or_equal_to: 0, message: "cannot be negative" }, on: :create
+  validates :current_balance, numericality: true, on: :update
   validates :target_amount, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
   validate :only_one_default_per_account, if: :is_default?
+  validate :account_belongs_to_user
 
   def soft_delete!
     update_columns(deleted_at: Time.current)
@@ -46,11 +48,19 @@ class Bucket < ApplicationRecord
 
   private
 
+  def account_belongs_to_user
+    if account_id.present? && user_id.present?
+      unless Account.where(id: account_id, user_id: user_id).exists?
+        errors.add(:account, "does not belong to this user")
+      end
+    end
+  end
+
   def only_one_default_per_account
     existing = Bucket.where(user_id: user_id, account_id: account_id, is_default: true)
     existing = existing.where.not(id: id) if persisted?
     if existing.exists?
-      errors.add(:is_default, "bucket already exists for this account")
+      errors.add(:base, "A default bucket already exists for this account.")
     end
   end
 end
