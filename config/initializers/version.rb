@@ -1,6 +1,6 @@
 APP_VERSION = "1.3.18"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
-MANUAL_CHANGE_SEQ = 23  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 24  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
@@ -95,6 +95,9 @@ APP_ALL_VERSIONS = [
       "Dashboard: Spending Overview card expand button added to front side — expand now available on both front and back sides, matching Accounts card pattern (CM-022126-02)",
       "Dashboard: Fixed Spending Overview expand by removing hardcoded pointer-events:none from flipper container — click events now reliably reach expand button (CM-022126-02)",
       "Dashboard: Buckets card groups buckets under Account headers with account totals and left-border nesting for visual hierarchy (CM-022126-03)",
+      "Buckets: New Priority column between Bucket Name and Balance — sortable with ascending/descending indicators (CM-022126-04)",
+      "Buckets: Account group row banding — alternating subtle background per account group for visual separation (CM-022126-04)",
+      "Buckets: Default sort changed to Account ASC then Priority ASC for priority-driven ordering within each account (CM-022126-04)",
     ]
   },
   {

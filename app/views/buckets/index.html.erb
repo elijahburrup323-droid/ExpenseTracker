@@ -42,6 +42,9 @@
           <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 transition select-none" data-sort-field="name" data-action="click->buckets#toggleSort">
             <span class="inline-flex items-center space-x-1"><span>Bucket Name</span><span data-sort-icon="name" class="text-gray-300 dark:text-gray-600"></span></span>
           </th>
+          <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-20 cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 transition select-none" data-sort-field="priority" data-action="click->buckets#toggleSort">
+            <span class="inline-flex items-center justify-center space-x-1"><span>Priority</span><span data-sort-icon="priority" class="text-gray-300 dark:text-gray-600"></span></span>
+          </th>
           <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 transition select-none" data-sort-field="current_balance" data-action="click->buckets#toggleSort">
             <span class="inline-flex items-center justify-end space-x-1"><span>Balance</span><span data-sort-icon="current_balance" class="text-gray-300 dark:text-gray-600"></span></span>
           </th>
@@ -56,7 +59,7 @@
       </thead>
       <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700" data-buckets-target="tableBody">
         <tr>
-          <td colspan="6" class="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">Loading...</td>
+          <td colspan="7" class="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">Loading...</td>
         </tr>
       </tbody>
     </table>

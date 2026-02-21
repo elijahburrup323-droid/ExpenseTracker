@@ -397,15 +397,21 @@ export default class extends Controller {
         case "target_amount":
           cmp = (parseFloat(a.target_amount) || 0) - (parseFloat(b.target_amount) || 0)
           break
+        case "priority":
+          cmp = (parseInt(a.priority) || 0) - (parseInt(b.priority) || 0)
+          break
         case "is_active":
           cmp = (a.is_active ? 1 : 0) - (b.is_active ? 1 : 0)
           break
       }
       if (cmp !== 0) return cmp * dir
-      // Stable secondary sort: account_name then name
+      // Stable secondary sort: account_name then priority then name
       const secA = (a.account_name || "").toLowerCase()
       const secB = (b.account_name || "").toLowerCase()
       if (secA !== secB) return secA < secB ? -1 : 1
+      const secPA = parseInt(a.priority) || 0
+      const secPB = parseInt(b.priority) || 0
+      if (secPA !== secPB) return secPA - secPB
       const secNA = (a.name || "").toLowerCase()
       const secNB = (b.name || "").toLowerCase()
       return secNA < secNB ? -1 : secNA > secNB ? 1 : 0
@@ -439,22 +445,35 @@ export default class extends Controller {
     }
 
     if (filtered.length === 0) {
-      this.tableBodyTarget.innerHTML = `<tr><td colspan="6" class="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">No buckets yet. Click "Add Bucket" to create one.</td></tr>`
+      this.tableBodyTarget.innerHTML = `<tr><td colspan="7" class="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">No buckets yet. Click "Add Bucket" to create one.</td></tr>`
       return
     }
 
     const sorted = this._getSortedBuckets(filtered)
-    this.tableBodyTarget.innerHTML = sorted.map(b => this._renderRow(b)).join("")
+    // Account group banding: alternate subtle bg per account group
+    let lastAccount = null
+    let bandIndex = 0
+    this.tableBodyTarget.innerHTML = sorted.map(b => {
+      if (b.account_name !== lastAccount) {
+        lastAccount = b.account_name
+        bandIndex++
+      }
+      return this._renderRow(b, bandIndex % 2)
+    }).join("")
     this._updateSortIcons()
   }
 
-  _renderRow(b) {
+  _renderRow(b, bandIdx = 0) {
     const balance = this._formatAmount(b.current_balance)
     const target = b.target_amount != null ? this._formatAmount(b.target_amount) : "\u2014"
     const defaultBadge = b.is_default ? `<span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300">Default</span>` : ""
+    const priority = parseInt(b.priority) || 0
 
     const activeBg = b.is_active ? "bg-brand-600" : "bg-gray-300"
     const activeKnob = b.is_active ? "translate-x-7" : "translate-x-1"
+
+    // Account group banding class
+    const bandClass = bandIdx === 1 ? "bg-gray-50 dark:bg-gray-800/60" : ""
 
     // Progress bar
     let progressBar = ""
@@ -464,9 +483,10 @@ export default class extends Controller {
       progressBar = `<div class="mt-1 w-20 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden"><div class="${color} h-full rounded-full" style="width: ${pct}%"></div></div>`
     }
 
-    return `<tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+    return `<tr class="${bandClass} hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
       <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">${this._esc(b.account_name || "")}</td>
       <td class="px-4 py-4 text-sm font-medium text-gray-900 dark:text-white">${this._esc(b.name)}${defaultBadge}</td>
+      <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400 text-center">${priority}</td>
       <td class="px-4 py-4 text-sm text-gray-900 dark:text-white text-right font-mono">${balance}</td>
       <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400 text-right">${target}${progressBar}</td>
       <td class="px-4 py-4 text-center">
