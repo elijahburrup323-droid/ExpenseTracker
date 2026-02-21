@@ -26,6 +26,9 @@ Rails.application.routes.draw do
   # Theme Settings
   get "settings/theme", to: "theme_settings#index", as: :theme_settings
 
+  # Social Security Benefit Planner
+  get "social_security_planner", to: "social_security_planner#index", as: :social_security_planner
+
   # Spending Types (HTML page)
   resources :spending_types, only: [:index]
 
