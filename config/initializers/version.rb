@@ -82,6 +82,8 @@ APP_ALL_VERSIONS = [
       "Rebrand: All user-facing text changed from BudgetHQ to MyBudgetHQ — navbar logo, page title, footer, email templates, SMS messages, report print headers, and static pages (CM-7)",
       "Rebrand: Email addresses updated from support@budgethq.app to support@mybudgethq.app (CM-7)",
       "Theme: Toggle ON-state colors changed from hardcoded purple-600 to theme-aware brand-600 across all screens with toggles (CM-7)",
+      "Social Security Benefit Planner: UI-only module with FRA/COLA/lifetime calculations accessible from user menu (CM-SS1)",
+      "Social Security Benefit Planner: Reworked to match approved mockup — two-card Participants layout, sortable Strategy Summary table, line chart with 3 strategy lines, Recommendation Summary, and iPad-first stacked dropdowns (CM-1)",
     ]
   },
   {
