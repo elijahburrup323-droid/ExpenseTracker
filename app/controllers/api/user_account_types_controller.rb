@@ -1,5 +1,7 @@
 module Api
   class UserAccountTypesController < BaseController
+    before_action :ensure_user_types_seeded, only: [:index]
+
     def index
       user_map = current_user.user_account_types.index_by(&:account_type_master_id)
 
@@ -126,6 +128,16 @@ module Api
 
       master.soft_delete!
       head :no_content
+    end
+
+    private
+
+    def ensure_user_types_seeded
+      system_count = AccountTypeMaster.system_types.count
+      AccountTypeMaster.ensure_system_types! if system_count < AccountTypeMaster::CANONICAL_TYPES.size
+      if current_user.user_account_types.count < AccountTypeMaster.system_types.active.count
+        AccountTypeMaster.seed_defaults_for_user(current_user)
+      end
     end
   end
 end
