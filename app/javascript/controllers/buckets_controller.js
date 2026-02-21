@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static targets = [
-    "tableBody", "addButton", "accountFilter",
+    "tableBody", "tableHead", "addButton", "accountFilter",
     "entryModal", "modalTitle", "modalAccount", "modalName", "modalTargetAmt", "modalBalance", "modalBalanceRow", "modalPriority", "modalError",
     "fundModal", "fundFrom", "fundFromBalance", "fundToName", "fundAmount", "fundError",
     "deleteModal", "deleteModalName"
@@ -17,6 +17,8 @@ export default class extends Controller {
     this.deletingId = null
     this.fundingId = null
     this.filterAccountId = ""
+    this.sortField = "account_name"
+    this.sortDir = "asc"
     this.fetchAll()
   }
 
@@ -356,6 +358,78 @@ export default class extends Controller {
     else if (event.key === "Escape") { event.preventDefault(); this.cancelModal() }
   }
 
+  // --- Sorting ---
+
+  toggleSort(event) {
+    const field = event.currentTarget.dataset.sortField
+    if (!field) return
+    if (this.sortField === field) {
+      this.sortDir = this.sortDir === "asc" ? "desc" : "asc"
+    } else {
+      this.sortField = field
+      this.sortDir = "asc"
+    }
+    this._updateSortIcons()
+    this.renderTable()
+  }
+
+  _getSortedBuckets(buckets) {
+    const sorted = [...buckets]
+    const field = this.sortField
+    const dir = this.sortDir === "asc" ? 1 : -1
+
+    sorted.sort((a, b) => {
+      let valA, valB, cmp = 0
+      switch (field) {
+        case "account_name":
+          valA = (a.account_name || "").toLowerCase()
+          valB = (b.account_name || "").toLowerCase()
+          cmp = valA < valB ? -1 : valA > valB ? 1 : 0
+          break
+        case "name":
+          valA = (a.name || "").toLowerCase()
+          valB = (b.name || "").toLowerCase()
+          cmp = valA < valB ? -1 : valA > valB ? 1 : 0
+          break
+        case "current_balance":
+          cmp = (parseFloat(a.current_balance) || 0) - (parseFloat(b.current_balance) || 0)
+          break
+        case "target_amount":
+          cmp = (parseFloat(a.target_amount) || 0) - (parseFloat(b.target_amount) || 0)
+          break
+        case "is_active":
+          cmp = (a.is_active ? 1 : 0) - (b.is_active ? 1 : 0)
+          break
+      }
+      if (cmp !== 0) return cmp * dir
+      // Stable secondary sort: account_name then name
+      const secA = (a.account_name || "").toLowerCase()
+      const secB = (b.account_name || "").toLowerCase()
+      if (secA !== secB) return secA < secB ? -1 : 1
+      const secNA = (a.name || "").toLowerCase()
+      const secNB = (b.name || "").toLowerCase()
+      return secNA < secNB ? -1 : secNA > secNB ? 1 : 0
+    })
+    return sorted
+  }
+
+  _updateSortIcons() {
+    if (!this.hasTableHeadTarget) return
+    const icons = this.tableHeadTarget.querySelectorAll("[data-sort-icon]")
+    icons.forEach(icon => {
+      const field = icon.dataset.sortIcon
+      if (field === this.sortField) {
+        icon.innerHTML = this.sortDir === "asc"
+          ? `<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>`
+          : `<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>`
+        icon.className = "text-brand-600 dark:text-brand-400"
+      } else {
+        icon.innerHTML = ""
+        icon.className = "text-gray-300 dark:text-gray-600"
+      }
+    })
+  }
+
   // --- Rendering ---
 
   renderTable() {
@@ -369,7 +443,9 @@ export default class extends Controller {
       return
     }
 
-    this.tableBodyTarget.innerHTML = filtered.map(b => this._renderRow(b)).join("")
+    const sorted = this._getSortedBuckets(filtered)
+    this.tableBodyTarget.innerHTML = sorted.map(b => this._renderRow(b)).join("")
+    this._updateSortIcons()
   }
 
   _renderRow(b) {
@@ -389,8 +465,8 @@ export default class extends Controller {
     }
 
     return `<tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-      <td class="px-4 py-4 text-sm font-medium text-gray-900 dark:text-white">${this._esc(b.name)}${defaultBadge}</td>
       <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">${this._esc(b.account_name || "")}</td>
+      <td class="px-4 py-4 text-sm font-medium text-gray-900 dark:text-white">${this._esc(b.name)}${defaultBadge}</td>
       <td class="px-4 py-4 text-sm text-gray-900 dark:text-white text-right font-mono">${balance}</td>
       <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400 text-right">${target}${progressBar}</td>
       <td class="px-4 py-4 text-center">

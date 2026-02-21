@@ -85,6 +85,9 @@ APP_ALL_VERSIONS = [
       "Social Security Benefit Planner: UI-only module with FRA/COLA/lifetime calculations accessible from user menu (CM-SS1)",
       "Social Security Benefit Planner: Reworked to match approved mockup — two-card Participants layout, sortable Strategy Summary table, line chart with 3 strategy lines, Recommendation Summary, and iPad-first stacked dropdowns (CM-1)",
       "Admin: Account Type Masters delete modal — replaced generic fallback with user-friendly messaging showing blocking account names, disabled Delete button on error (CM-7)",
+      "Buckets: Table columns reordered — Account displayed before Bucket Name for account-first grouping (CM-1)",
+      "Buckets: Default sort by Account A-Z then Bucket Name A-Z on initial load and after data refresh (CM-1)",
+      "Buckets: All column headers (Account, Name, Balance, Target, Active) are now clickable and sortable with ascending/descending chevron indicators (CM-1)",
     ]
   },
   {
