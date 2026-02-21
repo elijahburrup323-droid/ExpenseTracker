@@ -109,17 +109,24 @@ class DashboardController < ApplicationController
                                    .includes(:account, spending_category: :spending_type)
                                    .limit(5)
 
-    # Card 6: Buckets summary
+    # Card 6: Buckets summary (grouped by account)
     user_buckets = current_user.buckets.active.includes(:account).ordered
     if user_buckets.empty?
       @buckets_summary = { empty: true }
     else
-      top = user_buckets.sort_by { |b| -b.current_balance.to_f }.first(5)
+      grouped = user_buckets.group_by(&:account)
+      account_groups = grouped.map do |account, buckets|
+        {
+          account_name: account&.name || "Unknown",
+          account_total: buckets.sum(&:current_balance).to_f.round(2),
+          buckets: buckets.sort_by { |b| b.name.to_s }
+        }
+      end.sort_by { |g| g[:account_name] }
       @buckets_summary = {
         empty: false,
         count: user_buckets.size,
         total_balance: user_buckets.sum(&:current_balance).to_f.round(2),
-        top_buckets: top
+        account_groups: account_groups
       }
     end
   end
