@@ -659,6 +659,45 @@ export default class extends Controller {
       this.markReconciledBtnTarget.disabled = true
       if (this.hasFixMarkReconciledBtnTarget) this.fixMarkReconciledBtnTarget.disabled = true
     }
+
+    // Update button state based on full reconciliation status
+    this._updateReconciledButtonState(isZero)
+  }
+
+  _allItemsReconciled() {
+    if (!this.data_cache) return false
+    const d = this.data_cache
+    const allP = d.payments.length === 0 || d.payments.every(p => p.reconciled)
+    const allD = d.deposits.length === 0 || d.deposits.every(p => p.reconciled)
+    const allT = d.transfers.length === 0 || d.transfers.every(p => p.reconciled)
+    const allA = d.adjustments.length === 0 || d.adjustments.every(p => p.reconciled)
+    return allP && allD && allT && allA
+  }
+
+  _updateReconciledButtonState(isZero) {
+    const allReconciled = isZero && this._allItemsReconciled() && this.externalBalanceTarget.value
+    const btn = this.markReconciledBtnTarget
+    const fixBtn = this.hasFixMarkReconciledBtnTarget ? this.fixMarkReconciledBtnTarget : null
+
+    if (allReconciled) {
+      btn.textContent = "Reconciled"
+      btn.classList.remove("bg-brand-600", "hover:bg-brand-700")
+      btn.classList.add("bg-green-600", "hover:bg-green-700")
+      if (fixBtn) {
+        fixBtn.textContent = "Reconciled"
+        fixBtn.classList.remove("bg-brand-600", "hover:bg-brand-700")
+        fixBtn.classList.add("bg-green-600", "hover:bg-green-700")
+      }
+    } else {
+      btn.textContent = "Mark as Reconciled"
+      btn.classList.remove("bg-green-600", "hover:bg-green-700")
+      btn.classList.add("bg-brand-600", "hover:bg-brand-700")
+      if (fixBtn) {
+        fixBtn.textContent = "Mark as Reconciled"
+        fixBtn.classList.remove("bg-green-600", "hover:bg-green-700")
+        fixBtn.classList.add("bg-brand-600", "hover:bg-brand-700")
+      }
+    }
   }
 
   _renderFixMode() {
