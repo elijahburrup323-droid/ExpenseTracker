@@ -42,13 +42,23 @@
   <%# Table %>
   <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden ring-1 ring-gray-200 dark:ring-gray-700">
     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-      <thead class="bg-gray-50 dark:bg-gray-800">
+      <thead class="bg-gray-50 dark:bg-gray-800" data-transfer-masters-target="tableHead">
         <tr>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">From</th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">To</th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Memo</th>
-          <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 transition select-none" data-sort-field="date" data-action="click->transfer-masters#toggleSort">
+            <span class="inline-flex items-center space-x-1"><span>Date</span><span data-sort-icon="date" class="text-gray-300 dark:text-gray-600"></span></span>
+          </th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 transition select-none" data-sort-field="from" data-action="click->transfer-masters#toggleSort">
+            <span class="inline-flex items-center space-x-1"><span>From</span><span data-sort-icon="from" class="text-gray-300 dark:text-gray-600"></span></span>
+          </th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 transition select-none" data-sort-field="to" data-action="click->transfer-masters#toggleSort">
+            <span class="inline-flex items-center space-x-1"><span>To</span><span data-sort-icon="to" class="text-gray-300 dark:text-gray-600"></span></span>
+          </th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 transition select-none" data-sort-field="memo" data-action="click->transfer-masters#toggleSort">
+            <span class="inline-flex items-center space-x-1"><span>Memo</span><span data-sort-icon="memo" class="text-gray-300 dark:text-gray-600"></span></span>
+          </th>
+          <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 transition select-none" data-sort-field="amount" data-action="click->transfer-masters#toggleSort">
+            <span class="inline-flex items-center justify-end space-x-1"><span>Amount</span><span data-sort-icon="amount" class="text-gray-300 dark:text-gray-600"></span></span>
+          </th>
           <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">Actions</th>
         </tr>
       </thead>

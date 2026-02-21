@@ -3,7 +3,7 @@ import { iconFor, escapeHtml } from "controllers/shared/icon_catalog"
 
 export default class extends Controller {
   static targets = [
-    "tableBody", "paginationInfo", "addButton",
+    "tableBody", "tableHead", "paginationInfo", "addButton",
     "modal", "modalTitle", "modalFrom", "modalTo", "modalDate", "modalAmount", "modalMemo", "modalError", "modalSaveButton",
     "modalFromBucketRow", "modalFromBucket", "modalToBucketRow", "modalToBucket", "bucketHelperText",
     "deleteModal",
@@ -30,6 +30,8 @@ export default class extends Controller {
 
   fromBuckets = []
   toBuckets = []
+  sortField = null
+  sortDir = "asc"
 
   connect() {
     this.fetchAll()
@@ -56,12 +58,82 @@ export default class extends Controller {
       return
     }
 
+    const sorted = this._getSortedTransfers()
     const start = (this.page - 1) * this.perPage
-    const end = Math.min(start + this.perPage, this.transfers.length)
-    const pageItems = this.transfers.slice(start, end)
+    const end = Math.min(start + this.perPage, sorted.length)
+    const pageItems = sorted.slice(start, end)
 
     this.tableBodyTarget.innerHTML = pageItems.map(t => this.renderRow(t)).join("")
-    this.paginationInfoTarget.textContent = `${start + 1}–${end} of ${this.transfers.length}`
+    this.paginationInfoTarget.textContent = `${start + 1}–${end} of ${sorted.length}`
+  }
+
+  // --- Sorting ---
+
+  toggleSort(event) {
+    const field = event.currentTarget.dataset.sortField
+    if (!field) return
+    if (this.sortField === field) {
+      this.sortDir = this.sortDir === "asc" ? "desc" : "asc"
+    } else {
+      this.sortField = field
+      this.sortDir = "asc"
+    }
+    this.page = 1
+    this._updateSortIcons()
+    this.renderTable()
+  }
+
+  _getSortedTransfers() {
+    if (!this.sortField) return [...this.transfers]
+
+    const sorted = [...this.transfers]
+    const dir = this.sortDir === "asc" ? 1 : -1
+
+    sorted.sort((a, b) => {
+      let valA, valB
+      switch (this.sortField) {
+        case "date":
+          valA = a.transfer_date || ""
+          valB = b.transfer_date || ""
+          return valA < valB ? -dir : valA > valB ? dir : 0
+        case "from":
+          valA = (a.from_account_name || "").toLowerCase()
+          valB = (b.from_account_name || "").toLowerCase()
+          return valA < valB ? -dir : valA > valB ? dir : 0
+        case "to":
+          valA = (a.to_account_name || "").toLowerCase()
+          valB = (b.to_account_name || "").toLowerCase()
+          return valA < valB ? -dir : valA > valB ? dir : 0
+        case "memo":
+          valA = (a.memo || "").toLowerCase()
+          valB = (b.memo || "").toLowerCase()
+          return valA < valB ? -dir : valA > valB ? dir : 0
+        case "amount":
+          valA = parseFloat(a.amount) || 0
+          valB = parseFloat(b.amount) || 0
+          return (valA - valB) * dir
+        default:
+          return 0
+      }
+    })
+    return sorted
+  }
+
+  _updateSortIcons() {
+    if (!this.hasTableHeadTarget) return
+    const icons = this.tableHeadTarget.querySelectorAll("[data-sort-icon]")
+    icons.forEach(icon => {
+      const field = icon.dataset.sortIcon
+      if (field === this.sortField) {
+        icon.innerHTML = this.sortDir === "asc"
+          ? `<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>`
+          : `<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>`
+        icon.className = "text-brand-600 dark:text-brand-400"
+      } else {
+        icon.innerHTML = ""
+        icon.className = "text-gray-300 dark:text-gray-600"
+      }
+    })
   }
 
   renderRow(t) {
