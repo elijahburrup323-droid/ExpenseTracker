@@ -248,6 +248,13 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 - **ss_planner_controller.js** — Social Security Benefit Planner with multi-age comparison and break-even analysis. Users enter 2+ claiming ages (years + months) via dynamically-added dropdown rows, then click Calculate Comparison to compute monthly benefits using SSA early/late adjustment rules with year+month precision. Pairwise break-even ages computed via month-by-month cumulative simulation. Outputs: sortable comparison results table (Claim Age, Monthly Benefit, Lifetime Value, Notes), Break-even Analysis card with pairwise crossover ages and plain-English explanations, cumulative benefit line chart with dynamic legend, and Recommendation Summary narrative. Supports spouse participant with independent claim age list. COLA assumption and Working Before FRA toggle in Assumptions section. No database writes — all state held in component. iPad-friendly stacked dropdowns.
 - **reconciliation_controller.js** — Stimulus controller for Account Reconciliation screen. Manages account selection, fetches reconciliation data via AJAX, renders Payments/Deposits/Transfers/Balance Adjustments tables with reconcile checkboxes. Toggles reconciled state per-row via PATCH. External balance input and statement counts saved via PUT. Fix Mode shows unmatched transactions and suggested fixes. "Mark as Reconciled" enabled only when difference is zero. Collapsible group sections: clickable headers with chevron indicators toggle table/footer visibility. Auto-collapses empty groups and fully reconciled groups. Collapse state persisted per user/account/month/group via group_states API. Keyboard accessible (Enter/Space). On connect, reads ?account_id= query param to auto-select an account (used by Accounts dblclick navigation).
 
+### Report Sort Utility (app/javascript/controllers/shared/report_sort.js)
+- Shared sortable-header utility for all reports under Monthly > Reports
+- Exports: `nextSortState(clickedField, currentField, currentDir)` — returns { field, dir } after a header click
+- Exports: `sortTh(label, field, sort, ctrl, align)` — renders a sortable &lt;th&gt; with chevron indicator, click handler, and active/inactive styling
+- Exports: `sortData(array, field, dir, accessor)` — sorts array of objects by field, handles numbers, strings, dates, nulls
+- All 9 report tables use this utility for consistent sortable column headers with ascending/descending toggle
+
 ### Icon Catalog (app/javascript/controllers/shared/icon_catalog.js)
 - Contains 50 budget-related SVG icons (grocery, dining, gas, utilities, etc.) and 12 color options
 - Exports: `iconFor(key)`, `escapeHtml(str)`, `escapeAttr(str)`, `ICONS`, `COLORS`

@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { sortTh, sortData, nextSortState } from "controllers/shared/report_sort"
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"]
 
@@ -23,6 +24,7 @@ export default class extends Controller {
   static values = { apiUrl: String, accountsUrl: String, year: Number, month: Number }
 
   async connect() {
+    this._sort = { field: "date", dir: "asc" }
     this._populateSelectors()
     await this._fetchAccounts()
   }
@@ -78,6 +80,13 @@ export default class extends Controller {
     this.optionsModalTarget.style.display = "none"
     this.reportContentTargets.forEach(el => el.style.display = "")
     this.fetchData()
+  }
+
+  toggleSort(event) {
+    const f = event.currentTarget.dataset.sortField
+    if (!f) return
+    this._sort = nextSortState(f, this._sort.field, this._sort.dir)
+    this.render()
   }
 
   async fetchData() {
@@ -164,7 +173,8 @@ export default class extends Controller {
             <p class="text-sm text-gray-400 dark:text-gray-500">No transactions for this period.</p>
           </div>`
       } else {
-        const rows = txns.map(t => {
+        const sortedTxns = sortData(txns, this._sort.field, this._sort.dir)
+        const rows = sortedTxns.map(t => {
           const reconBadge = t.reconciled
             ? `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">Yes</span>`
             : `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">No</span>`
@@ -188,11 +198,11 @@ export default class extends Controller {
               <table class="min-w-full">
                 <thead class="bg-gray-50 dark:bg-gray-900">
                   <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
-                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Reconciled</th>
+                    ${sortTh("Date", "date", this._sort, "reconciliation-summary", "left")}
+                    ${sortTh("Description", "description", this._sort, "reconciliation-summary", "left")}
+                    ${sortTh("Amount", "amount", this._sort, "reconciliation-summary", "right")}
+                    ${sortTh("Type", "type", this._sort, "reconciliation-summary", "left")}
+                    ${sortTh("Reconciled", "reconciled", this._sort, "reconciliation-summary", "center")}
                   </tr>
                 </thead>
                 <tbody>${rows}</tbody>

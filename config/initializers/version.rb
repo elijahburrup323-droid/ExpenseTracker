@@ -1,6 +1,6 @@
 APP_VERSION = "1.3.18"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
-MANUAL_CHANGE_SEQ = 28  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 29  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
@@ -107,6 +107,8 @@ APP_ALL_VERSIONS = [
       "Legal Pages: Public view now renders from database-driven sections instead of monolithic HTML content column (CM-022126-07)",
       "Database: New legal_page_sections table with section_number, title, body, display_order, active flag, and audit tracking (CM-022126-07)",
       "Navigation: Terms Maint. and Privacy Maint. links added under Admin sidebar group (CM-022126-07)",
+      "Reports: All 9 report tables now have sortable column headers — click any header to sort ascending/descending with chevron indicators (CM-022126-06)",
+      "Reports: Shared report_sort.js utility provides sortTh(), sortData(), and nextSortState() for consistent sort behavior across all reports (CM-022126-06)",
     ]
   },
   {

@@ -1,5 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 import { renderIconSvg } from "controllers/shared/icon_catalog"
+import { sortTh, sortData, nextSortState } from "controllers/shared/report_sort"
 
 function fmt(amount) {
   const n = parseFloat(amount) || 0
@@ -22,6 +23,14 @@ export default class extends Controller {
 
   connect() {
     this._includeInactive = false
+    this._sort = { field: "due_day_display", dir: "asc" }
+  }
+
+  toggleSort(event) {
+    const f = event.currentTarget.dataset.sortField
+    if (!f) return
+    this._sort = nextSortState(f, this._sort.field, this._sort.dir)
+    if (this._data) this.render()
   }
 
   // --- Modal Logic ---
@@ -68,12 +77,24 @@ export default class extends Controller {
       <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Expected</div>
       <div class="text-lg font-bold text-gray-900 dark:text-white mt-1">${fmt(d.total_expected)}</div>`
 
+    // Table header
+    this.summaryHeadTarget.innerHTML = `<tr>
+      ${sortTh("Due Date", "due_day_display", this._sort, "recurring-obligations", "left")}
+      ${sortTh("Name", "name", this._sort, "recurring-obligations", "left")}
+      ${sortTh("Account", "account_name", this._sort, "recurring-obligations", "left")}
+      ${sortTh("Category", "category_name", this._sort, "recurring-obligations", "left")}
+      ${sortTh("Frequency", "frequency_name", this._sort, "recurring-obligations", "left")}
+      ${sortTh("Amount", "amount", this._sort, "recurring-obligations", "right")}
+      ${sortTh("Status", "status", this._sort, "recurring-obligations", "center")}
+    </tr>`
+
     if (d.obligations.length === 0) {
       this.summaryBodyTarget.innerHTML = `<tr><td colspan="7" class="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">No recurring obligations for this month.</td></tr>`
       return
     }
 
-    const rows = d.obligations.map(ob => {
+    const sorted = sortData(d.obligations, this._sort.field, this._sort.dir)
+    const rows = sorted.map(ob => {
       const icon = ob.icon_key ? renderIconSvg(ob.icon_key, ob.color_key || "blue", "h-4 w-4") : ""
       const inactiveClass = ob.use_flag ? "" : " opacity-50"
       const inactiveBadge = ob.use_flag ? "" : `<span class="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400">Inactive</span>`

@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { sortTh, sortData, nextSortState } from "controllers/shared/report_sort"
 import { fetchTags, renderTagFilterCheckboxes, tagIdsQueryString, renderAppliedTagsBanner, renderAppliedTagsPrint } from "controllers/shared/tag_filter"
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"]
@@ -34,11 +35,19 @@ export default class extends Controller {
 
   async connect() {
     this._format = "table"
+    this._sort = { field: "amount", dir: "desc" }
     this._selectedTagIds = []
     this._allTags = []
     this._populateDateSelectors()
     await this._fetchAccounts()
     this._ensureTagsLoaded()
+  }
+
+  toggleSort(event) {
+    const f = event.currentTarget.dataset.sortField
+    if (!f) return
+    this._sort = nextSortState(f, this._sort.field, this._sort.dir)
+    if (this._data) this.render()
   }
 
   // --- Tag Filter ---
@@ -186,12 +195,20 @@ export default class extends Controller {
   }
 
   renderTable(d) {
+    this.tableHeadTarget.innerHTML = `<tr>
+      ${sortTh("Source", "name", this._sort, "income-by-source", "left")}
+      ${sortTh("Amount", "amount", this._sort, "income-by-source", "right")}
+      ${sortTh("# Deposits", "count", this._sort, "income-by-source", "right")}
+      ${sortTh("% of Total", "pct", this._sort, "income-by-source", "right")}
+    </tr>`
+
     if (d.sources.length === 0) {
       this.tableBodyTarget.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-sm text-gray-400 dark:text-gray-500">No income data for this period.</td></tr>`
       return
     }
 
-    const rows = d.sources.map((s, i) => {
+    const sorted = sortData(d.sources, this._sort.field, this._sort.dir)
+    const rows = sorted.map((s, i) => {
       const color = PIE_COLORS[i % PIE_COLORS.length]
       return `<tr class="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
         <td class="px-6 py-3">

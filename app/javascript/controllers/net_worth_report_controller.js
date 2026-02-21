@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { sortTh, sortData, nextSortState } from "controllers/shared/report_sort"
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"]
 
@@ -33,7 +34,15 @@ export default class extends Controller {
 
   connect() {
     this._format = "table"
+    this._sort = { field: "label", dir: "asc" }
     this._populateDateSelectors()
+  }
+
+  toggleSort(event) {
+    const f = event.currentTarget.dataset.sortField
+    if (!f) return
+    this._sort = nextSortState(f, this._sort.field, this._sort.dir)
+    if (this._data) this.render()
   }
 
   _populateDateSelectors() {
@@ -138,12 +147,21 @@ export default class extends Controller {
   }
 
   renderTable(d) {
+    this.tableHeadTarget.innerHTML = `<tr>
+      ${sortTh("Month", "label", this._sort, "net-worth-report", "left")}
+      ${sortTh("Total Assets", "total_assets", this._sort, "net-worth-report", "right")}
+      ${sortTh("Total Liabilities", "total_liabilities", this._sort, "net-worth-report", "right")}
+      ${sortTh("Net Worth", "net_worth", this._sort, "net-worth-report", "right")}
+      ${sortTh("Change", "change", this._sort, "net-worth-report", "right")}
+    </tr>`
+
     if (d.months.length === 0) {
       this.tableBodyTarget.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-sm text-gray-400 dark:text-gray-500">No data for this period.</td></tr>`
       return
     }
 
-    const rows = d.months.map(m => {
+    const sorted = sortData(d.months, this._sort.field, this._sort.dir)
+    const rows = sorted.map(m => {
       const changeHtml = m.change === null
         ? `<span class="text-gray-400">\u2014</span>`
         : `<span class="${colorClass(m.change)}">${m.change > 0 ? "+" : ""}${fmt(m.change)}</span>`

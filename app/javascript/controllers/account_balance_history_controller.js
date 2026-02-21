@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { sortTh, sortData, nextSortState } from "controllers/shared/report_sort"
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"]
 
@@ -40,8 +41,16 @@ export default class extends Controller {
 
   async connect() {
     this._format = "table"
+    this._sort = { field: "label", dir: "asc" }
     this._populateDateSelectors()
     await this._fetchAccounts()
+  }
+
+  toggleSort(event) {
+    const f = event.currentTarget.dataset.sortField
+    if (!f) return
+    this._sort = nextSortState(f, this._sort.field, this._sort.dir)
+    if (this._data) this.render()
   }
 
   // --- Setup ---
@@ -190,12 +199,20 @@ export default class extends Controller {
   }
 
   renderTable(d) {
+    this.tableHeadTarget.innerHTML = `<tr>
+      ${sortTh("Month", "label", this._sort, "account-balance-history", "left")}
+      ${sortTh("Beginning Balance", "beginning_balance", this._sort, "account-balance-history", "right")}
+      ${sortTh("Ending Balance", "ending_balance", this._sort, "account-balance-history", "right")}
+      ${sortTh("Change", "change", this._sort, "account-balance-history", "right")}
+    </tr>`
+
     if (d.months.length === 0) {
       this.tableBodyTarget.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-sm text-gray-400 dark:text-gray-500">No balance data for this period.</td></tr>`
       return
     }
 
-    const rows = d.months.map(m => {
+    const sorted = sortData(d.months, this._sort.field, this._sort.dir)
+    const rows = sorted.map(m => {
       const noData = m.beginning_balance === null
       if (noData) {
         return `<tr class="border-b border-gray-100 dark:border-gray-700">

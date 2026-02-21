@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { sortTh, sortData, nextSortState } from "controllers/shared/report_sort"
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"]
 
@@ -29,6 +30,7 @@ export default class extends Controller {
   static values = { apiUrl: String, year: Number, month: Number }
 
   connect() {
+    this._sort = { field: "name", dir: "asc" }
     this._populateSelectors()
   }
 
@@ -66,6 +68,13 @@ export default class extends Controller {
     this.optionsModalTarget.style.display = "none"
     this.reportContentTargets.forEach(el => el.style.display = "")
     this.fetchData()
+  }
+
+  toggleSort(event) {
+    const f = event.currentTarget.dataset.sortField
+    if (!f) return
+    this._sort = nextSortState(f, this._sort.field, this._sort.dir)
+    this.render()
   }
 
   async fetchData() {
@@ -118,7 +127,8 @@ export default class extends Controller {
 
     // Section 2: Account Balances
     if (this._showAccountDetail && d.accounts && d.accounts.length > 0) {
-      const rows = d.accounts.map(a => {
+      const sortedAccounts = sortData(d.accounts, this._sort.field, this._sort.dir)
+      const rows = sortedAccounts.map(a => {
         return `<tr class="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
           <td class="px-6 py-3 text-sm font-medium text-gray-900 dark:text-white">${escapeHtml(a.name)}</td>
           <td class="px-6 py-3 text-sm text-right font-mono text-gray-700 dark:text-gray-300">${fmt(a.beginning_balance)}</td>
@@ -136,10 +146,10 @@ export default class extends Controller {
             <table class="min-w-full">
               <thead class="bg-gray-50 dark:bg-gray-900">
                 <tr>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Account</th>
-                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Beginning Balance</th>
-                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ending Balance</th>
-                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Change</th>
+                  ${sortTh("Account", "name", this._sort, "soft-close-summary", "left")}
+                  ${sortTh("Beginning Balance", "beginning_balance", this._sort, "soft-close-summary", "right")}
+                  ${sortTh("Ending Balance", "ending_balance", this._sort, "soft-close-summary", "right")}
+                  ${sortTh("Change", "change", this._sort, "soft-close-summary", "right")}
                 </tr>
               </thead>
               <tbody>${rows}</tbody>

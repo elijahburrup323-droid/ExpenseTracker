@@ -49,6 +49,7 @@ export default class extends Controller {
     this._includeYtd = false
     this._selectedTagIds = []
     this._allTags = []
+    this._detailSort = { field: "name", dir: "asc" }
     this._ensureTagsLoaded()
   }
 
@@ -310,7 +311,18 @@ export default class extends Controller {
 
     let body = ""
     if (isOpen && items.length > 0) {
-      const rows = items.map(([name, amt]) =>
+      const sortedItems = [...items].sort((a, b) => {
+        const mult = this._detailSort.dir === 'asc' ? 1 : -1
+        if (this._detailSort.field === 'amount') return (a[1] - b[1]) * mult
+        return String(a[0]).localeCompare(String(b[0])) * mult
+      })
+
+      const nameActive = this._detailSort.field === 'name'
+      const amtActive = this._detailSort.field === 'amount'
+      const nameChev = nameActive ? (this._detailSort.dir === 'asc' ? '\u25B2' : '\u25BC') : ''
+      const amtChev = amtActive ? (this._detailSort.dir === 'asc' ? '\u25B2' : '\u25BC') : ''
+
+      const rows = sortedItems.map(([name, amt]) =>
         `<tr class="border-b border-gray-100 dark:border-gray-700">
           <td class="px-6 py-2.5 text-sm text-gray-700 dark:text-gray-300">${escapeHtml(name)}</td>
           <td class="px-6 py-2.5 text-sm text-right font-medium ${amountClass(amt)}">${fmt(amt)}</td>
@@ -319,6 +331,18 @@ export default class extends Controller {
 
       body = `<div class="overflow-hidden">
         <table class="min-w-full">
+          <thead class="bg-gray-50 dark:bg-gray-900">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium ${nameActive ? 'text-gray-700 dark:text-gray-200' : 'text-gray-500 dark:text-gray-400'} uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 transition select-none"
+                  data-sort-field="name" data-action="click->monthly-cash-flow#toggleDetailSort">
+                <span class="inline-flex items-center space-x-1"><span>Name</span>${nameChev ? `<span class="ml-1">${nameChev}</span>` : ''}</span>
+              </th>
+              <th class="px-6 py-3 text-right text-xs font-medium ${amtActive ? 'text-gray-700 dark:text-gray-200' : 'text-gray-500 dark:text-gray-400'} uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 transition select-none"
+                  data-sort-field="amount" data-action="click->monthly-cash-flow#toggleDetailSort">
+                <span class="inline-flex items-center justify-end space-x-1"><span>Amount</span>${amtChev ? `<span class="ml-1">${amtChev}</span>` : ''}</span>
+              </th>
+            </tr>
+          </thead>
           <tbody>${rows}
             <tr class="bg-gray-50 dark:bg-gray-900 border-t-2 border-gray-300 dark:border-gray-600">
               <td class="px-6 py-3 text-sm font-bold text-gray-900 dark:text-white">Total</td>
@@ -353,6 +377,17 @@ export default class extends Controller {
     const section = event.currentTarget.dataset.section
     if (section === "deposits") this._depositsOpen = !this._depositsOpen
     if (section === "payments") this._paymentsOpen = !this._paymentsOpen
+    this.render()
+  }
+
+  toggleDetailSort(event) {
+    const f = event.currentTarget.dataset.sortField
+    if (!f) return
+    if (f === this._detailSort.field) {
+      this._detailSort = { field: f, dir: this._detailSort.dir === "asc" ? "desc" : "asc" }
+    } else {
+      this._detailSort = { field: f, dir: "asc" }
+    }
     this.render()
   }
 }

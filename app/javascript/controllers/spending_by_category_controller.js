@@ -1,6 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 import { renderIconSvg } from "controllers/shared/icon_catalog"
 import { fetchTags, renderTagFilterCheckboxes, tagIdsQueryString, renderAppliedTagsBanner, renderAppliedTagsPrint } from "controllers/shared/tag_filter"
+import { sortTh, sortData, nextSortState } from "controllers/shared/report_sort"
 
 function fmt(amount) {
   const n = parseFloat(amount) || 0
@@ -48,7 +49,15 @@ export default class extends Controller {
     this._includeYtd = false
     this._selectedTagIds = []
     this._allTags = []
+    this._sort = { field: "amount", dir: "desc" }
     this._ensureTagsLoaded()
+  }
+
+  toggleSort(event) {
+    const f = event.currentTarget.dataset.sortField
+    if (!f) return
+    this._sort = nextSortState(f, this._sort.field, this._sort.dir)
+    if (this._data) this.render()
   }
 
   // --- Tag Filter ---
@@ -184,11 +193,11 @@ export default class extends Controller {
 
     // Table header
     this.summaryHeadTarget.innerHTML = `<tr>
-      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Category</th>
-      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Spending Type</th>
-      <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
-      <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">% of Total</th>
-      <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"># Trans</th>
+      ${sortTh("Category", "name", this._sort, "spending-by-category", "left")}
+      ${sortTh("Spending Type", "spending_type", this._sort, "spending-by-category", "left")}
+      ${sortTh("Amount", "amount", this._sort, "spending-by-category", "right")}
+      ${sortTh("% of Total", "pct", this._sort, "spending-by-category", "right")}
+      ${sortTh("# Trans", "count", this._sort, "spending-by-category", "right")}
     </tr>`
 
     if (d.categories.length === 0) {
@@ -196,7 +205,8 @@ export default class extends Controller {
       return
     }
 
-    const rows = d.categories.map(c => {
+    const sorted = sortData(d.categories, this._sort.field, this._sort.dir)
+    const rows = sorted.map(c => {
       const icon = c.icon_key ? renderIconSvg(c.icon_key, c.color_key || "blue", "h-5 w-5") : ""
       return `<tr class="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
         <td class="px-6 py-3">
