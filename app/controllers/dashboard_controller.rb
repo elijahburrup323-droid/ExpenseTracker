@@ -108,5 +108,19 @@ class DashboardController < ApplicationController
                                    .order(payment_date: :desc, sort_order: :desc)
                                    .includes(:account, spending_category: :spending_type)
                                    .limit(5)
+
+    # Card 6: Buckets summary
+    user_buckets = current_user.buckets.active.includes(:account).ordered
+    if user_buckets.empty?
+      @buckets_summary = { empty: true }
+    else
+      top = user_buckets.sort_by { |b| -b.current_balance.to_f }.first(5)
+      @buckets_summary = {
+        empty: false,
+        count: user_buckets.size,
+        total_balance: user_buckets.sum(&:current_balance).to_f.round(2),
+        top_buckets: top
+      }
+    end
   end
 end

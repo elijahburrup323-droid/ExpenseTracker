@@ -1,9 +1,42 @@
-<div class="flex items-center mb-4">
-  <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200"><%= card.title %></h2>
+<div class="flex items-center justify-between mb-4">
+  <div class="flex items-center">
+    <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200"><%= card.title %></h2>
+  </div>
 </div>
-<div class="flex-1 flex items-center justify-center">
-  <p class="text-sm text-gray-400 dark:text-gray-500">No buckets yet.</p>
+<div class="flex-1" data-role="card-content">
+  <% if @buckets_summary[:empty] %>
+    <p class="text-sm text-gray-400 dark:text-gray-500 text-center py-4">No buckets yet. Create one to start allocating money.</p>
+  <% else %>
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-xs text-gray-500 dark:text-gray-400"><%= @buckets_summary[:count] %> bucket<%= @buckets_summary[:count] != 1 ? "s" : "" %></span>
+      <span class="text-sm font-semibold text-gray-900 dark:text-white"><%= number_to_currency(@buckets_summary[:total_balance]) %></span>
+    </div>
+    <div class="space-y-2">
+      <% @buckets_summary[:top_buckets].each do |b| %>
+        <div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center min-w-0">
+              <span class="text-sm text-gray-700 dark:text-gray-300 truncate"><%= b.name %></span>
+              <% if b.is_default %>
+                <span class="ml-1 text-[10px] font-medium text-brand-600 dark:text-brand-400">(Default)</span>
+              <% end %>
+            </div>
+            <span class="text-sm font-semibold text-gray-900 dark:text-white ml-2 flex-shrink-0"><%= number_to_currency(b.current_balance) %></span>
+          </div>
+          <% if b.target_amount.present? && b.target_amount > 0 %>
+            <% pct = [(b.current_balance.to_f / b.target_amount.to_f * 100).round(1), 100].min %>
+            <% bar_color = pct >= 100 ? "bg-green-500" : pct >= 50 ? "bg-brand-500" : "bg-yellow-500" %>
+            <div class="mt-1 w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+              <div class="<%= bar_color %> h-full rounded-full" style="width: <%= pct %>%"></div>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
 </div>
 <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
-  <a href="#" class="text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium">Manage Buckets &rsaquo;</a>
+  <%= link_to buckets_path, class: "text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium" do %>
+    Manage Buckets &rsaquo;
+  <% end %>
 </div>

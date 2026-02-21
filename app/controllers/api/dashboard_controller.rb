@@ -119,7 +119,7 @@ module Api
       when "recent_activity"
         compute_recent_activity(ctx)
       when "buckets"
-        { placeholder: true }
+        compute_buckets(ctx)
       else
         {}
       end
@@ -239,6 +239,33 @@ module Api
                  .map { |p| { date: p.payment_date.strftime("%-m/%-d"), description: p.description, amount: p.amount.to_f } }
 
       { recent: recent }
+    end
+
+    def compute_buckets(_ctx)
+      buckets = current_user.buckets.active.includes(:account).ordered
+      return { empty: true, count: 0, total_balance: 0, buckets: [] } if buckets.empty?
+
+      total_balance = buckets.sum(&:current_balance).to_f.round(2)
+
+      top_buckets = buckets.sort_by { |b| -b.current_balance.to_f }.first(5).map do |b|
+        pct = b.target_amount.present? && b.target_amount > 0 ?
+          [(b.current_balance.to_f / b.target_amount.to_f * 100).round(1), 100].min : nil
+        {
+          name: b.name,
+          balance: b.current_balance.to_f.round(2),
+          target: b.target_amount&.to_f&.round(2),
+          progress_pct: pct,
+          account_name: b.account&.name || "[Deleted]",
+          is_default: b.is_default
+        }
+      end
+
+      {
+        empty: false,
+        count: buckets.size,
+        total_balance: total_balance,
+        buckets: top_buckets
+      }
     end
   end
 end
