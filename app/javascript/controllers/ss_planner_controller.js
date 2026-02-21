@@ -63,10 +63,10 @@ function fmtCurrency(val) {
 export default class extends Controller {
   static targets = [
     "yourName", "yourSex", "yourBirthdate", "yourCurrentlyDrawing",
-    "yourClaimAgeList", "yourClaimAgeDupMsg", "yourFRA", "yourLifeExpectancy",
+    "yourClaimAgeList", "yourClaimAgeDupMsg", "yourFRA", "yourFRAInline", "yourLifeExpectancy",
     "yourPIA",
     "spouseSection", "spouseName", "spouseSex", "spouseBirthdate", "spouseCurrentlyDrawing",
-    "spouseClaimAgeList", "spouseClaimAgeDupMsg", "spouseFRA", "spouseLifeExpectancy",
+    "spouseClaimAgeList", "spouseClaimAgeDupMsg", "spouseFRA", "spouseFRAInline", "spouseLifeExpectancy",
     "spousePIA",
     "colaRate",
     "strategyTableBody", "strategyTableHead", "timelineChart",
@@ -233,15 +233,22 @@ export default class extends Controller {
   _renderClaimAgeRows(who) {
     const ages = who === "your" ? this.yourClaimAges : this.spouseClaimAges
     const container = who === "your" ? this.yourClaimAgeListTarget : this.spouseClaimAgeListTarget
-    const selectClass = "w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm focus:ring-brand-500 focus:border-brand-500"
+    const selectClass = "rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm focus:ring-brand-500 focus:border-brand-500 px-2 py-1.5"
 
-    container.innerHTML = ages.map((age, idx) => {
+    // Table header row
+    let html = `<div class="grid grid-cols-[1fr_1fr_auto] gap-2 mb-1">
+      <span class="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-1">Years</span>
+      <span class="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-1">Months</span>
+      <span class="w-8"></span>
+    </div>`
+
+    html += ages.map((age, idx) => {
       const yearsOpts = Array.from({ length: 9 }, (_, i) => {
         const y = 62 + i
-        return `<option value="${y}" ${y === age.years ? "selected" : ""}>${y} years</option>`
+        return `<option value="${y}" ${y === age.years ? "selected" : ""}>${y}</option>`
       }).join("")
       const monthsOpts = Array.from({ length: 12 }, (_, i) => {
-        return `<option value="${i}" ${i === age.months ? "selected" : ""}>${i} months</option>`
+        return `<option value="${i}" ${i === age.months ? "selected" : ""}>${i}</option>`
       }).join("")
       const canDelete = ages.length > 2
       const deleteBtn = canDelete
@@ -250,18 +257,18 @@ export default class extends Controller {
              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
            </button>`
         : `<div class="w-8"></div>`
-      return `<div class="flex items-start gap-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg p-2">
-        <div class="flex-1 space-y-1">
-          <select data-claim-who="${who}" data-claim-idx="${idx}" data-claim-field="years"
-                  data-action="change->ss-planner#onClaimAgeSelect"
-                  class="${selectClass}">${yearsOpts}</select>
-          <select data-claim-who="${who}" data-claim-idx="${idx}" data-claim-field="months"
-                  data-action="change->ss-planner#onClaimAgeSelect"
-                  class="${selectClass}">${monthsOpts}</select>
-        </div>
+      return `<div class="grid grid-cols-[1fr_1fr_auto] gap-2 items-center">
+        <select data-claim-who="${who}" data-claim-idx="${idx}" data-claim-field="years"
+                data-action="change->ss-planner#onClaimAgeSelect"
+                class="${selectClass}">${yearsOpts}</select>
+        <select data-claim-who="${who}" data-claim-idx="${idx}" data-claim-field="months"
+                data-action="change->ss-planner#onClaimAgeSelect"
+                class="${selectClass}">${monthsOpts}</select>
         ${deleteBtn}
       </div>`
     }).join("")
+
+    container.innerHTML = html
   }
 
   // Stimulus action handlers for dynamic rows
@@ -290,8 +297,12 @@ export default class extends Controller {
       const birthDate = new Date(yourBirth)
       const birthYear = birthDate.getFullYear()
       const fra = getFRA(birthYear)
+      const yourFRAText = fmtAge(fra.years, fra.months)
       if (this.hasYourFRATarget) {
-        this.yourFRATarget.textContent = fmtAge(fra.years, fra.months)
+        this.yourFRATarget.textContent = yourFRAText
+      }
+      if (this.hasYourFRAInlineTarget) {
+        this.yourFRAInlineTarget.textContent = yourFRAText
       }
       const now = new Date()
       const ageYears = now.getFullYear() - birthYear - (now < new Date(now.getFullYear(), birthDate.getMonth(), birthDate.getDate()) ? 1 : 0)
@@ -308,8 +319,12 @@ export default class extends Controller {
         const sBirth = new Date(spouseBirth)
         const sBirthYear = sBirth.getFullYear()
         const sFra = getFRA(sBirthYear)
+        const spouseFRAText = fmtAge(sFra.years, sFra.months)
         if (this.hasSpouseFRATarget) {
-          this.spouseFRATarget.textContent = fmtAge(sFra.years, sFra.months)
+          this.spouseFRATarget.textContent = spouseFRAText
+        }
+        if (this.hasSpouseFRAInlineTarget) {
+          this.spouseFRAInlineTarget.textContent = spouseFRAText
         }
         const now = new Date()
         const sAge = now.getFullYear() - sBirthYear - (now < new Date(now.getFullYear(), sBirth.getMonth(), sBirth.getDate()) ? 1 : 0)

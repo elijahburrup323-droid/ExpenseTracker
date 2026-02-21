@@ -62,11 +62,12 @@
         </div>
         <%# Primary Insurance Amount (PIA) %>
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Primary Insurance Amount (PIA) $/mo</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Benefit at Full Retirement Age (PIA) &mdash; $/mo</label>
           <input type="number" step="1" min="0" placeholder="e.g. 2800"
                  data-ss-planner-target="yourPIA"
                  data-action="change->ss-planner#recalculate"
                  class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm focus:ring-brand-500 focus:border-brand-500">
+          <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Enter the monthly benefit shown on your Social Security statement at your FRA (<span data-ss-planner-target="yourFRAInline">&mdash;</span>).</p>
         </div>
         <%# Currently Drawing? %>
         <div>
@@ -171,11 +172,12 @@
           </div>
           <%# Primary Insurance Amount (PIA) %>
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Primary Insurance Amount (PIA) $/mo</label>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Benefit at Full Retirement Age (PIA) &mdash; $/mo</label>
             <input type="number" step="1" min="0" placeholder="e.g. 1800"
                    data-ss-planner-target="spousePIA"
                    data-action="change->ss-planner#recalculate"
                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm focus:ring-brand-500 focus:border-brand-500">
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Enter the monthly benefit shown on their Social Security statement at their FRA (<span data-ss-planner-target="spouseFRAInline">&mdash;</span>).</p>
           </div>
           <%# Currently Drawing? %>
           <div>
