@@ -143,9 +143,11 @@ export default class extends Controller {
     const memo = t.memo ? escapeHtml(t.memo) : ""
     const amount = this.formatCurrency(t.amount)
 
+    const bucketBadge = `<span class="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">Bucket</span>`
     const fromBucketLabel = t.from_bucket_name ? `<span class="block text-xs text-gray-400">${escapeHtml(t.from_bucket_name)}</span>` : ""
     const toBucketLabel = t.to_bucket_name ? `<span class="block text-xs text-gray-400">${escapeHtml(t.to_bucket_name)}</span>` : ""
-    const reallocationBadge = t.is_bucket_reallocation ? `<span class="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">Bucket</span>` : ""
+    const fromBucketBadge = t.from_bucket_id ? bucketBadge : ""
+    const toBucketBadge = t.to_bucket_id ? bucketBadge : ""
 
     return `
       <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
@@ -154,6 +156,7 @@ export default class extends Controller {
           <div class="flex items-center space-x-2">
             ${fromIcon}
             <div><span>${escapeHtml(t.from_account_name)}</span>${fromBucketLabel}</div>
+            ${fromBucketBadge}
             <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
           </div>
         </td>
@@ -161,7 +164,7 @@ export default class extends Controller {
           <div class="flex items-center space-x-2">
             ${toIcon}
             <div><span>${escapeHtml(t.to_account_name)}</span>${toBucketLabel}</div>
-            ${reallocationBadge}
+            ${toBucketBadge}
           </div>
         </td>
         <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-[200px] truncate">${memo}</td>
