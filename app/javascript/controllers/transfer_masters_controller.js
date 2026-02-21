@@ -5,7 +5,7 @@ export default class extends Controller {
   static targets = [
     "tableBody", "paginationInfo", "addButton",
     "modal", "modalTitle", "modalFrom", "modalTo", "modalDate", "modalAmount", "modalMemo", "modalError", "modalSaveButton",
-    "modalFromBucketRow", "modalFromBucket", "modalToBucketRow", "modalToBucket",
+    "modalFromBucketRow", "modalFromBucket", "modalToBucketRow", "modalToBucket", "bucketHelperText",
     "deleteModal",
     "dateWarningModal", "dateWarningMessage", "deleteBlockedModal", "deleteBlockedMessage"
   ]
@@ -71,20 +71,25 @@ export default class extends Controller {
     const memo = t.memo ? escapeHtml(t.memo) : ""
     const amount = this.formatCurrency(t.amount)
 
+    const fromBucketLabel = t.from_bucket_name ? `<span class="block text-xs text-gray-400">${escapeHtml(t.from_bucket_name)}</span>` : ""
+    const toBucketLabel = t.to_bucket_name ? `<span class="block text-xs text-gray-400">${escapeHtml(t.to_bucket_name)}</span>` : ""
+    const reallocationBadge = t.is_bucket_reallocation ? `<span class="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">Bucket</span>` : ""
+
     return `
       <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${date}</td>
         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
           <div class="flex items-center space-x-2">
             ${fromIcon}
-            <span>${escapeHtml(t.from_account_name)}</span>
+            <div><span>${escapeHtml(t.from_account_name)}</span>${fromBucketLabel}</div>
             <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
           </div>
         </td>
         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
           <div class="flex items-center space-x-2">
             ${toIcon}
-            <span>${escapeHtml(t.to_account_name)}</span>
+            <div><span>${escapeHtml(t.to_account_name)}</span>${toBucketLabel}</div>
+            ${reallocationBadge}
           </div>
         </td>
         <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-[200px] truncate">${memo}</td>
@@ -239,18 +244,37 @@ export default class extends Controller {
     this.toBuckets = []
     this._hideBucketRow("from")
     this._hideBucketRow("to")
+    if (this.hasBucketHelperTextTarget) this.bucketHelperTextTarget.classList.add("hidden")
   }
 
   onFromAccountChange(event) {
     const val = event.target.value
-    if (val) { this._fetchBucketsFor(Number(val), "from") }
-    else { this._hideBucketRow("from"); this.fromBuckets = [] }
+    if (val) { this._fetchBucketsFor(Number(val), "from").then(() => this._updateBucketHelperText()) }
+    else { this._hideBucketRow("from"); this.fromBuckets = []; this._updateBucketHelperText() }
   }
 
   onToAccountChange(event) {
     const val = event.target.value
-    if (val) { this._fetchBucketsFor(Number(val), "to") }
-    else { this._hideBucketRow("to"); this.toBuckets = [] }
+    if (val) { this._fetchBucketsFor(Number(val), "to").then(() => this._updateBucketHelperText()) }
+    else { this._hideBucketRow("to"); this.toBuckets = []; this._updateBucketHelperText() }
+  }
+
+  onBucketChange() {
+    this._updateBucketHelperText()
+  }
+
+  _updateBucketHelperText() {
+    if (!this.hasBucketHelperTextTarget) return
+    const fromId = this.modalFromTarget.value
+    const toId = this.modalToTarget.value
+    const fromBucket = this.hasModalFromBucketTarget ? this.modalFromBucketTarget.value : ""
+    const toBucket = this.hasModalToBucketTarget ? this.modalToBucketTarget.value : ""
+
+    if (fromId && fromId === toId && fromBucket && toBucket && fromBucket !== toBucket) {
+      this.bucketHelperTextTarget.classList.remove("hidden")
+    } else {
+      this.bucketHelperTextTarget.classList.add("hidden")
+    }
   }
 
   // ── Save (Create / Update) ──
@@ -265,7 +289,12 @@ export default class extends Controller {
     // Validation
     if (!fromId) return this.showModalError("Please select a From account.")
     if (!toId) return this.showModalError("Please select a To account.")
-    if (fromId === toId) return this.showModalError("From and To accounts cannot be the same.")
+    if (fromId === toId) {
+      const fromBucket = this.hasModalFromBucketTarget ? this.modalFromBucketTarget.value : ""
+      const toBucket = this.hasModalToBucketTarget ? this.modalToBucketTarget.value : ""
+      if (!fromBucket || !toBucket) return this.showModalError("Select both buckets to move funds within the same account.")
+      if (fromBucket === toBucket) return this.showModalError("From Bucket and To Bucket cannot be the same.")
+    }
     if (!date) return this.showModalError("Please select a date.")
     if (!amount || amount <= 0) return this.showModalError("Amount must be greater than $0.00.")
 

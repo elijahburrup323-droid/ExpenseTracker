@@ -14,13 +14,16 @@ module Api
 
       ActiveRecord::Base.transaction do
         if transfer.save
-          from_acct = transfer.from_account
-          from_acct.balance -= transfer.amount
-          from_acct.save!
+          # Only adjust account balances for inter-account transfers
+          unless transfer.from_account_id == transfer.to_account_id
+            from_acct = transfer.from_account
+            from_acct.balance -= transfer.amount
+            from_acct.save!
 
-          to_acct = transfer.to_account
-          to_acct.balance += transfer.amount
-          to_acct.save!
+            to_acct = transfer.to_account
+            to_acct.balance += transfer.amount
+            to_acct.save!
+          end
 
           apply_transfer_bucket_transactions(transfer)
           flag_open_month_has_data(transfer.transfer_date, "transfer")
@@ -37,25 +40,31 @@ module Api
         old_amount = @transfer.amount
         old_from = @transfer.from_account
         old_to = @transfer.to_account
+        old_was_reallocation = old_from.id == old_to.id
 
         old_from_bucket_id = @transfer.from_bucket_id
         old_to_bucket_id = @transfer.to_bucket_id
 
         if @transfer.update(transfer_params)
-          # Reverse old transfer
-          old_from.balance += old_amount
-          old_from.save!
-          old_to.balance -= old_amount
-          old_to.save!
+          # Reverse old transfer (only if inter-account)
+          unless old_was_reallocation
+            old_from.balance += old_amount
+            old_from.save!
+            old_to.balance -= old_amount
+            old_to.save!
+          end
 
-          # Apply new transfer
+          # Apply new transfer (only if inter-account)
           new_from = @transfer.reload.from_account
-          new_from.balance -= @transfer.amount
-          new_from.save!
-
           new_to = @transfer.reload.to_account
-          new_to.balance += @transfer.amount
-          new_to.save!
+          new_is_reallocation = new_from.id == new_to.id
+
+          unless new_is_reallocation
+            new_from.balance -= @transfer.amount
+            new_from.save!
+            new_to.balance += @transfer.amount
+            new_to.save!
+          end
 
           # Reverse old bucket transactions and apply new ones
           reverse_transfer_bucket_transactions(old_from_bucket_id, old_to_bucket_id, old_amount, @transfer)
@@ -71,13 +80,16 @@ module Api
 
     def destroy
       ActiveRecord::Base.transaction do
-        from_acct = @transfer.from_account
-        from_acct.balance += @transfer.amount
-        from_acct.save!
+        # Only adjust account balances for inter-account transfers
+        unless @transfer.from_account_id == @transfer.to_account_id
+          from_acct = @transfer.from_account
+          from_acct.balance += @transfer.amount
+          from_acct.save!
 
-        to_acct = @transfer.to_account
-        to_acct.balance -= @transfer.amount
-        to_acct.save!
+          to_acct = @transfer.to_account
+          to_acct.balance -= @transfer.amount
+          to_acct.save!
+        end
 
         reverse_transfer_bucket_transactions(@transfer.from_bucket_id, @transfer.to_bucket_id, @transfer.amount, @transfer)
         @transfer.destroy!
@@ -129,34 +141,39 @@ module Api
           from_bucket_id: t.from_bucket_id,
           to_bucket_id: t.to_bucket_id,
           from_bucket_name: t.from_bucket_id.present? ? t.from_bucket&.name : nil,
-          to_bucket_name: t.to_bucket_id.present? ? t.to_bucket&.name : nil
+          to_bucket_name: t.to_bucket_id.present? ? t.to_bucket&.name : nil,
+          is_bucket_reallocation: t.from_account_id == t.to_account_id
         )
     end
 
     def apply_transfer_bucket_transactions(transfer)
+      is_reallocation = transfer.from_account_id == transfer.to_account_id
+
       if transfer.from_bucket_id.present?
         bucket = current_user.buckets.find(transfer.from_bucket_id)
+        memo = is_reallocation ? "Bucket reallocation to #{transfer.to_bucket&.name}" : "Transfer out to #{transfer.to_account&.name}"
         bucket.record_transaction!(
           direction: "OUT",
           amount: transfer.amount,
           source_type: "TRANSFER",
           source_id: transfer.id,
-          memo: "Transfer out to #{transfer.to_account&.name}",
+          memo: memo,
           txn_date: transfer.transfer_date
         )
       end
 
       if transfer.to_bucket_id.present?
         bucket = current_user.buckets.find(transfer.to_bucket_id)
+        memo = is_reallocation ? "Bucket reallocation from #{transfer.from_bucket&.name}" : "Transfer in from #{transfer.from_account&.name}"
         bucket.record_transaction!(
           direction: "IN",
           amount: transfer.amount,
           source_type: "TRANSFER",
           source_id: transfer.id,
-          memo: "Transfer in from #{transfer.from_account&.name}",
+          memo: memo,
           txn_date: transfer.transfer_date
         )
-      elsif transfer.to_account&.buckets&.active&.exists?
+      elsif !is_reallocation && transfer.to_account&.buckets&.active&.exists?
         # If to-account has buckets but no specific bucket chosen, add to default
         default_bucket = current_user.buckets.find_by(account_id: transfer.to_account_id, is_default: true)
         if default_bucket

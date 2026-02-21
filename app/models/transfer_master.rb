@@ -15,8 +15,14 @@ class TransferMaster < ApplicationRecord
   private
 
   def accounts_must_differ
-    if from_account_id.present? && from_account_id == to_account_id
-      errors.add(:to_account_id, "must be different from the From account")
+    return unless from_account_id.present? && from_account_id == to_account_id
+
+    # Same account: require both buckets and they must differ
+    if from_bucket_id.blank? || to_bucket_id.blank?
+      errors.add(:base, "Select both buckets to move funds within the same account.")
+    elsif from_bucket_id == to_bucket_id
+      errors.add(:base, "From Bucket and To Bucket cannot be the same.")
     end
+    # If both buckets present and different → valid bucket reallocation
   end
 end
