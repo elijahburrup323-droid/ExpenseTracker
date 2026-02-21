@@ -1,6 +1,6 @@
 APP_VERSION = "1.3.18"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
-MANUAL_CHANGE_SEQ = 24  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 25  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
@@ -98,6 +98,8 @@ APP_ALL_VERSIONS = [
       "Buckets: New Priority column between Bucket Name and Balance — sortable with ascending/descending indicators (CM-022126-04)",
       "Buckets: Account group row banding — alternating subtle background per account group for visual separation (CM-022126-04)",
       "Buckets: Default sort changed to Account ASC then Priority ASC for priority-driven ordering within each account (CM-022126-04)",
+      "Admin: Account Type Masters delete fixed — uses soft-delete instead of hard delete to avoid FK constraint on user_account_types (CM-022126-05)",
+      "Admin: Account Type Masters delete error messaging — in-use types show specific account names blocking deletion instead of generic error (CM-022126-05)",
     ]
   },
   {

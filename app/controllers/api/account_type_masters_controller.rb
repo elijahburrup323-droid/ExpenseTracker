@@ -52,11 +52,17 @@ module Api
       return render_not_found unless master
 
       if master.in_use?
-        render json: { errors: ["This account type is currently in use and cannot be deleted. Set it to inactive instead."] }, status: :unprocessable_entity
+        account_names = master.accounts.order(:name).limit(5).pluck(:name)
+        total = master.accounts.count
+        name_list = account_names.join(", ")
+        name_list += " (+#{total - 5} more)" if total > 5
+        render json: { errors: ["Cannot delete \"#{master.display_name}\" because it is in use by: #{name_list}. Change those accounts to a different type first, or set this type to Inactive."] }, status: :unprocessable_entity
         return
       end
 
-      master.destroy!
+      # Soft-delete: remove user toggle records then mark as deleted
+      master.user_account_types.delete_all
+      master.soft_delete!
       render json: { success: true }
     end
 

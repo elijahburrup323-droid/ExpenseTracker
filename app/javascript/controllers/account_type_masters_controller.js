@@ -256,15 +256,19 @@ export default class extends Controller {
         this.closeDeleteModal()
         this.fetchAll()
       } else {
-        const data = await res.json()
-        const msg = (data.errors || ["Unable to complete this request. Please try again."]).join(", ")
+        let msg = `Delete failed (HTTP ${res.status}).`
+        try {
+          const data = await res.json()
+          if (data.errors && data.errors.length > 0) msg = data.errors.join(", ")
+          else if (data.error) msg = data.error
+        } catch (_) { /* non-JSON response */ }
         this.deleteModalErrorTarget.textContent = msg
         this.deleteModalErrorTarget.classList.remove("hidden")
         this.deleteConfirmBtnTarget.disabled = true
         this.deleteConfirmBtnTarget.classList.add("opacity-50", "cursor-not-allowed")
       }
     } catch (e) {
-      this.deleteModalErrorTarget.textContent = "Network error."
+      this.deleteModalErrorTarget.textContent = "Network error. Please check your connection and try again."
       this.deleteModalErrorTarget.classList.remove("hidden")
     }
   }
