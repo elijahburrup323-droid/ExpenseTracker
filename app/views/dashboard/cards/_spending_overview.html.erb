@@ -1,7 +1,7 @@
 <% spent_val = @spent_mtd.to_f %>
-<div class="relative flex-1" data-role="flipper" style="transform-style: preserve-3d; transition: transform 0.6s; pointer-events: none;">
+<div class="relative flex-1" data-role="flipper" style="transform-style: preserve-3d; transition: transform 0.6s;">
   <%# === FRONT SIDE === %>
-  <div class="flex flex-col" data-role="front" style="backface-visibility: hidden; pointer-events: auto;">
+  <div class="flex flex-col" data-role="front" style="backface-visibility: hidden;">
     <div class="flex items-center justify-between mb-4">
       <div class="flex items-center">
         <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200"><%= card.title %></h2>
@@ -42,14 +42,27 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/>
         </svg>
       </button>
-      <%= link_to payments_path(start_date: @month_start.to_s, end_date: (@month_end - 1).to_s),
-            class: "text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium" do %>
-        View Details &rsaquo;
-      <% end %>
+      <div class="flex items-center space-x-3">
+        <%= link_to payments_path(start_date: @month_start.to_s, end_date: (@month_end - 1).to_s),
+              class: "text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium" do %>
+          View Details &rsaquo;
+        <% end %>
+        <button type="button" data-action="click->dashboard#toggleCardExpand"
+                data-role="expand-btn"
+                class="inline-flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition cursor-pointer" style="min-width:32px; min-height:32px;"
+                aria-label="Expand Spending Overview">
+          <svg class="w-4 h-4" data-icon="expand" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/>
+          </svg>
+          <svg class="w-4 h-4 hidden" data-icon="collapse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"/>
+          </svg>
+        </button>
+      </div>
     </div>
   </div>
   <%# === BACK SIDE (Category + Type Breakdowns) === %>
-  <div class="absolute inset-0 flex flex-col" data-role="back" style="backface-visibility: hidden; transform: rotateY(180deg); pointer-events: none;">
+  <div class="absolute inset-0 flex flex-col" data-role="back" style="backface-visibility: hidden; transform: rotateY(180deg);">
     <div class="flex items-center justify-between mb-3">
       <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Spending Breakdown</h2>
       <div class="flex items-center space-x-2">

@@ -1,6 +1,6 @@
 APP_VERSION = "1.3.18"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
-MANUAL_CHANGE_SEQ = 21  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 22  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
@@ -92,6 +92,8 @@ APP_ALL_VERSIONS = [
       "Social Security Benefit Planner: Break-even analysis — pairwise crossover ages computed via month-by-month cumulative simulation with plain-English winner explanations (CM-SS2)",
       "Social Security Benefit Planner: Cumulative benefit line chart dynamically renders one line per compared claim age with color-coded legend (CM-SS2)",
       "Social Security Benefit Planner: Recommendation narrative summarizes optimal strategy and break-even takeaway in 2-3 sentences (CM-SS2)",
+      "Dashboard: Spending Overview card expand button added to front side — expand now available on both front and back sides, matching Accounts card pattern (CM-022126-02)",
+      "Dashboard: Fixed Spending Overview expand by removing hardcoded pointer-events:none from flipper container — click events now reliably reach expand button (CM-022126-02)",
     ]
   },
   {
