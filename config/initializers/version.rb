@@ -1,6 +1,6 @@
 APP_VERSION = "1.3.18"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
-MANUAL_CHANGE_SEQ = 16  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 17  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
@@ -84,6 +84,7 @@ APP_ALL_VERSIONS = [
       "Theme: Toggle ON-state colors changed from hardcoded purple-600 to theme-aware brand-600 across all screens with toggles (CM-7)",
       "Social Security Benefit Planner: UI-only module with FRA/COLA/lifetime calculations accessible from user menu (CM-SS1)",
       "Social Security Benefit Planner: Reworked to match approved mockup — two-card Participants layout, sortable Strategy Summary table, line chart with 3 strategy lines, Recommendation Summary, and iPad-first stacked dropdowns (CM-1)",
+      "Admin: Account Type Masters delete modal — replaced generic fallback with user-friendly messaging showing blocking account names, disabled Delete button on error (CM-7)",
     ]
   },
   {

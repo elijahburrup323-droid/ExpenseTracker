@@ -8,7 +8,7 @@ function escapeHtml(str) {
 export default class extends Controller {
   static targets = [
     "tableBody", "modal", "modalTitle", "modalName", "modalDescription", "modalError",
-    "deleteModal", "deleteModalName", "deleteModalError",
+    "deleteModal", "deleteModalName", "deleteModalError", "deleteConfirmBtn",
     "cannotDeleteModal", "cannotDeleteBody"
   ]
   static values = { apiUrl: String, csrfToken: String }
@@ -200,12 +200,21 @@ export default class extends Controller {
         return
       }
     } catch (e) {
-      // proceed with delete modal
+      this.deletingId = id
+      this.deleteModalNameTarget.textContent = master.display_name
+      this.deleteModalErrorTarget.textContent = "Unable to verify deletion. Please try again."
+      this.deleteModalErrorTarget.classList.remove("hidden")
+      this.deleteModalTarget.classList.remove("hidden")
+      this.deleteConfirmBtnTarget.disabled = true
+      this.deleteConfirmBtnTarget.classList.add("opacity-50", "cursor-not-allowed")
+      return
     }
 
     this.deletingId = id
     this.deleteModalNameTarget.textContent = master.display_name
     this.deleteModalErrorTarget.classList.add("hidden")
+    this.deleteConfirmBtnTarget.disabled = false
+    this.deleteConfirmBtnTarget.classList.remove("opacity-50", "cursor-not-allowed")
     this.deleteModalTarget.classList.remove("hidden")
   }
 
@@ -248,8 +257,11 @@ export default class extends Controller {
         this.fetchAll()
       } else {
         const data = await res.json()
-        this.deleteModalErrorTarget.textContent = (data.errors || ["Delete failed"]).join(", ")
+        const msg = (data.errors || ["Unable to complete this request. Please try again."]).join(", ")
+        this.deleteModalErrorTarget.textContent = msg
         this.deleteModalErrorTarget.classList.remove("hidden")
+        this.deleteConfirmBtnTarget.disabled = true
+        this.deleteConfirmBtnTarget.classList.add("opacity-50", "cursor-not-allowed")
       }
     } catch (e) {
       this.deleteModalErrorTarget.textContent = "Network error."
