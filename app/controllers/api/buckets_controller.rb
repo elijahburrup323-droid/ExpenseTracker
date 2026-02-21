@@ -14,39 +14,84 @@ module Api
 
     def create
       bucket = current_user.buckets.build(bucket_params)
-      initial_balance = bucket.current_balance.to_f
+      requested_balance = bucket.current_balance.to_f
 
-      if initial_balance < 0
+      if requested_balance < 0
         return render json: { errors: ["Current balance cannot be negative"] }, status: :unprocessable_entity
       end
 
+      account = current_user.accounts.find_by(id: bucket.account_id)
+      return render json: { errors: ["Account not found"] }, status: :unprocessable_entity unless account
+
+      is_first_bucket = !current_user.buckets.where(account_id: bucket.account_id).exists?
+
       ActiveRecord::Base.transaction do
-        # Auto-assign sort_order
         max_sort = current_user.buckets.where(account_id: bucket.account_id).maximum(:sort_order) || 0
         bucket.sort_order = max_sort + 1
 
-        # First bucket for this account becomes default
-        unless current_user.buckets.where(account_id: bucket.account_id).exists?
+        if is_first_bucket
+          # First bucket: auto-capture entire account balance, mark as primary
           bucket.is_default = true
-        end
+          bucket.priority = 0
+          bucket.current_balance = 0
 
-        bucket.current_balance = 0
-
-        if bucket.save
-          # If initial balance provided, record transaction (sets current_balance correctly)
-          if initial_balance > 0
-            bucket.record_transaction!(
-              direction: "IN",
-              amount: initial_balance,
-              source_type: "INITIAL",
-              memo: "Initial bucket allocation",
-              txn_date: Date.current
-            )
+          if bucket.save
+            acct_balance = account.balance.to_f
+            if acct_balance > 0
+              bucket.record_transaction!(
+                direction: "IN",
+                amount: acct_balance,
+                source_type: "INITIAL",
+                memo: "Auto-captured full account balance",
+                txn_date: Date.current
+              )
+            end
+            render json: bucket_json(bucket), status: :created
+          else
+            render_errors(bucket)
+            raise ActiveRecord::Rollback
           end
-          render json: bucket_json(bucket), status: :created
         else
-          render_errors(bucket)
-          raise ActiveRecord::Rollback
+          # Subsequent bucket: transfer from primary bucket
+          primary = current_user.buckets.find_by(account_id: bucket.account_id, is_default: true)
+          unless primary
+            render json: { errors: ["No primary bucket found for this account."] }, status: :unprocessable_entity
+            raise ActiveRecord::Rollback
+            return
+          end
+
+          allocation = requested_balance
+          if allocation > primary.current_balance.to_f
+            render json: { errors: ["Allocation exceeds available funds in Primary Bucket (available: $#{'%.2f' % primary.current_balance})."] }, status: :unprocessable_entity
+            raise ActiveRecord::Rollback
+            return
+          end
+
+          bucket.priority = [(bucket.priority || 1), 1].max if bucket.priority == 0
+          bucket.current_balance = 0
+
+          if bucket.save
+            if allocation > 0
+              primary.record_transaction!(
+                direction: "OUT",
+                amount: allocation,
+                source_type: "FUND_MOVE",
+                memo: "Allocation to new bucket '#{bucket.name}'",
+                txn_date: Date.current
+              )
+              bucket.record_transaction!(
+                direction: "IN",
+                amount: allocation,
+                source_type: "FUND_MOVE",
+                memo: "Initial allocation from primary bucket",
+                txn_date: Date.current
+              )
+            end
+            render json: bucket_json(bucket), status: :created
+          else
+            render_errors(bucket)
+            raise ActiveRecord::Rollback
+          end
         end
       end
     end

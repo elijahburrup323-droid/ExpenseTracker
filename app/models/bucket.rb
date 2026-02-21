@@ -21,6 +21,7 @@ class Bucket < ApplicationRecord
   validates :target_amount, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
   validate :only_one_default_per_account, if: :is_default?
+  validate :only_one_priority_zero_per_account
   validate :account_belongs_to_user
 
   def soft_delete!
@@ -28,6 +29,16 @@ class Bucket < ApplicationRecord
   end
 
   def record_transaction!(direction:, amount:, source_type:, source_id: nil, memo: nil, txn_date: Date.current)
+    new_balance = if direction == "IN"
+                    current_balance + amount
+                  else
+                    current_balance - amount
+                  end
+
+    if new_balance < 0
+      raise ActiveRecord::RecordInvalid.new(self), "Bucket balance cannot go negative (would be #{new_balance})"
+    end
+
     bucket_transactions.create!(
       user: user,
       txn_date: txn_date,
@@ -38,11 +49,7 @@ class Bucket < ApplicationRecord
       memo: memo
     )
 
-    if direction == "IN"
-      self.current_balance += amount
-    else
-      self.current_balance -= amount
-    end
+    self.current_balance = new_balance
     save!
   end
 
@@ -61,6 +68,15 @@ class Bucket < ApplicationRecord
     existing = existing.where.not(id: id) if persisted?
     if existing.exists?
       errors.add(:base, "A default bucket already exists for this account.")
+    end
+  end
+
+  def only_one_priority_zero_per_account
+    return unless priority == 0 && account_id.present?
+    existing = Bucket.where(user_id: user_id, account_id: account_id, priority: 0)
+    existing = existing.where.not(id: id) if persisted?
+    if existing.exists?
+      errors.add(:priority, "Only one primary bucket (priority 0) is allowed per account.")
     end
   end
 end
