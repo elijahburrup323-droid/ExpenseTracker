@@ -120,9 +120,13 @@ module Api
       end
 
       if master.in_use?
+        account_names = master.accounts.where(user_id: current_user.id).order(:name).limit(6).pluck(:name)
+        total = master.accounts.where(user_id: current_user.id).count
         return render json: {
           errors: ["This type is in use by one or more accounts. Remove or reassign those accounts first."],
-          blocked: true
+          blocked: true,
+          account_names: account_names.first(5),
+          total_count: total
         }, status: :conflict
       end
 

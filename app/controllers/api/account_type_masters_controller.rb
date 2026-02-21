@@ -34,7 +34,14 @@ module Api
       return render_not_found unless master
 
       if master.in_use?
-        render json: { can_delete: false, reason: "IN_USE" }
+        accounts = master.accounts.order(:name).limit(6).pluck(:name)
+        total = master.accounts.count
+        render json: {
+          can_delete: false,
+          reason: "IN_USE",
+          account_names: accounts.first(5),
+          total_count: total
+        }
       else
         render json: { can_delete: true }
       end

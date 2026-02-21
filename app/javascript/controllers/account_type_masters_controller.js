@@ -9,7 +9,7 @@ export default class extends Controller {
   static targets = [
     "tableBody", "modal", "modalTitle", "modalName", "modalDescription", "modalError",
     "deleteModal", "deleteModalName", "deleteModalError",
-    "cannotDeleteModal"
+    "cannotDeleteModal", "cannotDeleteBody"
   ]
   static values = { apiUrl: String, csrfToken: String }
 
@@ -195,6 +195,7 @@ export default class extends Controller {
       const data = await res.json()
 
       if (!data.can_delete) {
+        this._populateCannotDeleteModal(data)
         this.cannotDeleteModalTarget.classList.remove("hidden")
         return
       }
@@ -206,6 +207,22 @@ export default class extends Controller {
     this.deleteModalNameTarget.textContent = master.display_name
     this.deleteModalErrorTarget.classList.add("hidden")
     this.deleteModalTarget.classList.remove("hidden")
+  }
+
+  _populateCannotDeleteModal(data) {
+    if (!this.hasCannotDeleteBodyTarget) return
+    const names = data.account_names || []
+    const total = data.total_count || 0
+    const overflow = total > 5 ? `<li class="text-gray-400">+${total - 5} more account(s)</li>` : ""
+
+    this.cannotDeleteBodyTarget.innerHTML = `
+      <p class="mb-2">This account type cannot be deleted because it is currently being used by the following account(s):</p>
+      <ul class="list-disc pl-5 mb-3 space-y-0.5 text-gray-700 dark:text-gray-300">
+        ${names.map(n => `<li>${escapeHtml(n)}</li>`).join("")}
+        ${overflow}
+      </ul>
+      <p>To delete this account type, you must first change those accounts to a different type. If you do not want it available for future use, you can set it to <strong>Inactive</strong> instead.</p>
+    `
   }
 
   closeDeleteModal() {
