@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-accent-theme="<%= user_signed_in? ? current_user.accent_theme_key : 'purple' %>">
+<html lang="en" data-accent-theme="<%= user_signed_in? ? current_user.accent_theme_key : 'purple' %>" style="--text-scale: <%= user_signed_in? ? (current_user.text_scale_percent / 100.0) : 1 %>">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -44,6 +44,8 @@
         --brand-600: #e11d48; --brand-700: #be123c; --brand-800: #9f1239;
         --brand-900: #881337;
       }
+      /* Global text scale — scales rem-based typography without affecting px layouts */
+      html { font-size: calc(16px * var(--text-scale, 1)); }
     </style>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -154,6 +156,36 @@
                   </svg>
                   <span><%= Date.today.strftime("%b %-d, %Y") %></span>
                 </div>
+
+                <% if current_user.budgethq_agent? %>
+                <div class="h-5 w-px bg-gray-300 dark:bg-gray-600"></div>
+
+                <%# Text Scale Control (agent-only) %>
+                <div class="flex items-center space-x-1"
+                     data-controller="text-scale"
+                     data-text-scale-api-url-value="<%= api_text_scale_path %>"
+                     data-text-scale-csrf-token-value="<%= form_authenticity_token %>"
+                     data-text-scale-current-value="<%= current_user.text_scale_percent %>">
+                  <button type="button"
+                          class="w-7 h-7 flex items-center justify-center rounded text-xs font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                          data-text-scale-target="decrease"
+                          data-action="click->text-scale#decrease"
+                          aria-label="Decrease text size"
+                          title="Decrease text size">A−</button>
+                  <button type="button"
+                          class="px-1.5 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-300 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition tabular-nums"
+                          data-text-scale-target="display"
+                          data-action="click->text-scale#reset"
+                          aria-label="Reset text size"
+                          title="Reset to 100%"><%= current_user.text_scale_percent %>%</button>
+                  <button type="button"
+                          class="w-7 h-7 flex items-center justify-center rounded text-xs font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                          data-text-scale-target="increase"
+                          data-action="click->text-scale#increase"
+                          aria-label="Increase text size"
+                          title="Increase text size">A+</button>
+                </div>
+                <% end %>
 
                 <div class="h-5 w-px bg-gray-300 dark:bg-gray-600"></div>
 

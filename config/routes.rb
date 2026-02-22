@@ -197,6 +197,9 @@ Rails.application.routes.draw do
     # Sidebar state API
     put "sidebar_state", to: "sidebar_state#update", as: :sidebar_state
 
+    # Text scale API
+    put "text_scale", to: "text_scale#update", as: :text_scale
+
     # Diagnostic endpoint (admin only)
     get "diagnose_send", to: "diagnose#test_send"
 
