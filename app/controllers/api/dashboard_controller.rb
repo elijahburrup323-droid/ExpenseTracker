@@ -173,7 +173,23 @@ module Api
         end
       end
 
-      { spent: spent, categories: by_category, types: by_type }
+      # Spending by Tag (split payment amount evenly across tags)
+      month_payments = base_payments.includes(:tags).to_a
+      tag_totals = Hash.new(0.0)
+      tag_names = {}
+      month_payments.each do |p|
+        next if p.tags.empty?
+        share = p.amount.to_f / p.tags.size
+        p.tags.each do |t|
+          tag_totals[t.id] += share
+          tag_names[t.id] ||= t.name
+        end
+      end
+      by_tag = tag_totals.sort_by { |_id, amt| -amt }.map do |id, amt|
+        { id: id, name: tag_names[id], amount: amt.round(2), pct: spent > 0 ? (amt / spent * 100).round(1) : 0.0 }
+      end
+
+      { spent: spent, categories: by_category, types: by_type, tags: by_tag }
     end
 
     def compute_accounts_overview(ctx)

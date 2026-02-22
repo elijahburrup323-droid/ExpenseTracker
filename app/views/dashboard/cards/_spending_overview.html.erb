@@ -77,52 +77,83 @@
     </div>
     <div class="flex-1 overflow-y-auto" data-role="card-back-content">
       <% color_map = { "blue" => "#3b82f6", "green" => "#22c55e", "gold" => "#eab308", "red" => "#ef4444", "purple" => "#a855f7", "pink" => "#ec4899", "indigo" => "#6366f1", "teal" => "#14b8a6", "orange" => "#f97316", "gray" => "#6b7280" } %>
-      <%# --- By Category --- %>
-      <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">By Category</p>
-      <% if @spending_by_category.any? %>
-        <div class="space-y-1">
-          <% @spending_by_category.each do |cat| %>
-            <div class="grid items-center" style="grid-template-columns: 1fr 5.5rem 3rem; gap: 0 0.5rem;">
-              <div class="flex items-center space-x-2 min-w-0">
-                <span class="w-2 h-2 rounded-full flex-shrink-0" style="background: <%= color_map[cat[:color_key]] || '#6b7280' %>"></span>
-                <span class="text-xs text-gray-700 dark:text-gray-300 truncate"><%= cat[:name] %></span>
-              </div>
-              <span class="text-xs font-semibold text-gray-900 dark:text-white text-right" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(cat[:amount]) %></span>
-              <span class="text-xs text-gray-400 dark:text-gray-500 text-right" style="font-variant-numeric: tabular-nums;"><%= cat[:pct] %>%</span>
+      <% has_tags = @spending_by_tag.present? && @spending_by_tag.any? %>
+      <% grid_cols = has_tags ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : "grid-cols-1 sm:grid-cols-2" %>
+      <div class="grid <%= grid_cols %> gap-4" data-role="breakdown-grid">
+        <%# --- Column 1: By Category --- %>
+        <div>
+          <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">By Category</p>
+          <% if @spending_by_category.any? %>
+            <div class="space-y-1">
+              <% @spending_by_category.each do |cat| %>
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-1.5 min-w-0 flex-1">
+                    <span class="w-2 h-2 rounded-full flex-shrink-0" style="background: <%= color_map[cat[:color_key]] || '#6b7280' %>"></span>
+                    <span class="text-xs text-gray-700 dark:text-gray-300 truncate"><%= cat[:name] %></span>
+                  </div>
+                  <div class="flex items-center space-x-2 flex-shrink-0 ml-2">
+                    <span class="text-xs font-semibold text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(cat[:amount]) %></span>
+                    <span class="text-[10px] text-gray-400 dark:text-gray-500 w-8 text-right" style="font-variant-numeric: tabular-nums;"><%= cat[:pct] %>%</span>
+                  </div>
+                </div>
+              <% end %>
             </div>
+          <% else %>
+            <p class="text-xs text-gray-400 dark:text-gray-500">No spending yet.</p>
           <% end %>
         </div>
-        <div class="grid items-center mt-2 pt-1.5 border-t border-gray-200 dark:border-gray-600" style="grid-template-columns: 1fr 5.5rem 3rem; gap: 0 0.5rem;">
-          <span class="text-xs font-semibold text-gray-700 dark:text-gray-300">Total</span>
-          <span class="text-xs font-semibold text-gray-900 dark:text-white text-right" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(@spent_mtd) %></span>
-          <span></span>
-        </div>
-      <% else %>
-        <p class="text-xs text-gray-400 dark:text-gray-500">No spending yet.</p>
-      <% end %>
 
-      <%# --- By Spending Type --- %>
-      <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mt-4 mb-2">By Spending Type</p>
-      <% if @spending_by_type.any? %>
-        <div class="space-y-1">
-          <% @spending_by_type.each do |st| %>
-            <div class="grid items-center" style="grid-template-columns: 1fr 5.5rem 3rem; gap: 0 0.5rem;">
-              <div class="flex items-center space-x-2 min-w-0">
-                <span class="w-2 h-2 rounded-full flex-shrink-0" style="background: <%= color_map[st[:color_key]] || '#6b7280' %>"></span>
-                <span class="text-xs text-gray-700 dark:text-gray-300 truncate"><%= st[:name] %></span>
-              </div>
-              <span class="text-xs font-semibold text-gray-900 dark:text-white text-right" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(st[:amount]) %></span>
-              <span class="text-xs text-gray-400 dark:text-gray-500 text-right" style="font-variant-numeric: tabular-nums;"><%= st[:pct] %>%</span>
+        <%# --- Column 2: By Spending Type --- %>
+        <div>
+          <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">By Spending Type</p>
+          <% if @spending_by_type.any? %>
+            <div class="space-y-1">
+              <% @spending_by_type.each do |st| %>
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-1.5 min-w-0 flex-1">
+                    <span class="w-2 h-2 rounded-full flex-shrink-0" style="background: <%= color_map[st[:color_key]] || '#6b7280' %>"></span>
+                    <span class="text-xs text-gray-700 dark:text-gray-300 truncate"><%= st[:name] %></span>
+                  </div>
+                  <div class="flex items-center space-x-2 flex-shrink-0 ml-2">
+                    <span class="text-xs font-semibold text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(st[:amount]) %></span>
+                    <span class="text-[10px] text-gray-400 dark:text-gray-500 w-8 text-right" style="font-variant-numeric: tabular-nums;"><%= st[:pct] %>%</span>
+                  </div>
+                </div>
+              <% end %>
             </div>
+          <% else %>
+            <p class="text-xs text-gray-400 dark:text-gray-500">No spending yet.</p>
           <% end %>
         </div>
-        <div class="grid items-center mt-2 pt-1.5 border-t border-gray-200 dark:border-gray-600" style="grid-template-columns: 1fr 5.5rem 3rem; gap: 0 0.5rem;">
+
+        <% if has_tags %>
+          <%# --- Column 3: By Tag --- %>
+          <div>
+            <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">By Tag</p>
+            <div class="space-y-1">
+              <% @spending_by_tag.each do |tag| %>
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-1.5 min-w-0 flex-1">
+                    <span class="w-2 h-2 rounded-full flex-shrink-0 bg-brand-400"></span>
+                    <span class="text-xs text-gray-700 dark:text-gray-300 truncate"><%= tag[:name] %></span>
+                  </div>
+                  <div class="flex items-center space-x-2 flex-shrink-0 ml-2">
+                    <span class="text-xs font-semibold text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(tag[:amount]) %></span>
+                    <span class="text-[10px] text-gray-400 dark:text-gray-500 w-8 text-right" style="font-variant-numeric: tabular-nums;"><%= tag[:pct] %>%</span>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+      <%# --- Total row spanning all columns --- %>
+      <% if @spending_by_category.any? || @spending_by_type.any? %>
+        <div class="flex items-center justify-between mt-3 pt-2 border-t border-gray-200 dark:border-gray-600">
           <span class="text-xs font-semibold text-gray-700 dark:text-gray-300">Total</span>
-          <span class="text-xs font-semibold text-gray-900 dark:text-white text-right" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(@spent_mtd) %></span>
-          <span></span>
+          <span class="text-xs font-semibold text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(@spent_mtd) %></span>
         </div>
-      <% else %>
-        <p class="text-xs text-gray-400 dark:text-gray-500">No spending yet.</p>
       <% end %>
     </div>
     <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">

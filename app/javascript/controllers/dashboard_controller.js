@@ -404,15 +404,14 @@ export default class extends Controller {
     if (backContent) {
       const categories = data.categories || []
       const types = data.types || []
+      const tags = data.tags || []
       const colorMap = { blue: "#3b82f6", green: "#22c55e", gold: "#eab308", red: "#ef4444", purple: "#a855f7", pink: "#ec4899", indigo: "#6366f1", teal: "#14b8a6", orange: "#f97316", gray: "#6b7280" }
 
-      const gridCols = "grid-template-columns: 1fr 5.5rem 3rem; gap: 0 0.5rem;"
-
-      const renderList = (items, listType) => {
+      const renderColumn = (items, listType) => {
         if (items.length === 0) return `<p class="text-xs text-gray-400 dark:text-gray-500">No spending yet.</p>`
         let h = '<div class="space-y-1">'
         for (const item of items) {
-          const dotColor = colorMap[item.color_key] || "#6b7280"
+          const dotColor = listType === "tag" ? "var(--brand-400, #a855f7)" : (colorMap[item.color_key] || "#6b7280")
           let limitHtml = ""
           if (listType === "category" && item.limit != null) {
             const pctUsed = item.limit_pct_used || 0
@@ -431,33 +430,39 @@ export default class extends Controller {
             const sign = over > 0 ? "+" : ""
             limitHtml = `<span class="text-[10px] ${overClass} ml-1">(lim ${item.limit_pct}%, ${sign}${over}%)</span>`
           }
-          h += `
-            <div>
-              <div class="grid items-center" style="${gridCols}">
-                <div class="flex items-center space-x-2 min-w-0">
-                  <span class="w-2 h-2 rounded-full flex-shrink-0" style="background: ${dotColor}"></span>
-                  <span class="text-xs text-gray-700 dark:text-gray-300 truncate">${this._esc(item.name)}</span>
-                </div>
-                <span class="text-xs font-semibold text-gray-900 dark:text-white tabular-nums text-right">${this._currency(item.amount)}</span>
-                <span class="text-xs text-gray-400 dark:text-gray-500 tabular-nums text-right">${item.pct}%</span>
+          h += `<div class="flex items-center justify-between">
+              <div class="flex items-center space-x-1.5 min-w-0 flex-1">
+                <span class="w-2 h-2 rounded-full flex-shrink-0" style="background: ${dotColor}"></span>
+                <span class="text-xs text-gray-700 dark:text-gray-300 truncate">${this._esc(item.name)}</span>
               </div>
-              ${listType === "type" && item.limit_pct != null ? limitHtml : ""}
-              ${listType === "category" && item.limit != null ? limitHtml : ""}
-            </div>`
+              <div class="flex items-center space-x-2 flex-shrink-0 ml-2">
+                <span class="text-xs font-semibold text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;">${this._currency(item.amount)}</span>
+                <span class="text-[10px] text-gray-400 dark:text-gray-500 w-8 text-right" style="font-variant-numeric: tabular-nums;">${item.pct}%</span>
+              </div>
+            </div>
+            ${listType === "type" && item.limit_pct != null ? limitHtml : ""}
+            ${listType === "category" && item.limit != null ? limitHtml : ""}`
         }
         h += '</div>'
-        h += `<div class="grid items-center mt-2 pt-1.5 border-t border-gray-200 dark:border-gray-600" style="${gridCols}">
-          <span class="text-xs font-semibold text-gray-700 dark:text-gray-300">Total</span>
-          <span class="text-xs font-semibold text-gray-900 dark:text-white tabular-nums text-right">${spent}</span>
-          <span></span>
-        </div>`
         return h
       }
 
-      let html = `<p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">By Category</p>`
-      html += renderList(categories, "category")
-      html += `<p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mt-4 mb-2">By Spending Type</p>`
-      html += renderList(types, "type")
+      const hasTags = tags.length > 0
+      const gridClass = hasTags ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : "grid-cols-1 sm:grid-cols-2"
+
+      let html = `<div class="grid ${gridClass} gap-4" data-role="breakdown-grid">`
+      html += `<div><p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">By Category</p>${renderColumn(categories, "category")}</div>`
+      html += `<div><p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">By Spending Type</p>${renderColumn(types, "type")}</div>`
+      if (hasTags) {
+        html += `<div><p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">By Tag</p>${renderColumn(tags, "tag")}</div>`
+      }
+      html += `</div>`
+      if (categories.length > 0 || types.length > 0) {
+        html += `<div class="flex items-center justify-between mt-3 pt-2 border-t border-gray-200 dark:border-gray-600">
+          <span class="text-xs font-semibold text-gray-700 dark:text-gray-300">Total</span>
+          <span class="text-xs font-semibold text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;">${spent}</span>
+        </div>`
+      }
       backContent.innerHTML = html
     }
   }

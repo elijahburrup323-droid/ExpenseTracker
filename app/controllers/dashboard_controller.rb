@@ -61,6 +61,24 @@ class DashboardController < ApplicationController
       end
     end
 
+    # Card 1 back: Spending by Tag (split amount evenly across a payment's tags)
+    month_payments = current_user.payments
+      .where(payment_date: @month_start...@month_end)
+      .includes(:tags)
+    tag_totals = Hash.new(0.0)
+    tag_names = {}
+    month_payments.each do |p|
+      next if p.tags.empty?
+      share = p.amount.to_f / p.tags.size
+      p.tags.each do |t|
+        tag_totals[t.id] += share
+        tag_names[t.id] ||= t.name
+      end
+    end
+    @spending_by_tag = tag_totals.sort_by { |_id, amt| -amt }.map do |id, amt|
+      { id: id, name: tag_names[id], amount: amt.round(2), pct: spent_total > 0 ? (amt / spent_total * 100).round(1) : 0.0 }
+    end
+
     # Card 2: Accounts — all accounts (passed as @accounts)
 
     # Card 3: Net Worth — sum of all account balances + historical snapshots
