@@ -84,8 +84,9 @@ export default class extends Controller {
     this._breakEvens = []
 
     // Initialize claim age lists with defaults (3 fixed rows with per-row benefit)
-    this.yourClaimAges = [{ years: 62, months: 0, benefit: 0 }, { years: 67, months: 0, benefit: 0 }, { years: 70, months: 0, benefit: 0 }]
-    this.spouseClaimAges = [{ years: 62, months: 0, benefit: 0 }, { years: 67, months: 0, benefit: 0 }, { years: 70, months: 0, benefit: 0 }]
+    // Row 1 defaults blank until birthdate is entered (auto-populated by _updateFRAandLE)
+    this.yourClaimAges = [{ years: "", months: "", benefit: 0 }, { years: 67, months: 0, benefit: 0 }, { years: 70, months: 0, benefit: 0 }]
+    this.spouseClaimAges = [{ years: "", months: "", benefit: 0 }, { years: 67, months: 0, benefit: 0 }, { years: 70, months: 0, benefit: 0 }]
 
     this._renderClaimAgeRows("your")
     this._renderClaimAgeRows("spouse")
@@ -148,8 +149,8 @@ export default class extends Controller {
     this._lastStrategies = []
     this._breakEvens = []
 
-    this.yourClaimAges = [{ years: 62, months: 0, benefit: 0 }, { years: 67, months: 0, benefit: 0 }, { years: 70, months: 0, benefit: 0 }]
-    this.spouseClaimAges = [{ years: 62, months: 0, benefit: 0 }, { years: 67, months: 0, benefit: 0 }, { years: 70, months: 0, benefit: 0 }]
+    this.yourClaimAges = [{ years: "", months: "", benefit: 0 }, { years: 67, months: 0, benefit: 0 }, { years: 70, months: 0, benefit: 0 }]
+    this.spouseClaimAges = [{ years: "", months: "", benefit: 0 }, { years: 67, months: 0, benefit: 0 }, { years: 70, months: 0, benefit: 0 }]
     this._renderClaimAgeRows("your")
     this._renderClaimAgeRows("spouse")
 
@@ -271,13 +272,18 @@ export default class extends Controller {
       }
       const now = new Date()
       const ageYears = now.getFullYear() - birthYear - (now < new Date(now.getFullYear(), birthDate.getMonth(), birthDate.getDate()) ? 1 : 0)
+      // Compute months portion of current age
+      let ageMonths = now.getMonth() - birthDate.getMonth()
+      if (ageMonths < 0) ageMonths += 12
+      if (now.getDate() < birthDate.getDate()) ageMonths = (ageMonths + 11) % 12
       const le = lifeExpectancy(ageYears, yourSex)
       if (this.hasYourLifeExpectancyTarget) {
         this.yourLifeExpectancyTarget.textContent = `${Math.round(le)} Years`
       }
-      // Auto-populate Row 1 with current age
+      // Auto-populate Row 1 with current age (years + months)
       if (this.yourClaimAges && this.yourClaimAges[0]) {
         this.yourClaimAges[0].years = ageYears
+        this.yourClaimAges[0].months = ageMonths
         this._renderClaimAgeRows("your")
       }
     }
@@ -295,13 +301,17 @@ export default class extends Controller {
         }
         const now = new Date()
         const sAge = now.getFullYear() - sBirthYear - (now < new Date(now.getFullYear(), sBirth.getMonth(), sBirth.getDate()) ? 1 : 0)
+        let sAgeMonths = now.getMonth() - sBirth.getMonth()
+        if (sAgeMonths < 0) sAgeMonths += 12
+        if (now.getDate() < sBirth.getDate()) sAgeMonths = (sAgeMonths + 11) % 12
         const sLe = lifeExpectancy(sAge, spouseSex)
         if (this.hasSpouseLifeExpectancyTarget) {
           this.spouseLifeExpectancyTarget.textContent = `${Math.round(sLe)} Years`
         }
-        // Auto-populate Spouse Row 1 with current age
+        // Auto-populate Spouse Row 1 with current age (years + months)
         if (this.spouseClaimAges && this.spouseClaimAges[0]) {
           this.spouseClaimAges[0].years = sAge
+          this.spouseClaimAges[0].months = sAgeMonths
           this._renderClaimAgeRows("spouse")
         }
       }
