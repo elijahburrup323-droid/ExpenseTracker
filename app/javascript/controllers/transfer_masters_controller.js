@@ -168,7 +168,7 @@ export default class extends Controller {
           </div>
         </td>
         <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-[200px] truncate">${memo}</td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-green-600">${amount}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-right tabular-nums font-medium text-green-600">${amount}</td>
         <td class="px-6 py-4 whitespace-nowrap text-center">
           <div class="flex items-center justify-center space-x-2">
             <button class="text-brand-600 hover:text-brand-800 dark:text-brand-400 dark:hover:text-brand-300 transition"

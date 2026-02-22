@@ -182,7 +182,7 @@ export default class extends Controller {
           return `<tr class="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
             <td class="px-6 py-3 text-sm text-gray-900 dark:text-white">${escapeHtml(t.date)}</td>
             <td class="px-6 py-3 text-sm text-gray-900 dark:text-white">${escapeHtml(t.description)}</td>
-            <td class="px-6 py-3 text-sm text-right font-mono ${amtColor}">${fmt(t.amount)}</td>
+            <td class="px-6 py-3 text-sm text-right tabular-nums font-mono ${amtColor}">${fmt(t.amount)}</td>
             <td class="px-6 py-3 text-sm text-gray-500 dark:text-gray-400">${escapeHtml(t.type)}</td>
             <td class="px-6 py-3 text-sm text-center">${reconBadge}</td>
           </tr>`
@@ -241,7 +241,7 @@ export default class extends Controller {
       if (!this._includeUnreconciled) txns = txns.filter(t => t.reconciled)
 
       if (txns.length > 0) {
-        const txnRows = txns.map(t =>
+        const txnRows = sortData(txns, this._sort.field, this._sort.dir).map(t =>
           `<tr>
             <td>${escapeHtml(t.date)}</td>
             <td>${escapeHtml(t.description)}</td>

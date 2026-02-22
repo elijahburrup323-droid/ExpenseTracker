@@ -252,8 +252,9 @@ Each CRUD screen has a matching Stimulus controller in app/javascript/controller
 - Shared sortable-header utility for all reports under Monthly > Reports
 - Exports: `nextSortState(clickedField, currentField, currentDir)` — returns { field, dir } after a header click
 - Exports: `sortTh(label, field, sort, ctrl, align)` — renders a sortable &lt;th&gt; with chevron indicator, click handler, and active/inactive styling
-- Exports: `sortData(array, field, dir, accessor)` — sorts array of objects by field, handles numbers, strings, dates, nulls
+- Exports: `sortData(array, field, dir, accessor, secondary)` — sorts array of objects by field, handles numbers, strings, dates, nulls; optional `secondary` `{ field, dir }` for tiebreaker sort
 - All 9 report tables use this utility for consistent sortable column headers with ascending/descending toggle
+- Print output preserves current sort order for all reports
 
 ### Icon Catalog (app/javascript/controllers/shared/icon_catalog.js)
 - Contains 50 budget-related SVG icons (grocery, dining, gas, utilities, etc.) and 12 color options

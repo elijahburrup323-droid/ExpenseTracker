@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { sortTh, sortData, nextSortState } from "controllers/shared/report_sort"
 
 function fmt(amount) {
   const n = parseFloat(amount) || 0
@@ -55,6 +56,14 @@ export default class extends Controller {
     this._mode = "regular"
     this._comparePrev = true
     this._includeYtd = false
+    this._sort = { field: "amount", dir: "desc" }
+  }
+
+  toggleSort(event) {
+    const f = event.currentTarget.dataset.sortField
+    if (!f) return
+    this._sort = nextSortState(f, this._sort.field, this._sort.dir)
+    if (this._data) this.render()
   }
 
   // --- Modal Logic ---
@@ -151,10 +160,10 @@ export default class extends Controller {
       <div class="text-lg font-bold text-gray-900 dark:text-white mt-1">${d.transaction_count}</div>`
 
     this.summaryHeadTarget.innerHTML = `<tr>
-      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tag</th>
-      <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
-      <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">% of Total</th>
-      <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"># Trans</th>
+      ${sortTh("Tag", "name", this._sort, "spending-by-tag", "left")}
+      ${sortTh("Amount", "amount", this._sort, "spending-by-tag", "right")}
+      ${sortTh("% of Total", "pct", this._sort, "spending-by-tag", "right")}
+      ${sortTh("# Trans", "count", this._sort, "spending-by-tag", "right")}
     </tr>`
 
     if (d.tags.length === 0) {
@@ -162,7 +171,7 @@ export default class extends Controller {
       return
     }
 
-    const rows = d.tags.map(t => {
+    const rows = sortData(d.tags, this._sort.field, this._sort.dir).map(t => {
       const dot = tagDot(t.color_key)
       return `<tr class="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
         <td class="px-6 py-3">
@@ -171,17 +180,17 @@ export default class extends Controller {
             <span class="text-sm font-medium text-gray-900 dark:text-white">${escapeHtml(t.name)}</span>
           </div>
         </td>
-        <td class="px-6 py-3 text-sm font-semibold text-right ${amountClass(t.amount)}">${fmt(t.amount)}</td>
-        <td class="px-6 py-3 text-sm text-right text-gray-700 dark:text-gray-300">${t.pct.toFixed(1)}%</td>
-        <td class="px-6 py-3 text-sm text-right text-gray-500 dark:text-gray-400">${t.count}</td>
+        <td class="px-6 py-3 text-sm font-semibold text-right tabular-nums ${amountClass(t.amount)}">${fmt(t.amount)}</td>
+        <td class="px-6 py-3 text-sm text-right tabular-nums text-gray-700 dark:text-gray-300">${t.pct.toFixed(1)}%</td>
+        <td class="px-6 py-3 text-sm text-right tabular-nums text-gray-500 dark:text-gray-400">${t.count}</td>
       </tr>`
     }).join("")
 
     const totalRow = `<tr class="bg-gray-50 dark:bg-gray-900 border-t-2 border-gray-300 dark:border-gray-600">
       <td class="px-6 py-3 text-sm font-bold text-gray-900 dark:text-white">Total</td>
-      <td class="px-6 py-3 text-sm font-bold text-right ${amountClass(d.total_spent)}">${fmt(d.total_spent)}</td>
-      <td class="px-6 py-3 text-sm font-bold text-right text-gray-900 dark:text-white">100.0%</td>
-      <td class="px-6 py-3 text-sm font-bold text-right text-gray-900 dark:text-white">${d.transaction_count}</td>
+      <td class="px-6 py-3 text-sm font-bold text-right tabular-nums ${amountClass(d.total_spent)}">${fmt(d.total_spent)}</td>
+      <td class="px-6 py-3 text-sm font-bold text-right tabular-nums text-gray-900 dark:text-white">100.0%</td>
+      <td class="px-6 py-3 text-sm font-bold text-right tabular-nums text-gray-900 dark:text-white">${d.transaction_count}</td>
     </tr>`
 
     this.summaryBodyTarget.innerHTML = rows + totalRow
@@ -246,16 +255,16 @@ export default class extends Controller {
             <span class="text-sm font-medium text-gray-900 dark:text-white">${escapeHtml(name)}</span>
           </div>
         </td>
-        <td class="px-6 py-3 text-sm font-semibold text-right ${amountClass(curr?.amount || 0)}">${fmt(curr?.amount || 0)}</td>`
+        <td class="px-6 py-3 text-sm font-semibold text-right tabular-nums ${amountClass(curr?.amount || 0)}">${fmt(curr?.amount || 0)}</td>`
 
       if (hasPrev) {
-        cols += `<td class="px-6 py-3 text-sm text-right ${amountClass(prev?.amount || 0)}">${fmt(prev?.amount || 0)}</td>
-          <td class="px-6 py-3 text-sm font-medium text-right ${varianceClass(v?.dollar)}">${v ? fmt(v.dollar) : "\u2014"}</td>
-          <td class="px-6 py-3 text-sm font-medium text-right ${varianceClass(v?.dollar)}">${v ? fmtPct(v.percent) : "\u2014"}</td>`
+        cols += `<td class="px-6 py-3 text-sm text-right tabular-nums ${amountClass(prev?.amount || 0)}">${fmt(prev?.amount || 0)}</td>
+          <td class="px-6 py-3 text-sm font-medium text-right tabular-nums ${varianceClass(v?.dollar)}">${v ? fmt(v.dollar) : "\u2014"}</td>
+          <td class="px-6 py-3 text-sm font-medium text-right tabular-nums ${varianceClass(v?.dollar)}">${v ? fmtPct(v.percent) : "\u2014"}</td>`
       }
 
       if (hasYtd) {
-        cols += `<td class="px-6 py-3 text-sm text-right ${amountClass(ytd?.amount || 0)}">${fmt(ytd?.amount || 0)}</td>`
+        cols += `<td class="px-6 py-3 text-sm text-right tabular-nums ${amountClass(ytd?.amount || 0)}">${fmt(ytd?.amount || 0)}</td>`
       }
 
       return `<tr class="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">${cols}</tr>`
@@ -263,14 +272,14 @@ export default class extends Controller {
 
     const totalVar = d.variance?.total
     let totalCols = `<td class="px-6 py-3 text-sm font-bold text-gray-900 dark:text-white">Total</td>
-      <td class="px-6 py-3 text-sm font-bold text-right ${amountClass(d.total_spent)}">${fmt(d.total_spent)}</td>`
+      <td class="px-6 py-3 text-sm font-bold text-right tabular-nums ${amountClass(d.total_spent)}">${fmt(d.total_spent)}</td>`
     if (hasPrev) {
-      totalCols += `<td class="px-6 py-3 text-sm font-bold text-right ${amountClass(d.prev.total_spent)}">${fmt(d.prev.total_spent)}</td>
-        <td class="px-6 py-3 text-sm font-bold text-right ${varianceClass(totalVar?.dollar)}">${totalVar ? fmt(totalVar.dollar) : "\u2014"}</td>
-        <td class="px-6 py-3 text-sm font-bold text-right ${varianceClass(totalVar?.dollar)}">${totalVar ? fmtPct(totalVar.percent) : "\u2014"}</td>`
+      totalCols += `<td class="px-6 py-3 text-sm font-bold text-right tabular-nums ${amountClass(d.prev.total_spent)}">${fmt(d.prev.total_spent)}</td>
+        <td class="px-6 py-3 text-sm font-bold text-right tabular-nums ${varianceClass(totalVar?.dollar)}">${totalVar ? fmt(totalVar.dollar) : "\u2014"}</td>
+        <td class="px-6 py-3 text-sm font-bold text-right tabular-nums ${varianceClass(totalVar?.dollar)}">${totalVar ? fmtPct(totalVar.percent) : "\u2014"}</td>`
     }
     if (hasYtd) {
-      totalCols += `<td class="px-6 py-3 text-sm font-bold text-right ${amountClass(d.ytd.total_spent)}">${fmt(d.ytd.total_spent)}</td>`
+      totalCols += `<td class="px-6 py-3 text-sm font-bold text-right tabular-nums ${amountClass(d.ytd.total_spent)}">${fmt(d.ytd.total_spent)}</td>`
     }
 
     const totalRow = `<tr class="bg-gray-50 dark:bg-gray-900 border-t-2 border-gray-300 dark:border-gray-600">${totalCols}</tr>`
@@ -297,7 +306,7 @@ export default class extends Controller {
         <th style="text-align:right;"># Trans</th>
       </tr>`
 
-      tableRows = d.tags.map(t =>
+      tableRows = sortData(d.tags, this._sort.field, this._sort.dir).map(t =>
         `<tr>
           <td>${escapeHtml(t.name)}</td>
           <td style="text-align:right;font-family:monospace;">${fmt(t.amount)}</td>

@@ -390,11 +390,11 @@ export default class extends Controller {
             </svg>
             <div class="absolute inset-0 flex flex-col items-center justify-center">
               <span class="text-xs text-gray-500 dark:text-gray-400">Spent</span>
-              <span class="text-sm font-bold text-gray-900 dark:text-white">${spent}</span>
+              <span class="text-sm font-bold text-gray-900 dark:text-white tabular-nums">${spent}</span>
             </div>
           </div>
           <div>
-            <p class="text-lg font-semibold text-gray-800 dark:text-gray-200">${spent}</p>
+            <p class="text-lg font-semibold text-gray-800 dark:text-gray-200 tabular-nums">${spent}</p>
             <p class="text-sm text-gray-500 dark:text-gray-400">spent this month</p>
           </div>
         </div>`
@@ -437,8 +437,8 @@ export default class extends Controller {
                   <span class="text-xs text-gray-700 dark:text-gray-300 truncate">${this._esc(item.name)}</span>
                 </div>
                 <div class="flex items-center space-x-2 flex-shrink-0 ml-2">
-                  <span class="text-xs font-semibold text-gray-900 dark:text-white">${this._currency(item.amount)}</span>
-                  <span class="text-xs text-gray-500 dark:text-gray-400 w-10 text-right">${item.pct}%</span>
+                  <span class="text-xs font-semibold text-gray-900 dark:text-white tabular-nums">${this._currency(item.amount)}</span>
+                  <span class="text-xs text-gray-500 dark:text-gray-400 w-10 text-right tabular-nums">${item.pct}%</span>
                   ${listType === "type" && item.limit_pct != null ? limitHtml : ""}
                 </div>
               </div>
@@ -446,7 +446,7 @@ export default class extends Controller {
             </div>`
         }
         h += '</div>'
-        h += `<p class="text-xs font-semibold text-gray-700 dark:text-gray-300 mt-1.5">Total: ${spent}</p>`
+        h += `<p class="text-xs font-semibold text-gray-700 dark:text-gray-300 mt-1.5 tabular-nums">Total: ${spent}</p>`
         return h
       }
 
@@ -472,7 +472,7 @@ export default class extends Controller {
           <div class="flex items-center">
             <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Accounts</h2>
           </div>
-          <span class="text-sm font-semibold text-gray-900 dark:text-white">Total: ${this._currency(total)}</span>
+          <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">Total: ${this._currency(total)}</span>
         </div>
         <ul class="space-y-3 flex-1">`
       if (accounts.length === 0) {
@@ -490,7 +490,7 @@ export default class extends Controller {
                 </span>
                 <span class="text-sm text-gray-700 dark:text-gray-300">${this._esc(a.name)}</span>
               </div>
-              <span class="text-sm font-semibold text-gray-900 dark:text-white">${this._currency(a.balance)}</span>
+              <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">${this._currency(a.balance)}</span>
             </li>`
         })
       }
@@ -504,7 +504,7 @@ export default class extends Controller {
       let html = `
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Accounts</h2>
-          <span class="text-sm font-semibold text-gray-900 dark:text-white">Total: ${this._currency(total)}</span>
+          <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">Total: ${this._currency(total)}</span>
         </div>
         <div class="flex-1 flex flex-col items-center justify-center overflow-hidden">`
 
@@ -565,11 +565,11 @@ export default class extends Controller {
 
     let html = ""
     html += `<div class="flex items-baseline space-x-2 mb-3">`
-    html += `<span class="text-2xl font-bold text-gray-900 dark:text-white">${this._currency(value)}</span>`
+    html += `<span class="text-2xl font-bold text-gray-900 dark:text-white tabular-nums">${this._currency(value)}</span>`
     if (change >= 0) {
-      html += `<span class="text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded">+${this._currency(change)} (${changePct}%)</span>`
+      html += `<span class="text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded tabular-nums">+${this._currency(change)} (${changePct}%)</span>`
     } else {
-      html += `<span class="text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 px-1.5 py-0.5 rounded">${this._currency(change)} (${changePct}%)</span>`
+      html += `<span class="text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 px-1.5 py-0.5 rounded tabular-nums">${this._currency(change)} (${changePct}%)</span>`
     }
     html += `</div>`
 
@@ -631,7 +631,7 @@ export default class extends Controller {
               <span class="text-xs text-gray-500 dark:text-gray-400">(${this._esc(acct.name)})</span>
             </div>
           </div>
-          <span class="text-sm font-semibold text-emerald-600 dark:text-emerald-400">+${this._currency(acct.beginning_balance)}</span>
+          <span class="text-sm font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">+${this._currency(acct.beginning_balance)}</span>
         </div>`
     }
 
@@ -643,7 +643,7 @@ export default class extends Controller {
           </span>
           <span class="text-sm text-gray-700 dark:text-gray-300">Beginning Balance</span>
         </div>
-        <span class="text-sm font-semibold text-gray-900 dark:text-white">${this._currency(data.beginning_balance)}</span>
+        <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">${this._currency(data.beginning_balance)}</span>
       </div>
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-2">
@@ -654,7 +654,7 @@ export default class extends Controller {
           </span>
           <span class="text-sm text-gray-700 dark:text-gray-300">Income</span>
         </div>
-        <span class="text-sm font-semibold text-emerald-600 dark:text-emerald-400">+${this._currency(data.income)}</span>
+        <span class="text-sm font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">+${this._currency(data.income)}</span>
       </div>
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-2">
@@ -665,7 +665,7 @@ export default class extends Controller {
           </span>
           <span class="text-sm text-gray-700 dark:text-gray-300">Expenses</span>
         </div>
-        <span class="text-sm font-semibold text-red-600 dark:text-red-400">${this._currency(data.expenses)}</span>
+        <span class="text-sm font-semibold text-red-600 dark:text-red-400 tabular-nums">${this._currency(data.expenses)}</span>
       </div>
       ${accountsHtml}
       <div class="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
@@ -675,7 +675,7 @@ export default class extends Controller {
           </span>
           <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">Current Balance</span>
         </div>
-        <span class="text-sm font-bold text-gray-900 dark:text-white">${this._currency(data.current_balance)}</span>
+        <span class="text-sm font-bold text-gray-900 dark:text-white tabular-nums">${this._currency(data.current_balance)}</span>
       </div>`
   }
 
@@ -702,7 +702,7 @@ export default class extends Controller {
             </span>
             <span class="text-sm text-gray-700 dark:text-gray-300"><span class="text-gray-400 dark:text-gray-500">${this._esc(p.date)}</span> ${this._esc(p.description)}</span>
           </div>
-          <span class="text-sm font-semibold text-gray-900 dark:text-white">${this._currency(p.amount)}</span>
+          <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">${this._currency(p.amount)}</span>
         </li>`
     })
     content.innerHTML = html
@@ -719,7 +719,7 @@ export default class extends Controller {
 
     let html = `<div class="flex items-center justify-between mb-3">
       <span class="text-xs text-gray-500 dark:text-gray-400">${data.count} bucket${data.count !== 1 ? "s" : ""}</span>
-      <span class="text-sm font-semibold text-gray-900 dark:text-white">${this._currency(data.total_balance)}</span>
+      <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">${this._currency(data.total_balance)}</span>
     </div><div class="space-y-2">`
 
     for (const b of (data.buckets || [])) {
@@ -741,7 +741,7 @@ export default class extends Controller {
             <span class="text-sm text-gray-700 dark:text-gray-300 truncate">${this._esc(b.name)}</span>
             ${defaultBadge}
           </div>
-          <span class="text-sm font-semibold text-gray-900 dark:text-white ml-2 flex-shrink-0">${this._currency(b.balance)}</span>
+          <span class="text-sm font-semibold text-gray-900 dark:text-white ml-2 flex-shrink-0 tabular-nums">${this._currency(b.balance)}</span>
         </div>
         ${progressHtml}
       </div>`

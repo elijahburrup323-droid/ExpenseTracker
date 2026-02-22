@@ -217,7 +217,7 @@ export default class extends Controller {
       if (noData) {
         return `<tr class="border-b border-gray-100 dark:border-gray-700">
           <td class="px-6 py-3 text-sm text-gray-900 dark:text-white">${escapeHtml(m.label)}</td>
-          <td class="px-6 py-3 text-sm text-right text-gray-400 dark:text-gray-500" colspan="3">No snapshot data</td>
+          <td class="px-6 py-3 text-sm text-right tabular-nums text-gray-400 dark:text-gray-500" colspan="3">No snapshot data</td>
         </tr>`
       }
       const sourceTag = m.source === "live"
@@ -225,9 +225,9 @@ export default class extends Controller {
         : ""
       return `<tr class="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
         <td class="px-6 py-3 text-sm text-gray-900 dark:text-white">${escapeHtml(m.label)}${sourceTag}</td>
-        <td class="px-6 py-3 text-sm font-semibold text-right ${balanceClass(m.beginning_balance)}">${fmt(m.beginning_balance)}</td>
-        <td class="px-6 py-3 text-sm font-semibold text-right ${balanceClass(m.ending_balance)}">${fmt(m.ending_balance)}</td>
-        <td class="px-6 py-3 text-sm font-medium text-right ${changeClass(m.change)}">${fmt(m.change)}</td>
+        <td class="px-6 py-3 text-sm font-semibold text-right tabular-nums ${balanceClass(m.beginning_balance)}">${fmt(m.beginning_balance)}</td>
+        <td class="px-6 py-3 text-sm font-semibold text-right tabular-nums ${balanceClass(m.ending_balance)}">${fmt(m.ending_balance)}</td>
+        <td class="px-6 py-3 text-sm font-medium text-right tabular-nums ${changeClass(m.change)}">${fmt(m.change)}</td>
       </tr>`
     }).join("")
 
@@ -313,7 +313,8 @@ export default class extends Controller {
     if (d.months.length === 0) {
       tableRows = `<tr><td colspan="4" style="text-align:center;padding:20px;color:#9ca3af;">No balance data for this period.</td></tr>`
     } else {
-      tableRows = d.months.map(m => {
+      const sorted = sortData(d.months, this._sort.field, this._sort.dir)
+      tableRows = sorted.map(m => {
         if (m.beginning_balance === null) {
           return `<tr><td>${escapeHtml(m.label)}</td><td colspan="3" style="text-align:center;color:#9ca3af;">No snapshot data</td></tr>`
         }

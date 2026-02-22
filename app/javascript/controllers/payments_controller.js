@@ -1001,7 +1001,7 @@ export default class extends Controller {
         ${escapeHtml(payment.description)}
         ${this._renderTagBadges(payment.tags || [])}
       </td>
-      <td class="px-4 py-3 text-sm text-gray-900 dark:text-white text-right font-mono">${this._formatBalance(payment.amount)}</td>
+      <td class="px-4 py-3 text-sm text-gray-900 dark:text-white text-right tabular-nums font-mono">${this._formatBalance(payment.amount)}</td>
       <td class="px-4 py-3 text-right space-x-2 whitespace-nowrap">
         <button type="button"
                 class="inline-flex items-center justify-center w-8 h-8 rounded-md text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800 transition"

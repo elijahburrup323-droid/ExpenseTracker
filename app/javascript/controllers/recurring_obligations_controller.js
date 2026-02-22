@@ -93,7 +93,8 @@ export default class extends Controller {
       return
     }
 
-    const sorted = sortData(d.obligations, this._sort.field, this._sort.dir)
+    const secondary = this._sort.field === "due_day_display" ? { field: "name", dir: "asc" } : null
+    const sorted = sortData(d.obligations, this._sort.field, this._sort.dir, null, secondary)
     const rows = sorted.map(ob => {
       const icon = ob.icon_key ? renderIconSvg(ob.icon_key, ob.color_key || "blue", "h-4 w-4") : ""
       const inactiveClass = ob.use_flag ? "" : " opacity-50"
@@ -114,7 +115,7 @@ export default class extends Controller {
           </div>
         </td>
         <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${escapeHtml(ob.frequency_name)}</td>
-        <td class="px-4 py-3 text-sm font-semibold text-right text-gray-900 dark:text-white">${fmt(ob.amount)}</td>
+        <td class="px-4 py-3 text-sm font-semibold text-right tabular-nums text-gray-900 dark:text-white">${fmt(ob.amount)}</td>
         <td class="px-4 py-3 text-center">
           <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
             ${escapeHtml(ob.status)}
@@ -125,7 +126,7 @@ export default class extends Controller {
 
     const totalRow = `<tr class="bg-gray-50 dark:bg-gray-900 border-t-2 border-gray-300 dark:border-gray-600">
       <td class="px-4 py-3 text-sm font-bold text-gray-900 dark:text-white" colspan="5">Total</td>
-      <td class="px-4 py-3 text-sm font-bold text-right text-gray-900 dark:text-white">${fmt(d.total_expected)}</td>
+      <td class="px-4 py-3 text-sm font-bold text-right tabular-nums text-gray-900 dark:text-white">${fmt(d.total_expected)}</td>
       <td class="px-4 py-3"></td>
     </tr>`
 
@@ -149,7 +150,9 @@ export default class extends Controller {
       <th style="text-align:center;">Status</th>
     </tr>`
 
-    let tableRows = d.obligations.map(ob =>
+    const secondary = this._sort.field === "due_day_display" ? { field: "name", dir: "asc" } : null
+    const sorted = sortData(d.obligations, this._sort.field, this._sort.dir, null, secondary)
+    let tableRows = sorted.map(ob =>
       `<tr>
         <td>${escapeHtml(ob.due_day_display)}</td>
         <td>${escapeHtml(ob.name)}${ob.use_flag ? "" : " <em style=\"color:#9ca3af;\">(Inactive)</em>"}</td>

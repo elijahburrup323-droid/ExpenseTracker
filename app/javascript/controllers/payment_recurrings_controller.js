@@ -311,7 +311,7 @@ export default class extends Controller {
     return `<tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
       <td class="px-4 py-4 text-sm font-medium text-gray-900 dark:text-white">${this._esc(rec.name)}</td>
       <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">${this._esc(rec.description || "")}</td>
-      <td class="px-4 py-4 text-sm text-gray-900 dark:text-white text-right font-mono">${this._formatAmount(rec.amount)}</td>
+      <td class="px-4 py-4 text-sm text-gray-900 dark:text-white text-right tabular-nums font-mono">${this._formatAmount(rec.amount)}</td>
       <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">${this._esc(rec.account_name || "\u2014")}</td>
       <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">${this._esc(rec.category_name || "\u2014")}</td>
       <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">${this._esc(rec.frequency_name || "")}</td>

@@ -53,34 +53,45 @@ export function sortTh(label, field, sort, ctrl, align = "left") {
   </th>`
 }
 
+/** Compare two values: numeric-aware with null handling */
+function compareValues(va, vb, mult) {
+  if (va == null && vb == null) return 0
+  if (va == null) return 1 * mult
+  if (vb == null) return -1 * mult
+
+  const na = typeof va === "string" ? parseFloat(va) : va
+  const nb = typeof vb === "string" ? parseFloat(vb) : vb
+
+  if (typeof na === "number" && !isNaN(na) && typeof nb === "number" && !isNaN(nb)) {
+    return (na - nb) * mult
+  }
+
+  return String(va).localeCompare(String(vb), undefined, { sensitivity: "base" }) * mult
+}
+
 /**
- * Sorts an array of objects by a field.
+ * Sorts an array of objects by a field with optional secondary tiebreaker.
  * Handles numbers, strings, dates, and nulls.
  * @param {Array} array - Data rows
  * @param {string} field - Property name to sort by
  * @param {string} dir - "asc" | "desc"
  * @param {Function} [accessor] - Optional (row, field) => value override
+ * @param {{ field: string, dir: string }} [secondary] - Optional tiebreaker sort
  */
-export function sortData(array, field, dir, accessor) {
+export function sortData(array, field, dir, accessor, secondary) {
   const sorted = [...array]
   const mult = dir === "asc" ? 1 : -1
 
   sorted.sort((a, b) => {
     const va = accessor ? accessor(a, field) : a[field]
     const vb = accessor ? accessor(b, field) : b[field]
+    const result = compareValues(va, vb, mult)
+    if (result !== 0 || !secondary) return result
 
-    if (va == null && vb == null) return 0
-    if (va == null) return 1 * mult
-    if (vb == null) return -1 * mult
-
-    const na = typeof va === "string" ? parseFloat(va) : va
-    const nb = typeof vb === "string" ? parseFloat(vb) : vb
-
-    if (typeof na === "number" && !isNaN(na) && typeof nb === "number" && !isNaN(nb)) {
-      return (na - nb) * mult
-    }
-
-    return String(va).localeCompare(String(vb), undefined, { sensitivity: "base" }) * mult
+    const smult = secondary.dir === "asc" ? 1 : -1
+    const sa = accessor ? accessor(a, secondary.field) : a[secondary.field]
+    const sb = accessor ? accessor(b, secondary.field) : b[secondary.field]
+    return compareValues(sa, sb, smult)
   })
 
   return sorted

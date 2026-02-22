@@ -131,9 +131,9 @@ export default class extends Controller {
       const rows = sortedAccounts.map(a => {
         return `<tr class="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
           <td class="px-6 py-3 text-sm font-medium text-gray-900 dark:text-white">${escapeHtml(a.name)}</td>
-          <td class="px-6 py-3 text-sm text-right font-mono text-gray-700 dark:text-gray-300">${fmt(a.beginning_balance)}</td>
-          <td class="px-6 py-3 text-sm text-right font-mono text-gray-700 dark:text-gray-300">${fmt(a.ending_balance)}</td>
-          <td class="px-6 py-3 text-sm text-right font-mono ${colorClass(a.change)}">${a.change > 0 ? "+" : ""}${fmt(a.change)}</td>
+          <td class="px-6 py-3 text-sm text-right tabular-nums font-mono text-gray-700 dark:text-gray-300">${fmt(a.beginning_balance)}</td>
+          <td class="px-6 py-3 text-sm text-right tabular-nums font-mono text-gray-700 dark:text-gray-300">${fmt(a.ending_balance)}</td>
+          <td class="px-6 py-3 text-sm text-right tabular-nums font-mono ${colorClass(a.change)}">${a.change > 0 ? "+" : ""}${fmt(a.change)}</td>
         </tr>`
       }).join("")
 
@@ -229,7 +229,7 @@ export default class extends Controller {
 
     // Account Detail
     if (this._showAccountDetail && d.accounts && d.accounts.length > 0) {
-      let accountRows = d.accounts.map(a =>
+      let accountRows = sortData(d.accounts, this._sort.field, this._sort.dir).map(a =>
         `<tr>
           <td>${escapeHtml(a.name)}</td>
           <td style="text-align:right;font-family:monospace;">${fmt(a.beginning_balance)}</td>

@@ -487,8 +487,8 @@ export default class extends Controller {
       <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">${this._esc(b.account_name || "")}</td>
       <td class="px-4 py-4 text-sm font-medium text-gray-900 dark:text-white">${this._esc(b.name)}${defaultBadge}</td>
       <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400 text-center">${priority}</td>
-      <td class="px-4 py-4 text-sm text-gray-900 dark:text-white text-right font-mono">${balance}</td>
-      <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400 text-right">${target}${progressBar}</td>
+      <td class="px-4 py-4 text-sm text-gray-900 dark:text-white text-right tabular-nums font-mono">${balance}</td>
+      <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400 text-right tabular-nums">${target}${progressBar}</td>
       <td class="px-4 py-4 text-center">
         <button type="button"
           class="relative inline-flex h-7 w-14 items-center rounded-full transition-colors ${activeBg} focus:outline-none focus:ring-2 focus:ring-purple-300"

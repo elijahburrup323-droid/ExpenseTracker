@@ -172,10 +172,10 @@ export default class extends Controller {
 
       return `<tr class="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
         <td class="px-6 py-3 text-sm font-medium text-gray-900 dark:text-white">${escapeHtml(m.label)}${liveBadge}</td>
-        <td class="px-6 py-3 text-sm font-semibold text-right text-green-600 dark:text-green-400">${fmt(m.total_assets)}</td>
-        <td class="px-6 py-3 text-sm font-semibold text-right ${colorClass(m.total_liabilities)}">${fmt(m.total_liabilities)}</td>
-        <td class="px-6 py-3 text-sm font-bold text-right ${colorClass(m.net_worth)}">${fmt(m.net_worth)}</td>
-        <td class="px-6 py-3 text-sm text-right">${changeHtml}</td>
+        <td class="px-6 py-3 text-sm font-semibold text-right tabular-nums text-green-600 dark:text-green-400">${fmt(m.total_assets)}</td>
+        <td class="px-6 py-3 text-sm font-semibold text-right tabular-nums ${colorClass(m.total_liabilities)}">${fmt(m.total_liabilities)}</td>
+        <td class="px-6 py-3 text-sm font-bold text-right tabular-nums ${colorClass(m.net_worth)}">${fmt(m.net_worth)}</td>
+        <td class="px-6 py-3 text-sm text-right tabular-nums">${changeHtml}</td>
       </tr>`
     }).join("")
 
@@ -260,7 +260,7 @@ export default class extends Controller {
     const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
     const filterLabel = d.in_budget_only ? "In-Budget Accounts" : "All Accounts"
 
-    let tableRows = d.months.map(m => {
+    let tableRows = sortData(d.months, this._sort.field, this._sort.dir).map(m => {
       const changeStr = m.change === null ? "\u2014" : `${m.change > 0 ? "+" : ""}${fmt(m.change)}`
       const changeStyle = m.change === null ? "" : (m.change < 0 ? "color:#dc2626;" : (m.change > 0 ? "color:#16a34a;" : ""))
       const nwStyle = m.net_worth < 0 ? "color:#dc2626;" : (m.net_worth > 0 ? "color:#16a34a;" : "")

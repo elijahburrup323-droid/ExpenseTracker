@@ -217,17 +217,17 @@ export default class extends Controller {
             <span class="text-sm font-medium text-gray-900 dark:text-white">${escapeHtml(s.name)}</span>
           </div>
         </td>
-        <td class="px-6 py-3 text-sm font-semibold text-right text-green-600 dark:text-green-400">${fmt(s.amount)}</td>
-        <td class="px-6 py-3 text-sm text-right text-gray-500 dark:text-gray-400">${s.count}</td>
-        <td class="px-6 py-3 text-sm text-right text-gray-700 dark:text-gray-300">${s.pct.toFixed(1)}%</td>
+        <td class="px-6 py-3 text-sm font-semibold text-right tabular-nums text-green-600 dark:text-green-400">${fmt(s.amount)}</td>
+        <td class="px-6 py-3 text-sm text-right tabular-nums text-gray-500 dark:text-gray-400">${s.count}</td>
+        <td class="px-6 py-3 text-sm text-right tabular-nums text-gray-700 dark:text-gray-300">${s.pct.toFixed(1)}%</td>
       </tr>`
     }).join("")
 
     const totalRow = `<tr class="bg-gray-50 dark:bg-gray-900 border-t-2 border-gray-300 dark:border-gray-600">
       <td class="px-6 py-3 text-sm font-bold text-gray-900 dark:text-white">Total</td>
-      <td class="px-6 py-3 text-sm font-bold text-right text-green-600 dark:text-green-400">${fmt(d.total_income)}</td>
-      <td class="px-6 py-3 text-sm font-bold text-right text-gray-900 dark:text-white">${d.total_count}</td>
-      <td class="px-6 py-3 text-sm font-bold text-right text-gray-900 dark:text-white">100.0%</td>
+      <td class="px-6 py-3 text-sm font-bold text-right tabular-nums text-green-600 dark:text-green-400">${fmt(d.total_income)}</td>
+      <td class="px-6 py-3 text-sm font-bold text-right tabular-nums text-gray-900 dark:text-white">${d.total_count}</td>
+      <td class="px-6 py-3 text-sm font-bold text-right tabular-nums text-gray-900 dark:text-white">100.0%</td>
     </tr>`
 
     this.tableBodyTarget.innerHTML = rows + totalRow
@@ -286,7 +286,7 @@ export default class extends Controller {
     const d = this._data
     const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
 
-    let tableRows = d.sources.map(s =>
+    let tableRows = sortData(d.sources, this._sort.field, this._sort.dir).map(s =>
       `<tr>
         <td>${escapeHtml(s.name)}</td>
         <td style="text-align:right;font-family:monospace;">${fmt(s.amount)}</td>

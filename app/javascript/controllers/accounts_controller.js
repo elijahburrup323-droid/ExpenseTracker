@@ -724,7 +724,7 @@ export default class extends Controller {
       <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white cursor-pointer" data-id="${acc.id}" data-action="dblclick->accounts#goToReconciliation">${escapeHtml(acc.name)}</td>
       <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">${escapeHtml(acc.account_type_description || acc.account_type_name || "")}</td>
       <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">${escapeHtml(acc.institution || "")}</td>
-      <td class="px-6 py-4 text-sm text-gray-900 dark:text-white text-right font-mono">${this._formatBalance(acc.balance)}</td>
+      <td class="px-6 py-4 text-sm text-gray-900 dark:text-white text-right tabular-nums font-mono">${this._formatBalance(acc.balance)}</td>
       <td class="px-6 py-4 text-center">${budgetToggle}</td>
       <td class="px-6 py-4 text-right space-x-2 whitespace-nowrap">
         <button type="button"

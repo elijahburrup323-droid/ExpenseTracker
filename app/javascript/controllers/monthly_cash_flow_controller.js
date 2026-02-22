@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { sortTh, sortData, nextSortState } from "controllers/shared/report_sort"
 import { fetchTags, renderTagFilterCheckboxes, tagIdsQueryString, renderAppliedTagsBanner } from "controllers/shared/tag_filter"
 
 function fmt(amount) {
@@ -49,7 +50,7 @@ export default class extends Controller {
     this._includeYtd = false
     this._selectedTagIds = []
     this._allTags = []
-    this._detailSort = { field: "name", dir: "asc" }
+    this._sort = { field: "name", dir: "asc" }
     this._ensureTagsLoaded()
   }
 
@@ -283,19 +284,19 @@ export default class extends Controller {
     }
 
     let cols = `<td class="px-6 py-4 ${labelClass} whitespace-nowrap">${label}</td>
-      <td class="px-6 py-4 text-sm font-semibold text-right ${amountClass(current)}">${fmt(current)}</td>`
+      <td class="px-6 py-4 text-sm font-semibold text-right tabular-nums ${amountClass(current)}">${fmt(current)}</td>`
 
     if (hasPrev) {
       const prev = d.prev[key]
       const v = d.variance?.[key]
-      cols += `<td class="px-6 py-4 text-sm text-right ${amountClass(prev)}">${fmt(prev)}</td>
-        <td class="px-6 py-4 text-sm font-medium text-right ${varianceClass(v?.dollar)}">${v ? fmt(v.dollar) : "—"}</td>
-        <td class="px-6 py-4 text-sm font-medium text-right ${varianceClass(v?.dollar)}">${v ? fmtPct(v.percent) : "—"}</td>`
+      cols += `<td class="px-6 py-4 text-sm text-right tabular-nums ${amountClass(prev)}">${fmt(prev)}</td>
+        <td class="px-6 py-4 text-sm font-medium text-right tabular-nums ${varianceClass(v?.dollar)}">${v ? fmt(v.dollar) : "—"}</td>
+        <td class="px-6 py-4 text-sm font-medium text-right tabular-nums ${varianceClass(v?.dollar)}">${v ? fmtPct(v.percent) : "—"}</td>`
     }
 
     if (hasYtd) {
       const ytdVal = d.ytd[key]
-      cols += `<td class="px-6 py-4 text-sm text-right ${amountClass(ytdVal)}">${fmt(ytdVal)}</td>`
+      cols += `<td class="px-6 py-4 text-sm text-right tabular-nums ${amountClass(ytdVal)}">${fmt(ytdVal)}</td>`
     }
 
     return `<tr class="${rowClass}">${cols}</tr>`
@@ -311,21 +312,13 @@ export default class extends Controller {
 
     let body = ""
     if (isOpen && items.length > 0) {
-      const sortedItems = [...items].sort((a, b) => {
-        const mult = this._detailSort.dir === 'asc' ? 1 : -1
-        if (this._detailSort.field === 'amount') return (a[1] - b[1]) * mult
-        return String(a[0]).localeCompare(String(b[0])) * mult
-      })
-
-      const nameActive = this._detailSort.field === 'name'
-      const amtActive = this._detailSort.field === 'amount'
-      const nameChev = nameActive ? (this._detailSort.dir === 'asc' ? '\u25B2' : '\u25BC') : ''
-      const amtChev = amtActive ? (this._detailSort.dir === 'asc' ? '\u25B2' : '\u25BC') : ''
+      const accessor = (item, f) => f === "name" ? item[0] : item[1]
+      const sortedItems = sortData(items, this._sort.field, this._sort.dir, accessor)
 
       const rows = sortedItems.map(([name, amt]) =>
         `<tr class="border-b border-gray-100 dark:border-gray-700">
           <td class="px-6 py-2.5 text-sm text-gray-700 dark:text-gray-300">${escapeHtml(name)}</td>
-          <td class="px-6 py-2.5 text-sm text-right font-medium ${amountClass(amt)}">${fmt(amt)}</td>
+          <td class="px-6 py-2.5 text-sm text-right tabular-nums font-medium ${amountClass(amt)}">${fmt(amt)}</td>
         </tr>`
       ).join("")
 
@@ -333,20 +326,14 @@ export default class extends Controller {
         <table class="min-w-full">
           <thead class="bg-gray-50 dark:bg-gray-900">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium ${nameActive ? 'text-gray-700 dark:text-gray-200' : 'text-gray-500 dark:text-gray-400'} uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 transition select-none"
-                  data-sort-field="name" data-action="click->monthly-cash-flow#toggleDetailSort">
-                <span class="inline-flex items-center space-x-1"><span>Name</span>${nameChev ? `<span class="ml-1">${nameChev}</span>` : ''}</span>
-              </th>
-              <th class="px-6 py-3 text-right text-xs font-medium ${amtActive ? 'text-gray-700 dark:text-gray-200' : 'text-gray-500 dark:text-gray-400'} uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 transition select-none"
-                  data-sort-field="amount" data-action="click->monthly-cash-flow#toggleDetailSort">
-                <span class="inline-flex items-center justify-end space-x-1"><span>Amount</span>${amtChev ? `<span class="ml-1">${amtChev}</span>` : ''}</span>
-              </th>
+              ${sortTh("Name", "name", this._sort, "monthly-cash-flow", "left")}
+              ${sortTh("Amount", "amount", this._sort, "monthly-cash-flow", "right")}
             </tr>
           </thead>
           <tbody>${rows}
             <tr class="bg-gray-50 dark:bg-gray-900 border-t-2 border-gray-300 dark:border-gray-600">
               <td class="px-6 py-3 text-sm font-bold text-gray-900 dark:text-white">Total</td>
-              <td class="px-6 py-3 text-sm font-bold text-right ${amountClass(total)}">${fmt(total)}</td>
+              <td class="px-6 py-3 text-sm font-bold text-right tabular-nums ${amountClass(total)}">${fmt(total)}</td>
             </tr>
           </tbody>
         </table>
@@ -380,14 +367,10 @@ export default class extends Controller {
     this.render()
   }
 
-  toggleDetailSort(event) {
+  toggleSort(event) {
     const f = event.currentTarget.dataset.sortField
     if (!f) return
-    if (f === this._detailSort.field) {
-      this._detailSort = { field: f, dir: this._detailSort.dir === "asc" ? "desc" : "asc" }
-    } else {
-      this._detailSort = { field: f, dir: "asc" }
-    }
+    this._sort = nextSortState(f, this._sort.field, this._sort.dir)
     this.render()
   }
 }

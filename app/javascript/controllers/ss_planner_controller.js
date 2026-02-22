@@ -624,8 +624,8 @@ export default class extends Controller {
       const bestBadge = isBest ? ' <span class="text-green-600 dark:text-green-400 text-xs ml-1">Best</span>' : ''
       return `<tr class="${highlight} hover:bg-gray-50 dark:hover:bg-gray-700/50">
         <td class="px-4 py-2 text-sm text-gray-900 dark:text-white">${fmtAge(s.claimYears, s.claimMonths)}</td>
-        <td class="px-4 py-2 text-sm text-right font-mono text-gray-900 dark:text-white">${fmtCurrency(s.monthlyBenefit)}/mo</td>
-        <td class="px-4 py-2 text-sm text-right font-mono text-gray-900 dark:text-white">${fmtCurrency(s.lifetime)}${bestBadge}</td>
+        <td class="px-4 py-2 text-sm text-right tabular-nums font-mono text-gray-900 dark:text-white">${fmtCurrency(s.monthlyBenefit)}/mo</td>
+        <td class="px-4 py-2 text-sm text-right tabular-nums font-mono text-gray-900 dark:text-white">${fmtCurrency(s.lifetime)}${bestBadge}</td>
         <td class="px-4 py-2 text-sm text-gray-600 dark:text-gray-400">${s.note || "\u2014"}</td>
       </tr>`
     }).join("")

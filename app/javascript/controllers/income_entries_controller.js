@@ -443,7 +443,7 @@ export default class extends Controller {
       <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">${this._esc(entry.account_name || "\u2014")}</td>
       <td class="px-4 py-4 text-sm font-medium text-gray-900 dark:text-white">${this._esc(entry.source_name)}</td>
       <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">${this._esc(entry.description || "")}</td>
-      <td class="px-4 py-4 text-sm text-gray-900 dark:text-white text-right font-mono">${this._formatAmount(entry.amount)}</td>
+      <td class="px-4 py-4 text-sm text-gray-900 dark:text-white text-right tabular-nums font-mono">${this._formatAmount(entry.amount)}</td>
       <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">${this._esc(entry.frequency_name || "\u2014")}</td>
       <td class="px-4 py-4 text-center">${receivedToggle}</td>
       <td class="px-4 py-4 text-right space-x-2 whitespace-nowrap">

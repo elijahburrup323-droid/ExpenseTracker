@@ -109,6 +109,10 @@ APP_ALL_VERSIONS = [
       "Navigation: Terms Maint. and Privacy Maint. links added under Admin sidebar group (CM-022126-07)",
       "Reports: All 9 report tables now have sortable column headers — click any header to sort ascending/descending with chevron indicators (CM-022126-06)",
       "Reports: Shared report_sort.js utility provides sortTh(), sortData(), and nextSortState() for consistent sort behavior across all reports (CM-022126-06)",
+      "Reports: Secondary sort tiebreaker — Recurring Obligations sorts by Name within same Due Date for stable deterministic ordering (CM-022126-06)",
+      "Reports: Print output now preserves current column sort order for all reports (CM-022126-06)",
+      "Reports: Spending by Tag report converted to shared report_sort.js with sortable headers and default Amount descending sort (CM-022126-06)",
+      "Reports: Monthly Cash Flow detail sections refactored to shared report_sort.js with SVG chevron indicators (CM-022126-06)",
     ]
   },
   {
