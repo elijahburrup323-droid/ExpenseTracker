@@ -431,17 +431,15 @@ export default class extends Controller {
           }
           h += `
             <div>
-              <div class="flex items-center justify-between">
+              <div class="grid items-center" style="grid-template-columns: 1fr 5rem 2.5rem;">
                 <div class="flex items-center space-x-2 min-w-0">
                   <span class="w-2 h-2 rounded-full flex-shrink-0" style="background: ${dotColor}"></span>
                   <span class="text-xs text-gray-700 dark:text-gray-300 truncate">${this._esc(item.name)}</span>
                 </div>
-                <div class="flex items-center space-x-2 flex-shrink-0 ml-2">
-                  <span class="text-xs font-semibold text-gray-900 dark:text-white tabular-nums">${this._currency(item.amount)}</span>
-                  <span class="text-xs text-gray-500 dark:text-gray-400 w-10 text-right tabular-nums">${item.pct}%</span>
-                  ${listType === "type" && item.limit_pct != null ? limitHtml : ""}
-                </div>
+                <span class="text-xs font-semibold text-gray-900 dark:text-white tabular-nums text-right">${this._currency(item.amount)}</span>
+                <span class="text-xs text-gray-500 dark:text-gray-400 tabular-nums text-right">${item.pct}%</span>
               </div>
+              ${listType === "type" && item.limit_pct != null ? limitHtml : ""}
               ${listType === "category" && item.limit != null ? limitHtml : ""}
             </div>`
         }
