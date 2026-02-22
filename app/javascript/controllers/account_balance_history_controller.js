@@ -73,8 +73,8 @@ export default class extends Controller {
     this.startYearSelectTarget.innerHTML = yearOptions
     this.endYearSelectTarget.innerHTML = yearOptions
 
-    // Defaults: Jan of current year to current open month
-    this.startMonthSelectTarget.value = "1"
+    // Defaults: current open month only
+    this.startMonthSelectTarget.value = String(currentMonth)
     this.startYearSelectTarget.value = String(currentYear)
     this.endMonthSelectTarget.value = String(currentMonth)
     this.endYearSelectTarget.value = String(currentYear)

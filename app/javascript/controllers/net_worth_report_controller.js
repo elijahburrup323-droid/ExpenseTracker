@@ -58,7 +58,7 @@ export default class extends Controller {
     this.startYearSelectTarget.innerHTML = yearOptions
     this.endYearSelectTarget.innerHTML = yearOptions
 
-    this.startMonthSelectTarget.value = "1"
+    this.startMonthSelectTarget.value = String(currentMonth)
     this.startYearSelectTarget.value = String(currentYear)
     this.endMonthSelectTarget.value = String(currentMonth)
     this.endYearSelectTarget.value = String(currentYear)
