@@ -117,6 +117,8 @@
     <% end %>
     <% if user_signed_in? %>
       <div data-controller="sidebar month-actions"
+           data-sidebar-save-url-value="<%= api_sidebar_state_path %>"
+           data-sidebar-initial-state-value="<%= current_user.sidebar_state_json || '' %>"
            data-month-actions-close-url-value="<%= close_api_open_month_master_path %>"
            data-month-actions-reopen-url-value="<%= reopen_api_open_month_master_path %>"
            data-month-actions-show-url-value="<%= api_open_month_master_path %>"

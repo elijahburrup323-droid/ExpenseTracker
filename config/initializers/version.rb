@@ -1,6 +1,6 @@
 APP_VERSION = "1.3.18"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
-MANUAL_CHANGE_SEQ = 29  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 30  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
@@ -113,6 +113,10 @@ APP_ALL_VERSIONS = [
       "Reports: Print output now preserves current column sort order for all reports (CM-022126-06)",
       "Reports: Spending by Tag report converted to shared report_sort.js with sortable headers and default Amount descending sort (CM-022126-06)",
       "Reports: Monthly Cash Flow detail sections refactored to shared report_sort.js with SVG chevron indicators (CM-022126-06)",
+      "Social Security Benefit Planner: PIA input removed — benefit amount now entered per claim age row instead of global PIA (CM-022126-08)",
+      "Social Security Benefit Planner: Claim ages changed from dropdowns to compact text inputs with validation (Years 0-120, Months 0-11) (CM-022126-08)",
+      "Social Security Benefit Planner: Fixed 3-row claim age grid with per-row Benefit $/mo column — Row 1 auto-populates from birthdate (CM-022126-08)",
+      "Social Security Benefit Planner: Full Name labels updated to 'Full Name (Optional)' for both You and Spouse panels (CM-022126-08)",
     ]
   },
   {

@@ -2,9 +2,12 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static targets = ["sidebar", "backdrop", "toggleIcon", "mainContent", "tooltip", "flyout"]
+  static values = { saveUrl: String, initialState: String }
 
   connect() {
-    const collapsed = localStorage.getItem("sidebarCollapsed") === "true"
+    // Load server-persisted state, fall back to localStorage
+    this._loadInitialState()
+    const collapsed = this._state.isSidebarCollapsed
     this._applyState(collapsed, false)
     this._restoreGroupStates()
     // Close flyout on outside click
@@ -18,6 +21,7 @@ export default class extends Controller {
 
   disconnect() {
     document.removeEventListener("click", this._outsideClickHandler)
+    if (this._saveTimer) clearTimeout(this._saveTimer)
   }
 
   // --- Sidebar collapse ---
@@ -25,7 +29,8 @@ export default class extends Controller {
   toggle() {
     const isCollapsed = this.sidebarTarget.dataset.collapsed === "true"
     const newState = !isCollapsed
-    localStorage.setItem("sidebarCollapsed", newState)
+    this._state.isSidebarCollapsed = newState
+    this._persistState()
     this._applyState(newState, true)
     this.hideFlyout()
   }
@@ -139,6 +144,47 @@ export default class extends Controller {
 
   // --- Internal ---
 
+  _loadInitialState() {
+    // Try server-rendered state first
+    if (this.hasInitialStateValue && this.initialStateValue) {
+      try {
+        this._state = JSON.parse(this.initialStateValue)
+        // Sync to localStorage so it's available for instant load
+        localStorage.setItem("sidebarCollapsed", String(this._state.isSidebarCollapsed || false))
+        localStorage.setItem("sidebarGroups", JSON.stringify(this._expandedSectionsToGroups(this._state.expandedSections)))
+        return
+      } catch {}
+    }
+
+    // Fall back to localStorage (first-time users with no server state)
+    const collapsed = localStorage.getItem("sidebarCollapsed") === "true"
+    const groups = this._localStorageGroups()
+    const expandedSections = Object.entries(groups).filter(([, v]) => v === "open").map(([k]) => k)
+    this._state = {
+      isSidebarCollapsed: collapsed,
+      expandedSections: expandedSections,
+      version: 1
+    }
+  }
+
+  _expandedSectionsToGroups(sections) {
+    // Convert expandedSections array to sidebarGroups object
+    const groups = {}
+    if (!Array.isArray(sections)) return groups
+    // Get all group keys from DOM
+    this.sidebarTarget.querySelectorAll("[data-sidebar-group]").forEach(el => {
+      const key = el.dataset.sidebarGroup
+      groups[key] = sections.includes(key) ? "open" : "closed"
+    })
+    return groups
+  }
+
+  _localStorageGroups() {
+    try {
+      return JSON.parse(localStorage.getItem("sidebarGroups") || "{}")
+    } catch { return {} }
+  }
+
   _applyState(collapsed, animate) {
     const sidebar = this.sidebarTarget
     sidebar.dataset.collapsed = collapsed
@@ -209,17 +255,61 @@ export default class extends Controller {
   }
 
   _getGroupState(groupKey) {
+    // Check in-memory state first
+    if (this._state && Array.isArray(this._state.expandedSections)) {
+      return this._state.expandedSections.includes(groupKey) ? "open" : "closed"
+    }
+    // Fall back to localStorage
     try {
       const states = JSON.parse(localStorage.getItem("sidebarGroups") || "{}")
-      return states[groupKey] || "open"
-    } catch { return "open" }
+      return states[groupKey] || "closed"
+    } catch { return "closed" }
   }
 
   _saveGroupState(groupKey, state) {
+    // Update in-memory state
+    if (!this._state) this._state = { isSidebarCollapsed: false, expandedSections: [], version: 1 }
+    if (!Array.isArray(this._state.expandedSections)) this._state.expandedSections = []
+
+    if (state === "open") {
+      if (!this._state.expandedSections.includes(groupKey)) {
+        this._state.expandedSections.push(groupKey)
+      }
+    } else {
+      this._state.expandedSections = this._state.expandedSections.filter(k => k !== groupKey)
+    }
+
+    // Update localStorage immediately for fast reload
     try {
-      const states = JSON.parse(localStorage.getItem("sidebarGroups") || "{}")
-      states[groupKey] = state
-      localStorage.setItem("sidebarGroups", JSON.stringify(states))
+      const groups = JSON.parse(localStorage.getItem("sidebarGroups") || "{}")
+      groups[groupKey] = state
+      localStorage.setItem("sidebarGroups", JSON.stringify(groups))
     } catch {}
+
+    this._persistState()
+  }
+
+  _persistState() {
+    // Update localStorage immediately
+    localStorage.setItem("sidebarCollapsed", String(this._state.isSidebarCollapsed || false))
+
+    // Debounce server save (500ms)
+    if (this._saveTimer) clearTimeout(this._saveTimer)
+    this._saveTimer = setTimeout(() => this._saveToServer(), 500)
+  }
+
+  _saveToServer() {
+    if (!this.hasSaveUrlValue || !this.saveUrlValue) return
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
+    fetch(this.saveUrlValue, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "X-CSRF-Token": csrfToken
+      },
+      body: JSON.stringify({ sidebar_state: this._state })
+    }).catch(() => {}) // fail silently
   }
 }

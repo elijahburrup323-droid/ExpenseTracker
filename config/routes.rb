@@ -194,6 +194,9 @@ Rails.application.routes.draw do
     # Theme API
     put "theme", to: "theme#update", as: :theme
 
+    # Sidebar state API
+    put "sidebar_state", to: "sidebar_state#update", as: :sidebar_state
+
     # Diagnostic endpoint (admin only)
     get "diagnose_send", to: "diagnose#test_send"
 

@@ -63,11 +63,9 @@ function fmtCurrency(val) {
 export default class extends Controller {
   static targets = [
     "yourName", "yourSex", "yourBirthdate", "yourCurrentlyDrawing",
-    "yourClaimAgeList", "yourClaimAgeDupMsg", "yourFRA", "yourFRAInline", "yourLifeExpectancy",
-    "yourPIA",
+    "yourClaimAgeList", "yourClaimAgeDupMsg", "yourFRA", "yourLifeExpectancy",
     "spouseSection", "spouseName", "spouseSex", "spouseBirthdate", "spouseCurrentlyDrawing",
-    "spouseClaimAgeList", "spouseClaimAgeDupMsg", "spouseFRA", "spouseFRAInline", "spouseLifeExpectancy",
-    "spousePIA",
+    "spouseClaimAgeList", "spouseClaimAgeDupMsg", "spouseFRA", "spouseLifeExpectancy",
     "colaRate",
     "strategyTableBody", "strategyTableHead", "timelineChart",
     "yourOptimal", "spouseOptimal", "projectedValue",
@@ -85,9 +83,9 @@ export default class extends Controller {
     this._lastStrategies = []
     this._breakEvens = []
 
-    // Initialize claim age lists with defaults
-    this.yourClaimAges = [{ years: 62, months: 0 }, { years: 67, months: 0 }]
-    this.spouseClaimAges = [{ years: 62, months: 0 }, { years: 67, months: 0 }]
+    // Initialize claim age lists with defaults (3 fixed rows with per-row benefit)
+    this.yourClaimAges = [{ years: 62, months: 0, benefit: 0 }, { years: 67, months: 0, benefit: 0 }, { years: 70, months: 0, benefit: 0 }]
+    this.spouseClaimAges = [{ years: 62, months: 0, benefit: 0 }, { years: 67, months: 0, benefit: 0 }, { years: 70, months: 0, benefit: 0 }]
 
     this._renderClaimAgeRows("your")
     this._renderClaimAgeRows("spouse")
@@ -132,7 +130,6 @@ export default class extends Controller {
   resetScenario() {
     if (this.hasYourNameTarget) this.yourNameTarget.value = ""
     if (this.hasYourBirthdateTarget) this.yourBirthdateTarget.value = ""
-    if (this.hasYourPIATarget) this.yourPIATarget.value = ""
     if (this.hasColaRateTarget) this.colaRateTarget.value = "2.6"
     if (this.hasWorkingBeforeFRATarget) this.workingBeforeFRATarget.value = "no"
     this.hasSpouse = false
@@ -151,8 +148,8 @@ export default class extends Controller {
     this._lastStrategies = []
     this._breakEvens = []
 
-    this.yourClaimAges = [{ years: 62, months: 0 }, { years: 67, months: 0 }]
-    this.spouseClaimAges = [{ years: 62, months: 0 }, { years: 67, months: 0 }]
+    this.yourClaimAges = [{ years: 62, months: 0, benefit: 0 }, { years: 67, months: 0, benefit: 0 }, { years: 70, months: 0, benefit: 0 }]
+    this.spouseClaimAges = [{ years: 62, months: 0, benefit: 0 }, { years: 67, months: 0, benefit: 0 }, { years: 70, months: 0, benefit: 0 }]
     this._renderClaimAgeRows("your")
     this._renderClaimAgeRows("spouse")
 
@@ -163,7 +160,7 @@ export default class extends Controller {
     if (this.hasSpouseOptimalTarget) this.spouseOptimalTarget.innerHTML = "&mdash;"
     if (this.hasProjectedValueTarget) this.projectedValueTarget.innerHTML = "&mdash;"
     if (this.hasStrategyTableBodyTarget) {
-      this.strategyTableBodyTarget.innerHTML = '<tr><td colspan="4" class="px-4 py-6 text-center text-sm text-gray-400">Enter your PIA and birthdate, then click Calculate Comparison.</td></tr>'
+      this.strategyTableBodyTarget.innerHTML = '<tr><td colspan="4" class="px-4 py-6 text-center text-sm text-gray-400">Enter your birthdate and claim age details, then click Calculate Comparison.</td></tr>'
     }
     if (this.hasTimelineChartTarget) {
       this.timelineChartTarget.innerHTML = '<p class="text-sm text-gray-400 dark:text-gray-500 text-center py-8">Enter your details above to see the comparison chart.</p>'
@@ -175,40 +172,13 @@ export default class extends Controller {
 
   // ─── Claim Age List Management ────────────────────
 
-  addYourClaimAge() {
-    this._addClaimAge("your")
-  }
-
-  addSpouseClaimAge() {
-    this._addClaimAge("spouse")
-  }
-
-  _addClaimAge(who) {
-    const ages = who === "your" ? this.yourClaimAges : this.spouseClaimAges
-    // Find a default that doesn't duplicate
-    let newAge = { years: 62, months: 0 }
-    for (let y = 62; y <= 70; y++) {
-      if (!ages.some(a => a.years === y && a.months === 0)) {
-        newAge = { years: y, months: 0 }
-        break
-      }
-    }
-    ages.push(newAge)
-    this._renderClaimAgeRows(who)
-    this._validateDuplicates(who)
-  }
-
-  _removeClaimAge(who, index) {
-    const ages = who === "your" ? this.yourClaimAges : this.spouseClaimAges
-    if (ages.length <= 2) return
-    ages.splice(index, 1)
-    this._renderClaimAgeRows(who)
-    this._validateDuplicates(who)
-  }
-
   _onClaimAgeChange(who, index, field, value) {
     const ages = who === "your" ? this.yourClaimAges : this.spouseClaimAges
-    ages[index][field] = parseInt(value) || 0
+    if (field === "benefit") {
+      ages[index][field] = parseFloat(value) || 0
+    } else {
+      ages[index][field] = parseInt(value) || 0
+    }
     this._validateDuplicates(who)
   }
 
@@ -233,58 +203,56 @@ export default class extends Controller {
   _renderClaimAgeRows(who) {
     const ages = who === "your" ? this.yourClaimAges : this.spouseClaimAges
     const container = who === "your" ? this.yourClaimAgeListTarget : this.spouseClaimAgeListTarget
-    const selectClass = "rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm focus:ring-brand-500 focus:border-brand-500 px-2 py-1.5"
+    const inputClass = "w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm focus:ring-brand-500 focus:border-brand-500 px-2 py-1.5 tabular-nums"
 
     // Table header row
-    let html = `<div class="grid grid-cols-[1fr_1fr_auto] gap-2 mb-1">
+    let html = `<div class="grid grid-cols-[2rem_1fr_1fr_1fr] gap-2 mb-1">
+      <span class="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-1">#</span>
       <span class="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-1">Years</span>
       <span class="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-1">Months</span>
-      <span class="w-8"></span>
+      <span class="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-1">Benefit $/mo</span>
     </div>`
 
     html += ages.map((age, idx) => {
-      const yearsOpts = Array.from({ length: 9 }, (_, i) => {
-        const y = 62 + i
-        return `<option value="${y}" ${y === age.years ? "selected" : ""}>${y}</option>`
-      }).join("")
-      const monthsOpts = Array.from({ length: 12 }, (_, i) => {
-        return `<option value="${i}" ${i === age.months ? "selected" : ""}>${i}</option>`
-      }).join("")
-      const canDelete = ages.length > 2
-      const deleteBtn = canDelete
-        ? `<button type="button" data-claim-who="${who}" data-claim-idx="${idx}" data-action="click->ss-planner#removeClaimAgeRow"
-             class="p-1.5 text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-300 transition" title="Remove">
-             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-           </button>`
-        : `<div class="w-8"></div>`
-      return `<div class="grid grid-cols-[1fr_1fr_auto] gap-2 items-center">
-        <select data-claim-who="${who}" data-claim-idx="${idx}" data-claim-field="years"
-                data-action="change->ss-planner#onClaimAgeSelect"
-                class="${selectClass}">${yearsOpts}</select>
-        <select data-claim-who="${who}" data-claim-idx="${idx}" data-claim-field="months"
-                data-action="change->ss-planner#onClaimAgeSelect"
-                class="${selectClass}">${monthsOpts}</select>
-        ${deleteBtn}
+      return `<div class="grid grid-cols-[2rem_1fr_1fr_1fr] gap-2 items-center">
+        <span class="text-sm font-medium text-gray-400 dark:text-gray-500 text-center">${idx + 1}</span>
+        <input type="number" min="0" max="120" step="1" value="${age.years}"
+               data-claim-who="${who}" data-claim-idx="${idx}" data-claim-field="years"
+               data-action="change->ss-planner#onClaimAgeInput"
+               class="${inputClass}">
+        <input type="number" min="0" max="11" step="1" value="${age.months}"
+               data-claim-who="${who}" data-claim-idx="${idx}" data-claim-field="months"
+               data-action="change->ss-planner#onClaimAgeInput"
+               class="${inputClass}">
+        <input type="number" min="0" step="1" value="${age.benefit || ''}"
+               placeholder="e.g. 2800"
+               data-claim-who="${who}" data-claim-idx="${idx}" data-claim-field="benefit"
+               data-action="change->ss-planner#onClaimAgeInput"
+               class="${inputClass}">
       </div>`
     }).join("")
 
     container.innerHTML = html
   }
 
-  // Stimulus action handlers for dynamic rows
-  onClaimAgeSelect(event) {
+  // Stimulus action handler for text inputs
+  onClaimAgeInput(event) {
     const el = event.currentTarget
     const who = el.dataset.claimWho
     const idx = parseInt(el.dataset.claimIdx)
     const field = el.dataset.claimField
-    this._onClaimAgeChange(who, idx, field, el.value)
-  }
-
-  removeClaimAgeRow(event) {
-    const el = event.currentTarget
-    const who = el.dataset.claimWho
-    const idx = parseInt(el.dataset.claimIdx)
-    this._removeClaimAge(who, idx)
+    // Clamp values
+    let val = el.value
+    if (field === "years") {
+      val = Math.max(0, Math.min(120, parseInt(val) || 0))
+      el.value = val
+    } else if (field === "months") {
+      val = Math.max(0, Math.min(11, parseInt(val) || 0))
+      el.value = val
+    } else if (field === "benefit") {
+      val = Math.max(0, parseFloat(val) || 0)
+    }
+    this._onClaimAgeChange(who, idx, field, val)
   }
 
   // ─── FRA / Life Expectancy (live update on input change) ──
@@ -301,14 +269,16 @@ export default class extends Controller {
       if (this.hasYourFRATarget) {
         this.yourFRATarget.textContent = yourFRAText
       }
-      if (this.hasYourFRAInlineTarget) {
-        this.yourFRAInlineTarget.textContent = yourFRAText
-      }
       const now = new Date()
       const ageYears = now.getFullYear() - birthYear - (now < new Date(now.getFullYear(), birthDate.getMonth(), birthDate.getDate()) ? 1 : 0)
       const le = lifeExpectancy(ageYears, yourSex)
       if (this.hasYourLifeExpectancyTarget) {
         this.yourLifeExpectancyTarget.textContent = `${Math.round(le)} Years`
+      }
+      // Auto-populate Row 1 with current age
+      if (this.yourClaimAges && this.yourClaimAges[0]) {
+        this.yourClaimAges[0].years = ageYears
+        this._renderClaimAgeRows("your")
       }
     }
 
@@ -323,14 +293,16 @@ export default class extends Controller {
         if (this.hasSpouseFRATarget) {
           this.spouseFRATarget.textContent = spouseFRAText
         }
-        if (this.hasSpouseFRAInlineTarget) {
-          this.spouseFRAInlineTarget.textContent = spouseFRAText
-        }
         const now = new Date()
         const sAge = now.getFullYear() - sBirthYear - (now < new Date(now.getFullYear(), sBirth.getMonth(), sBirth.getDate()) ? 1 : 0)
         const sLe = lifeExpectancy(sAge, spouseSex)
         if (this.hasSpouseLifeExpectancyTarget) {
           this.spouseLifeExpectancyTarget.textContent = `${Math.round(sLe)} Years`
+        }
+        // Auto-populate Spouse Row 1 with current age
+        if (this.spouseClaimAges && this.spouseClaimAges[0]) {
+          this.spouseClaimAges[0].years = sAge
+          this._renderClaimAgeRows("spouse")
         }
       }
     }
@@ -423,13 +395,13 @@ export default class extends Controller {
 
     const yourBirth = this.hasYourBirthdateTarget ? this.yourBirthdateTarget.value : ""
     const yourSex = this.hasYourSexTarget ? this.yourSexTarget.value : "male"
-    const yourPIA = this.hasYourPIATarget ? parseFloat(this.yourPIATarget.value) || 0 : 0
     const cola = this.hasColaRateTarget ? parseFloat(this.colaRateTarget.value) || 2.6 : 2.6
     const workingBeforeFRA = this.hasWorkingBeforeFRATarget ? this.workingBeforeFRATarget.value === "yes" : false
 
-    if (!yourBirth || yourPIA <= 0) {
+    const hasAnyBenefit = this.yourClaimAges.some(a => (a.benefit || 0) > 0)
+    if (!yourBirth || !hasAnyBenefit) {
       if (this.hasRecommendationTextTarget) {
-        this.recommendationTextTarget.textContent = "Please enter your birthdate and PIA to run a comparison."
+        this.recommendationTextTarget.textContent = "Please enter your birthdate and at least one benefit amount to run a comparison."
       }
       return
     }
@@ -445,14 +417,14 @@ export default class extends Controller {
     const ageYears = now.getFullYear() - birthYear - (now < new Date(now.getFullYear(), birthDate.getMonth(), birthDate.getDate()) ? 1 : 0)
     const le = lifeExpectancy(ageYears, yourSex)
 
-    // Sort claim ages ascending
-    const sortedAges = [...this.yourClaimAges].sort((a, b) => (a.years * 12 + a.months) - (b.years * 12 + b.months))
+    // Filter to rows that have a benefit entered, sort ascending
+    const activeAges = this.yourClaimAges.filter(a => (a.benefit || 0) > 0)
+    const sortedAges = [...activeAges].sort((a, b) => (a.years * 12 + a.months) - (b.years * 12 + b.months))
 
-    // Compute strategies for each claim age (with year+month precision)
+    // Compute strategies for each claim age using per-row benefit amount
     const strategies = sortedAges.map(age => {
       const totalClaimMonths = age.years * 12 + age.months
-      const factor = claimingFactor(totalClaimMonths, fraMonths)
-      let monthlyBenefit = yourPIA * factor
+      let monthlyBenefit = age.benefit
 
       if (workingBeforeFRA && totalClaimMonths < fraMonths) {
         monthlyBenefit *= 0.5
@@ -468,6 +440,7 @@ export default class extends Controller {
       }
 
       // Note about FRA relationship
+      const factor = claimingFactor(totalClaimMonths, fraMonths)
       let note = ""
       if (totalClaimMonths < fraMonths) {
         const pct = ((1 - factor) * 100).toFixed(1)
@@ -520,19 +493,18 @@ export default class extends Controller {
     if (this.hasSpouse) {
       const spouseBirth = this.hasSpouseBirthdateTarget ? this.spouseBirthdateTarget.value : ""
       const spouseSex = this.hasSpouseSexTarget ? this.spouseSexTarget.value : "female"
-      const spousePIA = this.hasSpousePIATarget ? parseFloat(this.spousePIATarget.value) || 0 : 0
-      if (spouseBirth && spousePIA > 0 && !this._validateDuplicates("spouse")) {
+      const spouseActiveAges = this.spouseClaimAges.filter(a => (a.benefit || 0) > 0)
+      if (spouseBirth && spouseActiveAges.length > 0 && !this._validateDuplicates("spouse")) {
         const sBirth = new Date(spouseBirth)
         const sBirthYear = sBirth.getFullYear()
         const sFra = getFRA(sBirthYear)
         const sFraMonths = sFra.years * 12 + sFra.months
         const sAge = now.getFullYear() - sBirthYear - (now < new Date(now.getFullYear(), sBirth.getMonth(), sBirth.getDate()) ? 1 : 0)
         const sLe = lifeExpectancy(sAge, spouseSex)
-        const sortedSpouseAges = [...this.spouseClaimAges].sort((a, b) => (a.years * 12 + a.months) - (b.years * 12 + b.months))
+        const sortedSpouseAges = [...spouseActiveAges].sort((a, b) => (a.years * 12 + a.months) - (b.years * 12 + b.months))
         const spouseStrats = sortedSpouseAges.map(age => {
           const totalClaimMonths = age.years * 12 + age.months
-          const factor = claimingFactor(totalClaimMonths, sFraMonths)
-          let mb = spousePIA * factor
+          let mb = age.benefit
           if (workingBeforeFRA && totalClaimMonths < sFraMonths) mb *= 0.5
           const claimAgeDecimal = age.years + age.months / 12
           const mc = Math.max(0, Math.round((sLe - claimAgeDecimal) * 12))
@@ -613,7 +585,7 @@ export default class extends Controller {
   _renderStrategyTable(strategies) {
     if (!this.hasStrategyTableBodyTarget) return
     if (!strategies || strategies.length === 0) {
-      this.strategyTableBodyTarget.innerHTML = '<tr><td colspan="4" class="px-4 py-6 text-center text-sm text-gray-400">Enter your PIA and birthdate, then click Calculate Comparison.</td></tr>'
+      this.strategyTableBodyTarget.innerHTML = '<tr><td colspan="4" class="px-4 py-6 text-center text-sm text-gray-400">Enter your birthdate and claim age details, then click Calculate Comparison.</td></tr>'
       return
     }
 
