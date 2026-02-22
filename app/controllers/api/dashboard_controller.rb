@@ -6,6 +6,8 @@ module Api
 
       month = (params[:month] || Date.today.month).to_i
       year = (params[:year] || Date.today.year).to_i
+      month = month.clamp(1, 12)
+      year = year.clamp(2000, 2100)
       month_start = Date.new(year, month, 1)
       month_end = month_start.next_month  # half-open: [month_start, month_end)
 
