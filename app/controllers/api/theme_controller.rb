@@ -1,6 +1,6 @@
 module Api
   class ThemeController < BaseController
-    VALID_THEMES = %w[purple navy teal charcoal deep_green burgundy].freeze
+    VALID_THEMES = %w[purple navy teal charcoal deep_green burgundy royal_blue slate_blue sunset_orange midnight emerald copper].freeze
 
     # PUT /api/theme
     def update

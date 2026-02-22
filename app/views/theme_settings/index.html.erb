@@ -1,4 +1,4 @@
-<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6" data-controller="theme-settings"
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6" data-controller="theme-settings"
      data-theme-settings-api-url-value="<%= api_theme_path %>"
      data-theme-settings-csrf-token-value="<%= form_authenticity_token %>"
      data-theme-settings-current-value="<%= current_user.accent_theme_key %>">
@@ -13,14 +13,20 @@
   <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6">
     <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Accent Theme</h2>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" data-theme-settings-target="themeGrid">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" data-theme-settings-target="themeGrid">
       <% [
-        { key: "purple",     label: "Default Purple",  dark: "#7e22ce", light: "#a855f7" },
-        { key: "navy",       label: "Navy",            dark: "#1d4ed8", light: "#3b82f6" },
-        { key: "teal",       label: "Teal",            dark: "#0f766e", light: "#14b8a6" },
-        { key: "charcoal",   label: "Charcoal",        dark: "#334155", light: "#64748b" },
-        { key: "deep_green", label: "Deep Green",      dark: "#15803d", light: "#22c55e" },
-        { key: "burgundy",   label: "Burgundy",        dark: "#be123c", light: "#f43f5e" },
+        { key: "purple",        label: "Default Purple",  dark: "#7e22ce", light: "#a855f7" },
+        { key: "navy",          label: "Navy",            dark: "#1d4ed8", light: "#3b82f6" },
+        { key: "teal",          label: "Teal",            dark: "#0f766e", light: "#14b8a6" },
+        { key: "charcoal",      label: "Charcoal",        dark: "#334155", light: "#64748b" },
+        { key: "deep_green",    label: "Deep Green",      dark: "#15803d", light: "#22c55e" },
+        { key: "burgundy",      label: "Burgundy",        dark: "#be123c", light: "#f43f5e" },
+        { key: "royal_blue",    label: "Royal Blue",      dark: "#4338ca", light: "#6366f1" },
+        { key: "slate_blue",    label: "Slate Blue",      dark: "#414882", light: "#6270b0" },
+        { key: "sunset_orange", label: "Sunset Orange",   dark: "#b45309", light: "#f59e0b" },
+        { key: "midnight",      label: "Midnight",        dark: "#313563", light: "#4a508f" },
+        { key: "emerald",       label: "Emerald",         dark: "#047857", light: "#10b981" },
+        { key: "copper",        label: "Copper",          dark: "#964318", light: "#d46f25" },
       ].each do |theme| %>
         <button type="button"
                 class="theme-card group relative flex items-center space-x-4 p-4 rounded-xl border-2 transition-all duration-200 hover:shadow-md min-h-[4rem] <%= current_user.accent_theme_key == theme[:key] ? 'border-brand-500 ring-2 ring-brand-200 dark:ring-brand-800 bg-brand-50 dark:bg-brand-900/20' : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-white dark:bg-gray-800' %>"
