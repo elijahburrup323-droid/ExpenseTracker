@@ -406,9 +406,11 @@ export default class extends Controller {
       const types = data.types || []
       const colorMap = { blue: "#3b82f6", green: "#22c55e", gold: "#eab308", red: "#ef4444", purple: "#a855f7", pink: "#ec4899", indigo: "#6366f1", teal: "#14b8a6", orange: "#f97316", gray: "#6b7280" }
 
+      const gridCols = "grid-template-columns: 1fr 5.5rem 3rem; gap: 0 0.5rem;"
+
       const renderList = (items, listType) => {
         if (items.length === 0) return `<p class="text-xs text-gray-400 dark:text-gray-500">No spending yet.</p>`
-        let h = '<div class="space-y-1.5">'
+        let h = '<div class="space-y-1">'
         for (const item of items) {
           const dotColor = colorMap[item.color_key] || "#6b7280"
           let limitHtml = ""
@@ -431,26 +433,30 @@ export default class extends Controller {
           }
           h += `
             <div>
-              <div class="grid items-center" style="grid-template-columns: 1fr 5rem 2.5rem;">
+              <div class="grid items-center" style="${gridCols}">
                 <div class="flex items-center space-x-2 min-w-0">
                   <span class="w-2 h-2 rounded-full flex-shrink-0" style="background: ${dotColor}"></span>
                   <span class="text-xs text-gray-700 dark:text-gray-300 truncate">${this._esc(item.name)}</span>
                 </div>
                 <span class="text-xs font-semibold text-gray-900 dark:text-white tabular-nums text-right">${this._currency(item.amount)}</span>
-                <span class="text-xs text-gray-500 dark:text-gray-400 tabular-nums text-right">${item.pct}%</span>
+                <span class="text-xs text-gray-400 dark:text-gray-500 tabular-nums text-right">${item.pct}%</span>
               </div>
               ${listType === "type" && item.limit_pct != null ? limitHtml : ""}
               ${listType === "category" && item.limit != null ? limitHtml : ""}
             </div>`
         }
         h += '</div>'
-        h += `<p class="text-xs font-semibold text-gray-700 dark:text-gray-300 mt-1.5 tabular-nums">Total: ${spent}</p>`
+        h += `<div class="grid items-center mt-2 pt-1.5 border-t border-gray-200 dark:border-gray-600" style="${gridCols}">
+          <span class="text-xs font-semibold text-gray-700 dark:text-gray-300">Total</span>
+          <span class="text-xs font-semibold text-gray-900 dark:text-white tabular-nums text-right">${spent}</span>
+          <span></span>
+        </div>`
         return h
       }
 
-      let html = `<p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">By Category</p>`
+      let html = `<p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">By Category</p>`
       html += renderList(categories, "category")
-      html += `<p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-3 mb-1.5">By Spending Type</p>`
+      html += `<p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mt-4 mb-2">By Spending Type</p>`
       html += renderList(types, "type")
       backContent.innerHTML = html
     }
