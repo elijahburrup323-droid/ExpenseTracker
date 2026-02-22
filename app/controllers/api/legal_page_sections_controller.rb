@@ -49,8 +49,19 @@ module Api
       end
     end
 
+    ALLOWED_TAGS = %w[p br strong em u a ul ol li h2 h3 blockquote hr span].freeze
+    ALLOWED_ATTRS = { "a" => %w[href target rel], "span" => %w[class] }.freeze
+
     def section_params
-      params.require(:legal_page_section).permit(:section_number, :section_title, :section_body, :display_order, :is_active)
+      raw = params.require(:legal_page_section).permit(:section_number, :section_title, :section_body, :display_order, :is_active)
+      if raw[:section_body].present?
+        raw[:section_body] = ActionController::Base.helpers.sanitize(
+          raw[:section_body],
+          tags: ALLOWED_TAGS,
+          attributes: ALLOWED_ATTRS.values.flatten.uniq
+        )
+      end
+      raw
     end
 
     def serialize(s)

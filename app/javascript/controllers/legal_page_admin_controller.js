@@ -9,7 +9,8 @@ export default class extends Controller {
   static targets = [
     "tableBody",
     "modal", "modalTitle", "modalNumber", "modalOrder", "modalTitle2", "modalBody", "modalError",
-    "deleteModal", "deleteModalName"
+    "deleteModal", "deleteModalName",
+    "quillEditor", "editorContainer", "htmlToggle"
   ]
   static values = { apiUrl: String, previewUrl: String, csrfToken: String }
 
@@ -17,6 +18,8 @@ export default class extends Controller {
     this.sections = []
     this.editingId = null
     this.deletingId = null
+    this.quill = null
+    this._htmlMode = false
     this.fetchAll()
   }
 
@@ -70,6 +73,69 @@ export default class extends Controller {
     }).join("")
   }
 
+  // --- Quill Editor ---
+
+  _initQuill() {
+    if (this.quill) return
+    if (typeof Quill === "undefined") return
+
+    this.quill = new Quill(this.quillEditorTarget, {
+      theme: "snow",
+      modules: {
+        toolbar: [
+          ["bold", "italic", "underline"],
+          [{ header: [2, 3, false] }],
+          [{ list: "ordered" }, { list: "bullet" }],
+          ["link", "blockquote"],
+          ["clean"]
+        ]
+      },
+      placeholder: "Enter section content..."
+    })
+  }
+
+  _setQuillHtml(html) {
+    if (!this.quill) return
+    if (html) {
+      this.quill.root.innerHTML = html
+    } else {
+      this.quill.setText("")
+    }
+  }
+
+  _getBodyHtml() {
+    if (this._htmlMode) {
+      return this.modalBodyTarget.value.trim()
+    }
+    if (this.quill) {
+      const html = this.quill.root.innerHTML
+      return html === "<p><br></p>" ? "" : html
+    }
+    return this.modalBodyTarget.value.trim()
+  }
+
+  toggleHtmlView() {
+    this._htmlMode = !this._htmlMode
+
+    if (this._htmlMode) {
+      // Switch to HTML view: sync Quill content to textarea
+      if (this.quill) {
+        const html = this.quill.root.innerHTML
+        this.modalBodyTarget.value = html === "<p><br></p>" ? "" : html
+      }
+      this.editorContainerTarget.classList.add("hidden")
+      this.modalBodyTarget.classList.remove("hidden")
+      this.htmlToggleTarget.textContent = "Show Editor"
+    } else {
+      // Switch back to WYSIWYG: sync textarea to Quill
+      const html = this.modalBodyTarget.value.trim()
+      this._setQuillHtml(html)
+      this.modalBodyTarget.classList.add("hidden")
+      this.editorContainerTarget.classList.remove("hidden")
+      this.htmlToggleTarget.textContent = "Show HTML"
+    }
+  }
+
   // --- Modal ---
 
   openAddModal() {
@@ -79,8 +145,14 @@ export default class extends Controller {
     this.modalOrderTarget.value = this.sections.length + 1
     this.modalTitle2Target.value = ""
     this.modalBodyTarget.value = ""
+    this._htmlMode = false
+    this.editorContainerTarget.classList.remove("hidden")
+    this.modalBodyTarget.classList.add("hidden")
+    this.htmlToggleTarget.textContent = "Show HTML"
     this.modalErrorTarget.classList.add("hidden")
     this.modalTarget.classList.remove("hidden")
+    this._initQuill()
+    this._setQuillHtml("")
     this.modalTitle2Target.focus()
   }
 
@@ -95,8 +167,14 @@ export default class extends Controller {
     this.modalOrderTarget.value = s.display_order
     this.modalTitle2Target.value = s.section_title
     this.modalBodyTarget.value = s.section_body
+    this._htmlMode = false
+    this.editorContainerTarget.classList.remove("hidden")
+    this.modalBodyTarget.classList.add("hidden")
+    this.htmlToggleTarget.textContent = "Show HTML"
     this.modalErrorTarget.classList.add("hidden")
     this.modalTarget.classList.remove("hidden")
+    this._initQuill()
+    this._setQuillHtml(s.section_body)
     this.modalTitle2Target.focus()
   }
 
@@ -109,7 +187,7 @@ export default class extends Controller {
     const section_number = parseInt(this.modalNumberTarget.value)
     const display_order = parseInt(this.modalOrderTarget.value)
     const section_title = this.modalTitle2Target.value.trim()
-    const section_body = this.modalBodyTarget.value.trim()
+    const section_body = this._getBodyHtml()
 
     if (!section_number) { this._showError("Section number is required"); return }
     if (!section_title) { this._showError("Section title is required"); return }
