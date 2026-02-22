@@ -44,6 +44,9 @@ Rails.application.routes.draw do
   # Transfers (HTML page)
   resources :transfer_masters, only: [:index]
 
+  # Recurring Transfers (HTML page)
+  resources :recurring_transfers, only: [:index]
+
   # Account Reconciliation (HTML page)
   get "account_reconciliation", to: "account_reconciliation#index", as: :account_reconciliation
 
@@ -114,6 +117,7 @@ Rails.application.routes.draw do
     end
     resources :tags, only: [:index, :create, :update, :destroy]
     resources :payment_recurrings, only: [:index, :create, :update, :destroy]
+    resources :recurring_transfers, only: [:index, :create, :update, :destroy]
     resources :buckets, only: [:index, :create, :update, :destroy] do
       member do
         post :fund

@@ -34,6 +34,7 @@ class User < ApplicationRecord
   has_many :spending_limit_histories, dependent: :destroy
   has_many :user_report_layouts, dependent: :destroy
   has_many :recurring_obligations, dependent: :destroy
+  has_many :recurring_transfers, dependent: :destroy
 
   validates :email, presence: true, uniqueness: true, unless: :phone_only_user?
   validates :phone_number, uniqueness: true, allow_blank: true

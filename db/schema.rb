@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_22_222303) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_22_500002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -498,6 +498,31 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_22_222303) do
     t.index ["user_id"], name: "index_recurring_obligations_on_user_id"
   end
 
+  create_table "recurring_transfers", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "from_account_id", null: false
+    t.bigint "to_account_id", null: false
+    t.bigint "from_bucket_id"
+    t.bigint "to_bucket_id"
+    t.bigint "frequency_master_id", null: false
+    t.decimal "amount", precision: 12, scale: 2, null: false
+    t.date "next_date", null: false
+    t.boolean "use_flag", default: true, null: false
+    t.string "memo", limit: 255
+    t.integer "sort_order", default: 0, null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["frequency_master_id"], name: "index_recurring_transfers_on_frequency_master_id"
+    t.index ["from_account_id"], name: "index_recurring_transfers_on_from_account_id"
+    t.index ["from_bucket_id"], name: "index_recurring_transfers_on_from_bucket_id"
+    t.index ["next_date"], name: "index_recurring_transfers_on_next_date"
+    t.index ["to_account_id"], name: "index_recurring_transfers_on_to_account_id"
+    t.index ["to_bucket_id"], name: "index_recurring_transfers_on_to_bucket_id"
+    t.index ["user_id", "deleted_at"], name: "index_recurring_transfers_on_user_id_and_deleted_at"
+    t.index ["user_id"], name: "index_recurring_transfers_on_user_id"
+  end
+
   create_table "reports_masters", force: :cascade do |t|
     t.string "report_key", limit: 60, null: false
     t.string "title", limit: 120, null: false
@@ -618,8 +643,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_22_222303) do
     t.boolean "reconciled", default: false, null: false
     t.bigint "from_bucket_id"
     t.bigint "to_bucket_id"
+    t.bigint "recurring_transfer_id"
     t.index ["from_account_id"], name: "index_transfer_masters_on_from_account_id"
     t.index ["from_bucket_id"], name: "index_transfer_masters_on_from_bucket_id"
+    t.index ["recurring_transfer_id"], name: "index_transfer_masters_on_recurring_transfer_id"
     t.index ["to_account_id"], name: "index_transfer_masters_on_to_account_id"
     t.index ["to_bucket_id"], name: "index_transfer_masters_on_to_bucket_id"
     t.index ["transfer_date"], name: "index_transfer_masters_on_transfer_date"
@@ -777,6 +804,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_22_222303) do
   add_foreign_key "recurring_obligations", "income_frequency_masters", column: "frequency_master_id"
   add_foreign_key "recurring_obligations", "spending_categories"
   add_foreign_key "recurring_obligations", "users"
+  add_foreign_key "recurring_transfers", "accounts", column: "from_account_id"
+  add_foreign_key "recurring_transfers", "accounts", column: "to_account_id"
+  add_foreign_key "recurring_transfers", "buckets", column: "from_bucket_id"
+  add_foreign_key "recurring_transfers", "buckets", column: "to_bucket_id"
+  add_foreign_key "recurring_transfers", "income_frequency_masters", column: "frequency_master_id"
+  add_foreign_key "recurring_transfers", "users"
   add_foreign_key "spending_categories", "spending_types"
   add_foreign_key "spending_categories", "users"
   add_foreign_key "spending_limits_history", "users"
@@ -788,6 +821,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_22_222303) do
   add_foreign_key "transfer_masters", "accounts", column: "to_account_id"
   add_foreign_key "transfer_masters", "buckets", column: "from_bucket_id"
   add_foreign_key "transfer_masters", "buckets", column: "to_bucket_id"
+  add_foreign_key "transfer_masters", "recurring_transfers"
   add_foreign_key "transfer_masters", "users"
   add_foreign_key "user_account_types", "account_type_masters"
   add_foreign_key "user_account_types", "users"

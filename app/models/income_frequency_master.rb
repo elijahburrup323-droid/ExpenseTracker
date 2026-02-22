@@ -10,9 +10,10 @@ class IncomeFrequencyMaster < ApplicationRecord
   has_many :income_recurrings, foreign_key: :frequency_master_id
   has_many :income_entries, foreign_key: :frequency_master_id
   has_many :recurring_obligations, foreign_key: :frequency_master_id
+  has_many :recurring_transfers, foreign_key: :frequency_master_id
 
   def in_use?
-    income_user_frequencies.exists? || income_recurrings.exists? || income_entries.exists? || recurring_obligations.exists?
+    income_user_frequencies.exists? || income_recurrings.exists? || income_entries.exists? || recurring_obligations.exists? || recurring_transfers.exists?
   end
 
   def next_date_from(date)

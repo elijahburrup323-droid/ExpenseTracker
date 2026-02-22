@@ -1,6 +1,7 @@
 module Api
   class TransferMastersController < BaseController
     before_action :set_transfer, only: [:update, :destroy]
+    before_action :generate_due_transfers, only: [:index]
 
     def index
       transfers = current_user.transfer_masters.ordered.to_a
@@ -231,6 +232,12 @@ module Api
           )
         end
       end
+    end
+
+    def generate_due_transfers
+      TransferMaster.generate_due_transfers_for(current_user)
+    rescue => e
+      Rails.logger.warn("generate_due_transfers error: #{e.message}")
     end
   end
 end
