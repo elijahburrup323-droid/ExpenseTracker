@@ -19,10 +19,46 @@ class Bucket < ApplicationRecord
   validates :current_balance, numericality: { greater_than_or_equal_to: 0, message: "cannot be negative" }, on: :create
   validates :current_balance, numericality: true, on: :update
   validates :target_amount, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :max_spend_per_year, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :bucket_year_start_month, numericality: { only_integer: true, in: 1..12 }
 
   validate :only_one_default_per_account, if: :is_default?
   validate :only_one_priority_zero_per_account
   validate :account_belongs_to_user
+
+  # Compute the bucket year window based on bucket_year_start_month.
+  # Returns [start_date, end_date] for the current bucket year.
+  def bucket_year_window(reference_date = Date.current)
+    sm = bucket_year_start_month || 1
+    year = reference_date.year
+    start_date = Date.new(year, sm, 1)
+    # If current date is before the start month, the bucket year started last year
+    start_date = Date.new(year - 1, sm, 1) if reference_date < start_date
+    end_date = start_date.next_year - 1.day
+    [start_date, end_date]
+  end
+
+  # Sum of all OUT transactions within the bucket year window (spend + transfer_out).
+  def spent_ytd(reference_date = Date.current)
+    return 0.0 unless max_spend_per_year.present?
+    start_date, end_date = bucket_year_window(reference_date)
+    bucket_transactions
+      .where(direction: "OUT", txn_date: start_date..end_date)
+      .where.not(source_type: "FUND_MOVE")
+      .sum(:amount)
+      .to_f
+  end
+
+  def available_to_spend(reference_date = Date.current)
+    return nil unless max_spend_per_year.present?
+    [max_spend_per_year.to_f - spent_ytd(reference_date), 0.0].max
+  end
+
+  # Returns true if recording this spend amount would exceed the annual cap.
+  def spend_exceeds_cap?(amount, reference_date = Date.current)
+    return false unless max_spend_per_year.present?
+    spent_ytd(reference_date) + amount.to_f > max_spend_per_year.to_f
+  end
 
   def soft_delete!
     update_columns(deleted_at: Time.current)

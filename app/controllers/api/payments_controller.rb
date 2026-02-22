@@ -19,6 +19,16 @@ module Api
         if bucket.current_balance < (payment.amount || 0)
           return render json: { errors: ["Insufficient bucket balance ($#{bucket.current_balance} available)"] }, status: :unprocessable_entity
         end
+        # Soft-block: warn if spend exceeds annual cap (unless force_over_cap)
+        if bucket.spend_exceeds_cap?(payment.amount) && !ActiveModel::Type::Boolean.new.cast(params[:force_over_cap])
+          avail = bucket.available_to_spend
+          return render json: {
+            errors: ["This payment exceeds your annual spending cap for this bucket."],
+            spend_cap_warning: true,
+            available_to_spend: avail,
+            max_spend_per_year: bucket.max_spend_per_year.to_f
+          }, status: :unprocessable_entity
+        end
       end
 
       ActiveRecord::Base.transaction do

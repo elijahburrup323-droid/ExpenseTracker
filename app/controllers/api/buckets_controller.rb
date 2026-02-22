@@ -201,17 +201,24 @@ module Api
     end
 
     def bucket_params
-      params.require(:bucket).permit(:account_id, :name, :is_default, :priority, :target_amount, :current_balance, :is_active, :sort_order)
+      params.require(:bucket).permit(:account_id, :name, :is_default, :priority, :target_amount, :current_balance, :is_active, :sort_order, :max_spend_per_year, :bucket_year_start_month)
     end
 
     def bucket_json(b, accounts_lookup = nil)
       acct = accounts_lookup ? accounts_lookup[b.account_id] : Account.unscoped.find_by(id: b.account_id)
 
-      b.as_json(only: [:id, :name, :is_default, :priority, :target_amount, :current_balance, :is_active, :sort_order])
+      json = b.as_json(only: [:id, :name, :is_default, :priority, :target_amount, :current_balance, :is_active, :sort_order, :max_spend_per_year, :bucket_year_start_month])
         .merge(
           account_id: b.account_id,
           account_name: acct&.name || "[Deleted]"
         )
+
+      if b.max_spend_per_year.present?
+        json[:spent_ytd] = b.spent_ytd.round(2)
+        json[:available_to_spend] = b.available_to_spend.round(2)
+      end
+
+      json
     end
   end
 end

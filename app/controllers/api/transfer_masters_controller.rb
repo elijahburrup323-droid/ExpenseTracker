@@ -12,6 +12,20 @@ module Api
     def create
       transfer = current_user.transfer_masters.build(transfer_params)
 
+      # Soft-block: warn if from-bucket spend exceeds annual cap
+      if transfer.from_bucket_id.present? && transfer.from_account_id != transfer.to_account_id
+        from_bucket = current_user.buckets.find_by(id: transfer.from_bucket_id)
+        if from_bucket&.spend_exceeds_cap?(transfer.amount) && !ActiveModel::Type::Boolean.new.cast(params[:force_over_cap])
+          avail = from_bucket.available_to_spend
+          return render json: {
+            errors: ["This transfer exceeds your annual spending cap for bucket '#{from_bucket.name}'."],
+            spend_cap_warning: true,
+            available_to_spend: avail,
+            max_spend_per_year: from_bucket.max_spend_per_year.to_f
+          }, status: :unprocessable_entity
+        end
+      end
+
       ActiveRecord::Base.transaction do
         if transfer.save
           # Only adjust account balances for inter-account transfers

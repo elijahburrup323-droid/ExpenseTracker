@@ -117,6 +117,38 @@
             </div>
           </div>
 
+          <%# Max Spend / Year %>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Max Spend / Year <span class="text-xs text-gray-400">(optional)</span></label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500 dark:text-gray-400 text-sm">$</span>
+              <input type="number" step="0.01" min="0" placeholder="Not set"
+                     class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 pl-7 pr-3 py-2 text-right"
+                     data-buckets-target="modalMaxSpend"
+                     data-action="keydown->buckets#handleKeydown">
+            </div>
+          </div>
+
+          <%# Bucket Year Start Month %>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bucket Year Start Month</label>
+            <select class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2"
+                    data-buckets-target="modalYearStart">
+              <option value="1">January</option>
+              <option value="2">February</option>
+              <option value="3">March</option>
+              <option value="4">April</option>
+              <option value="5">May</option>
+              <option value="6">June</option>
+              <option value="7">July</option>
+              <option value="8">August</option>
+              <option value="9">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </select>
+          </div>
+
           <%# Initial Balance (only for add) %>
           <div data-buckets-target="modalBalanceRow">
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Initial Balance</label>
@@ -205,6 +237,40 @@
                   class="px-4 py-2 text-sm font-medium text-white bg-brand-600 border border-transparent rounded-lg hover:bg-brand-700 transition"
                   data-action="click->buckets#executeFund">
             Move Money
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%# Spend Exceed Confirmation Modal %>
+  <div class="hidden fixed inset-0 z-50" data-buckets-target="spendWarnModal">
+    <div class="fixed inset-0 bg-gray-500/75 dark:bg-gray-900/80 transition-opacity"></div>
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+        <div class="flex items-start">
+          <div class="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-full bg-yellow-100 dark:bg-yellow-900/30">
+            <svg class="h-5 w-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+            </svg>
+          </div>
+          <div class="ml-4">
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white">Exceeds Annual Spending Cap</h3>
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400" data-buckets-target="spendWarnMessage">
+              This exceeds your Max Spend for the year. Continue?
+            </p>
+          </div>
+        </div>
+        <div class="mt-6 flex justify-end space-x-3">
+          <button type="button"
+                  class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+                  data-action="click->buckets#cancelSpendWarn">
+            Cancel
+          </button>
+          <button type="button"
+                  class="px-4 py-2 text-sm font-medium text-white bg-yellow-600 border border-transparent rounded-lg hover:bg-yellow-700 transition"
+                  data-action="click->buckets#confirmSpendWarn">
+            Continue Anyway
           </button>
         </div>
       </div>

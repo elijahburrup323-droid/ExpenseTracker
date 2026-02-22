@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_22_212720) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_22_222303) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -130,6 +130,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_22_212720) do
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "max_spend_per_year", precision: 12, scale: 2
+    t.integer "bucket_year_start_month", default: 1, null: false
     t.index ["account_id", "priority"], name: "idx_buckets_unique_priority_zero_per_account", unique: true, where: "((priority = 0) AND (deleted_at IS NULL))"
     t.index ["account_id"], name: "index_buckets_on_account_id"
     t.index ["user_id", "account_id"], name: "index_buckets_on_user_id_and_account_id"

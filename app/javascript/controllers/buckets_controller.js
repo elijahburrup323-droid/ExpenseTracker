@@ -3,8 +3,9 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = [
     "tableBody", "tableHead", "addButton", "accountFilter",
-    "entryModal", "modalTitle", "modalAccount", "modalName", "modalTargetAmt", "modalBalance", "modalBalanceRow", "modalPriority", "modalError",
+    "entryModal", "modalTitle", "modalAccount", "modalName", "modalTargetAmt", "modalBalance", "modalBalanceRow", "modalPriority", "modalMaxSpend", "modalYearStart", "modalError",
     "fundModal", "fundFrom", "fundFromBalance", "fundToName", "fundAmount", "fundError",
+    "spendWarnModal", "spendWarnMessage",
     "deleteModal", "deleteModalName"
   ]
   static values = { apiUrl: String, accountsUrl: String, csrfToken: String }
@@ -75,6 +76,8 @@ export default class extends Controller {
     this._rebuildModalAccountDropdown()
     this.modalNameTarget.value = ""
     this.modalTargetAmtTarget.value = ""
+    this.modalMaxSpendTarget.value = ""
+    this.modalYearStartTarget.value = "1"
     this.modalBalanceTarget.value = ""
     this.modalPriorityTarget.value = "0"
     this.modalBalanceRowTarget.classList.remove("hidden")
@@ -104,6 +107,8 @@ export default class extends Controller {
     this.modalAccountTarget.value = String(bucket.account_id || "")
     this.modalNameTarget.value = bucket.name || ""
     this.modalTargetAmtTarget.value = bucket.target_amount != null ? bucket.target_amount : ""
+    this.modalMaxSpendTarget.value = bucket.max_spend_per_year != null ? bucket.max_spend_per_year : ""
+    this.modalYearStartTarget.value = bucket.bucket_year_start_month || 1
     this.modalPriorityTarget.value = bucket.priority || 0
     this.modalBalanceRowTarget.classList.add("hidden") // Don't allow balance edit
     this.modalErrorTarget.classList.add("hidden")
@@ -129,6 +134,8 @@ export default class extends Controller {
     const account_id = this.modalAccountTarget.value
     const name = this.modalNameTarget.value.trim()
     const target_amount = this.modalTargetAmtTarget.value.trim() || null
+    const max_spend_per_year = this.modalMaxSpendTarget.value.trim() || null
+    const bucket_year_start_month = parseInt(this.modalYearStartTarget.value) || 1
     const current_balance = this.modalBalanceTarget.value.trim() || "0"
     const priority = this.modalPriorityTarget.value.trim() || "0"
 
@@ -143,7 +150,7 @@ export default class extends Controller {
           "Accept": "application/json",
           "X-CSRF-Token": this.csrfTokenValue
         },
-        body: JSON.stringify({ bucket: { account_id, name, target_amount, current_balance, priority } })
+        body: JSON.stringify({ bucket: { account_id, name, target_amount, max_spend_per_year, bucket_year_start_month, current_balance, priority } })
       })
 
       if (response.ok) {
@@ -165,6 +172,8 @@ export default class extends Controller {
     const account_id = this.modalAccountTarget.value
     const name = this.modalNameTarget.value.trim()
     const target_amount = this.modalTargetAmtTarget.value.trim() || null
+    const max_spend_per_year = this.modalMaxSpendTarget.value.trim() || null
+    const bucket_year_start_month = parseInt(this.modalYearStartTarget.value) || 1
     const priority = this.modalPriorityTarget.value.trim() || "0"
 
     if (!account_id) { this._showModalError("Account is required"); return }
@@ -178,7 +187,7 @@ export default class extends Controller {
           "Accept": "application/json",
           "X-CSRF-Token": this.csrfTokenValue
         },
-        body: JSON.stringify({ bucket: { account_id, name, target_amount, priority } })
+        body: JSON.stringify({ bucket: { account_id, name, target_amount, max_spend_per_year, bucket_year_start_month, priority } })
       })
 
       if (response.ok) {
@@ -275,6 +284,21 @@ export default class extends Controller {
   handleFundKeydown(event) {
     if (event.key === "Enter") { event.preventDefault(); this.executeFund() }
     else if (event.key === "Escape") { event.preventDefault(); this.cancelFund() }
+  }
+
+  // --- Spend Exceed Warning (soft block) ---
+
+  cancelSpendWarn() {
+    this.spendWarnModalTarget.classList.add("hidden")
+    this._pendingFundAction = null
+  }
+
+  confirmSpendWarn() {
+    this.spendWarnModalTarget.classList.add("hidden")
+    if (this._pendingFundAction) {
+      this._pendingFundAction()
+      this._pendingFundAction = null
+    }
   }
 
   // --- Delete ---
@@ -483,9 +507,24 @@ export default class extends Controller {
       progressBar = `<div class="mt-1 w-20 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden"><div class="${color} h-full rounded-full" style="width: ${pct}%"></div></div>`
     }
 
+    // Max Spend / Spent YTD / Available to Spend sub-panel
+    let spendPanel = ""
+    if (b.max_spend_per_year != null) {
+      const maxSpend = this._formatAmount(b.max_spend_per_year)
+      const spentYtd = this._formatAmount(b.spent_ytd || 0)
+      const avail = this._formatAmount(b.available_to_spend || 0)
+      const availNum = parseFloat(b.available_to_spend) || 0
+      const availColor = availNum <= 0 ? "text-red-600 dark:text-red-400" : "text-green-700 dark:text-green-400"
+      spendPanel = `<div class="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700 text-xs space-y-0.5">
+        <div class="flex justify-between"><span class="text-gray-400">Max Spend/Yr</span><span class="tabular-nums">${maxSpend}</span></div>
+        <div class="flex justify-between"><span class="text-gray-400">Spent YTD</span><span class="tabular-nums">${spentYtd}</span></div>
+        <div class="flex justify-between font-semibold"><span class="text-gray-500 dark:text-gray-300">Available</span><span class="${availColor} tabular-nums">${avail}</span></div>
+      </div>`
+    }
+
     return `<tr class="${bandClass} hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
       <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">${this._esc(b.account_name || "")}</td>
-      <td class="px-4 py-4 text-sm font-medium text-gray-900 dark:text-white">${this._esc(b.name)}${defaultBadge}</td>
+      <td class="px-4 py-4 text-sm font-medium text-gray-900 dark:text-white">${this._esc(b.name)}${defaultBadge}${spendPanel}</td>
       <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400 text-center">${priority}</td>
       <td class="px-4 py-4 text-sm text-gray-900 dark:text-white text-right tabular-nums font-mono">${balance}</td>
       <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400 text-right tabular-nums">${target}${progressBar}</td>
