@@ -8,7 +8,6 @@
      data-payments-open-month-url-value="<%= api_open_month_master_path %>"
      data-payments-accounts-page-url-value="<%= accounts_path %>"
      data-payments-categories-page-url-value="<%= spending_categories_path %>"
-     data-payments-types-page-url-value="<%= spending_types_path %>"
      data-payments-suggestions-url-value="<%= suggestions_api_payments_path %>"
      data-payments-tags-url-value="<%= api_tags_path %>"
      data-payments-buckets-url-value="<%= api_buckets_path %>"
@@ -329,9 +328,8 @@
             <label class="block text-sm font-medium text-gray-700 mb-1">Spending Type</label>
             <select name="spending_type_override_id" data-payments-target="modalType"
                     class="w-full rounded-lg border-gray-300 shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2.5"
-                    data-action="keydown->payments#handleModalKeydown change->payments#handleNewDropdown">
+                    data-action="keydown->payments#handleModalKeydown">
               <option value="">Auto (from category)</option>
-              <option value="new">— New Spending Type —</option>
             </select>
           </div>
           <div class="relative">

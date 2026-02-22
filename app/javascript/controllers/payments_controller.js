@@ -29,7 +29,7 @@ export default class extends Controller {
   ]
   static values = {
     apiUrl: String, accountsUrl: String, categoriesUrl: String, typesUrl: String, csrfToken: String,
-    accountsPageUrl: String, categoriesPageUrl: String, typesPageUrl: String, openMonthUrl: String,
+    accountsPageUrl: String, categoriesPageUrl: String, openMonthUrl: String,
     suggestionsUrl: String, tagsUrl: String, bucketsUrl: String
   }
 
@@ -422,7 +422,7 @@ export default class extends Controller {
     const payment_date = this.modalDateTarget.value
     const account_id = this.modalAccountTarget.value
     const spending_category_id = this.modalCategoryTarget.value
-    const spending_type_override_id = (this.modalTypeTarget.value && this.modalTypeTarget.value !== "new") ? this.modalTypeTarget.value : null
+    const spending_type_override_id = this.modalTypeTarget.value || null
     const description = this.modalDescriptionTarget.value.trim()
     const amount = this.modalAmountTarget.value.trim() || "0"
 
@@ -514,7 +514,7 @@ export default class extends Controller {
     const payment_date = this.modalDateTarget.value
     const account_id = this.modalAccountTarget.value
     const spending_category_id = this.modalCategoryTarget.value
-    const spending_type_override_id = (this.modalTypeTarget.value && this.modalTypeTarget.value !== "new") ? this.modalTypeTarget.value : null
+    const spending_type_override_id = this.modalTypeTarget.value || null
     const description = this.modalDescriptionTarget.value.trim()
     const amount = this.modalAmountTarget.value.trim() || "0"
 
@@ -1100,7 +1100,6 @@ export default class extends Controller {
     let url = null
     let label = ""
     if (name === "account_id") { url = this.accountsPageUrlValue; label = "Account" }
-    else if (name === "spending_type_override_id") { url = this.typesPageUrlValue; label = "Spending Type" }
     if (url) {
       this._openInNewTab(url)
       alert(`A new tab has been opened to create a ${label}. After creating it, come back here and your payment will still be in progress. The dropdown will refresh automatically.`)
@@ -1143,10 +1142,10 @@ export default class extends Controller {
       const currentType = this.modalTypeTarget.value
       this.modalAccountTarget.innerHTML = `<option value="">Select account...</option><option value="new">— New Account —</option>` + this._buildAccountOptions()
       this.modalCategoryTarget.innerHTML = `<option value="">Select category...</option><option value="new">— New Category —</option>` + this._buildCategoryOptions()
-      this.modalTypeTarget.innerHTML = `<option value="">Auto (from category)</option><option value="new">— New Spending Type —</option>` + this._buildTypeOptions()
+      this.modalTypeTarget.innerHTML = `<option value="">Auto (from category)</option>` + this._buildTypeOptions()
       if (currentAcc && currentAcc !== "new") this.modalAccountTarget.value = currentAcc
       if (currentCat && currentCat !== "new") this.modalCategoryTarget.value = currentCat
-      if (currentType && currentType !== "new") this.modalTypeTarget.value = currentType
+      if (currentType) this.modalTypeTarget.value = currentType
     }
   }
 
@@ -1170,7 +1169,7 @@ export default class extends Controller {
     // Populate dropdowns
     this.modalAccountTarget.innerHTML = `<option value="">Select account...</option><option value="new">— New Account —</option>` + this._buildAccountOptions()
     this.modalCategoryTarget.innerHTML = `<option value="">Select category...</option><option value="new">— New Category —</option>` + this._buildCategoryOptions()
-    this.modalTypeTarget.innerHTML = `<option value="">Auto (from category)</option><option value="new">— New Spending Type —</option>` + this._buildTypeOptions()
+    this.modalTypeTarget.innerHTML = `<option value="">Auto (from category)</option>` + this._buildTypeOptions()
 
     // Reset fields
     this.modalDateTarget.value = this._formatDateValue(new Date())
@@ -1213,7 +1212,7 @@ export default class extends Controller {
     // Populate dropdowns with existing values selected
     this.modalAccountTarget.innerHTML = `<option value="">Select account...</option><option value="new">— New Account —</option>` + this._buildAccountOptions(payment.account_id)
     this.modalCategoryTarget.innerHTML = `<option value="">Select category...</option><option value="new">— New Category —</option>` + this._buildCategoryOptions(payment.spending_category_id)
-    this.modalTypeTarget.innerHTML = `<option value="">Auto (from category)</option><option value="new">— New Spending Type —</option>` + this._buildTypeOptions(payment.spending_type_override_id)
+    this.modalTypeTarget.innerHTML = `<option value="">Auto (from category)</option>` + this._buildTypeOptions(payment.spending_type_override_id)
 
     // Pre-populate fields
     this.modalDateTarget.value = payment.payment_date || ""

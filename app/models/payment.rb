@@ -15,6 +15,13 @@ class Payment < ApplicationRecord
   validates :description, presence: true, length: { maximum: 255 }
   validates :amount, presence: true, numericality: true
   validates :payment_date, presence: true
+  validate :spending_type_override_must_exist, if: -> { spending_type_override_id.present? }
+
+  private def spending_type_override_must_exist
+    unless SpendingType.where(deleted_at: nil).exists?(id: spending_type_override_id)
+      errors.add(:spending_type_override_id, "must reference a valid, active Spending Type")
+    end
+  end
 
   def soft_delete!
     update_columns(deleted_at: Time.current)
