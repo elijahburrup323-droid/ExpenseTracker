@@ -35,6 +35,9 @@ module Api
       account.sort_order = max_sort + 1
       account.beginning_balance = account.balance
 
+      # Auto-resolve account_type from account_type_master for backward compatibility
+      resolve_account_type(account)
+
       if account.save
         master = account.account_type_master
         account_type = account.account_type
@@ -51,7 +54,9 @@ module Api
       if @account.beginning_balance.to_f == 0 && account_params[:balance].present?
         @account.beginning_balance = account_params[:balance]
       end
-      if @account.update(account_params)
+      @account.assign_attributes(account_params)
+      resolve_account_type(@account)
+      if @account.save
         master = @account.account_type_master
         account_type = @account.account_type
         type_name = master&.display_name || account_type&.name || ""
@@ -88,6 +93,28 @@ module Api
 
     def account_params
       params.require(:account).permit(:name, :account_type_id, :account_type_master_id, :institution, :balance, :include_in_budget, :icon_key, :color_key)
+    end
+
+    def resolve_account_type(account)
+      return if account.account_type_id.present?
+      return unless account.account_type_master_id.present?
+
+      master = AccountTypeMaster.find_by(id: account.account_type_master_id)
+      return unless master
+
+      # Find or create a legacy account_type record for this user matching the master
+      legacy = current_user.account_types.unscoped
+                 .where(user_id: current_user.id)
+                 .find_by("LOWER(name) = ?", master.display_name.strip.downcase)
+      unless legacy
+        max_sort = current_user.account_types.unscoped.where(user_id: current_user.id).maximum(:sort_order) || 0
+        legacy = current_user.account_types.create!(
+          name: master.display_name,
+          description: master.description || master.display_name,
+          sort_order: max_sort + 1
+        )
+      end
+      account.account_type_id = legacy.id
     end
   end
 end

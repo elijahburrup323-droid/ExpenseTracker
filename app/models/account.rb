@@ -1,6 +1,6 @@
 class Account < ApplicationRecord
   belongs_to :user
-  belongs_to :account_type
+  belongs_to :account_type, optional: true
   belongs_to :account_type_master, optional: true
   has_many :payments
   has_many :income_entries
