@@ -11,6 +11,7 @@ class Users::SessionsController < Devise::SessionsController
     self.resource = warden.authenticate!(auth_options)
     set_flash_message!(:notice, :signed_in)
     sign_in(resource_name, resource)
+    UserLoginAudit.record_login!(resource, request, login_method: "password")
     yield resource if block_given?
     respond_with resource, location: after_sign_in_path_for(resource)
   end

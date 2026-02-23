@@ -10,8 +10,9 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_23_035111) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_23_200000) do
   # These are extensions that must be enabled in order to support this database
+  enable_extension "pg_stat_statements"
   enable_extension "plpgsql"
 
   create_table "account_month_snapshots", force: :cascade do |t|
@@ -682,6 +683,36 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_23_035111) do
     t.index ["user_id"], name: "index_user_emails_on_user_id"
   end
 
+  create_table "user_login_audits", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "user_email", null: false
+    t.string "role", default: "customer", null: false
+    t.string "login_method", default: "password", null: false
+    t.string "session_id"
+    t.string "ip_address"
+    t.string "geo_city"
+    t.string "geo_region"
+    t.string "geo_country"
+    t.text "user_agent_raw"
+    t.string "browser_name"
+    t.string "browser_version"
+    t.string "os_name"
+    t.string "os_version"
+    t.string "device_type"
+    t.string "client_timezone"
+    t.string "client_locale"
+    t.string "request_id"
+    t.string "app_version"
+    t.string "referrer"
+    t.boolean "success", default: true, null: false
+    t.string "failure_reason"
+    t.datetime "login_at", null: false
+    t.index ["ip_address"], name: "index_user_login_audits_on_ip_address"
+    t.index ["login_at"], name: "index_user_login_audits_on_login_at"
+    t.index ["user_id", "login_at"], name: "index_user_login_audits_on_user_id_and_login_at"
+    t.index ["user_id"], name: "index_user_login_audits_on_user_id"
+  end
+
   create_table "user_phones", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "phone_number", null: false
@@ -827,6 +858,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_23_035111) do
   add_foreign_key "user_account_types", "account_type_masters"
   add_foreign_key "user_account_types", "users"
   add_foreign_key "user_emails", "users"
+  add_foreign_key "user_login_audits", "users"
   add_foreign_key "user_phones", "users"
   add_foreign_key "user_report_layouts", "users"
 end

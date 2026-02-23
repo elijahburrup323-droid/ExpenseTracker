@@ -4,6 +4,7 @@ class User < ApplicationRecord
          :omniauthable, omniauth_providers: [:google_oauth2, :apple, :microsoft_graph]
 
   has_many :identities, dependent: :destroy
+  has_many :login_audits, class_name: "UserLoginAudit", dependent: :destroy
   has_many :spending_types, dependent: :destroy
   has_many :spending_categories, dependent: :destroy
   has_many :account_types, dependent: :destroy

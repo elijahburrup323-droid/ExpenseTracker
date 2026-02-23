@@ -1,7 +1,7 @@
 APP_VERSION = "1.3.18"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
-MANUAL_CHANGE_SEQ = 42  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 43  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
@@ -154,6 +154,9 @@ APP_ALL_VERSIONS = [
       "Buckets: Table layout density — removed progress bars, added dedicated Avail. and Spent YTD columns, compressed Priority to narrow integer-only column, reduced cell padding, fixed table layout with explicit column widths (CM-22)",
       "Dashboard: Expanded Buckets card shows detailed layout — per-bucket Current of Target above progress bar, Max Spend/Yr | Spent | Remaining columns aligned right (CM-24)",
       "Dashboard: Expand/collapse adds data-expanded attribute for layout-aware content toggling across all cards (CM-24)",
+      "Security: User Login Audit — every successful login records user identity, IP address, parsed browser/OS/device, session ID, and app version to append-only audit table (CM-24b)",
+      "Security: Failed login attempts logged with attempted email, IP, and failure reason via Warden before_failure hook (CM-24b)",
+      "Database: New user_login_audits table with indexes on user_id+login_at, ip_address, and login_at for efficient security queries (CM-24b)",
     ]
   },
   {
