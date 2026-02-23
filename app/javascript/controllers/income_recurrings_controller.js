@@ -4,7 +4,7 @@ export default class extends Controller {
   static targets = [
     "tableBody", "addButton", "generateButton", "deleteModal", "deleteModalName",
     "entryModal", "modalTitle", "modalName", "modalDescription", "modalAmount",
-    "modalAccount", "modalFrequency", "modalNextDate", "modalError"
+    "modalAccount", "modalFrequency", "modalNextDate", "modalError", "sortHeader"
   ]
   static values = { apiUrl: String, accountsUrl: String, frequenciesUrl: String, csrfToken: String }
 
@@ -15,6 +15,8 @@ export default class extends Controller {
     this.state = "idle" // idle | adding | editing
     this.editingId = null
     this.deletingId = null
+    this.sortColumn = null
+    this.sortDirection = "asc"
     this.fetchAll()
   }
 
@@ -343,6 +345,50 @@ export default class extends Controller {
       event.preventDefault()
       this.cancelModal()
     }
+  }
+
+  // --- Sorting ---
+
+  sort(event) {
+    const key = event.currentTarget.dataset.sortKey
+    if (this.sortColumn === key) {
+      this.sortDirection = this.sortDirection === "asc" ? "desc" : "asc"
+    } else {
+      this.sortColumn = key
+      this.sortDirection = "asc"
+    }
+    this._applySortArrows()
+    this._sortRecurrings()
+    this.renderTable()
+  }
+
+  _applySortArrows() {
+    this.sortHeaderTargets.forEach(th => {
+      const arrow = th.querySelector("[data-sort-arrow]")
+      if (!arrow) return
+      if (th.dataset.sortKey === this.sortColumn) {
+        arrow.textContent = this.sortDirection === "asc" ? "\u25B2" : "\u25BC"
+      } else {
+        arrow.textContent = ""
+      }
+    })
+  }
+
+  _sortRecurrings() {
+    if (!this.sortColumn) return
+    const key = this.sortColumn
+    const dir = this.sortDirection === "asc" ? 1 : -1
+    this.recurrings.sort((a, b) => {
+      let valA = a[key], valB = b[key]
+      if (key === "amount") {
+        return (parseFloat(valA || 0) - parseFloat(valB || 0)) * dir
+      }
+      valA = (valA || "").toString().toLowerCase()
+      valB = (valB || "").toString().toLowerCase()
+      if (valA < valB) return -1 * dir
+      if (valA > valB) return 1 * dir
+      return 0
+    })
   }
 
   // --- Rendering ---

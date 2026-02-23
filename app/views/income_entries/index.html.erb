@@ -9,7 +9,7 @@
      data-income-entries-open-month-url-value="<%= api_open_month_master_path %>">
 
   <%# Page Header (sticky) %>
-  <div class="sticky top-14 z-20 bg-gray-50 dark:bg-gray-900 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-2 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+  <div class="sticky top-14 z-20 bg-gray-50 dark:bg-gray-900 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 pt-4 pb-0 mb-2 border-b border-gray-200 dark:border-gray-700 shadow-sm">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
     <div>
       <div class="flex items-baseline space-x-3">
@@ -55,6 +55,16 @@
       </button>
     </div>
     </div>
+
+    <%# Deposits / Recurring Tabs %>
+    <div class="flex space-x-6 mt-3">
+      <%= link_to income_entries_path, class: "pb-2 text-sm font-medium border-b-2 border-brand-600 text-brand-600 dark:text-brand-400 dark:border-brand-400", data: { turbo_action: "replace" } do %>
+        Deposits
+      <% end %>
+      <%= link_to income_recurrings_path, class: "pb-2 text-sm font-medium border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500 transition", data: { turbo_action: "replace" } do %>
+        Recurring
+      <% end %>
+    </div>
   </div>
 
   <%# Table %>
@@ -67,7 +77,7 @@
           <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 select-none" data-action="click->income-entries#sort" data-sort-key="source_name" data-income-entries-target="sortHeader">Source <span data-sort-arrow></span></th>
           <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 select-none" data-action="click->income-entries#sort" data-sort-key="description" data-income-entries-target="sortHeader">Description <span data-sort-arrow></span></th>
           <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 select-none" data-action="click->income-entries#sort" data-sort-key="amount" data-income-entries-target="sortHeader">Amount <span data-sort-arrow></span></th>
-          <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Frequency</th>
+          <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 select-none" data-action="click->income-entries#sort" data-sort-key="frequency_name" data-income-entries-target="sortHeader">Frequency <span data-sort-arrow></span></th>
           <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-20">Received</th>
           <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-28">Actions</th>
         </tr>
