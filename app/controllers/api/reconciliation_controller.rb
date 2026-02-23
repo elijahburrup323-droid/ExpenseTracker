@@ -103,6 +103,7 @@ module Api
         statement_counts: {
           payments: recon&.statement_payment_count || 0,
           deposits: recon&.statement_deposit_count || 0,
+          transfers: recon&.statement_transfer_count || 0,
           adjustments: recon&.statement_adjustment_count || 0
         },
         recon_status: recon&.status || "open",
@@ -184,6 +185,7 @@ module Api
       )
       recon.statement_payment_count = params[:payment_count].to_i if params[:payment_count]
       recon.statement_deposit_count = params[:deposit_count].to_i if params[:deposit_count]
+      recon.statement_transfer_count = params[:transfer_count].to_i if params[:transfer_count]
       recon.statement_adjustment_count = params[:adjustment_count].to_i if params[:adjustment_count]
       recon.save!
 

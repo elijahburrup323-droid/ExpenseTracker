@@ -8,8 +8,8 @@ export default class extends Controller {
     "paymentsUnreconciled", "depositsUnreconciled", "transfersUnreconciled", "adjustmentsUnreconciled",
     "paymentsTotal", "depositsTotal", "transfersTotal", "adjustmentsTotal",
     "paymentsTotalBottom", "depositsTotalBottom", "transfersTotalBottom", "adjustmentsTotalBottom",
-    "paymentStatementCount", "depositStatementCount", "adjustmentStatementCount",
-    "paymentCountLabel", "depositCountLabel", "adjustmentCountLabel",
+    "paymentStatementCount", "depositStatementCount", "transferStatementCount", "adjustmentStatementCount",
+    "paymentCountLabel", "depositCountLabel", "transferCountLabel", "adjustmentCountLabel",
     "recordCount", "searchInput", "readOnlyBanner",
     "mainPanel", "fixModePanel", "emptyState", "dataSections",
     "markReconciledBtn", "fixMarkReconciledBtn",
@@ -94,6 +94,7 @@ export default class extends Controller {
       if (this.hasExternalLabelTarget) this.externalLabelTarget.textContent = name
       if (this.hasPaymentCountLabelTarget) this.paymentCountLabelTarget.textContent = `${name} Count:`
       if (this.hasDepositCountLabelTarget) this.depositCountLabelTarget.textContent = `${name} Count:`
+      if (this.hasTransferCountLabelTarget) this.transferCountLabelTarget.textContent = `${name} Count:`
       if (this.hasAdjustmentCountLabelTarget) this.adjustmentCountLabelTarget.textContent = `${name} Count:`
 
       // Top summary
@@ -107,6 +108,7 @@ export default class extends Controller {
       // Statement counts
       this.paymentStatementCountTarget.value = data.statement_counts.payments
       this.depositStatementCountTarget.value = data.statement_counts.deposits
+      this.transferStatementCountTarget.value = data.statement_counts.transfers
       this.adjustmentStatementCountTarget.value = data.statement_counts.adjustments
 
       // Record count = total transactions
@@ -117,6 +119,7 @@ export default class extends Controller {
       this.externalBalanceTarget.disabled = this.isReadOnly
       this.paymentStatementCountTarget.disabled = this.isReadOnly
       this.depositStatementCountTarget.disabled = this.isReadOnly
+      this.transferStatementCountTarget.disabled = this.isReadOnly
       this.adjustmentStatementCountTarget.disabled = this.isReadOnly
 
       this._renderPayments(data.payments)
@@ -221,6 +224,7 @@ export default class extends Controller {
 
     if (section === "payments") body.payment_count = event.target.value
     if (section === "deposits") body.deposit_count = event.target.value
+    if (section === "transfers") body.transfer_count = event.target.value
     if (section === "adjustments") body.adjustment_count = event.target.value
 
     try {

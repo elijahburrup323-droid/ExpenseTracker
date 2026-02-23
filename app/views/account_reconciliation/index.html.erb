@@ -261,7 +261,17 @@
             <span class="text-sm font-semibold text-gray-900 dark:text-white">Transfers</span>
             <span data-reconciliation-target="transfersUnreconciled" class="text-xs text-red-500 font-medium">(0 Unreconciled)</span>
           </div>
-          <span data-reconciliation-target="transfersTotal" class="text-sm font-semibold text-blue-600 dark:text-blue-400">$0.00</span>
+          <div class="flex items-center space-x-3">
+            <div class="flex items-center space-x-1" data-action="click->reconciliation#stopProp">
+              <label class="text-xs text-gray-500 dark:text-gray-400" data-reconciliation-target="transferCountLabel">Statement Count:</label>
+              <input type="number" min="0" value="0"
+                     data-reconciliation-target="transferStatementCount"
+                     data-action="change->reconciliation#updateStatementCount"
+                     data-section="transfers"
+                     class="w-14 px-2 py-0.5 text-xs text-center border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white">
+            </div>
+            <span data-reconciliation-target="transfersTotal" class="text-sm font-semibold text-blue-600 dark:text-blue-400">$0.00</span>
+          </div>
         </div>
         <div data-reconciliation-target="transfersContent">
           <div class="overflow-x-auto">
