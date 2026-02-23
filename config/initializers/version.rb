@@ -164,6 +164,7 @@ APP_ALL_VERSIONS = [
       "Buckets: Reduced PRI-to-Bucket spacing — Priority column narrowed from w-12 to w-9 for tighter visual grouping with Bucket name (CM-25)",
       "Buckets: Fixed deletion of non-default buckets — skip model validations on bucket being soft-deleted, show error messages to user on failure instead of silent fail (CM-26)",
       "Dashboard: Expanded Buckets card layout corrected — Current of Target centered above progress bar, Max Spend/Yr | Spent | Remaining columns on same row as progress bar, no value duplication (CM-27)",
+      "Dashboard: Spending Overview backside layout converted from viewport breakpoints to container-width-driven CSS grid — uses auto-fit minmax(280px, 1fr) so columns adapt to actual card width, consistent across iPad and desktop (CM-28)",
     ]
   },
   {

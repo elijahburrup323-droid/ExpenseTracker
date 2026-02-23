@@ -485,9 +485,8 @@ export default class extends Controller {
       }
 
       const hasTags = tags.length > 0
-      const gridClass = hasTags ? "grid-cols-1 xl:grid-cols-3" : "grid-cols-1 xl:grid-cols-2"
 
-      let html = `<div class="grid ${gridClass} gap-6 xl:gap-8" data-role="breakdown-grid">`
+      let html = `<div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;" data-role="breakdown-grid">`
       html += `<div class="flex flex-col"><p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">By Category</p>${renderColumn(categories, "category")}${categories.length > 0 ? renderColumnTotal(categories) : renderEmptyTotal()}</div>`
       html += `<div class="flex flex-col"><p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">By Spending Type</p>${renderColumn(types, "type")}${types.length > 0 ? renderColumnTotal(types) : renderEmptyTotal()}</div>`
       if (hasTags) {

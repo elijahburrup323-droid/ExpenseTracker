@@ -78,8 +78,7 @@
     <div class="flex-1 overflow-y-auto" data-role="card-back-content">
       <% color_map = { "blue" => "#3b82f6", "green" => "#22c55e", "gold" => "#eab308", "red" => "#ef4444", "purple" => "#a855f7", "pink" => "#ec4899", "indigo" => "#6366f1", "teal" => "#14b8a6", "orange" => "#f97316", "gray" => "#6b7280" } %>
       <% has_tags = @spending_by_tag.present? && @spending_by_tag.any? %>
-      <% grid_cols = has_tags ? "grid-cols-1 xl:grid-cols-3" : "grid-cols-1 xl:grid-cols-2" %>
-      <div class="grid <%= grid_cols %> gap-6 xl:gap-8" data-role="breakdown-grid">
+      <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;" data-role="breakdown-grid">
         <%# --- Column 1: By Category --- %>
         <div class="flex flex-col">
           <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">By Category</p>
