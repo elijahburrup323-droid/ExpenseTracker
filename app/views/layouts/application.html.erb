@@ -199,10 +199,10 @@
                   <span><%= Date.today.strftime("%b %-d, %Y") %></span>
                 </div>
 
-                <% if current_user.budgethq_agent? %>
+                <% if defined?(TEXT_SCALE_TEST_MODE) && TEXT_SCALE_TEST_MODE %>
                 <div class="h-5 w-px bg-gray-300 dark:bg-gray-600"></div>
 
-                <%# Text Scale Control (agent-only) %>
+                <%# Text Scale Control (all users in test mode) %>
                 <div class="flex items-center space-x-1"
                      data-controller="text-scale"
                      data-text-scale-api-url-value="<%= api_text_scale_path %>"
