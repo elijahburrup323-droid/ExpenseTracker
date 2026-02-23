@@ -408,8 +408,8 @@ export default class extends Controller {
       const colorMap = { blue: "#3b82f6", green: "#22c55e", gold: "#eab308", red: "#ef4444", purple: "#a855f7", pink: "#ec4899", indigo: "#6366f1", teal: "#14b8a6", orange: "#f97316", gray: "#6b7280" }
 
       const renderColumn = (items, listType) => {
-        if (items.length === 0) return `<p class="text-xs text-gray-400 dark:text-gray-500">No spending yet.</p>`
-        let h = '<div class="space-y-1">'
+        if (items.length === 0) return `<p class="text-xs text-gray-400 dark:text-gray-500 flex-1">No spending yet.</p>`
+        let h = '<div class="space-y-1 flex-1">'
         for (const item of items) {
           const dotColor = listType === "tag" ? "var(--brand-400, #a855f7)" : (colorMap[item.color_key] || "#6b7280")
           let limitHtml = ""
@@ -435,7 +435,7 @@ export default class extends Controller {
                 <span class="w-2 h-2 rounded-full flex-shrink-0" style="background: ${dotColor}"></span>
                 <span class="text-xs text-gray-700 dark:text-gray-300 truncate">${this._esc(item.name)}</span>
               </div>
-              <div class="flex items-center space-x-2 flex-shrink-0 ml-2">
+              <div class="flex items-center space-x-1 flex-shrink-0 ml-1">
                 <span class="text-xs font-semibold text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;">${this._currency(item.amount)}</span>
                 <span class="text-[10px] text-gray-400 dark:text-gray-500 w-8 text-right" style="font-variant-numeric: tabular-nums;">${item.pct}%</span>
               </div>
@@ -447,22 +447,36 @@ export default class extends Controller {
         return h
       }
 
+      const columnTotal = (items) => {
+        const total = items.reduce((sum, i) => sum + (parseFloat(i.amount) || 0), 0)
+        return this._currency(total)
+      }
+
+      const renderColumnTotal = (items) => {
+        return `<div class="flex items-center justify-end mt-2 pt-1.5 border-t border-gray-200 dark:border-gray-600">
+          <div class="flex items-center space-x-1">
+            <span class="text-xs font-semibold text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;">${columnTotal(items)}</span>
+            <span class="text-[10px] text-gray-400 dark:text-gray-500 w-8 text-right">&nbsp;</span>
+          </div>
+        </div>`
+      }
+
+      const renderEmptyTotal = () => {
+        return `<div class="flex items-center justify-end mt-2 pt-1.5 border-t border-gray-200 dark:border-gray-600">
+          <span class="text-xs font-semibold text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;">${this._currency(0)}</span>
+        </div>`
+      }
+
       const hasTags = tags.length > 0
       const gridClass = hasTags ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : "grid-cols-1 sm:grid-cols-2"
 
-      let html = `<div class="grid ${gridClass} gap-4" data-role="breakdown-grid">`
-      html += `<div><p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">By Category</p>${renderColumn(categories, "category")}</div>`
-      html += `<div><p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">By Spending Type</p>${renderColumn(types, "type")}</div>`
+      let html = `<div class="grid ${gridClass} gap-6" data-role="breakdown-grid">`
+      html += `<div class="flex flex-col"><p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">By Category</p>${renderColumn(categories, "category")}${categories.length > 0 ? renderColumnTotal(categories) : renderEmptyTotal()}</div>`
+      html += `<div class="flex flex-col"><p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">By Spending Type</p>${renderColumn(types, "type")}${types.length > 0 ? renderColumnTotal(types) : renderEmptyTotal()}</div>`
       if (hasTags) {
-        html += `<div><p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">By Tag</p>${renderColumn(tags, "tag")}</div>`
+        html += `<div class="flex flex-col"><p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">By Tag</p>${renderColumn(tags, "tag")}${renderColumnTotal(tags)}</div>`
       }
       html += `</div>`
-      if (categories.length > 0 || types.length > 0) {
-        html += `<div class="flex items-center justify-between mt-3 pt-2 border-t border-gray-200 dark:border-gray-600">
-          <span class="text-xs font-semibold text-gray-700 dark:text-gray-300">Total</span>
-          <span class="text-xs font-semibold text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;">${spent}</span>
-        </div>`
-      }
       backContent.innerHTML = html
     }
   }

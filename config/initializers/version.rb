@@ -117,6 +117,10 @@ APP_ALL_VERSIONS = [
       "Social Security Benefit Planner: Claim ages changed from dropdowns to compact text inputs with validation (Years 0-120, Months 0-11) (CM-022126-08)",
       "Social Security Benefit Planner: Fixed 3-row claim age grid with per-row Benefit $/mo column — Row 1 auto-populates from birthdate (CM-022126-08)",
       "Social Security Benefit Planner: Full Name labels updated to 'Full Name (Optional)' for both You and Spouse panels (CM-022126-08)",
+      "Dashboard: Spending Breakdown per-column totals — each column (Category, Spending Type, Tag) now shows its own total row aligned with amounts (CM-022226-05)",
+      "Dashboard: Spending Breakdown wider column gutters (gap-6) for cleaner visual separation between columns (CM-022226-05)",
+      "Dashboard: Spending Breakdown tighter label-to-amount spacing within each column for more professional layout (CM-022226-05)",
+      "Dashboard: Spending Breakdown grand total removed — per-column totals replace the single global total (CM-022226-05)",
     ]
   },
   {
