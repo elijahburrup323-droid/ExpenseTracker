@@ -28,16 +28,17 @@
 - Hotwired: Turbo + Stimulus.js for frontend interactivity
 - Tailwind CSS via CDN (with custom brand purple color palette and dark mode)
 - Importmap for JavaScript module loading (no webpack/esbuild)
-- Deployed on Render.com at https://djburrup.com/expensetracker (relative_url_root = "/expensetracker")
+- UAT: https://djburrup.com/expensetracker (relative_url_root = "/expensetracker", auto-deploys from main branch)
+- Production: https://mybudgethq.com (root path, deploys from production branch)
 - Email delivery via SendGrid Web API (sendgrid-ruby gem) — Render blocks outbound SMTP ports, so we use the HTTP API instead of SMTP. API key stored in SENDGRID_PASSWORD env var.
 - SMS delivery via Twilio REST API (twilio-ruby gem) — phone number auto-normalized to E.164 format
 - Current Version: 1.2.6 (QA_MODE controlled via config/initializers/version.rb)
 
 ## Project Location
-- Local path: C:/Projects/ExpenseTracker
-- GitHub: https://github.com/elijahburrup323-droid/ExpenseTracker (main branch)
+- Local path: G:/My Drive/MyBudgetHQ/Web
+- GitHub: https://github.com/elijahburrup323-droid/MyBudgetHQ (main + production branches)
 - Windows development environment (MINGW64)
-- Render Service ID: srv-d61stbali9vc739cgvfg, Owner: tea-d61avmchg0os73cjbcb0
+- UAT Render Service ID: srv-d61stbali9vc739cgvfg, Owner: tea-d61avmchg0os73cjbcb0
 
 ## Architecture Overview
 The app uses a sidebar navigation layout. All CRUD screens are single-page with Stimulus controllers that call JSON API endpoints. There are NO Turbo Frames or Turbo Streams used for data — all data operations go through fetch() calls to /api/* endpoints.
@@ -312,7 +313,7 @@ A: The close_month_masters table is a durable month-close ledger that records ev
 30. **Sortable column headers (REQUIRED for all table screens)** — Every table-based screen must include sortable column headers at initial build. Click pattern: first click = ascending, second = descending. Active column shows up/down chevron icon in brand color. Sorting is client-side via a shared pattern: `toggleSort(event)` reads `data-sort-field`, `_getSortedX()` returns sorted copy, `_updateSortIcons()` updates chevrons. Text sorts case-insensitive, numbers sort numerically, dates sort chronologically, booleans group true above false when descending. Sort indicators must not cause layout shift (use reserved icon span). Headers use `cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 transition select-none` styling. Screens with this pattern: Accounts, Transfers, Deposits.
 
 ## Development Notes
-- Windows filesystem is case-insensitive but Rails can fail template lookups if path case doesn't match. Always start server from C:/Projects/ExpenseTracker (correct case).
+- Windows filesystem is case-insensitive but Rails can fail template lookups if path case doesn't match. Always start server from G:/My Drive/MyBudgetHQ/Web (correct case).
 - Tailwind is loaded via CDN with JIT — classes must exist in HTML for generation. Dynamic class toggling via JS uses classList.add/remove (not string interpolation).
 - With Turbo loaded, forms submit via fetch(). Use Promise.all([page.waitForURL(...), page.click(...)]) for Turbo navigation waits in tests.
 - Flash messages are positioned fixed top-right and auto-dismiss after 5s.
@@ -330,7 +331,7 @@ A: The close_month_masters table is a durable month-close ledger that records ev
 
 ## Task Intake: "Lets Work" Workflow
 
-All work items are managed via Google Drive at **G:\My Drive\ExpenseTracker** using a Kanban-style folder flow:
+All work items are managed via Google Drive at **G:\My Drive\MyBudgetHQ** using a Kanban-style folder flow:
 
 ### Folder Structure
 - **Open Items** — bugs (text files) and new features (subfolders) waiting to be worked
@@ -339,7 +340,7 @@ All work items are managed via Google Drive at **G:\My Drive\ExpenseTracker** us
 
 ### When I say "Lets Work"
 1. **Launch WorkLauncher** — Run: `powershell -Command "Start-ScheduledTask -TaskName 'WorkLauncher'"`
-2. Navigate to **G:\My Drive\ExpenseTracker\Open Items**
+2. Navigate to **G:\My Drive\MyBudgetHQ\Open Items**
 3. Pick up to **5 items** (text files or feature folders) to work on
 4. For each item:
    a. **Move** it from Open Items → **In Process**
@@ -356,7 +357,7 @@ All work items are managed via Google Drive at **G:\My Drive\ExpenseTracker** us
    b. Bump `APP_VERSION` and add changelog entry to `APP_ALL_VERSIONS`
    c. Update all documentation pages (database_schema, claude_prompt, etc.)
    d. Commit to GitHub, trigger Render deploy
-   e. Run `node create_docx.js` to export ALL documentation pages to Google Drive and `C:\Projects\ExpenseTracker\documentation`
+   e. Run `node create_docx.js` to export ALL documentation pages to Google Drive and `G:\My Drive\MyBudgetHQ\Web\documentation`
 6. **Post-deploy verification** (BEFORE moving to Ready for QA):
    a. Sign in with **both** production accounts and verify login succeeds:
       - elijahburrup323@gmail.com / Eli624462!
@@ -409,7 +410,7 @@ Before each git commit, update these items:
 
 ## Post-Deploy Checklist
 After each deploy, run:
-1. `node create_docx.js` — exports ALL documentation pages as .docx to Google Drive AND to C:\Projects\ExpenseTracker\documentation
+1. `node create_docx.js` — exports ALL documentation pages as .docx to Google Drive AND to G:\My Drive\MyBudgetHQ\Web\documentation
 
 ## How We Work Together (Claude Code + Developer)
 
@@ -470,7 +471,7 @@ After each deploy, run:
 ### File Reading from Google Drive
 - `.docx` files: Read via Python docx module (`/c/Users/elija/AppData/Local/Programs/Python/Python313/python.exe` with `PYTHONIOENCODING=utf-8`)
 - `.gdoc` files: Read via `python "S:/My Drive/1. Projects/Tools/gdoc_reader.py" read <DOC_ID>` (uses Google Docs API with OAuth)
-- Google Drive path in MINGW64: `/g/My Drive/ExpenseTracker/` with numbered folders (`1. Open Items`, `2. In Process`, `3. Ready for QA`)
+- Google Drive path in MINGW64: `/g/My Drive/MyBudgetHQ/` with numbered folders (`1. Open Items`, `2. In Process`, `3. Ready for QA`)
 
 ## Key Project Files
 - Dashboard view: `app/views/dashboard/index.html.erb` (single file, all 6 cards)
@@ -514,7 +515,7 @@ When the user says **"BugStopper"**, execute this automated adversarial testing 
 5. Re-run full suite to confirm no regressions
 
 ### Phase 4: Documentation
-1. Create bug report docx at `G:\My Drive\ExpenseTracker\2. In Process\BugStopper_BugReport_{MMYYYY}_{Sequence}.docx`
+1. Create bug report docx at `G:\My Drive\MyBudgetHQ\2. In Process\BugStopper_BugReport_{MMYYYY}_{Sequence}.docx`
 2. Include: test inventory, pass/fail results, bug descriptions, fixes applied, severity ratings
 3. Update this claude_prompt if any architectural changes were made
 

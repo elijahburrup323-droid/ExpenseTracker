@@ -4,7 +4,7 @@ require "rails/all"
 
 Bundler.require(*Rails.groups)
 
-module ExpenseTracker
+module MyBudgetHQ
   class Application < Rails::Application
     config.load_defaults 7.1
 

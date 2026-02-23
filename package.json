@@ -1,5 +1,5 @@
 {
-  "name": "expense-tracker",
+  "name": "mybudgethq",
   "private": true,
   "devDependencies": {
     "@playwright/test": "^1.58.2",
@@ -7,7 +7,7 @@
     "@tailwindcss/typography": "^0.5.10"
   },
   "version": "1.0.0",
-  "description": "A Ruby on Rails expense tracking application with comprehensive authentication options.",
+  "description": "MyBudgetHQ — personal finance and budget tracking web application.",
   "main": "index.js",
   "directories": {
     "lib": "lib"
