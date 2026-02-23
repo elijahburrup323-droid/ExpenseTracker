@@ -81,26 +81,27 @@
                         <% end %>
                       </div>
                       <% if has_target %>
-                        <%# Current of Target — centered above progress bar %>
-                        <div class="mt-1 text-xs font-medium text-gray-700 dark:text-gray-300 text-center" style="font-variant-numeric: tabular-nums;">
-                          <%= number_to_currency(b.current_balance) %> of <%= number_to_currency(b.target_amount) %>
-                        </div>
-                        <%# Progress bar row with right-side financial columns %>
-                        <div class="mt-1 flex items-center gap-6">
-                          <div class="flex-1 h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
-                            <div class="<%= bar_color %> h-full rounded-full" style="width: <%= pct %>%"></div>
+                        <%# Two-region grid: left = progress info, right = metrics %>
+                        <div class="mt-1" style="display: grid; grid-template-columns: 42% 1fr; gap: 1rem; align-items: center;">
+                          <div>
+                            <div class="text-xs font-medium text-gray-700 dark:text-gray-300 text-center mb-1" style="font-variant-numeric: tabular-nums;">
+                              <%= number_to_currency(b.current_balance) %> of <%= number_to_currency(b.target_amount) %>
+                            </div>
+                            <div class="h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                              <div class="<%= bar_color %> h-full rounded-full" style="width: <%= pct %>%"></div>
+                            </div>
                           </div>
                           <% if has_max_spend %>
-                            <div class="flex items-center gap-4 flex-shrink-0" style="font-variant-numeric: tabular-nums;">
-                              <div class="text-right" style="min-width: 5.5rem;">
+                            <div class="flex items-center gap-4" style="font-variant-numeric: tabular-nums;">
+                              <div class="text-right" style="min-width: 5rem;">
                                 <div class="text-[10px] text-gray-500 dark:text-gray-400 uppercase leading-none">Max Spend/Yr</div>
                                 <div class="text-xs font-semibold text-gray-900 dark:text-white"><%= number_to_currency(b.max_spend_per_year) %></div>
                               </div>
-                              <div class="text-right" style="min-width: 4.5rem;">
+                              <div class="text-right" style="min-width: 4rem;">
                                 <div class="text-[10px] text-gray-500 dark:text-gray-400 uppercase leading-none">Spent</div>
                                 <div class="text-xs font-semibold text-gray-900 dark:text-white"><%= number_to_currency(spent_val) %></div>
                               </div>
-                              <div class="text-right" style="min-width: 4.5rem;">
+                              <div class="text-right" style="min-width: 4rem;">
                                 <div class="text-[10px] text-gray-500 dark:text-gray-400 uppercase leading-none">Remaining</div>
                                 <div class="text-xs font-semibold <%= remaining && remaining > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' %>"><%= number_to_currency(remaining || 0) %></div>
                               </div>
@@ -108,22 +109,22 @@
                           <% end %>
                         </div>
                       <% else %>
-                        <%# No target — show balance with optional financial columns %>
-                        <div class="mt-1 flex items-center gap-6">
-                          <div class="flex-1 text-xs text-gray-500 dark:text-gray-400" style="font-variant-numeric: tabular-nums;">
+                        <%# No target — two-region grid with balance text and optional metrics %>
+                        <div class="mt-1" style="display: grid; grid-template-columns: 42% 1fr; gap: 1rem; align-items: center;">
+                          <div class="text-xs text-gray-500 dark:text-gray-400" style="font-variant-numeric: tabular-nums;">
                             Balance: <%= number_to_currency(b.current_balance) %>
                           </div>
                           <% if has_max_spend %>
-                            <div class="flex items-center gap-4 flex-shrink-0" style="font-variant-numeric: tabular-nums;">
-                              <div class="text-right" style="min-width: 5.5rem;">
+                            <div class="flex items-center gap-4" style="font-variant-numeric: tabular-nums;">
+                              <div class="text-right" style="min-width: 5rem;">
                                 <div class="text-[10px] text-gray-500 dark:text-gray-400 uppercase leading-none">Max Spend/Yr</div>
                                 <div class="text-xs font-semibold text-gray-900 dark:text-white"><%= number_to_currency(b.max_spend_per_year) %></div>
                               </div>
-                              <div class="text-right" style="min-width: 4.5rem;">
+                              <div class="text-right" style="min-width: 4rem;">
                                 <div class="text-[10px] text-gray-500 dark:text-gray-400 uppercase leading-none">Spent</div>
                                 <div class="text-xs font-semibold text-gray-900 dark:text-white"><%= number_to_currency(spent_val) %></div>
                               </div>
-                              <div class="text-right" style="min-width: 4.5rem;">
+                              <div class="text-right" style="min-width: 4rem;">
                                 <div class="text-[10px] text-gray-500 dark:text-gray-400 uppercase leading-none">Remaining</div>
                                 <div class="text-xs font-semibold <%= remaining && remaining > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' %>"><%= number_to_currency(remaining || 0) %></div>
                               </div>

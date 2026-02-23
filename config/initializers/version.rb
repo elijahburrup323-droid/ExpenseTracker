@@ -166,6 +166,7 @@ APP_ALL_VERSIONS = [
       "Dashboard: Expanded Buckets card layout corrected — Current of Target centered above progress bar, Max Spend/Yr | Spent | Remaining columns on same row as progress bar, no value duplication (CM-27)",
       "Dashboard: Spending Overview backside layout converted from viewport breakpoints to container-width-driven CSS grid — uses auto-fit minmax(280px, 1fr) so columns adapt to actual card width, consistent across iPad and desktop (CM-28)",
       "Buckets: Fixed deletion of non-default buckets when default bucket has validation issues — bypass model validations on both deleted and default bucket during balance transfer (CM-29)",
+      "Dashboard: Expanded Buckets card layout rebalanced — progress bars capped at 42% width with fixed grid endpoint, metrics block (Max Spend/Yr, Spent, Remaining) shifted left for centered two-region layout (CM-30)",
     ]
   },
   {
