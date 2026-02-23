@@ -1,7 +1,7 @@
 APP_VERSION = "1.3.18"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
-MANUAL_CHANGE_SEQ = 34  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 35  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
@@ -132,6 +132,9 @@ APP_ALL_VERSIONS = [
       "Buckets: Table layout restructured — Max Spend/Yr under Target column, Available to be Spent under Balance column, Spent YTD under Priority column (CM-13)",
       "Global Text Scale: Control enabled for all users on every page — A−/A+ buttons in header adjust UI from 80% to 130% in 5% steps with per-user persistence (CM-15)",
       "Global Text Scale: TEXT_SCALE_TEST_MODE feature flag — true shows control in header for all users, false restricts to Settings only (CM-15)",
+      "Dashboard: Net Worth chart auto-backfills from closed-month dashboard snapshots — no more 'No history yet' when historical data exists (CM-16)",
+      "Dashboard: Net Worth snapshot now created automatically during soft close alongside dashboard_month_snapshot (CM-16)",
+      "Dashboard: Net Worth current-month snapshot updates with live account totals on each dashboard load (CM-16)",
     ]
   },
   {

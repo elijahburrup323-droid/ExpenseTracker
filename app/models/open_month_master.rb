@@ -66,6 +66,11 @@ class OpenMonthMaster < ApplicationRecord
         net_worth: nw,
         is_stale: false
       )
+
+      # Net worth snapshot for chart history
+      NetWorthSnapshot.find_or_initialize_by(
+        user_id: user_id, snapshot_date: month_end
+      ).update!(amount: nw)
     end
   end
 

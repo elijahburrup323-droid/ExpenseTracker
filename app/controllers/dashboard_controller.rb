@@ -83,6 +83,7 @@ class DashboardController < ApplicationController
 
     # Card 3: Net Worth — sum of all account balances + historical snapshots
     @net_worth = @accounts.sum(:balance)
+    backfill_net_worth_snapshots_if_needed
     @net_worth_snapshots = current_user.net_worth_snapshots.recent(6).to_a.sort_by(&:snapshot_date)
     if @net_worth_snapshots.size >= 2
       prev_amount = @net_worth_snapshots[-2].amount
@@ -147,5 +148,28 @@ class DashboardController < ApplicationController
         account_groups: account_groups
       }
     end
+  end
+
+  private
+
+  # Auto-backfill net_worth_snapshots from dashboard_month_snapshots and current live data.
+  # Idempotent: uses find_or_initialize_by on (user_id, snapshot_date).
+  def backfill_net_worth_snapshots_if_needed
+    existing_count = current_user.net_worth_snapshots.count
+    historical_months = DashboardMonthSnapshot.where(user_id: current_user.id, is_stale: false)
+    return if existing_count > historical_months.count
+
+    # Backfill from closed-month dashboard snapshots
+    historical_months.find_each do |dms|
+      month_end = Date.new(dms.year, dms.month, -1)
+      snap = current_user.net_worth_snapshots.find_or_initialize_by(snapshot_date: month_end)
+      snap.update!(amount: dms.net_worth) if snap.new_record? || snap.amount != dms.net_worth
+    end
+
+    # Add/update current month snapshot with live net worth
+    current_month_end = Date.new(@open_month.current_year, @open_month.current_month, -1)
+    live_nw = current_user.accounts.sum(:balance)
+    snap = current_user.net_worth_snapshots.find_or_initialize_by(snapshot_date: current_month_end)
+    snap.update!(amount: live_nw)
   end
 end

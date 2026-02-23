@@ -494,6 +494,7 @@ After each deploy cycle (UAT tested + promoted to production):
 - **Spending Breakdown responsive**: Breakdown grid uses `grid-cols-1 xl:grid-cols-3` (or xl:grid-cols-2 without tags) — single column stacked below 1280px, 3 columns on wide desktop. Same in ERB template and JS renderer.
 - **Buckets spent_ytd**: Only counts `PAYMENT_EXECUTION` source_type OUT transactions (not TRANSFER, FUND_MOVE, ADJUSTMENT, etc.). Max Spend/Yr must be &lt;= Target (validated in model and JS modal). Table detail lines: Max Spend/Yr under Target column, Available to be Spent under Balance column, Spent YTD under Priority column.
 - **Global Text Scale**: CSS variable `--text-scale` on `&lt;html&gt;` tag controls UI scale (80%-130%). `TEXT_SCALE_TEST_MODE` flag in version.rb shows control in header for all users (true) or hides it to Settings only (false). `text_scale_percent` column on users table persists the value. Stimulus controller `text-scale` handles A−/A+ buttons with debounced API save.
+- **Net Worth chart**: Auto-backfills `net_worth_snapshots` from `dashboard_month_snapshots` on dashboard load. Also creates a live current-month snapshot. The `generate_snapshots!` method in `open_month_master.rb` now auto-creates `NetWorthSnapshot` during soft close. Fix: never show "No history yet" when closed-month data exists.
 
 ### File Reading from Google Drive
 - `.docx` files: Read via Python docx module (`/c/Users/elija/AppData/Local/Programs/Python/Python313/python.exe` with `PYTHONIOENCODING=utf-8`)
