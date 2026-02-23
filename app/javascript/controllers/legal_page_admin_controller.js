@@ -97,7 +97,19 @@ export default class extends Controller {
   _setQuillHtml(html) {
     if (!this.quill) return
     if (html) {
-      this.quill.root.innerHTML = html
+      // Use Quill's clipboard converter for proper HTML import
+      this.quill.setText("")
+      this.quill.clipboard.dangerouslyPasteHTML(0, html, "silent")
+
+      // If Quill ended up empty but HTML has content, auto-switch to HTML mode
+      const rendered = this.quill.getText().trim()
+      if (!rendered && html.trim()) {
+        this.modalBodyTarget.value = html
+        this._htmlMode = true
+        this.editorContainerTarget.classList.add("hidden")
+        this.modalBodyTarget.classList.remove("hidden")
+        this.htmlToggleTarget.textContent = "Show Editor"
+      }
     } else {
       this.quill.setText("")
     }
@@ -145,14 +157,22 @@ export default class extends Controller {
     this.modalOrderTarget.value = this.sections.length + 1
     this.modalTitle2Target.value = ""
     this.modalBodyTarget.value = ""
-    this._htmlMode = false
-    this.editorContainerTarget.classList.remove("hidden")
-    this.modalBodyTarget.classList.add("hidden")
-    this.htmlToggleTarget.textContent = "Show HTML"
     this.modalErrorTarget.classList.add("hidden")
     this.modalTarget.classList.remove("hidden")
     this._initQuill()
-    this._setQuillHtml("")
+
+    if (this.quill) {
+      this._htmlMode = false
+      this.editorContainerTarget.classList.remove("hidden")
+      this.modalBodyTarget.classList.add("hidden")
+      this.htmlToggleTarget.textContent = "Show HTML"
+      this._setQuillHtml("")
+    } else {
+      this._htmlMode = true
+      this.editorContainerTarget.classList.add("hidden")
+      this.modalBodyTarget.classList.remove("hidden")
+      this.htmlToggleTarget.textContent = "Show Editor"
+    }
     this.modalTitle2Target.focus()
   }
 
@@ -166,15 +186,25 @@ export default class extends Controller {
     this.modalNumberTarget.value = s.section_number
     this.modalOrderTarget.value = s.display_order
     this.modalTitle2Target.value = s.section_title
-    this.modalBodyTarget.value = s.section_body
-    this._htmlMode = false
-    this.editorContainerTarget.classList.remove("hidden")
-    this.modalBodyTarget.classList.add("hidden")
-    this.htmlToggleTarget.textContent = "Show HTML"
+    this.modalBodyTarget.value = s.section_body || ""
     this.modalErrorTarget.classList.add("hidden")
     this.modalTarget.classList.remove("hidden")
     this._initQuill()
-    this._setQuillHtml(s.section_body)
+
+    if (this.quill) {
+      // Quill loaded — start in WYSIWYG mode
+      this._htmlMode = false
+      this.editorContainerTarget.classList.remove("hidden")
+      this.modalBodyTarget.classList.add("hidden")
+      this.htmlToggleTarget.textContent = "Show HTML"
+      this._setQuillHtml(s.section_body)
+    } else {
+      // Quill not available (CDN not loaded on Turbo nav) — fall back to HTML textarea
+      this._htmlMode = true
+      this.editorContainerTarget.classList.add("hidden")
+      this.modalBodyTarget.classList.remove("hidden")
+      this.htmlToggleTarget.textContent = "Show Editor"
+    }
     this.modalTitle2Target.focus()
   }
 
