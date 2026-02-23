@@ -151,6 +151,10 @@
       .sortable-drag {
         box-shadow: 0 10px 25px -3px rgba(0,0,0,0.15), 0 4px 6px -4px rgba(0,0,0,0.1);
       }
+
+      /* CM-23: Pin card footers to exact same distance from bottom edge */
+      [data-role="flipper"] { display: flex; flex-direction: column; }
+      [data-role="front"] { flex: 1; }
     </style>
   </head>
   <body class="font-sans bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">

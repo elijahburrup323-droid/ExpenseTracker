@@ -1,7 +1,7 @@
 APP_VERSION = "1.3.18"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
-MANUAL_CHANGE_SEQ = 38  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 39  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
@@ -148,6 +148,8 @@ APP_ALL_VERSIONS = [
       "Auth: Login form disabled Turbo Drive — forces full page reload after sign-in to prevent broken/unstyled dashboard render (CM-19, CM-20)",
       "Auth: Registration form disabled Turbo Drive — ensures correct layout render with sidebar on first load after signup (CM-19, CM-20)",
       "Auth: Password reset form disabled Turbo Drive — ensures correct layout render after password change (CM-19, CM-20)",
+      "Dashboard: Card footer divider lines now pinned to exact same distance from bottom edge on all 6 cards — uses mt-auto flex layout instead of fixed mt-4 margin (CM-23)",
+      "Dashboard: Flipper container set to flex column layout so front side stretches full card height, enabling consistent footer positioning (CM-23)",
     ]
   },
   {
