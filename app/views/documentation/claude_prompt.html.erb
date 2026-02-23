@@ -490,6 +490,7 @@ After each deploy cycle (UAT tested + promoted to production):
 - **Soft delete scope**: Always use `unscoped` when preloading associations that might reference deleted records
 - **API error format**: 422 for validation errors `{ errors: [...] }`, 409 for conflict/month-control errors, 405 for disallowed methods
 - **Importmap path vs relative path**: Shared modules must use importmap path (`"controllers/shared/icon_catalog"`) not relative (`"./shared/icon_catalog"`). Wrong path kills the entire importing controller silently.
+- **Dashboard responsive grid**: Dashboard uses `grid-cols-1 md:grid-cols-2 lg:grid-cols-3` — 1 column on phone, 2 columns on tablet (768px+), 3 columns on desktop (1024px+). Cards use `p-4 lg:p-6` for tighter padding on tablet. Spending chart uses `w-24 h-24 lg:w-32 lg:h-32` to fit tablet layout. Critical CSS in application.html.erb includes `md:grid-cols-2` and `lg:grid-cols-3` to prevent FOUC.
 
 ### File Reading from Google Drive
 - `.docx` files: Read via Python docx module (`/c/Users/elija/AppData/Local/Programs/Python/Python313/python.exe` with `PYTHONIOENCODING=utf-8`)

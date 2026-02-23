@@ -121,6 +121,9 @@ APP_ALL_VERSIONS = [
       "Dashboard: Spending Breakdown wider column gutters (gap-6) for cleaner visual separation between columns (CM-022226-05)",
       "Dashboard: Spending Breakdown tighter label-to-amount spacing within each column for more professional layout (CM-022226-05)",
       "Dashboard: Spending Breakdown grand total removed — per-column totals replace the single global total (CM-022226-05)",
+      "Dashboard: Responsive grid layout — 3 columns on desktop (1024px+), 2 columns on tablet (768px+), 1 column on phone for iPad/mobile usability (CM-10)",
+      "Dashboard: Responsive card padding (p-4 on tablet, p-6 on desktop) and spending chart sizing (w-24/h-24 tablet, w-32/h-32 desktop) for proper fit (CM-10)",
+      "Dashboard: Critical CSS updated with md:grid-cols-2 and lg:grid-cols-3 breakpoints to prevent layout flash on Turbo navigation (CM-10)",
     ]
   },
   {

@@ -382,7 +382,7 @@ export default class extends Controller {
     if (content) {
       content.innerHTML = `
         <div class="flex items-center space-x-4 flex-1">
-          <div class="relative w-32 h-32 flex-shrink-0">
+          <div class="relative w-24 h-24 lg:w-32 lg:h-32 flex-shrink-0">
             <svg viewBox="0 0 36 36" class="w-full h-full">
               <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#e5e7eb" stroke-width="3" class="dark:opacity-30"/>
               <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#a855f7" stroke-width="3"
