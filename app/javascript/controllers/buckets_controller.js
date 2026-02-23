@@ -141,6 +141,9 @@ export default class extends Controller {
 
     if (!account_id) { this._showModalError("Account is required"); return }
     if (!name) { this._showModalError("Name is required"); this.modalNameTarget.focus(); return }
+    if (max_spend_per_year && target_amount && parseFloat(max_spend_per_year) > parseFloat(target_amount)) {
+      this._showModalError("Max Spend/Yr cannot exceed Target"); this.modalMaxSpendTarget.focus(); return
+    }
 
     try {
       const response = await fetch(this.apiUrlValue, {
@@ -178,6 +181,9 @@ export default class extends Controller {
 
     if (!account_id) { this._showModalError("Account is required"); return }
     if (!name) { this._showModalError("Name is required"); this.modalNameTarget.focus(); return }
+    if (max_spend_per_year && target_amount && parseFloat(max_spend_per_year) > parseFloat(target_amount)) {
+      this._showModalError("Max Spend/Yr cannot exceed Target"); this.modalMaxSpendTarget.focus(); return
+    }
 
     try {
       const response = await fetch(`${this.apiUrlValue}/${this.editingId}`, {
@@ -507,27 +513,27 @@ export default class extends Controller {
       progressBar = `<div class="mt-1 w-20 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden"><div class="${color} h-full rounded-full" style="width: ${pct}%"></div></div>`
     }
 
-    // Max Spend / Spent YTD / Available to Spend sub-panel
-    let spendPanel = ""
+    // Max Spend detail lines — distributed across columns
+    let spentYtdLine = ""
+    let availLine = ""
+    let maxSpendLine = ""
     if (b.max_spend_per_year != null) {
       const maxSpend = this._formatAmount(b.max_spend_per_year)
       const spentYtd = this._formatAmount(b.spent_ytd || 0)
       const avail = this._formatAmount(b.available_to_spend || 0)
       const availNum = parseFloat(b.available_to_spend) || 0
       const availColor = availNum <= 0 ? "text-red-600 dark:text-red-400" : "text-green-700 dark:text-green-400"
-      spendPanel = `<div class="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700 text-xs space-y-0.5">
-        <div class="flex justify-between"><span class="text-gray-400">Max Spend/Yr</span><span class="tabular-nums">${maxSpend}</span></div>
-        <div class="flex justify-between"><span class="text-gray-400">Spent YTD</span><span class="tabular-nums">${spentYtd}</span></div>
-        <div class="flex justify-between font-semibold"><span class="text-gray-500 dark:text-gray-300">Available</span><span class="${availColor} tabular-nums">${avail}</span></div>
-      </div>`
+      maxSpendLine = `<div class="mt-1 text-xs text-gray-400 dark:text-gray-500 tabular-nums">Max Spend/Yr ${maxSpend}</div>`
+      spentYtdLine = `<div class="mt-1 text-xs text-gray-400 dark:text-gray-500 tabular-nums">Spent YTD ${spentYtd}</div>`
+      availLine = `<div class="mt-1 text-xs font-semibold ${availColor} tabular-nums">Available to be Spent ${avail}</div>`
     }
 
     return `<tr class="${bandClass} hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
       <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">${this._esc(b.account_name || "")}</td>
-      <td class="px-4 py-4 text-sm font-medium text-gray-900 dark:text-white">${this._esc(b.name)}${defaultBadge}${spendPanel}</td>
-      <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400 text-center">${priority}</td>
-      <td class="px-4 py-4 text-sm text-gray-900 dark:text-white text-right tabular-nums font-mono">${balance}</td>
-      <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400 text-right tabular-nums">${target}${progressBar}</td>
+      <td class="px-4 py-4 text-sm font-medium text-gray-900 dark:text-white">${this._esc(b.name)}${defaultBadge}</td>
+      <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400 text-center">${priority}${spentYtdLine}</td>
+      <td class="px-4 py-4 text-sm text-gray-900 dark:text-white text-right tabular-nums font-mono">${balance}${availLine}</td>
+      <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400 text-right tabular-nums">${target}${progressBar}${maxSpendLine}</td>
       <td class="px-4 py-4 text-center">
         <button type="button"
           class="relative inline-flex h-7 w-14 items-center rounded-full transition-colors ${activeBg} focus:outline-none focus:ring-2 focus:ring-purple-300"

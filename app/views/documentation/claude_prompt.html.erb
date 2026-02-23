@@ -492,6 +492,7 @@ After each deploy cycle (UAT tested + promoted to production):
 - **Importmap path vs relative path**: Shared modules must use importmap path (`"controllers/shared/icon_catalog"`) not relative (`"./shared/icon_catalog"`). Wrong path kills the entire importing controller silently.
 - **Dashboard responsive grid**: Dashboard uses `grid-cols-1 md:grid-cols-2 lg:grid-cols-3` — 1 column on phone, 2 columns on tablet (768px+), 3 columns on desktop (1024px+). Cards use `p-4 lg:p-6` for tighter padding on tablet. Spending chart uses `w-24 h-24 lg:w-32 lg:h-32` to fit tablet layout. Critical CSS in application.html.erb includes `md:grid-cols-2` and `lg:grid-cols-3` to prevent FOUC.
 - **Spending Breakdown responsive**: Breakdown grid uses `grid-cols-1 xl:grid-cols-3` (or xl:grid-cols-2 without tags) — single column stacked below 1280px, 3 columns on wide desktop. Same in ERB template and JS renderer.
+- **Buckets spent_ytd**: Only counts `PAYMENT_EXECUTION` source_type OUT transactions (not TRANSFER, FUND_MOVE, ADJUSTMENT, etc.). Max Spend/Yr must be &lt;= Target (validated in model and JS modal). Table detail lines: Max Spend/Yr under Target column, Available to be Spent under Balance column, Spent YTD under Priority column.
 
 ### File Reading from Google Drive
 - `.docx` files: Read via Python docx module (`/c/Users/elija/AppData/Local/Programs/Python/Python313/python.exe` with `PYTHONIOENCODING=utf-8`)

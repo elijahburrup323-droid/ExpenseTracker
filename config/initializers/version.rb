@@ -1,6 +1,6 @@
 APP_VERSION = "1.3.18"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
-MANUAL_CHANGE_SEQ = 32  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 33  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
@@ -126,6 +126,9 @@ APP_ALL_VERSIONS = [
       "Dashboard: Critical CSS updated with md:grid-cols-2 and lg:grid-cols-3 breakpoints to prevent layout flash on Turbo navigation (CM-10)",
       "Dashboard: Spending Breakdown responsive — 3-column layout at xl (1280px+), single-column stacked below for tablet and mobile readability (CM-11)",
       "Dashboard: Removed Filter by Tag button — tag filtering remains available in reports where it provides analytical value (CM-12)",
+      "Buckets: Spent YTD now counts only payment transactions — transfers and adjustments no longer inflate spending totals (CM-13)",
+      "Buckets: Max Spend/Yr validation — cannot exceed Target amount, enforced on both client modal and server model (CM-13)",
+      "Buckets: Table layout restructured — Max Spend/Yr under Target column, Available to be Spent under Balance column, Spent YTD under Priority column (CM-13)",
     ]
   },
   {

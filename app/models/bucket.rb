@@ -25,6 +25,7 @@ class Bucket < ApplicationRecord
   validate :only_one_default_per_account, if: :is_default?
   validate :only_one_priority_zero_per_account
   validate :account_belongs_to_user
+  validate :max_spend_not_greater_than_target
 
   # Compute the bucket year window based on bucket_year_start_month.
   # Returns [start_date, end_date] for the current bucket year.
@@ -38,13 +39,13 @@ class Bucket < ApplicationRecord
     [start_date, end_date]
   end
 
-  # Sum of all OUT transactions within the bucket year window (spend + transfer_out).
+  # Sum of all PAYMENT_EXECUTION OUT transactions within the bucket year window.
+  # Only actual payments count as spending; transfers and adjustments do not.
   def spent_ytd(reference_date = Date.current)
     return 0.0 unless max_spend_per_year.present?
     start_date, end_date = bucket_year_window(reference_date)
     bucket_transactions
-      .where(direction: "OUT", txn_date: start_date..end_date)
-      .where.not(source_type: "FUND_MOVE")
+      .where(direction: "OUT", source_type: "PAYMENT_EXECUTION", txn_date: start_date..end_date)
       .sum(:amount)
       .to_f
   end
@@ -104,6 +105,13 @@ class Bucket < ApplicationRecord
     existing = existing.where.not(id: id) if persisted?
     if existing.exists?
       errors.add(:base, "A default bucket already exists for this account.")
+    end
+  end
+
+  def max_spend_not_greater_than_target
+    return unless max_spend_per_year.present? && target_amount.present?
+    if max_spend_per_year > target_amount
+      errors.add(:max_spend_per_year, "cannot exceed Target")
     end
   end
 
