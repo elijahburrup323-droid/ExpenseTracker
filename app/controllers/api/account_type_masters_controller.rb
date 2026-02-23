@@ -61,7 +61,8 @@ module Api
       end
 
       # Soft-delete: remove user toggle records then mark as deleted
-      master.user_account_types.delete_all
+      # Use direct query to avoid nullify behavior from restrict_with_error
+      UserAccountType.where(account_type_master_id: master.id).delete_all
       master.soft_delete!
       render json: { success: true }
     end
