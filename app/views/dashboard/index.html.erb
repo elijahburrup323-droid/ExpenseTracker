@@ -4,7 +4,9 @@
      data-dashboard-reorder-url-value="<%= api_dashboard_reorder_slots_path %>"
      data-dashboard-open-month-url-value="<%= api_open_month_master_path %>"
      data-dashboard-month-value="<%= @open_month.current_month %>"
-     data-dashboard-year-value="<%= @open_month.current_year %>">
+     data-dashboard-year-value="<%= @open_month.current_year %>"
+     data-dashboard-earliest-month-value="<%= @earliest[:month] %>"
+     data-dashboard-earliest-year-value="<%= @earliest[:year] %>">
 
   <%# ===== 6-CARD GRID (3 x 2, equal size) ===== %>
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 md:[grid-auto-rows:1fr] gap-4 md:gap-6" data-dashboard-target="cardsGrid">

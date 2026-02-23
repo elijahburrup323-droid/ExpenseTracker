@@ -5,6 +5,7 @@ class DashboardController < ApplicationController
     DashboardCard.seed_defaults_for(current_user)
 
     @open_month = OpenMonthMaster.for_user(current_user)
+    @earliest = current_user.earliest_allowed_month
     @accounts = current_user.accounts.includes(:account_type).ordered
 
     # Load slot layout

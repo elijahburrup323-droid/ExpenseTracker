@@ -8,6 +8,14 @@ module Api
       year = (params[:year] || Date.today.year).to_i
       month = month.clamp(1, 12)
       year = year.clamp(2000, 2100)
+
+      # CM-25: Clamp to earliest allowed month
+      earliest = current_user.earliest_allowed_month
+      if year < earliest[:year] || (year == earliest[:year] && month < earliest[:month])
+        year = earliest[:year]
+        month = earliest[:month]
+      end
+
       month_start = Date.new(year, month, 1)
       month_end = month_start.next_month  # half-open: [month_start, month_end)
 
@@ -62,6 +70,8 @@ module Api
         year: year,
         month_label: month_start.strftime("%B %Y"),
         can_go_forward: can_go_forward,
+        earliest_month: earliest[:month],
+        earliest_year: earliest[:year],
         slots: slots_data
       }
 

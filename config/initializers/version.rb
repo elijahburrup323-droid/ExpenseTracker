@@ -1,7 +1,7 @@
 APP_VERSION = "1.3.18"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
-MANUAL_CHANGE_SEQ = 43  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 44  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
@@ -157,6 +157,8 @@ APP_ALL_VERSIONS = [
       "Security: User Login Audit — every successful login records user identity, IP address, parsed browser/OS/device, session ID, and app version to append-only audit table (CM-24b)",
       "Security: Failed login attempts logged with attempted email, IP, and failure reason via Warden before_failure hook (CM-24b)",
       "Database: New user_login_audits table with indexes on user_id+login_at, ip_address, and login_at for efficient security queries (CM-24b)",
+      "Dashboard: Month navigation now prevents navigating before the user's earliest data month — previous-month chevron disabled at earliest allowed month (CM-25)",
+      "Dashboard: Server-side month clamping — API rejects requests for months before user's first data, falling back to earliest allowed month (CM-25)",
     ]
   },
   {

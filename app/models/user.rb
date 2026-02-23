@@ -116,6 +116,28 @@ class User < ApplicationRecord
     identities.pluck(:provider)
   end
 
+  # CM-25: Earliest allowed month for dashboard navigation
+  # Returns { year:, month: } — the earliest month the user should be able to view.
+  def earliest_allowed_month
+    # Check earliest data across key tables
+    dates = []
+    dates << accounts.minimum(:created_at)
+    dates << payments.minimum(:payment_date)
+    dates << income_entries.minimum(:entry_date)
+    dates << buckets.minimum(:created_at)
+    dates.compact!
+
+    if dates.any?
+      earliest = dates.min
+      earliest = earliest.to_date if earliest.respond_to?(:to_date)
+      { year: earliest.year, month: earliest.month }
+    else
+      # Fallback: user account creation month
+      created = created_at || Time.current
+      { year: created.year, month: created.month }
+    end
+  end
+
   private
 
   def secondary_email_not_same_as_primary

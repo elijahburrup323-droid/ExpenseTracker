@@ -7,11 +7,13 @@ export default class extends Controller {
     "cardsGrid", "slotWrapper",
     "tagFilterWrapper", "tagFilterBtn", "tagFilterLabel", "tagFilterDropdown", "tagCheckboxList"
   ]
-  static values = { apiUrl: String, reorderUrl: String, openMonthUrl: String, tagsUrl: String, month: Number, year: Number }
+  static values = { apiUrl: String, reorderUrl: String, openMonthUrl: String, tagsUrl: String, month: Number, year: Number, earliestMonth: Number, earliestYear: Number }
 
   connect() {
     this.currentMonth = this.monthValue
     this.currentYear = this.yearValue
+    this.earliestMonth = this.earliestMonthValue || 1
+    this.earliestYear = this.earliestYearValue || 2020
     this.expandedCardType = null
     this._selectedTagIds = []
     this._allTags = []
@@ -52,6 +54,9 @@ export default class extends Controller {
   // --- Month Navigation ---
 
   prevMonth() {
+    // CM-25: Don't navigate before earliest allowed month
+    if (this.currentYear === this.earliestYear && this.currentMonth <= this.earliestMonth) return
+    if (this.currentYear < this.earliestYear) return
     this.currentMonth--
     if (this.currentMonth < 1) {
       this.currentMonth = 12
@@ -221,6 +226,16 @@ export default class extends Controller {
 
     this.nextBtnTargets.forEach(btn => {
       if (atCurrentMonth) {
+        btn.classList.add("opacity-30", "cursor-not-allowed")
+      } else {
+        btn.classList.remove("opacity-30", "cursor-not-allowed")
+      }
+    })
+
+    // CM-25: Disable prev button at earliest allowed month
+    const atEarliest = this.currentYear === this.earliestYear && this.currentMonth <= this.earliestMonth
+    this.prevBtnTargets.forEach(btn => {
+      if (atEarliest) {
         btn.classList.add("opacity-30", "cursor-not-allowed")
       } else {
         btn.classList.remove("opacity-30", "cursor-not-allowed")
