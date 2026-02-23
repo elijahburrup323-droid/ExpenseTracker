@@ -1,80 +1,165 @@
-<div class="flex items-center justify-between mb-4">
-  <div class="flex items-center">
-    <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200"><%= card.title %></h2>
-  </div>
-  <div class="flex items-center space-x-2">
-    <button type="button" data-action="click->dashboard#prevMonth" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
-      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-    </button>
-    <span class="text-xs text-gray-500 dark:text-gray-400 min-w-[5.5rem] text-center" data-dashboard-target="monthLabel"><%= Date.new(@open_month.current_year, @open_month.current_month, 1).strftime("%B %Y") %></span>
-    <button type="button" data-action="click->dashboard#nextMonth" data-dashboard-target="nextBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
-      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-    </button>
-  </div>
-</div>
-<div class="space-y-3 flex-1" data-role="card-content">
-  <div class="flex items-center justify-between">
-    <div class="flex items-center space-x-2">
-      <span class="w-6 h-6 rounded bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-        <span class="text-emerald-600 dark:text-emerald-400 text-xs font-bold">$</span>
-      </span>
-      <span class="text-sm text-gray-700 dark:text-gray-300">Beginning Balance</span>
-    </div>
-    <span class="text-sm font-semibold text-gray-900 dark:text-white"><%= number_to_currency(@beginning_balance_total) %></span>
-  </div>
-  <div class="flex items-center justify-between">
-    <div class="flex items-center space-x-2">
-      <span class="w-6 h-6 rounded bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-        <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
-        </svg>
-      </span>
-      <span class="text-sm text-gray-700 dark:text-gray-300">Income</span>
-    </div>
-    <span class="text-sm font-semibold text-emerald-600 dark:text-emerald-400">+<%= number_to_currency(@current_month_income) %></span>
-  </div>
-  <div class="flex items-center justify-between">
-    <div class="flex items-center space-x-2">
-      <span class="w-6 h-6 rounded bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-        <svg class="w-3.5 h-3.5 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
-        </svg>
-      </span>
-      <span class="text-sm text-gray-700 dark:text-gray-300">Expenses</span>
-    </div>
-    <span class="text-sm font-semibold text-red-600 dark:text-red-400"><%= number_to_currency(@current_month_payments) %></span>
-  </div>
-  <% @new_budget_accounts.each do |account| %>
-    <div class="flex items-center justify-between">
-      <div class="flex items-center space-x-2">
-        <span class="w-6 h-6 rounded bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-          <svg class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
-          </svg>
-        </span>
-        <div class="flex flex-col">
-          <span class="text-sm text-gray-700 dark:text-gray-300">New Account Added</span>
-          <span class="text-xs text-gray-500 dark:text-gray-400">(<%= account.name %>)</span>
-        </div>
+<div class="relative flex-1" data-role="flipper" style="transform-style: preserve-3d; transition: transform 0.6s;">
+  <%# === FRONT SIDE: Income & Spending summary === %>
+  <div class="flex flex-col" data-role="front" style="backface-visibility: hidden;">
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center">
+        <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200"><%= card.title %></h2>
       </div>
-      <span class="text-sm font-semibold text-emerald-600 dark:text-emerald-400">+<%= number_to_currency(account.beginning_balance) %></span>
+      <div class="flex items-center space-x-2">
+        <button type="button" data-action="click->dashboard#prevMonth" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <span class="text-xs text-gray-500 dark:text-gray-400 min-w-[5.5rem] text-center" data-dashboard-target="monthLabel"><%= Date.new(@open_month.current_year, @open_month.current_month, 1).strftime("%B %Y") %></span>
+        <button type="button" data-action="click->dashboard#nextMonth" data-dashboard-target="nextBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+        </button>
+      </div>
     </div>
-  <% end %>
-  <div class="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
-    <div class="flex items-center space-x-2">
-      <span class="w-6 h-6 rounded bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-        <span class="text-emerald-600 dark:text-emerald-400 text-xs font-bold">$</span>
-      </span>
-      <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">Current Balance</span>
+    <div class="space-y-3 flex-1" data-role="card-content">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <span class="w-6 h-6 rounded bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+            <span class="text-emerald-600 dark:text-emerald-400 text-xs font-bold">$</span>
+          </span>
+          <span class="text-sm text-gray-700 dark:text-gray-300">Beginning Balance</span>
+        </div>
+        <span class="text-sm font-semibold text-gray-900 dark:text-white"><%= number_to_currency(@beginning_balance_total) %></span>
+      </div>
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <span class="w-6 h-6 rounded bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+            <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+            </svg>
+          </span>
+          <span class="text-sm text-gray-700 dark:text-gray-300">Income</span>
+        </div>
+        <span class="text-sm font-semibold text-emerald-600 dark:text-emerald-400">+<%= number_to_currency(@current_month_income) %></span>
+      </div>
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <span class="w-6 h-6 rounded bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+            <svg class="w-3.5 h-3.5 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+            </svg>
+          </span>
+          <span class="text-sm text-gray-700 dark:text-gray-300">Expenses</span>
+        </div>
+        <span class="text-sm font-semibold text-red-600 dark:text-red-400"><%= number_to_currency(@current_month_payments) %></span>
+      </div>
+      <% @new_budget_accounts.each do |account| %>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="w-6 h-6 rounded bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+              <svg class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+              </svg>
+            </span>
+            <div class="flex flex-col">
+              <span class="text-sm text-gray-700 dark:text-gray-300">New Account Added</span>
+              <span class="text-xs text-gray-500 dark:text-gray-400">(<%= account.name %>)</span>
+            </div>
+          </div>
+          <span class="text-sm font-semibold text-emerald-600 dark:text-emerald-400">+<%= number_to_currency(account.beginning_balance) %></span>
+        </div>
+      <% end %>
+      <div class="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
+        <div class="flex items-center space-x-2">
+          <span class="w-6 h-6 rounded bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+            <span class="text-emerald-600 dark:text-emerald-400 text-xs font-bold">$</span>
+          </span>
+          <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">Current Balance</span>
+        </div>
+        <span class="text-sm font-bold text-gray-900 dark:text-white"><%= number_to_currency(@budget_total) %></span>
+      </div>
     </div>
-    <span class="text-sm font-bold text-gray-900 dark:text-white"><%= number_to_currency(@budget_total) %></span>
+    <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+      <button type="button" class="inline-flex items-center justify-center text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300" style="min-width:44px; min-height:44px;" data-action="click->dashboard#flipCard" aria-label="View recent deposits">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z"/>
+        </svg>
+      </button>
+      <div class="flex items-center space-x-3">
+        <%= link_to payments_path, class: "text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium" do %>
+          Manage Payments &rsaquo;
+        <% end %>
+        <%= link_to income_entries_path, class: "text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium" do %>
+          Manage Deposits &rsaquo;
+        <% end %>
+        <button type="button" data-action="click->dashboard#toggleCardExpand"
+                data-role="expand-btn"
+                class="inline-flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition cursor-pointer" style="min-width:32px; min-height:32px;"
+                aria-label="Expand Income & Spending Card">
+          <svg class="w-4 h-4" data-icon="expand" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/>
+          </svg>
+          <svg class="w-4 h-4 hidden" data-icon="collapse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"/>
+          </svg>
+        </button>
+      </div>
+    </div>
   </div>
-</div>
-<div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
-  <%= link_to payments_path, class: "text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium" do %>
-    Manage Payments &rsaquo;
-  <% end %>
-  <%= link_to income_entries_path, class: "text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium" do %>
-    Manage Deposits &rsaquo;
-  <% end %>
+
+  <%# === BACK SIDE: Recent Deposits === %>
+  <div class="absolute inset-0 flex flex-col" data-role="back" style="backface-visibility: hidden; transform: rotateY(180deg); pointer-events: none;">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Recent Deposits</h2>
+      <div class="flex items-center space-x-2">
+        <button type="button" data-action="click->dashboard#prevMonth" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <span class="text-xs text-gray-500 dark:text-gray-400 min-w-[5.5rem] text-center" data-dashboard-target="monthLabel"><%= Date.new(@open_month.current_year, @open_month.current_month, 1).strftime("%B %Y") %></span>
+        <button type="button" data-action="click->dashboard#nextMonth" data-dashboard-target="nextBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="flex-1 overflow-y-auto">
+      <% deposit_colors = %w[emerald blue purple amber sky] %>
+      <% if @recent_income_entries.any? %>
+        <div class="space-y-3">
+          <% @recent_income_entries.each_with_index do |entry, i| %>
+            <% c = deposit_colors[i % deposit_colors.length] %>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <span class="w-7 h-7 rounded-lg bg-<%= c %>-100 dark:bg-<%= c %>-900/30 flex items-center justify-center">
+                  <svg class="w-4 h-4 text-<%= c %>-500 dark:text-<%= c %>-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+                  </svg>
+                </span>
+                <span class="text-sm text-gray-700 dark:text-gray-300"><span class="text-gray-400 dark:text-gray-500"><%= entry.entry_date.strftime("%-m/%-d") %></span> <%= entry.description %></span>
+              </div>
+              <span class="text-sm font-semibold text-emerald-600 dark:text-emerald-400">+<%= number_to_currency(entry.amount) %></span>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="text-sm text-gray-400 dark:text-gray-500 text-center py-4">No deposits this month.</p>
+      <% end %>
+    </div>
+    <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+      <button type="button" class="inline-flex items-center justify-center text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300" style="min-width:44px; min-height:44px;" data-action="click->dashboard#flipCardBack" aria-label="Back to income & spending">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z"/>
+        </svg>
+      </button>
+      <div class="flex items-center space-x-3">
+        <%= link_to income_entries_path, class: "text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium" do %>
+          Manage Deposits &rsaquo;
+        <% end %>
+        <button type="button" data-action="click->dashboard#toggleCardExpand"
+                data-role="expand-btn"
+                class="inline-flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition cursor-pointer" style="min-width:32px; min-height:32px;"
+                aria-label="Expand Income & Spending Card">
+          <svg class="w-4 h-4" data-icon="expand" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/>
+          </svg>
+          <svg class="w-4 h-4 hidden" data-icon="collapse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
 </div>

@@ -13,7 +13,7 @@
       <% card = slot.dashboard_card %>
       <% next unless card&.is_active %>
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 lg:p-6 flex flex-col overflow-hidden min-w-0"
-           <% if %w[spending_overview accounts_overview buckets].include?(card.card_type) %>style="perspective: 1000px;"<% end %>
+           style="perspective: 1000px;"
            data-dashboard-target="slotWrapper"
            data-slot-number="<%= slot.slot_number %>"
            data-card-type="<%= card.card_type %>"

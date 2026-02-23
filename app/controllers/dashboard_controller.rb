@@ -128,6 +128,14 @@ class DashboardController < ApplicationController
                                    .includes(:account, spending_category: :spending_type)
                                    .limit(5)
 
+    # Card 4 back & Card 5 back: Recent income entries for the month
+    @recent_income_entries = current_user.income_entries
+                                         .where(received_flag: true)
+                                         .where(entry_date: @month_start...@month_end)
+                                         .order(entry_date: :desc)
+                                         .includes(:account)
+                                         .limit(5)
+
     # Card 6: Buckets summary (grouped by account)
     user_buckets = current_user.buckets.active.includes(:account).ordered
     if user_buckets.empty?
