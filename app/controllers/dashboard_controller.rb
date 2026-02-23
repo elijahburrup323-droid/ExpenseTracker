@@ -84,7 +84,7 @@ class DashboardController < ApplicationController
     # Card 3: Net Worth — sum of all account balances + historical snapshots
     @net_worth = @accounts.sum(:balance)
     backfill_net_worth_snapshots_if_needed
-    @net_worth_snapshots = current_user.net_worth_snapshots.recent(6).to_a.sort_by(&:snapshot_date)
+    @net_worth_snapshots = current_user.net_worth_snapshots.eligible_for_user(current_user).recent(6).to_a.sort_by(&:snapshot_date)
     if @net_worth_snapshots.size >= 2
       prev_amount = @net_worth_snapshots[-2].amount
       @net_worth_change = @net_worth - prev_amount
@@ -162,14 +162,21 @@ class DashboardController < ApplicationController
 
   # Auto-backfill net_worth_snapshots from dashboard_month_snapshots and current live data.
   # Idempotent: uses find_or_initialize_by on (user_id, snapshot_date).
+  # CM-21: Never create snapshots before the user's first eligible month.
   def backfill_net_worth_snapshots_if_needed
+    earliest = current_user.created_at.beginning_of_month.to_date
+
+    # Clean up any snapshots that predate the user's first eligible month
+    current_user.net_worth_snapshots.where("snapshot_date < ?", earliest).delete_all
+
     existing_count = current_user.net_worth_snapshots.count
     historical_months = DashboardMonthSnapshot.where(user_id: current_user.id, is_stale: false)
     return if existing_count > historical_months.count
 
-    # Backfill from closed-month dashboard snapshots
+    # Backfill from closed-month dashboard snapshots (only eligible months)
     historical_months.find_each do |dms|
       month_end = Date.new(dms.year, dms.month, -1)
+      next if month_end < earliest
       snap = current_user.net_worth_snapshots.find_or_initialize_by(snapshot_date: month_end)
       snap.update!(amount: dms.net_worth) if snap.new_record? || snap.amount != dms.net_worth
     end

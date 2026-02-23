@@ -3,7 +3,7 @@ module Api
     before_action :require_admin, only: [:populate]
 
     def index
-      snapshots = current_user.net_worth_snapshots.recent(6).order(snapshot_date: :asc)
+      snapshots = current_user.net_worth_snapshots.eligible_for_user(current_user).recent(6).order(snapshot_date: :asc)
       render json: snapshots.map { |s| { date: s.snapshot_date, amount: s.amount.to_f } }
     end
 
@@ -12,10 +12,12 @@ module Api
     def populate
       months_back = params[:months_back].to_i.clamp(1, 12)
       current_net_worth = current_user.accounts.sum(:balance).to_f
+      earliest = current_user.created_at.beginning_of_month.to_date
 
       records_created = 0
       months_back.downto(1) do |i|
         snapshot_date = (Date.today - i.months).end_of_month
+        next if snapshot_date < earliest  # CM-21: skip months before user existed
         # Generate realistic variation: random fluctuation around current net worth
         variation = current_net_worth * rand(-0.15..0.05) * (i.to_f / months_back)
         amount = (current_net_worth - (current_net_worth * 0.03 * i) + variation).round(2)

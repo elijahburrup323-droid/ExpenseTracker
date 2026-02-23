@@ -205,7 +205,7 @@ module Api
 
     def compute_net_worth(ctx)
       net_worth_val = current_user.accounts.sum(:balance).to_f.round(2)
-      snapshots = current_user.net_worth_snapshots.recent(6).to_a.sort_by(&:snapshot_date)
+      snapshots = current_user.net_worth_snapshots.eligible_for_user(current_user).recent(6).to_a.sort_by(&:snapshot_date)
       if snapshots.size >= 2
         prev_amount = snapshots[-2].amount.to_f
         nw_change = net_worth_val - prev_amount
