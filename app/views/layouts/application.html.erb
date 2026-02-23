@@ -155,6 +155,12 @@
       /* CM-23: Pin card footers to exact same distance from bottom edge */
       [data-role="flipper"] { display: flex; flex-direction: column; }
       [data-role="front"] { flex: 1; }
+
+      /* CM-21: Standardized 48px card footer — locked height, no scroll, no resize */
+      [data-role="card-footer"] {
+        height: 48px; min-height: 48px; max-height: 48px;
+        flex-shrink: 0; overflow: hidden;
+      }
     </style>
   </head>
   <body class="font-sans bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">
