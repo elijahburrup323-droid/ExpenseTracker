@@ -35,7 +35,7 @@
 - Current Version: 1.2.6 (QA_MODE controlled via config/initializers/version.rb)
 
 ## Project Location
-- Local path: G:/My Drive/MyBudgetHQ/Web
+- Local path: C:/Projects/MyBudgetHQ/Web (codebase on local SSD; workflow folders remain on G:\My Drive\MyBudgetHQ)
 - GitHub: https://github.com/elijahburrup323-droid/MyBudgetHQ (main + production branches)
 - Windows development environment (MINGW64)
 - UAT Render Service ID: srv-d61stbali9vc739cgvfg, Owner: tea-d61avmchg0os73cjbcb0
@@ -314,7 +314,7 @@ A: The close_month_masters table is a durable month-close ledger that records ev
 30. **Sortable column headers (REQUIRED for all table screens)** — Every table-based screen must include sortable column headers at initial build. Click pattern: first click = ascending, second = descending. Active column shows up/down chevron icon in brand color. Sorting is client-side via a shared pattern: `toggleSort(event)` reads `data-sort-field`, `_getSortedX()` returns sorted copy, `_updateSortIcons()` updates chevrons. Text sorts case-insensitive, numbers sort numerically, dates sort chronologically, booleans group true above false when descending. Sort indicators must not cause layout shift (use reserved icon span). Headers use `cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 transition select-none` styling. Screens with this pattern: Accounts, Transfers, Deposits.
 
 ## Development Notes
-- Windows filesystem is case-insensitive but Rails can fail template lookups if path case doesn't match. Always start server from G:/My Drive/MyBudgetHQ/Web (correct case).
+- Windows filesystem is case-insensitive but Rails can fail template lookups if path case doesn't match. Always start server from C:/Projects/MyBudgetHQ/Web (correct case).
 - Tailwind is loaded via CDN with JIT — classes must exist in HTML for generation. Dynamic class toggling via JS uses classList.add/remove (not string interpolation).
 - With Turbo loaded, forms submit via fetch(). Use Promise.all([page.waitForURL(...), page.click(...)]) for Turbo navigation waits in tests.
 - Flash messages are positioned fixed top-right and auto-dismiss after 5s.
@@ -329,7 +329,7 @@ A: The close_month_masters table is a durable month-close ledger that records ev
 - **button_to creates mini-forms** — These have submit buttons that broad selectors like `button[type=submit]` will match before the main form. Be specific with selectors.
 - **Flash messages** — Positioned fixed top-right, can block navbar elements. Wait for auto-dismiss in tests or dismiss programmatically.
 - **.gdoc file reading** — Google Drive for Desktop .gdoc files are cloud shortcuts that cannot be read via standard file I/O. Use `gdoc_reader.py` script which fetches content via Google Docs API with OAuth. .docx files are read via Node.js JSZip (extract word/document.xml, strip XML tags).
-- **CRITICAL: Google Drive Stream throttling** — The codebase lives on Google Drive Stream (G:/My Drive). Every `bundle exec rails runner` boots the entire Rails app, reading hundreds of files from Drive's local cache. Running multiple Rails processes concurrently (background tasks, server, runner scripts) can saturate Drive Stream's bandwidth, causing Drive to disconnect and the system to lock up requiring a reboot. **Mitigations**: (1) Run Rails runner commands sequentially, never more than 2-3 concurrent, (2) Avoid launching a Rails server while multiple runner tasks are active, (3) If Drive becomes unresponsive, stop all background processes before attempting recovery, (4) Prefer file-based runner scripts over inline Ruby to reduce process count.
+- **Codebase location** — Codebase is on local SSD at C:/Projects/MyBudgetHQ/Web (NOT Google Drive). Workflow folders (Open Items, In Process, etc.) remain on G:\My Drive\MyBudgetHQ. This split avoids Drive Stream saturation from concurrent Rails processes.
 
 ## Task Intake: "Lets Work" Workflow
 
@@ -422,7 +422,7 @@ After each deploy cycle (UAT tested + promoted to production):
 1. Run deployment tests against UAT (smoke + full Playwright suite, Chrome + Safari)
 2. Promote to production only after UAT tests pass
 3. Verify production (sign in with both accounts, data check, JS health)
-4. `node create_docx.js` — exports ALL documentation pages as .docx to Google Drive AND to G:\My Drive\MyBudgetHQ\Web\documentation
+4. `node create_docx.js` — exports ALL documentation pages as .docx to Google Drive AND to C:\Projects\MyBudgetHQ\Web\documentation
 
 ## How We Work Together (Claude Code + Developer)
 

@@ -11,7 +11,7 @@ param(
 
 # --- Configuration ---
 $pgBin     = "C:\Program Files\PostgreSQL\18\bin"
-$backupDir = "G:\My Drive\MyBudgetHQ\backups"
+$backupDir = "C:\Projects\MyBudgetHQ\backups"
 $logFile   = "$backupDir\sync.log"
 $retainDays = 7
 
