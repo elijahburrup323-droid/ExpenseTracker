@@ -1,7 +1,7 @@
 const { test, expect } = require("@playwright/test");
 const fs = require("fs");
 
-const BASE = "http://localhost:3000/expensetracker";
+const BASE = "http://localhost:3000/mybudgethq";
 
 async function login(page) {
   await page.goto(`${BASE}/users/sign_in`);

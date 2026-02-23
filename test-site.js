@@ -8,7 +8,7 @@ async function testSite() {
     issues.push(msg);
   };
 
-  log('=== ExpenseTracker Site Test Log ===');
+  log('=== MyBudgetHQ Site Test Log ===');
   log('Test started: ' + new Date().toISOString());
   log('');
 
@@ -27,7 +27,7 @@ async function testSite() {
   try {
     // Test 1: Home page
     log('--- Test 1: Home Page ---');
-    const baseUrl = 'https://expensetracker-d8tf.onrender.com/expensetracker';
+    const baseUrl = 'https://mybudgethq-d8tf.onrender.com/mybudgethq';
     const response = await page.goto(baseUrl + '/', { waitUntil: 'domcontentloaded', timeout: 30000 });
 
     if (!response.ok()) {
@@ -48,7 +48,7 @@ async function testSite() {
     // Test 2: Login page
     log('');
     log('--- Test 2: Login Page ---');
-    const loginResponse = await page.goto('https://expensetracker-d8tf.onrender.com/expensetracker/users/sign_in', { waitUntil: 'domcontentloaded', timeout: 30000 });
+    const loginResponse = await page.goto('https://mybudgethq-d8tf.onrender.com/mybudgethq/users/sign_in', { waitUntil: 'domcontentloaded', timeout: 30000 });
 
     if (loginResponse.ok()) {
       log('OK: Login page accessible');
@@ -94,7 +94,7 @@ async function testSite() {
     // Test 4: Signup page
     log('');
     log('--- Test 5: Signup Page ---');
-    const signupResponse = await page.goto('https://expensetracker-d8tf.onrender.com/expensetracker/users/sign_up', { waitUntil: 'domcontentloaded', timeout: 30000 });
+    const signupResponse = await page.goto('https://mybudgethq-d8tf.onrender.com/mybudgethq/users/sign_up', { waitUntil: 'domcontentloaded', timeout: 30000 });
     log(signupResponse.ok() ? 'OK: Signup page accessible' : 'ISSUE: Signup page returned status ' + signupResponse.status());
 
   } catch (error) {
@@ -117,8 +117,8 @@ async function testSite() {
   log('=== Test Complete ===');
 
   await browser.close();
-  fs.writeFileSync('c:/Projects/ExpenseTracker/log/testlog.txt', issues.join('\n'));
-  console.log('\nLog written to c:/Projects/ExpenseTracker/log/testlog.txt');
+  fs.writeFileSync('G:/My Drive/MyBudgetHQ/Web/log/testlog.txt', issues.join('\n'));
+  console.log('\nLog written to G:/My Drive/MyBudgetHQ/Web/log/testlog.txt');
 }
 
 testSite().catch(console.error);

@@ -1,6 +1,6 @@
 const { test, expect } = require("@playwright/test");
 
-const BASE = "http://localhost:3000/expensetracker";
+const BASE = "http://localhost:3000/mybudgethq";
 const EMAIL = "elijahburrup323@gmail.com";
 const PASSWORD = "Eli624462!";
 
@@ -9,7 +9,7 @@ async function login(page) {
   await page.fill('input[name="user[email]"]', EMAIL);
   await page.fill('input[name="user[password]"]', PASSWORD);
   await Promise.all([
-    page.waitForURL(/dashboard|expensetracker\/?$/),
+    page.waitForURL(/dashboard|mybudgethq\/?$/),
     page.getByRole("button", { name: "Sign in", exact: true }).click(),
   ]);
 }

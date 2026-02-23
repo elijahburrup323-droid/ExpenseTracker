@@ -1,6 +1,6 @@
 const { test, expect } = require("@playwright/test");
 
-const BASE = "http://localhost:3000/expensetracker";
+const BASE = "http://localhost:3000/mybudgethq";
 
 test.describe("Sidebar Toggle Position", () => {
   test.beforeEach(async ({ page }) => {

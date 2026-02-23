@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const BASE = 'http://localhost:3000/expensetracker';
+const BASE = 'http://localhost:3000/mybudgethq';
 const EMAIL = 'test@example.com';
 const PASS = 'password123';
 

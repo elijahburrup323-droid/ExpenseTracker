@@ -10,7 +10,11 @@ module MyBudgetHQ
 
     config.autoload_lib(ignore: %w[assets tasks])
 
-    # Run app at subpath when RAILS_RELATIVE_URL_ROOT is set (e.g., "/expensetracker" for UAT).
+    # Redirect legacy /expensetracker URLs to /mybudgethq
+    require_relative "../lib/middleware/legacy_url_redirect"
+    config.middleware.insert_before 0, LegacyUrlRedirect
+
+    # Run app at subpath when RAILS_RELATIVE_URL_ROOT is set (e.g., "/mybudgethq" for UAT).
     # When unset (production at mybudgethq.com), app runs at root "/".
     url_root = ENV["RAILS_RELATIVE_URL_ROOT"]
     config.relative_url_root = url_root.present? ? url_root : nil

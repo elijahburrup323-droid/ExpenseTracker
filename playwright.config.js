@@ -7,7 +7,7 @@ module.exports = defineConfig({
     timeout: 10000,
   },
   use: {
-    baseURL: "https://djburrup.com/expensetracker",
+    baseURL: "https://djburrup.com/mybudgethq",
     headless: true,
     screenshot: "only-on-failure",
     trace: "retain-on-failure",

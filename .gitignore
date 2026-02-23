@@ -45,6 +45,7 @@
 # Ignore OS files
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # Ignore Tailwind builds
 /app/assets/builds/*

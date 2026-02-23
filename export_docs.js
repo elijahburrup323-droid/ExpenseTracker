@@ -5,7 +5,7 @@ const fs = require("fs");
 const path = require("path");
 const { Document, Packer, Paragraph, TextRun, HeadingLevel } = require("docx");
 
-const DRIVE_DOCS = "G:/My Drive/ExpenseTracker/Documentation";
+const DRIVE_DOCS = "G:/My Drive/MyBudgetHQ/Documentation";
 const LOCAL_DOCS = path.join(__dirname, "documentation");
 const VIEWS_DIR = path.join(__dirname, "app", "views", "documentation");
 

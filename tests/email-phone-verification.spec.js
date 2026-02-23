@@ -1,6 +1,6 @@
 const { test, expect } = require("@playwright/test");
 
-const LOCAL_BASE = "http://localhost:3000/expensetracker";
+const LOCAL_BASE = "http://localhost:3000/mybudgethq";
 
 async function login(page) {
   await page.goto(`${LOCAL_BASE}/users/sign_in`);
@@ -19,15 +19,15 @@ async function cleanupRecords(page) {
     const csrf = csrfMeta ? csrfMeta.content : "";
 
     // Delete all alternate emails
-    const emails = await fetch("/expensetracker/api/user_emails", { headers: { Accept: "application/json" } }).then(r => r.json());
+    const emails = await fetch("/mybudgethq/api/user_emails", { headers: { Accept: "application/json" } }).then(r => r.json());
     for (const e of emails) {
-      await fetch(`/expensetracker/api/user_emails/${e.id}`, { method: "DELETE", headers: { "X-CSRF-Token": csrf } });
+      await fetch(`/mybudgethq/api/user_emails/${e.id}`, { method: "DELETE", headers: { "X-CSRF-Token": csrf } });
     }
 
     // Delete all alternate phones
-    const phones = await fetch("/expensetracker/api/user_phones", { headers: { Accept: "application/json" } }).then(r => r.json());
+    const phones = await fetch("/mybudgethq/api/user_phones", { headers: { Accept: "application/json" } }).then(r => r.json());
     for (const p of phones) {
-      await fetch(`/expensetracker/api/user_phones/${p.id}`, { method: "DELETE", headers: { "X-CSRF-Token": csrf } });
+      await fetch(`/mybudgethq/api/user_phones/${p.id}`, { method: "DELETE", headers: { "X-CSRF-Token": csrf } });
     }
   });
 }

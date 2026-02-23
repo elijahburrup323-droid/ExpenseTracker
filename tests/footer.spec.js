@@ -1,6 +1,6 @@
 const { test, expect } = require("@playwright/test");
 
-const LOCAL_BASE = "http://localhost:3000/expensetracker";
+const LOCAL_BASE = "http://localhost:3000/mybudgethq";
 
 test.describe("Global Footer", () => {
   test.describe("Unauthenticated pages", () => {

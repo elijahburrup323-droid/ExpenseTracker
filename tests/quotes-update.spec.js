@@ -1,6 +1,6 @@
 const { test, expect } = require("@playwright/test");
 
-const BASE = "http://localhost:3000/expensetracker";
+const BASE = "http://localhost:3000/mybudgethq";
 const AGENT = { email: "test@example.com", password: "password123" };
 
 async function login(page, acct) {

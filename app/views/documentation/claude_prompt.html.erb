@@ -28,7 +28,7 @@
 - Hotwired: Turbo + Stimulus.js for frontend interactivity
 - Tailwind CSS via CDN (with custom brand purple color palette and dark mode)
 - Importmap for JavaScript module loading (no webpack/esbuild)
-- UAT: https://djburrup.com/expensetracker (relative_url_root = "/expensetracker", auto-deploys from main branch)
+- UAT: https://djburrup.com/mybudgethq (relative_url_root = "/mybudgethq", auto-deploys from main branch)
 - Production: https://mybudgethq.com (root path, deploys from production branch)
 - Email delivery via SendGrid Web API (sendgrid-ruby gem) — Render blocks outbound SMTP ports, so we use the HTTP API instead of SMTP. API key stored in SENDGRID_PASSWORD env var.
 - SMS delivery via Twilio REST API (twilio-ruby gem) — phone number auto-normalized to E.164 format
@@ -502,7 +502,7 @@ When the user says **"BugStopper"**, execute this automated adversarial testing 
 ### Phase 2: Test Creation
 1. Create Playwright test files in `tests/local-bugstopper-*.spec.js`
 2. Each file targets one domain (e.g., buckets, reconciliation, reports, tags, security)
-3. All tests run against `http://localhost:3000/expensetracker` using `test@example.com` / `password123`
+3. All tests run against `http://localhost:3000/mybudgethq` using `test@example.com` / `password123`
 4. All API calls use `page.evaluate` with CSRF token extraction from `meta[name="csrf-token"]`
 5. Focus on adversarial inputs: nulls, empty strings, negative numbers, very long strings, XSS payloads, invalid foreign keys, cross-user IDs, boundary values (0, -1, MAX_INT)
 6. Focus on state corruption: delete a parent record then operate on children; race conditions on concurrent operations

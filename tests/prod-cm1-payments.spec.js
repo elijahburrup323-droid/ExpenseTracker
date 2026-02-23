@@ -1,6 +1,6 @@
 const { test, expect } = require("@playwright/test");
 
-const PROD_BASE = "https://djburrup.com/expensetracker";
+const PROD_BASE = "https://djburrup.com/mybudgethq";
 const ACCOUNT = { email: "elijahburrup323@gmail.com", password: "Eli624462!" };
 const ACCOUNT2 = { email: "djburrup@gmail.com", password: "luckydjb" };
 
@@ -174,7 +174,7 @@ test.describe("CM-1 Section 2: Payment Date Validation", () => {
 
     // First, get the current open month via API
     const openMonthData = await page.evaluate(async () => {
-      const res = await fetch("/expensetracker/api/open_month_master", {
+      const res = await fetch("/mybudgethq/api/open_month_master", {
         headers: { "Accept": "application/json" }
       });
       return res.json();
@@ -232,7 +232,7 @@ test.describe("CM-1 Section 2: Payment Date Validation", () => {
     await page.evaluate(async (data) => {
       const csrfMeta = document.querySelector('meta[name="csrf-token"]');
       const token = csrfMeta ? csrfMeta.content : "";
-      await fetch("/expensetracker/api/open_month_master", {
+      await fetch("/mybudgethq/api/open_month_master", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

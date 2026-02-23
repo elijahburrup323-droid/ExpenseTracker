@@ -1,6 +1,6 @@
 const { test, expect } = require("@playwright/test");
 
-const BASE = "https://djburrup.com/expensetracker";
+const BASE = "https://djburrup.com/mybudgethq";
 
 async function login(page) {
   await page.goto(`${BASE}/users/sign_in`);

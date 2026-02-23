@@ -1,6 +1,6 @@
 const { test, expect } = require("@playwright/test");
 
-const BASE = "https://djburrup.com/expensetracker";
+const BASE = "https://djburrup.com/mybudgethq";
 const EMAIL = "test@test.com";
 const PASSWORD = "password123";
 const SECONDARY_EMAIL = "theworldeknows@gmail.com";
