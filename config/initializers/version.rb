@@ -1,7 +1,7 @@
 APP_VERSION = "1.3.18"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
-MANUAL_CHANGE_SEQ = 35  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 36  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
@@ -135,6 +135,9 @@ APP_ALL_VERSIONS = [
       "Dashboard: Net Worth chart auto-backfills from closed-month dashboard snapshots — no more 'No history yet' when historical data exists (CM-16)",
       "Dashboard: Net Worth snapshot now created automatically during soft close alongside dashboard_month_snapshot (CM-16)",
       "Dashboard: Net Worth current-month snapshot updates with live account totals on each dashboard load (CM-16)",
+      "Dashboard: Buckets card simplified — removed per-account totals, Available, and Max Spend lines from small card view (CM-17)",
+      "Dashboard: Buckets card flip — grid icon toggles between simplified overview and detail view showing account totals and Max Spend metrics (CM-17)",
+      "Dashboard: Buckets card expand — expand icon matches Spending Overview and Accounts card pattern for full-size view (CM-17)",
     ]
   },
   {
