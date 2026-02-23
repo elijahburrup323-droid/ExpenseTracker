@@ -39,6 +39,7 @@
 - GitHub: https://github.com/elijahburrup323-droid/MyBudgetHQ (main + production branches)
 - Windows development environment (MINGW64)
 - UAT Render Service ID: srv-d61stbali9vc739cgvfg, Owner: tea-d61avmchg0os73cjbcb0
+- Production Render Service ID: srv-d6e4lch5pdvs73foruag
 
 ## Architecture Overview
 The app uses a sidebar navigation layout. All CRUD screens are single-page with Stimulus controllers that call JSON API endpoints. There are NO Turbo Frames or Turbo Streams used for data — all data operations go through fetch() calls to /api/* endpoints.
@@ -321,7 +322,7 @@ A: The close_month_masters table is a durable month-close ledger that records ev
 - **QA Mode banner** — QA_MODE flag in version.rb. When true, a red banner "NEW RELEASE QA MODE — vX.X.X" appears at the top of every page. Set to true before deploying for production QA testing, set to false after moving specs to Ready for QA.
 - **Rails runner STDOUT** — Always use STDOUT.sync=true at top of runner scripts. Use file-based scripts (tmp/script.rb) for complex commands to avoid bash escaping issues. Avoid `!` in inline ruby strings.
 - **Release notes creation** — BugReport.create!(screen_name:, description:, processed_date: Date.today) via file-based Rails runner script
-- **Render deploy** — Push to main triggers auto-deploy. Wait ~90-120 seconds for completion.
+- **Render deploy** — Push to `main` auto-deploys to UAT. Merge `main` into `production` and push auto-deploys to production. Wait ~2-3 minutes per deploy. Always deploy to UAT first, test, then promote to production.
 - **CRITICAL Render API note** — PUT /v1/services/{id}/env-vars REPLACES ALL env vars. Always include ALL existing vars when adding new ones.
 - **Required Render env vars** — DATABASE_URL, RAILS_ENV, RAILS_MASTER_KEY, WEB_CONCURRENCY, RAILS_RELATIVE_URL_ROOT, RAILS_SERVE_STATIC_FILES
 - **Importmap caveat** — Empty {"imports":{}} in production means RAILS_SERVE_STATIC_FILES is not set
@@ -352,27 +353,34 @@ All work items are managed via Google Drive at **G:\My Drive\MyBudgetHQ** using 
       - Check that the app still boots locally without JS console errors
    e. **Test locally** with Playwright against both **Safari** and **Chrome** browsers
    f. Repeat for the next item (up to 5 items before deploying)
-5. After processing up to 5 items, **deploy** to production:
+5. After processing up to 5 items, **deploy to UAT**:
    a. Set `QA_MODE = true` in `config/initializers/version.rb`
    b. Bump `APP_VERSION` and add changelog entry to `APP_ALL_VERSIONS`
    c. Update all documentation pages (database_schema, claude_prompt, etc.)
-   d. Commit to GitHub, trigger Render deploy
-   e. Run `node create_docx.js` to export ALL documentation pages to Google Drive and `G:\My Drive\MyBudgetHQ\Web\documentation`
-6. **Post-deploy verification** (BEFORE moving to Ready for QA):
-   a. Sign in with **both** production accounts and verify login succeeds:
-      - elijahburrup323@gmail.com / Eli624462!
-      - djburrup@gmail.com / luckydjb
-   b. **Data presence check**: After login, verify existing data is visible (not blank screens). Confirm:
-      - Dashboard loads and shows spending data
-      - Navigation menus and profile dropdown are functional
-      - At least one data page (Payments, Accounts, etc.) shows existing records
-   c. **JavaScript health check**: Confirm NO JavaScript import errors or 404s on asset files
-   d. **Regression check**: Verify 2-3 pages/features unrelated to the current change still work
-   e. If ANY of the above fail: do NOT move to Ready for QA. Diagnose, fix, re-deploy, re-verify.
-7. Once all production tests pass:
-   a. Set `QA_MODE = false` in version.rb, commit and push
-   b. **Move** all processed items from In Process → **Ready for QA**
-8. Go back to **Open Items** and grab the next batch — repeat
+   d. Commit and push to `main` branch — this auto-deploys to UAT (https://djburrup.com/mybudgethq)
+   e. Wait ~2-3 minutes for UAT deploy to complete
+6. **UAT deployment testing** (BEFORE promoting to production):
+   a. Run deployment smoke tests against UAT (`node test-site.js` targeting djburrup.com/mybudgethq)
+   b. Run full Playwright test suite against UAT: `npx playwright test --project=chromium` then `--project=webkit`
+   c. If ANY tests fail: diagnose, fix, commit to `main`, wait for UAT redeploy, re-run tests
+   d. All tests must pass on both Chrome and Safari before proceeding
+7. **Promote to production** (only after all UAT tests pass):
+   a. `git checkout production &amp;&amp; git merge main &amp;&amp; git push origin production &amp;&amp; git checkout main`
+   b. Wait ~2-3 minutes for production deploy to complete
+   c. **Post-deploy production verification**:
+      - Sign in with **both** production accounts:
+        - elijahburrup323@gmail.com / Eli624462!
+        - djburrup@gmail.com / luckydjb
+      - **Data presence check**: Dashboard loads, data visible, menus functional
+      - **JavaScript health check**: No import errors or 404s on asset files
+      - **Regression check**: Verify 2-3 unrelated features still work
+   d. If production verification fails: `git revert HEAD` on production branch, push, diagnose on UAT
+8. Once all production tests pass:
+   a. Set `QA_MODE = false` in version.rb, commit to `main`, push
+   b. Merge to production: `git checkout production &amp;&amp; git merge main &amp;&amp; git push origin production &amp;&amp; git checkout main`
+   c. Run `node create_docx.js` to export documentation to Google Drive
+   d. **Move** all processed items from In Process → **Ready for QA**
+9. Go back to **Open Items** and grab the next batch — repeat
 
 ### Bug text files
 - Process items that have **no status**, or are marked **NOT FIXED**, **FAILED**, or similar
@@ -409,8 +417,11 @@ Before each git commit, update these items:
 3. config/initializers/version.rb — bump APP_VERSION, add changelog to APP_ALL_VERSIONS
 
 ## Post-Deploy Checklist
-After each deploy, run:
-1. `node create_docx.js` — exports ALL documentation pages as .docx to Google Drive AND to G:\My Drive\MyBudgetHQ\Web\documentation
+After each deploy cycle (UAT tested + promoted to production):
+1. Run deployment tests against UAT (smoke + full Playwright suite, Chrome + Safari)
+2. Promote to production only after UAT tests pass
+3. Verify production (sign in with both accounts, data check, JS health)
+4. `node create_docx.js` — exports ALL documentation pages as .docx to Google Drive AND to G:\My Drive\MyBudgetHQ\Web\documentation
 
 ## How We Work Together (Claude Code + Developer)
 
@@ -452,13 +463,25 @@ After each deploy, run:
 6. **Login helper**: Use `Promise.all([page.waitForURL(...), page.click(...)])` for Turbo navigation. Use `getByRole("button", { name: "Sign in", exact: true })` for the login button. `button_to` creates mini-forms with submit buttons — broad selectors like `button[type=submit]` will match those first.
 7. **Test file naming**: Production tests go in `tests/` folder with pattern `prod-vXXX-batchN.spec.js`
 
-### Deploy & QA Cycle
-1. Set QA_MODE=true BEFORE deploying (include in the deploy commit)
-2. Wait for Render deploy to complete (~2-3 minutes) before running production tests
-3. Check for v-number in QA banner to confirm new code is live
-4. Run all tests on Chrome first, then Safari — fix any failures before moving on
-5. Set QA_MODE=false AFTER all tests pass, commit and push separately
-6. Move items to Ready for QA only after QA_MODE=false is pushed
+### Deploy &amp; QA Cycle (UAT-First Promotion)
+1. Set QA_MODE=true, commit and push to `main` (auto-deploys to UAT)
+2. Wait for UAT deploy to complete (~2-3 minutes)
+3. Check for v-number in QA banner on https://djburrup.com/mybudgethq to confirm new code is live
+4. Run smoke tests + full Playwright suite against UAT on Chrome first, then Safari
+5. Fix any failures, re-push to `main`, re-test on UAT until all pass
+6. **Promote**: `git checkout production &amp;&amp; git merge main &amp;&amp; git push origin production &amp;&amp; git checkout main`
+7. Wait for production deploy (~2-3 minutes), verify on https://mybudgethq.com
+8. Set QA_MODE=false, commit to `main`, push, merge to production
+9. Move items to Ready for QA only after QA_MODE=false is live on both environments
+
+### Promotion Workflow
+- `main` branch → auto-deploys to **UAT** (https://djburrup.com/mybudgethq)
+- `production` branch → auto-deploys to **Production** (https://mybudgethq.com)
+- **Never push directly to production branch** — always develop on `main`, test on UAT, then merge
+- Promotion command: `git checkout production &amp;&amp; git merge main &amp;&amp; git push origin production &amp;&amp; git checkout main`
+- Rollback code: `git revert HEAD` on production branch, push
+- Rollback DB: Render Dashboard → Production PostgreSQL → Backups → Restore
+- **Nightly UAT data sync**: At 5:00 AM daily, production database is cloned over UAT so UAT always has fresh production data
 
 ### Common Pitfalls
 - **Don't use overflow-x-hidden on parent containers** — breaks position:sticky in Safari/iPad
