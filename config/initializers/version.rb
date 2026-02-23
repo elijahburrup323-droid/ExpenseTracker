@@ -159,7 +159,11 @@ APP_ALL_VERSIONS = [
       "Database: New user_login_audits table with indexes on user_id+login_at, ip_address, and login_at for efficient security queries (CM-24b)",
       "Dashboard: Month navigation now prevents navigating before the user's earliest data month — previous-month chevron disabled at earliest allowed month (CM-25)",
       "Dashboard: Server-side month clamping — API rejects requests for months before user's first data, falling back to earliest allowed month (CM-25)",
-      "Buckets: Added dedicated Max Spend/Yr column between Target and Avail — 10-column layout with deterministic table-fixed rendering (Buckets_21)",
+      "Buckets: Deterministic column widths on first render — all columns have explicit pixel widths via table-fixed, no auto-content sizing or DOM repaint recalculation (CM-25)",
+      "Buckets: New Max Spend/Yr column inserted between Target and Avail — dedicated sortable column shows annual spending cap per bucket (CM-25)",
+      "Buckets: Reduced PRI-to-Bucket spacing — Priority column narrowed from w-12 to w-9 for tighter visual grouping with Bucket name (CM-25)",
+      "Buckets: Fixed deletion of non-default buckets — skip model validations on bucket being soft-deleted, show error messages to user on failure instead of silent fail (CM-26)",
+      "Dashboard: Expanded Buckets card layout corrected — Current of Target centered above progress bar, Max Spend/Yr | Spent | Remaining columns on same row as progress bar, no value duplication (CM-27)",
     ]
   },
   {

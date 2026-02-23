@@ -344,8 +344,14 @@ export default class extends Controller {
         if (res.ok) this.buckets = await res.json()
         this._rebuildAccountFilter()
         this.renderTable()
+      } else {
+        const data = await response.json().catch(() => null)
+        const msg = data?.errors?.join(", ") || "Failed to delete bucket. Please try again."
+        alert(msg)
       }
-    } catch (e) {}
+    } catch (e) {
+      alert("Network error — could not delete bucket. Please try again.")
+    }
 
     this.deletingId = null
     this.deleteModalTarget.classList.add("hidden")
@@ -427,6 +433,9 @@ export default class extends Controller {
         case "target_amount":
           cmp = (parseFloat(a.target_amount) || 0) - (parseFloat(b.target_amount) || 0)
           break
+        case "max_spend_per_year":
+          cmp = (parseFloat(a.max_spend_per_year) || 0) - (parseFloat(b.max_spend_per_year) || 0)
+          break
         case "priority":
           cmp = (parseInt(a.priority) || 0) - (parseInt(b.priority) || 0)
           break
@@ -505,7 +514,7 @@ export default class extends Controller {
     // Account group banding class
     const bandClass = bandIdx === 1 ? "bg-gray-50 dark:bg-gray-800/60" : ""
 
-    // Max Spend/Yr, Available to Spend & Spent YTD — dedicated columns (CM-22, CM-25b)
+    // Max Spend/Yr, Available to Spend & Spent YTD — dedicated columns (CM-22)
     let maxSpendCell = "\u2014"
     let availCell = "\u2014"
     let spentYtdCell = "\u2014"

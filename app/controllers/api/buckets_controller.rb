@@ -121,18 +121,22 @@ module Api
       end
 
       ActiveRecord::Base.transaction do
-        # Transfer remaining balance to default bucket
         transfer_amount = @bucket.current_balance.to_f
         if transfer_amount > 0
           default_bucket = current_user.buckets.find_by(account_id: @bucket.account_id, is_default: true)
           if default_bucket
-            @bucket.record_transaction!(
+            # Create audit record directly on the bucket being deleted (skip save! validations
+            # since we're about to soft-delete it anyway)
+            @bucket.bucket_transactions.create!(
+              user: current_user,
+              txn_date: Date.current,
               direction: "OUT",
               amount: transfer_amount,
               source_type: "ADJUSTMENT",
-              memo: "Balance transferred to default bucket on deletion",
-              txn_date: Date.current
+              memo: "Balance transferred to default bucket on deletion"
             )
+            @bucket.update_columns(current_balance: 0)
+
             default_bucket.record_transaction!(
               direction: "IN",
               amount: transfer_amount,
@@ -146,6 +150,8 @@ module Api
         @bucket.soft_delete!
       end
       head :no_content
+    rescue ActiveRecord::RecordInvalid => e
+      render json: { errors: [e.message] }, status: :unprocessable_entity
     end
 
     # POST /api/buckets/:id/fund — move money between buckets in same account
