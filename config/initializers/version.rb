@@ -1,7 +1,7 @@
 APP_VERSION = "1.3.18"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
-MANUAL_CHANGE_SEQ = 41  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 42  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
@@ -152,6 +152,8 @@ APP_ALL_VERSIONS = [
       "Dashboard: Flipper container set to flex column layout so front side stretches full card height, enabling consistent footer positioning (CM-23)",
       "Admin: Fixed Account Type Masters delete crash — association delete_all tried to nullify NOT NULL FK instead of deleting; changed to direct query deletion (CM-7, CM-022126-05)",
       "Buckets: Table layout density — removed progress bars, added dedicated Avail. and Spent YTD columns, compressed Priority to narrow integer-only column, reduced cell padding, fixed table layout with explicit column widths (CM-22)",
+      "Dashboard: Expanded Buckets card shows detailed layout — per-bucket Current of Target above progress bar, Max Spend/Yr | Spent | Remaining columns aligned right (CM-24)",
+      "Dashboard: Expand/collapse adds data-expanded attribute for layout-aware content toggling across all cards (CM-24)",
     ]
   },
   {

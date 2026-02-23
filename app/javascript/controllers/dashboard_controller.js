@@ -282,6 +282,7 @@ export default class extends Controller {
     wrapper.style.minHeight = `${this._savedGridHeight}px`
 
     this._updateExpandIcons(wrapper, true)
+    wrapper.setAttribute("data-expanded", "true")
     this.expandedCardType = wrapper.dataset.cardType
     if (this.sortable) this.sortable.option("disabled", true)
   }
@@ -300,6 +301,7 @@ export default class extends Controller {
     wrapper.style.minHeight = ""
 
     this._updateExpandIcons(wrapper, false)
+    wrapper.removeAttribute("data-expanded")
     this.expandedCardType = null
     this._expandedWrapper = null
     if (this.sortable) this.sortable.option("disabled", false)

@@ -156,6 +156,11 @@
       [data-role="flipper"] { display: flex; flex-direction: column; }
       [data-role="front"] { flex: 1; }
 
+      /* CM-24: Expanded card layout toggle — show detailed view only when expanded */
+      [data-role="expanded-layout"] { display: none; }
+      [data-expanded] [data-role="expanded-layout"] { display: block; }
+      [data-expanded] [data-role="simple-layout"] { display: none; }
+
       /* CM-21: Standardized 48px card footer — locked height, no scroll, no resize */
       [data-role="card-footer"] {
         height: 48px; min-height: 48px; max-height: 48px;
