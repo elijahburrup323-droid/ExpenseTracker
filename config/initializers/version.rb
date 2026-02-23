@@ -1,7 +1,7 @@
 APP_VERSION = "1.3.18"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
-MANUAL_CHANGE_SEQ = 44  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 45  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
@@ -159,6 +159,7 @@ APP_ALL_VERSIONS = [
       "Database: New user_login_audits table with indexes on user_id+login_at, ip_address, and login_at for efficient security queries (CM-24b)",
       "Dashboard: Month navigation now prevents navigating before the user's earliest data month — previous-month chevron disabled at earliest allowed month (CM-25)",
       "Dashboard: Server-side month clamping — API rejects requests for months before user's first data, falling back to earliest allowed month (CM-25)",
+      "Buckets: Added dedicated Max Spend/Yr column between Target and Avail — 10-column layout with deterministic table-fixed rendering (Buckets_21)",
     ]
   },
   {

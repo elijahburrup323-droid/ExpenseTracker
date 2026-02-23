@@ -475,7 +475,7 @@ export default class extends Controller {
     }
 
     if (filtered.length === 0) {
-      this.tableBodyTarget.innerHTML = `<tr><td colspan="9" class="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">No buckets yet. Click "Add Bucket" to create one.</td></tr>`
+      this.tableBodyTarget.innerHTML = `<tr><td colspan="10" class="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">No buckets yet. Click "Add Bucket" to create one.</td></tr>`
       return
     }
 
@@ -505,10 +505,12 @@ export default class extends Controller {
     // Account group banding class
     const bandClass = bandIdx === 1 ? "bg-gray-50 dark:bg-gray-800/60" : ""
 
-    // Available to Spend & Spent YTD — dedicated columns (CM-22)
+    // Max Spend/Yr, Available to Spend & Spent YTD — dedicated columns (CM-22, CM-25b)
+    let maxSpendCell = "\u2014"
     let availCell = "\u2014"
     let spentYtdCell = "\u2014"
     if (b.max_spend_per_year != null) {
+      maxSpendCell = this._formatAmount(b.max_spend_per_year)
       const availNum = parseFloat(b.available_to_spend) || 0
       const availColor = availNum <= 0 ? "text-red-600 dark:text-red-400" : "text-green-700 dark:text-green-400"
       availCell = `<span class="${availColor} font-semibold">${this._formatAmount(b.available_to_spend || 0)}</span>`
@@ -521,6 +523,7 @@ export default class extends Controller {
       <td class="px-1 py-3 text-sm text-gray-500 dark:text-gray-400 text-center">${priority}</td>
       <td class="px-2 py-3 text-sm text-gray-900 dark:text-white text-right tabular-nums font-mono whitespace-nowrap">${balance}</td>
       <td class="px-2 py-3 text-sm text-gray-500 dark:text-gray-400 text-right tabular-nums whitespace-nowrap">${target}</td>
+      <td class="px-2 py-3 text-sm text-gray-500 dark:text-gray-400 text-right tabular-nums whitespace-nowrap">${maxSpendCell}</td>
       <td class="px-2 py-3 text-sm text-right tabular-nums whitespace-nowrap">${availCell}</td>
       <td class="px-2 py-3 text-sm text-gray-500 dark:text-gray-400 text-right tabular-nums whitespace-nowrap">${spentYtdCell}</td>
       <td class="px-1 py-3 text-center">
