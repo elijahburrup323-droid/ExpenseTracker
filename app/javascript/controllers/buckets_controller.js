@@ -475,7 +475,7 @@ export default class extends Controller {
     }
 
     if (filtered.length === 0) {
-      this.tableBodyTarget.innerHTML = `<tr><td colspan="7" class="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">No buckets yet. Click "Add Bucket" to create one.</td></tr>`
+      this.tableBodyTarget.innerHTML = `<tr><td colspan="9" class="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">No buckets yet. Click "Add Bucket" to create one.</td></tr>`
       return
     }
 
@@ -496,75 +496,64 @@ export default class extends Controller {
   _renderRow(b, bandIdx = 0) {
     const balance = this._formatAmount(b.current_balance)
     const target = b.target_amount != null ? this._formatAmount(b.target_amount) : "\u2014"
-    const defaultBadge = b.is_default ? `<span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300">Default</span>` : ""
+    const defaultBadge = b.is_default ? `<span class="ml-1 inline-flex items-center px-1 py-0.5 rounded text-[10px] font-medium bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300">Def</span>` : ""
     const priority = parseInt(b.priority) || 0
 
     const activeBg = b.is_active ? "bg-brand-600" : "bg-gray-300"
-    const activeKnob = b.is_active ? "translate-x-7" : "translate-x-1"
+    const activeKnob = b.is_active ? "translate-x-6" : "translate-x-1"
 
     // Account group banding class
     const bandClass = bandIdx === 1 ? "bg-gray-50 dark:bg-gray-800/60" : ""
 
-    // Progress bar
-    let progressBar = ""
-    if (b.target_amount != null && b.target_amount > 0) {
-      const pct = Math.min(100, (parseFloat(b.current_balance) / parseFloat(b.target_amount)) * 100)
-      const color = pct >= 100 ? "bg-green-500" : pct >= 50 ? "bg-brand-500" : "bg-yellow-500"
-      progressBar = `<div class="mt-1 w-20 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden"><div class="${color} h-full rounded-full" style="width: ${pct}%"></div></div>`
-    }
-
-    // Max Spend detail lines — distributed across columns
-    let spentYtdLine = ""
-    let availLine = ""
-    let maxSpendLine = ""
+    // Available to Spend & Spent YTD — dedicated columns (CM-22)
+    let availCell = "\u2014"
+    let spentYtdCell = "\u2014"
     if (b.max_spend_per_year != null) {
-      const maxSpend = this._formatAmount(b.max_spend_per_year)
-      const spentYtd = this._formatAmount(b.spent_ytd || 0)
-      const avail = this._formatAmount(b.available_to_spend || 0)
       const availNum = parseFloat(b.available_to_spend) || 0
       const availColor = availNum <= 0 ? "text-red-600 dark:text-red-400" : "text-green-700 dark:text-green-400"
-      maxSpendLine = `<div class="mt-1 text-xs text-gray-400 dark:text-gray-500 tabular-nums">Max Spend/Yr ${maxSpend}</div>`
-      spentYtdLine = `<div class="mt-1 text-xs text-gray-400 dark:text-gray-500 tabular-nums">Spent YTD ${spentYtd}</div>`
-      availLine = `<div class="mt-1 text-xs font-semibold ${availColor} tabular-nums">Available to be Spent ${avail}</div>`
+      availCell = `<span class="${availColor} font-semibold">${this._formatAmount(b.available_to_spend || 0)}</span>`
+      spentYtdCell = this._formatAmount(b.spent_ytd || 0)
     }
 
     return `<tr class="${bandClass} hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-      <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">${this._esc(b.account_name || "")}</td>
-      <td class="px-4 py-4 text-sm font-medium text-gray-900 dark:text-white">${this._esc(b.name)}${defaultBadge}</td>
-      <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400 text-center">${priority}${spentYtdLine}</td>
-      <td class="px-4 py-4 text-sm text-gray-900 dark:text-white text-right tabular-nums font-mono">${balance}${availLine}</td>
-      <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400 text-right tabular-nums">${target}${progressBar}${maxSpendLine}</td>
-      <td class="px-4 py-4 text-center">
+      <td class="px-2 py-3 text-sm text-gray-500 dark:text-gray-400 truncate">${this._esc(b.account_name || "")}</td>
+      <td class="px-2 py-3 text-sm font-medium text-gray-900 dark:text-white truncate">${this._esc(b.name)}${defaultBadge}</td>
+      <td class="px-1 py-3 text-sm text-gray-500 dark:text-gray-400 text-center">${priority}</td>
+      <td class="px-2 py-3 text-sm text-gray-900 dark:text-white text-right tabular-nums font-mono whitespace-nowrap">${balance}</td>
+      <td class="px-2 py-3 text-sm text-gray-500 dark:text-gray-400 text-right tabular-nums whitespace-nowrap">${target}</td>
+      <td class="px-2 py-3 text-sm text-right tabular-nums whitespace-nowrap">${availCell}</td>
+      <td class="px-2 py-3 text-sm text-gray-500 dark:text-gray-400 text-right tabular-nums whitespace-nowrap">${spentYtdCell}</td>
+      <td class="px-1 py-3 text-center">
         <button type="button"
-          class="relative inline-flex h-7 w-14 items-center rounded-full transition-colors ${activeBg} focus:outline-none focus:ring-2 focus:ring-purple-300"
+          class="relative inline-flex h-6 w-12 items-center rounded-full transition-colors ${activeBg} focus:outline-none focus:ring-2 focus:ring-purple-300"
           data-id="${b.id}"
           data-action="click->buckets#toggleActive"
           role="switch" aria-checked="${b.is_active}" title="${b.is_active ? 'Active' : 'Inactive'}">
-          <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${activeKnob}"></span>
+          <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${activeKnob}"></span>
         </button>
       </td>
-      <td class="px-4 py-4 text-right space-x-1 whitespace-nowrap">
+      <td class="px-2 py-3 text-right space-x-0.5 whitespace-nowrap">
         <button type="button"
-                class="inline-flex items-center justify-center w-8 h-8 rounded-md text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 transition"
+                class="inline-flex items-center justify-center w-7 h-7 rounded-md text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 transition"
                 data-id="${b.id}"
                 data-action="click->buckets#openFund"
                 title="Fund">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         </button>
         <button type="button"
-                class="inline-flex items-center justify-center w-8 h-8 rounded-md text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800 transition"
+                class="inline-flex items-center justify-center w-7 h-7 rounded-md text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800 transition"
                 data-id="${b.id}"
                 data-action="click->buckets#startEditing"
                 title="Edit">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+          <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
         </button>
         <button type="button"
-                class="inline-flex items-center justify-center w-8 h-8 rounded-md text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 transition ${b.is_default ? 'opacity-30 cursor-not-allowed' : ''}"
+                class="inline-flex items-center justify-center w-7 h-7 rounded-md text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 transition ${b.is_default ? 'opacity-30 cursor-not-allowed' : ''}"
                 data-id="${b.id}"
                 data-action="click->buckets#confirmDelete"
                 title="${b.is_default ? 'Cannot delete default bucket' : 'Delete'}"
                 ${b.is_default ? 'disabled' : ''}>
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
         </button>
       </td>
     </tr>`

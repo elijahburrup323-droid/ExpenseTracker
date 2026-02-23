@@ -329,6 +329,7 @@ A: The close_month_masters table is a durable month-close ledger that records ev
 - **button_to creates mini-forms** — These have submit buttons that broad selectors like `button[type=submit]` will match before the main form. Be specific with selectors.
 - **Flash messages** — Positioned fixed top-right, can block navbar elements. Wait for auto-dismiss in tests or dismiss programmatically.
 - **.gdoc file reading** — Google Drive for Desktop .gdoc files are cloud shortcuts that cannot be read via standard file I/O. Use `gdoc_reader.py` script which fetches content via Google Docs API with OAuth. .docx files are read via Node.js JSZip (extract word/document.xml, strip XML tags).
+- **CRITICAL: Google Drive Stream throttling** — The codebase lives on Google Drive Stream (G:/My Drive). Every `bundle exec rails runner` boots the entire Rails app, reading hundreds of files from Drive's local cache. Running multiple Rails processes concurrently (background tasks, server, runner scripts) can saturate Drive Stream's bandwidth, causing Drive to disconnect and the system to lock up requiring a reboot. **Mitigations**: (1) Run Rails runner commands sequentially, never more than 2-3 concurrent, (2) Avoid launching a Rails server while multiple runner tasks are active, (3) If Drive becomes unresponsive, stop all background processes before attempting recovery, (4) Prefer file-based runner scripts over inline Ruby to reduce process count.
 
 ## Task Intake: "Lets Work" Workflow
 
