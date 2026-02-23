@@ -67,9 +67,11 @@ export default class extends Controller {
     "spouseSection", "spouseName", "spouseSex", "spouseBirthdate", "spouseCurrentlyDrawing",
     "spouseClaimAgeList", "spouseClaimAgeDupMsg", "spouseFRA", "spouseLifeExpectancy",
     "colaRate",
+    "yourWorkingBeforeFRA", "yourWorkingFRAError",
+    "spouseWorkingBeforeFRA", "spouseWorkingFRAError",
     "strategyTableBody", "strategyTableHead", "timelineChart",
     "yourOptimal", "spouseOptimal", "projectedValue",
-    "assumptionsSection", "workingBeforeFRA",
+    "assumptionsSection",
     "recommendationText", "recommendationSection",
     "spouseEmptyState", "spouseCard", "chartLegend",
     "compareBtn", "compareSpinner",
@@ -124,6 +126,52 @@ export default class extends Controller {
     this._updateFRAandLE()
   }
 
+  validateWorkingFRA(event) {
+    const input = event.currentTarget
+    const raw = (input.value || "").trim().toUpperCase()
+    const who = input === this.yourWorkingBeforeFRATarget ? "your" : "spouse"
+    const errorTarget = who === "your" ? this.yourWorkingFRAErrorTarget : this.spouseWorkingFRAErrorTarget
+
+    if (raw === "") {
+      errorTarget.classList.add("hidden")
+      input.classList.remove("border-red-500", "dark:border-red-500")
+      return
+    }
+
+    if (["Y", "YES"].includes(raw)) {
+      input.value = "Yes"
+      errorTarget.classList.add("hidden")
+      input.classList.remove("border-red-500", "dark:border-red-500")
+    } else if (["N", "NO"].includes(raw)) {
+      input.value = "No"
+      errorTarget.classList.add("hidden")
+      input.classList.remove("border-red-500", "dark:border-red-500")
+    } else {
+      errorTarget.classList.remove("hidden")
+      input.classList.add("border-red-500", "dark:border-red-500")
+    }
+  }
+
+  _isWorkingBeforeFRA(who) {
+    const target = who === "your" ? this.yourWorkingBeforeFRATarget : this.spouseWorkingBeforeFRATarget
+    if (!target) return false
+    const val = (target.value || "").trim().toUpperCase()
+    return val === "Y" || val === "YES"
+  }
+
+  _hasInvalidWorkingFRA() {
+    let invalid = false
+    if (this.hasYourWorkingBeforeFRATarget) {
+      const raw = (this.yourWorkingBeforeFRATarget.value || "").trim().toUpperCase()
+      if (raw !== "" && !["Y", "YES", "N", "NO"].includes(raw)) invalid = true
+    }
+    if (this.hasSpouse && this.hasSpouseWorkingBeforeFRATarget) {
+      const raw = (this.spouseWorkingBeforeFRATarget.value || "").trim().toUpperCase()
+      if (raw !== "" && !["Y", "YES", "N", "NO"].includes(raw)) invalid = true
+    }
+    return invalid
+  }
+
   compareClaimAges() {
     this._runComparison()
   }
@@ -132,7 +180,16 @@ export default class extends Controller {
     if (this.hasYourNameTarget) this.yourNameTarget.value = ""
     if (this.hasYourBirthdateTarget) this.yourBirthdateTarget.value = ""
     if (this.hasColaRateTarget) this.colaRateTarget.value = "2.6"
-    if (this.hasWorkingBeforeFRATarget) this.workingBeforeFRATarget.value = "no"
+    if (this.hasYourWorkingBeforeFRATarget) {
+      this.yourWorkingBeforeFRATarget.value = ""
+      this.yourWorkingBeforeFRATarget.classList.remove("border-red-500", "dark:border-red-500")
+    }
+    if (this.hasYourWorkingFRAErrorTarget) this.yourWorkingFRAErrorTarget.classList.add("hidden")
+    if (this.hasSpouseWorkingBeforeFRATarget) {
+      this.spouseWorkingBeforeFRATarget.value = ""
+      this.spouseWorkingBeforeFRATarget.classList.remove("border-red-500", "dark:border-red-500")
+    }
+    if (this.hasSpouseWorkingFRAErrorTarget) this.spouseWorkingFRAErrorTarget.classList.add("hidden")
     this.hasSpouse = false
     if (this.hasSpouseSectionTarget) this.spouseSectionTarget.classList.add("hidden")
     if (this.hasSpouseEmptyStateTarget) this.spouseEmptyStateTarget.classList.remove("hidden")
@@ -406,7 +463,15 @@ export default class extends Controller {
     const yourBirth = this.hasYourBirthdateTarget ? this.yourBirthdateTarget.value : ""
     const yourSex = this.hasYourSexTarget ? this.yourSexTarget.value : "male"
     const cola = this.hasColaRateTarget ? parseFloat(this.colaRateTarget.value) || 2.6 : 2.6
-    const workingBeforeFRA = this.hasWorkingBeforeFRATarget ? this.workingBeforeFRATarget.value === "yes" : false
+    const yourWorkingBeforeFRA = this._isWorkingBeforeFRA("your")
+
+    // Block if invalid Working Before FRA values
+    if (this._hasInvalidWorkingFRA()) {
+      if (this.hasRecommendationTextTarget) {
+        this.recommendationTextTarget.textContent = "Please correct the 'Working Before FRA?' field (enter Y or N) before calculating."
+      }
+      return
+    }
 
     const hasAnyBenefit = this.yourClaimAges.some(a => (a.benefit || 0) > 0)
     if (!yourBirth || !hasAnyBenefit) {
@@ -436,7 +501,7 @@ export default class extends Controller {
       const totalClaimMonths = age.years * 12 + age.months
       let monthlyBenefit = age.benefit
 
-      if (workingBeforeFRA && totalClaimMonths < fraMonths) {
+      if (yourWorkingBeforeFRA && totalClaimMonths < fraMonths) {
         monthlyBenefit *= 0.5
       }
 
@@ -512,10 +577,11 @@ export default class extends Controller {
         const sAge = now.getFullYear() - sBirthYear - (now < new Date(now.getFullYear(), sBirth.getMonth(), sBirth.getDate()) ? 1 : 0)
         const sLe = lifeExpectancy(sAge, spouseSex)
         const sortedSpouseAges = [...spouseActiveAges].sort((a, b) => (a.years * 12 + a.months) - (b.years * 12 + b.months))
+        const spouseWorkingBeforeFRA = this._isWorkingBeforeFRA("spouse")
         const spouseStrats = sortedSpouseAges.map(age => {
           const totalClaimMonths = age.years * 12 + age.months
           let mb = age.benefit
-          if (workingBeforeFRA && totalClaimMonths < sFraMonths) mb *= 0.5
+          if (spouseWorkingBeforeFRA && totalClaimMonths < sFraMonths) mb *= 0.5
           const claimAgeDecimal = age.years + age.months / 12
           const mc = Math.max(0, Math.round((sLe - claimAgeDecimal) * 12))
           let lt = 0

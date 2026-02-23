@@ -28,6 +28,29 @@
     </div>
   </div>
 
+  <%# ===== COLA Assumption (global, above participants) ===== %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-4 mb-6"
+       data-ss-planner-target="assumptionsSection">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div class="flex items-center space-x-3">
+        <label class="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">COLA (Cost-of-Living Adjustment)</label>
+        <select data-ss-planner-target="colaRate"
+                data-action="change->ss-planner#recalculate"
+                class="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm focus:ring-brand-500 focus:border-brand-500 w-28">
+          <option value="1.0">1.0 %</option>
+          <option value="1.5">1.5 %</option>
+          <option value="2.0">2.0 %</option>
+          <option value="2.5">2.5 %</option>
+          <option value="2.6" selected>2.6 %</option>
+          <option value="3.0">3.0 %</option>
+          <option value="3.5">3.5 %</option>
+          <option value="4.0">4.0 %</option>
+        </select>
+      </div>
+      <p class="text-xs text-gray-400 dark:text-gray-500">10-year average default (2.6%); applies to both participants</p>
+    </div>
+  </div>
+
   <%# ===== Participants Section ===== %>
   <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Participants</h2>
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -68,6 +91,15 @@
             <option value="no">No</option>
             <option value="yes">Yes</option>
           </select>
+        </div>
+        <%# Working Before FRA? %>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Working Before FRA?</label>
+          <input type="text" placeholder="Y or N" maxlength="3"
+                 data-ss-planner-target="yourWorkingBeforeFRA"
+                 data-action="blur->ss-planner#validateWorkingFRA change->ss-planner#recalculate"
+                 class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm focus:ring-brand-500 focus:border-brand-500">
+          <p data-ss-planner-target="yourWorkingFRAError" class="hidden text-xs text-red-500 mt-1">Enter Y or N</p>
         </div>
         <%# Claim Ages to Compare (multi-age list) %>
         <div>
@@ -163,6 +195,15 @@
               <option value="yes">Yes</option>
             </select>
           </div>
+          <%# Working Before FRA? %>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Working Before FRA?</label>
+            <input type="text" placeholder="Y or N" maxlength="3"
+                   data-ss-planner-target="spouseWorkingBeforeFRA"
+                   data-action="blur->ss-planner#validateWorkingFRA change->ss-planner#recalculate"
+                   class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm focus:ring-brand-500 focus:border-brand-500">
+            <p data-ss-planner-target="spouseWorkingFRAError" class="hidden text-xs text-red-500 mt-1">Enter Y or N</p>
+          </div>
           <%# Claim Ages to Compare (multi-age list) %>
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Claim Ages to Compare</label>
@@ -215,37 +256,7 @@
     </div>
   </div>
 
-  <%# ===== Assumptions ===== %>
-  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 mb-6"
-       data-ss-planner-target="assumptionsSection">
-    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Assumptions</h2>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">COLA</label>
-        <select data-ss-planner-target="colaRate"
-                data-action="change->ss-planner#recalculate"
-                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm focus:ring-brand-500 focus:border-brand-500">
-          <option value="1.0">1.0 %</option>
-          <option value="1.5">1.5 %</option>
-          <option value="2.0">2.0 %</option>
-          <option value="2.5">2.5 %</option>
-          <option value="2.6" selected>2.6 %</option>
-          <option value="3.0">3.0 %</option>
-          <option value="3.5">3.5 %</option>
-          <option value="4.0">4.0 %</option>
-        </select>
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Working Before FRA?</label>
-        <select data-ss-planner-target="workingBeforeFRA"
-                data-action="change->ss-planner#recalculate"
-                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm focus:ring-brand-500 focus:border-brand-500">
-          <option value="no">No</option>
-          <option value="yes">Yes</option>
-        </select>
-      </div>
-    </div>
-  </div>
+  <%# Assumptions section removed — COLA moved above Participants; Working Before FRA is now per-person %>
 
   <%# ===== Comparison Results (Table + Chart) ===== %>
   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6 mb-6">
