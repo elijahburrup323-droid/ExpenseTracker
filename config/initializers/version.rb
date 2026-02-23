@@ -124,6 +124,7 @@ APP_ALL_VERSIONS = [
       "Dashboard: Responsive grid layout — 3 columns on desktop (1024px+), 2 columns on tablet (768px+), 1 column on phone for iPad/mobile usability (CM-10)",
       "Dashboard: Responsive card padding (p-4 on tablet, p-6 on desktop) and spending chart sizing (w-24/h-24 tablet, w-32/h-32 desktop) for proper fit (CM-10)",
       "Dashboard: Critical CSS updated with md:grid-cols-2 and lg:grid-cols-3 breakpoints to prevent layout flash on Turbo navigation (CM-10)",
+      "Dashboard: Spending Breakdown responsive — 3-column layout at xl (1280px+), single-column stacked below for tablet and mobile readability (CM-11)",
     ]
   },
   {
