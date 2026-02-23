@@ -12,7 +12,7 @@ $endHour = 4
 $endMinute = 30
 $checkIntervalSeconds = 30
 $gracePeriodSeconds = 180   # 3 minutes for Claude to finish current operation
-$logFile = "G:\My Drive\MyBudgetHQ\Web\bugstopper_prod.log"
+$logFile = "C:\Projects\MyBudgetHQ\Web\bugstopper_prod.log"
 
 function Write-Log {
     param([string]$Message)

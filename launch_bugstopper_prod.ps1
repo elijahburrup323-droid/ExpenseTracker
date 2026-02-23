@@ -5,7 +5,7 @@
 # Usage: Right-click > Run with PowerShell
 #   or:  powershell -ExecutionPolicy Bypass -File launch_bugstopper_prod.ps1
 
-$projectDir = "G:\My Drive\MyBudgetHQ\Web"
+$projectDir = "C:\Projects\MyBudgetHQ\Web"
 $python = "C:\Users\elija\AppData\Local\Programs\Python\Python313\python.exe"
 $script = "S:\My Drive\1. Projects\Tools\bugstopper_launcher.py"
 

@@ -5,8 +5,8 @@
 # Usage: powershell -ExecutionPolicy Bypass -File "G:\My Drive\MyBudgetHQ\Web\scripts\setup-db-sync-task.ps1"
 
 $taskName   = "MyBudgetHQ-SyncUATFromProd"
-$scriptPath = "G:\My Drive\MyBudgetHQ\Web\scripts\sync-uat-from-prod.ps1"
-$projectDir = "G:\My Drive\MyBudgetHQ\Web"
+$scriptPath = "C:\Projects\MyBudgetHQ\Web\scripts\sync-uat-from-prod.ps1"
+$projectDir = "C:\Projects\MyBudgetHQ\Web"
 
 Write-Host "`n=== MyBudgetHQ - UAT DB Sync Task Setup ===" -ForegroundColor Cyan
 Write-Host ""

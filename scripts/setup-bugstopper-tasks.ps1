@@ -7,7 +7,7 @@
 # Usage: Run as Administrator
 #   powershell -ExecutionPolicy Bypass -File G:\My Drive\MyBudgetHQ\Web\scripts\setup-bugstopper-tasks.ps1
 
-$ProjectDir = "G:\My Drive\MyBudgetHQ\Web"
+$ProjectDir = "C:\Projects\MyBudgetHQ\Web"
 $Desktop    = [Environment]::GetFolderPath("Desktop")
 
 # ============ BugStopper Local ============

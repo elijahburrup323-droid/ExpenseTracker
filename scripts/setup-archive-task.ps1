@@ -6,7 +6,7 @@
 # The scheduled task archives into YESTERDAY's folder (midnight = end of day).
 # The desktop shortcut archives into TODAY's folder (manual = current day).
 
-$ScriptPath = "G:\My Drive\MyBudgetHQ\Web\scripts\archive-passed-qa.ps1"
+$ScriptPath = "C:\Projects\MyBudgetHQ\Web\scripts\archive-passed-qa.ps1"
 $TaskName   = "BudgetHQ-ArchivePassedQA"
 $Desktop    = [Environment]::GetFolderPath("Desktop")
 
@@ -49,7 +49,7 @@ $shell = New-Object -ComObject WScript.Shell
 $shortcut = $shell.CreateShortcut($shortcutPath)
 $shortcut.TargetPath = "powershell.exe"
 $shortcut.Arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$ScriptPath`" -UseToday"
-$shortcut.WorkingDirectory = "G:\My Drive\MyBudgetHQ\Web\scripts"
+$shortcut.WorkingDirectory = "C:\Projects\MyBudgetHQ\Web\scripts"
 $shortcut.Description = "Archive BudgetHQ Passed QA files into today's folder"
 $shortcut.IconLocation = "shell32.dll,45"
 $shortcut.Save()
