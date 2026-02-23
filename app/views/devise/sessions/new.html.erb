@@ -21,7 +21,7 @@
 
     <div class="bg-white dark:bg-gray-800 py-8 px-6 shadow-lg rounded-xl border border-gray-200 dark:border-gray-700">
       <!-- Email/Password Form -->
-      <%= form_for(resource, as: resource_name, url: session_path(resource_name), html: { class: "space-y-4" }) do |f| %>
+      <%= form_for(resource, as: resource_name, url: session_path(resource_name), html: { class: "space-y-4", data: { turbo: false } }) do |f| %>
         <div>
           <%= f.label :email, class: "block text-sm font-bold text-gray-700 dark:text-gray-300" %>
           <%= f.email_field :email, autofocus: true, autocomplete: "email",

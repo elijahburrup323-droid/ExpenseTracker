@@ -12,7 +12,7 @@
 
     <div class="bg-white dark:bg-gray-800 py-8 px-6 shadow-lg rounded-xl border border-gray-200 dark:border-gray-700">
       <!-- Registration Form -->
-      <%= form_for(resource, as: resource_name, url: registration_path(resource_name), html: { class: "space-y-4" }) do |f| %>
+      <%= form_for(resource, as: resource_name, url: registration_path(resource_name), html: { class: "space-y-4", data: { turbo: false } }) do |f| %>
         <%= render "devise/shared/error_messages", resource: resource %>
 
         <div class="grid grid-cols-2 gap-4">

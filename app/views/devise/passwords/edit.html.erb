@@ -11,7 +11,7 @@
     </div>
 
     <div class="bg-white py-8 px-6 shadow-lg rounded-xl border border-gray-200">
-      <%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :put, class: "space-y-6" }) do |f| %>
+      <%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :put, class: "space-y-6", data: { turbo: false } }) do |f| %>
         <%= render "devise/shared/error_messages", resource: resource %>
         <%= f.hidden_field :reset_password_token %>
 
