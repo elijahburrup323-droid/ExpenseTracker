@@ -2,6 +2,8 @@ class ApplicationController < ActionController::Base
   before_action :configure_permitted_parameters, if: :devise_controller?
   before_action :load_daily_quote
   before_action :load_open_month_display
+  before_action :redirect_to_onboarding
+  before_action :load_tutorial_data
 
   protected
 
@@ -31,6 +33,55 @@ class ApplicationController < ActionController::Base
     @open_month_display = Date.new(om.current_year, om.current_month, 1).strftime("%B, %Y")
   rescue
     @open_month_display = Date.today.strftime("%B, %Y")
+  end
+
+  def redirect_to_onboarding
+    return unless user_signed_in?
+    return if devise_controller?
+    return if controller_name == "onboarding"
+    return if request.path.start_with?("/api/")
+    return if current_user.onboarding_complete?
+    redirect_to onboarding_path
+  end
+
+  def load_tutorial_data
+    @tutorial_steps = nil
+    @tutorial_block_key = nil
+    @tutorial_available = false
+    return unless user_signed_in?
+    return if devise_controller?
+    return if controller_name == "onboarding"
+    return if request.path.start_with?("/api/")
+
+    block = FeatureBlock.where.not(tutorial_data: [nil, {}]).find_by(activate_path: request.path)
+    return unless block
+
+    steps = block.tutorial_data["steps"]
+    return if steps.blank?
+
+    activation = current_user.feature_activations.find_by(feature_block_id: block.id)
+    return unless activation&.active?
+
+    @tutorial_available = true
+    @tutorial_block_key = block.key
+
+    # Tour button (start_tutorial=1) always starts the tutorial regardless of progress
+    if params[:start_tutorial] == "1"
+      @tutorial_steps = steps
+      return
+    end
+
+    # Check if tutorial already completed/skipped
+    return if activation.tutorial_completed_at.present? || activation.tutorial_skipped_at.present?
+    progress = UserTutorialProgress.find_by(user_id: current_user.id, feature_block_id: block.id)
+    return if progress&.status.in?(%w[completed skipped])
+
+    # Auto-start on first visit (no progress record yet)
+    if progress.nil?
+      @tutorial_steps = steps
+    end
+  rescue
+    # Non-critical — don't break page if tutorial loading fails
   end
 
   def configure_permitted_parameters

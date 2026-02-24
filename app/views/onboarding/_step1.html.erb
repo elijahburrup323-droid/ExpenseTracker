@@ -1,0 +1,49 @@
+<%# Step 1: Welcome — Name entry %>
+<div class="text-center mb-8">
+  <%# MyBudgetHQ logo icon %>
+  <div class="mx-auto w-16 h-16 rounded-2xl bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center mb-4">
+    <svg class="w-8 h-8 text-brand-600 dark:text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z"/>
+    </svg>
+  </div>
+  <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+    Welcome to MyBudgetHQ<%= user.first_name.present? ? ", #{user.first_name}" : "" %>!
+  </h2>
+  <p class="text-gray-500 dark:text-gray-400">
+    Let's get your budget set up. This will only take a couple of minutes.
+  </p>
+</div>
+
+<%= form_tag(onboarding_path, method: :patch) do %>
+  <%= hidden_field_tag :step, 1 %>
+
+  <div class="space-y-4">
+    <div>
+      <label for="first_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">First Name</label>
+      <input type="text" name="first_name" id="first_name"
+             value="<%= user.first_name %>"
+             class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2.5 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition"
+             placeholder="Enter your first name"
+             required autofocus>
+    </div>
+
+    <div>
+      <label for="last_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Last Name</label>
+      <input type="text" name="last_name" id="last_name"
+             value="<%= user.last_name %>"
+             class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2.5 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition"
+             placeholder="Enter your last name"
+             required>
+    </div>
+  </div>
+
+  <div class="mt-8 flex justify-end">
+    <button type="submit"
+            class="inline-flex items-center px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg shadow-sm transition focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
+      Continue
+      <svg class="ml-2 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/>
+      </svg>
+    </button>
+  </div>
+<% end %>

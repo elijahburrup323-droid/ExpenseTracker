@@ -1,0 +1,283 @@
+<style>
+  /* ── Tech Tree Layout ── */
+  .tech-tree-container {
+    position: relative;
+    padding-bottom: 2rem;
+  }
+  .tech-tree-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .tech-tree-row {
+    position: relative;
+    z-index: 1;
+    margin-bottom: 2.5rem;
+  }
+  .tech-tree-row-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgb(156 163 175);
+    margin-bottom: 0.75rem;
+    padding-left: 0.25rem;
+  }
+  .dark .tech-tree-row-label { color: rgb(107 114 128); }
+
+  .tech-tree-nodes {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.5rem;
+  }
+
+  /* ── Node ── */
+  .tech-tree-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100px;
+    text-align: center;
+    position: relative;
+    cursor: default;
+    transition: transform 0.15s ease;
+  }
+  .tech-tree-node.node-clickable { cursor: pointer; }
+  .tech-tree-node.node-clickable:hover { transform: translateY(-3px); }
+
+  .node-icon-wrapper {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    border: 3px solid transparent;
+    transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+  }
+  .node-icon {
+    color: currentColor;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Ring states */
+  .node-ring-active {
+    border-color: rgb(34 197 94);
+    background: rgba(34, 197, 94, 0.1);
+    color: rgb(34 197 94);
+    box-shadow: 0 0 12px rgba(34, 197, 94, 0.3);
+  }
+  .dark .node-ring-active {
+    background: rgba(34, 197, 94, 0.15);
+    box-shadow: 0 0 16px rgba(34, 197, 94, 0.25);
+  }
+
+  .node-ring-core {
+    border-color: rgb(99 102 241);
+    background: rgba(99, 102, 241, 0.1);
+    color: rgb(99 102 241);
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.3);
+  }
+  .dark .node-ring-core {
+    background: rgba(99, 102, 241, 0.15);
+    box-shadow: 0 0 16px rgba(99, 102, 241, 0.25);
+  }
+
+  .node-ring-inactive {
+    border-color: rgb(209 213 219);
+    background: rgba(243, 244, 246, 0.8);
+    color: rgb(107 114 128);
+  }
+  .dark .node-ring-inactive {
+    border-color: rgb(75 85 99);
+    background: rgba(55, 65, 81, 0.8);
+    color: rgb(156 163 175);
+  }
+
+  .node-ring-locked {
+    border-color: rgb(209 213 219);
+    background: rgba(243, 244, 246, 0.5);
+    color: rgb(156 163 175);
+    opacity: 0.6;
+  }
+  .dark .node-ring-locked {
+    border-color: rgb(55 65 81);
+    background: rgba(31, 41, 55, 0.5);
+    color: rgb(107 114 128);
+  }
+
+  /* Tier accents on hover */
+  .node-tier-paid .node-ring-active { border-color: rgb(245 158 11); box-shadow: 0 0 12px rgba(245, 158, 11, 0.3); }
+  .node-tier-advanced .node-ring-active { border-color: rgb(59 130 246); box-shadow: 0 0 12px rgba(59, 130, 246, 0.3); }
+
+  .node-label {
+    margin-top: 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 500;
+    line-height: 1.15;
+    color: rgb(55 65 81);
+    max-width: 100px;
+    word-wrap: break-word;
+  }
+  .dark .node-label { color: rgb(209 213 219); }
+
+  /* Status badge */
+  .node-status-badge {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    line-height: 1;
+    border: 2px solid white;
+  }
+  .dark .node-status-badge { border-color: rgb(17 24 39); }
+  .node-status-badge.active {
+    background: rgb(34 197 94);
+    color: white;
+  }
+  .node-status-badge.locked {
+    background: rgb(209 213 219);
+    font-size: 0.5rem;
+  }
+  .dark .node-status-badge.locked { background: rgb(75 85 99); }
+
+  /* Recommended star */
+  .node-recommended-badge {
+    position: absolute;
+    top: -6px;
+    right: 4px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgb(234 179 8);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    z-index: 2;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  }
+
+  /* ── Tooltip ── */
+  .tech-tree-tooltip {
+    position: absolute;
+    z-index: 50;
+    transform: translate(-50%, -100%);
+    pointer-events: none;
+    background: rgb(17 24 39);
+    color: white;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    min-width: 200px;
+    max-width: 280px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    font-size: 0.8rem;
+  }
+  .tip-title { font-weight: 600; margin-bottom: 0.25rem; }
+  .tip-desc { color: rgb(209 213 219); font-size: 0.75rem; line-height: 1.4; margin-bottom: 0.5rem; }
+  .tip-meta { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+  .tip-tier {
+    display: inline-block;
+    padding: 0.1rem 0.4rem;
+    border-radius: 0.25rem;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    background: rgba(255,255,255,0.15);
+  }
+  .tip-setup { color: rgb(156 163 175); font-size: 0.7rem; }
+  .tip-status { font-size: 0.65rem; font-weight: 600; padding: 0.1rem 0.4rem; border-radius: 0.25rem; }
+  .tip-status-active { background: rgba(34, 197, 94, 0.2); color: rgb(134 239 172); }
+  .tip-status-available { background: rgba(59, 130, 246, 0.2); color: rgb(147 197 253); }
+  .tip-status-locked { background: rgba(156, 163, 175, 0.2); color: rgb(156 163 175); }
+
+  /* ── Legend ── */
+  .tech-tree-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgb(229 231 235);
+  }
+  .dark .tech-tree-legend { border-color: rgb(55 65 81); }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.7rem;
+    color: rgb(107 114 128);
+  }
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid;
+  }
+  .legend-dot.active { border-color: rgb(34 197 94); background: rgba(34, 197, 94, 0.2); }
+  .legend-dot.inactive { border-color: rgb(209 213 219); background: rgba(243, 244, 246, 0.5); }
+  .legend-dot.core { border-color: rgb(99 102 241); background: rgba(99, 102, 241, 0.2); }
+  .legend-dot.locked { border-color: rgb(209 213 219); background: rgba(209, 213, 219, 0.2); opacity: 0.6; }
+  .legend-dot.tier-paid { border-color: rgb(245 158 11); background: rgba(245, 158, 11, 0.2); }
+  .legend-dot.tier-advanced { border-color: rgb(59 130 246); background: rgba(59, 130, 246, 0.2); }
+  .legend-star {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: rgb(234 179 8); color: white; font-size: 0.5rem; line-height: 1;
+  }
+</style>
+
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
+     data-controller="feature-store"
+     data-feature-store-api-url-value="<%= api_feature_store_blocks_path %>"
+     data-feature-store-activate-url-value="<%= api_feature_store_activate_path %>"
+     data-feature-store-deactivate-url-value="<%= api_feature_store_deactivate_path %>"
+     data-feature-store-csrf-token-value="<%= form_authenticity_token %>">
+
+  <%# Header %>
+  <div class="text-center mb-8">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Build Your Budget</h1>
+    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Click any available feature to activate it. Dependencies flow top-to-bottom.</p>
+  </div>
+
+  <%# Loading state %>
+  <div data-feature-store-target="loading" class="text-center py-12">
+    <svg class="animate-spin h-8 w-8 text-brand-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Loading tech tree...</p>
+  </div>
+
+  <%# Tech Tree Container %>
+  <div data-feature-store-target="treeContainer" class="tech-tree-container"></div>
+
+  <%# Tooltip (positioned absolutely within container) %>
+  <div data-feature-store-target="tooltip" class="tech-tree-tooltip hidden"></div>
+
+  <%# Confirm Modal %>
+  <div data-feature-store-target="confirmModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white" data-feature-store-target="confirmTitle"></h3>
+      <p class="mt-2 text-sm text-gray-500 dark:text-gray-400" data-feature-store-target="confirmMessage"></p>
+      <div class="mt-4 flex justify-end space-x-3">
+        <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition" data-action="click->feature-store#closeConfirm">Cancel</button>
+        <button type="button" class="px-4 py-2 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 transition" data-action="click->feature-store#confirmAction" data-feature-store-target="confirmBtn">Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>

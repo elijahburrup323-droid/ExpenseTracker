@@ -105,3 +105,6 @@ puts "Seeded #{IncomeFrequencyMaster.count} income frequency masters"
 # Seed Legal Pages (Privacy Policy, Terms of Service)
 load Rails.root.join("db/seeds/legal_pages.rb")
 puts "Seeded #{LegalPage.count} legal pages"
+
+# Seed Feature Blocks (Progressive Feature Disclosure)
+load Rails.root.join("db/seeds/feature_blocks.rb")

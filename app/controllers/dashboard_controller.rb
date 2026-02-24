@@ -157,6 +157,11 @@ class DashboardController < ApplicationController
         account_groups: account_groups
       }
     end
+
+    # Smart Suggestions — evaluate and get top suggestion for banner
+    evaluator = SmartSuggestionEvaluator.new(current_user)
+    evaluator.evaluate
+    @top_suggestion = evaluator.top_suggestion
   end
 
   private
@@ -187,5 +192,7 @@ class DashboardController < ApplicationController
     live_nw = current_user.accounts.sum(:balance)
     snap = current_user.net_worth_snapshots.find_or_initialize_by(snapshot_date: current_month_end)
     snap.update!(amount: live_nw)
+  rescue ActiveRecord::RecordNotUnique
+    retry
   end
 end

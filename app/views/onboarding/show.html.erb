@@ -1,0 +1,16 @@
+<div class="w-full max-w-2xl" data-controller="onboarding">
+  <%# Progress bar %>
+  <div class="mb-8">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-sm font-medium text-brand-600 dark:text-brand-400">Step <%= @step %> of 4</span>
+    </div>
+    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+      <div class="bg-brand-600 h-2 rounded-full transition-all duration-500" style="width: <%= @step * 25 %>%"></div>
+    </div>
+  </div>
+
+  <%# Step content %>
+  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-8">
+    <%= render partial: "onboarding/step#{@step}", locals: { user: @user } %>
+  </div>
+</div>

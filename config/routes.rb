@@ -20,8 +20,14 @@ Rails.application.routes.draw do
   # Dashboard/Home
   get "dashboard", to: "dashboard#index", as: :dashboard
 
+  # Onboarding Wizard
+  resource :onboarding, only: [:show, :update], controller: "onboarding"
+
   # Pricing / Upgrade
   get "pricing", to: "pricing#index", as: :pricing
+
+  # Feature Store (placeholder — Phase 4)
+  get "feature_store", to: "feature_store#index", as: :feature_store
 
   # Theme Settings
   get "settings/theme", to: "theme_settings#index", as: :theme_settings
@@ -204,6 +210,21 @@ Rails.application.routes.draw do
       end
     end
     resources :import_templates, only: [:index, :create, :update, :destroy]
+    # Smart Suggestions API
+    resources :smart_suggestions, only: [:index] do
+      member do
+        post :dismiss
+      end
+    end
+
+    # Feature Store API
+    scope :feature_store, controller: "feature_store", as: :feature_store do
+      get  "blocks",     action: :blocks
+      post "activate",   action: :activate
+      post "deactivate", action: :deactivate
+    end
+    # Tutorial API
+    put "tutorial/progress", to: "tutorial#progress"
     resources :net_worth_snapshots, only: [:index] do
       collection do
         post :populate

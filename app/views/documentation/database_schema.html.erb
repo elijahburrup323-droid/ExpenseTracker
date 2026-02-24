@@ -1589,6 +1589,136 @@ phone_verifications
     </div>
   </div>
 
+  <%# ── feature_blocks ── %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">feature_blocks</h2>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Global catalog of activatable feature modules for the modular setup / Feature Store</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead><tr class="border-b border-gray-100 dark:border-gray-700"><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Column</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Type</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Constraints</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Description</th></tr></thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr><td class="px-6 py-2 font-mono font-medium text-gray-900 dark:text-white">id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">PK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Primary key</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">key</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300 px-1.5 py-0.5 rounded">UQ</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Unique slug identifier (e.g. "payments", "accounts")</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">display_name</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Human-readable feature name</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">tagline</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Short marketing tagline</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">description</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">text</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Detailed feature description</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">icon</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Icon key for display</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">category</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Feature category grouping</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">tier</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> default: free</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Pricing tier: free, paid, or advanced</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">sort_order</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">integer</td><td class="px-6 py-2">default: 0</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Display ordering</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">is_core</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">boolean</td><td class="px-6 py-2">default: false</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Core blocks are always active (cannot be deactivated)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">tutorial_data</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">jsonb</td><td class="px-6 py-2">default: {}</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Tutorial step definitions (title, text, selector, position)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">estimated_setup</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Estimated setup time string</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">activate_path</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">URL path for the feature (e.g. "/payments", "/accounts"). Used for tutorial auto-start and sidebar flash pulse on activation.</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">created_at / updated_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Timestamps</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5"><li>UNIQUE INDEX (key)</li></ul>
+    </div>
+  </div>
+
+  <%# ── feature_block_dependencies ── %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">feature_block_dependencies</h2>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">DAG of feature block prerequisites &mdash; block A depends on block B being active</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead><tr class="border-b border-gray-100 dark:border-gray-700"><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Column</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Type</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Constraints</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Description</th></tr></thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr><td class="px-6 py-2 font-mono font-medium text-gray-900 dark:text-white">id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">PK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Primary key</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">feature_block_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; feature_blocks</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">The dependent block</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">depends_on_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; feature_blocks</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">The prerequisite block</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">created_at / updated_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Timestamps</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5"><li>UNIQUE INDEX (feature_block_id, depends_on_id)</li><li>INDEX (feature_block_id)</li><li>INDEX (depends_on_id)</li></ul>
+    </div>
+  </div>
+
+  <%# ── user_feature_activations ── %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">user_feature_activations</h2>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Tracks which feature blocks each user has activated</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead><tr class="border-b border-gray-100 dark:border-gray-700"><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Column</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Type</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Constraints</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Description</th></tr></thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr><td class="px-6 py-2 font-mono font-medium text-gray-900 dark:text-white">id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">PK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Primary key</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">user_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; users</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Owning user</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">feature_block_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; feature_blocks</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Activated feature block</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">activated_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">When the block was activated</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">created_at / updated_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Timestamps</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5"><li>UNIQUE INDEX (user_id, feature_block_id)</li><li>INDEX (feature_block_id)</li></ul>
+    </div>
+  </div>
+
+  <%# ── user_tutorial_progress ── %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">user_tutorial_progress</h2>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Tracks tutorial completion per user per feature block</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead><tr class="border-b border-gray-100 dark:border-gray-700"><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Column</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Type</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Constraints</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Description</th></tr></thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr><td class="px-6 py-2 font-mono font-medium text-gray-900 dark:text-white">id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">PK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Primary key</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">user_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; users</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Owning user</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">feature_block_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; feature_blocks</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Feature block for this tutorial</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">completed_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">When tutorial was completed (null = not yet completed)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">current_step</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">integer</td><td class="px-6 py-2">default: 0</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Current tutorial step index</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">created_at / updated_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Timestamps</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5"><li>UNIQUE INDEX (user_id, feature_block_id)</li><li>INDEX (feature_block_id)</li></ul>
+    </div>
+  </div>
+
+  <%# ── smart_suggestions ── %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">smart_suggestions</h2>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Contextual suggestions shown after feature block activation</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead><tr class="border-b border-gray-100 dark:border-gray-700"><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Column</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Type</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Constraints</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Description</th></tr></thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr><td class="px-6 py-2 font-mono font-medium text-gray-900 dark:text-white">id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">PK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Primary key</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">feature_block_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; feature_blocks</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Related feature block</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">trigger_event</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Event that triggers this suggestion</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">suggestion_text</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">text</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Suggestion message text</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">priority</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">integer</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Display priority ordering</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">created_at / updated_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Timestamps</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5"><li>INDEX (feature_block_id)</li></ul>
+    </div>
+  </div>
+
   <%# ── Foreign Keys Summary ── %>
   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 overflow-hidden">
     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
@@ -1653,6 +1783,13 @@ phone_verifications
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">reconciliation_records</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">account_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">accounts.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (DB-level foreign key)</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">reconciliation_group_ui_states</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">cascade (via Rails dependent: :destroy)</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">reconciliation_group_ui_states</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">account_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">accounts.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (DB-level foreign key)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">feature_block_dependencies</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">feature_block_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">feature_blocks.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (DB-level foreign key)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">feature_block_dependencies</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">depends_on_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">feature_blocks.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (DB-level foreign key)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">user_feature_activations</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (DB-level foreign key)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">user_feature_activations</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">feature_block_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">feature_blocks.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (DB-level foreign key)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">user_tutorial_progress</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (DB-level foreign key)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">user_tutorial_progress</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">feature_block_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">feature_blocks.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (DB-level foreign key)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">smart_suggestions</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">feature_block_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">feature_blocks.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (DB-level foreign key)</td></tr>
         </tbody>
       </table>
     </div>

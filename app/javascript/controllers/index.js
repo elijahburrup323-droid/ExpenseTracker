@@ -51,6 +51,10 @@ import LegalPageAdminController from "controllers/legal_page_admin_controller"
 import TextScaleController from "controllers/text_scale_controller"
 import RecurringTransfersController from "controllers/recurring_transfers_controller"
 import SmartImportController from "controllers/smart_import_controller"
+import FeatureStoreController from "controllers/feature_store_controller"
+import OnboardingController from "controllers/onboarding_controller"
+import SuggestionBannerController from "controllers/suggestion_banner_controller"
+import TutorialController from "controllers/tutorial_controller"
 
 application.register("flash", FlashController)
 application.register("dropdown", DropdownController)
@@ -103,3 +107,7 @@ application.register("legal-page-admin", LegalPageAdminController)
 application.register("text-scale", TextScaleController)
 application.register("recurring-transfers", RecurringTransfersController)
 application.register("smart-import", SmartImportController)
+application.register("feature-store", FeatureStoreController)
+application.register("onboarding", OnboardingController)
+application.register("suggestion-banner", SuggestionBannerController)
+application.register("tutorial", TutorialController)

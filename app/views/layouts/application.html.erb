@@ -166,6 +166,13 @@
         height: 48px; min-height: 48px; max-height: 48px;
         flex-shrink: 0; overflow: hidden;
       }
+
+      /* Tutorial spotlight — elevates target element above dark overlay */
+      .tutorial-spotlight { position: relative; z-index: 9999; background: white; border-radius: 0.5rem; box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.5); }
+
+      /* Sidebar flash pulse — draws attention to newly activated feature menu item */
+      @keyframes sidebar-pulse { 0%,100% { background: transparent; } 50% { background: rgba(255,255,255,0.3); } }
+      .sidebar-flash-pulse { animation: sidebar-pulse 0.8s ease-in-out 6; border-radius: 0.5rem; }
     </style>
   </head>
   <body class="font-sans bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">
@@ -380,5 +387,13 @@
       </div>
     <% end %>
     <%= render "shared/whats_new" if user_signed_in? %>
+    <% if user_signed_in? && @tutorial_steps.present? %>
+      <div data-controller="tutorial"
+           data-tutorial-steps-value="<%= @tutorial_steps.to_json %>"
+           data-tutorial-api-url-value="/api/tutorial/progress"
+           data-tutorial-block-key-value="<%= @tutorial_block_key %>"
+           data-tutorial-csrf-token-value="<%= form_authenticity_token %>">
+      </div>
+    <% end %>
   </body>
 </html>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_23_200003) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_24_210001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_stat_statements"
   enable_extension "plpgsql"
@@ -229,6 +229,34 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_23_200003) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["table_name"], name: "index_dbu_table_catalogs_on_table_name", unique: true
+  end
+
+  create_table "feature_block_dependencies", force: :cascade do |t|
+    t.bigint "feature_block_id", null: false
+    t.bigint "depends_on_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["depends_on_id"], name: "index_feature_block_dependencies_on_depends_on_id"
+    t.index ["feature_block_id", "depends_on_id"], name: "idx_feature_block_deps_unique", unique: true
+    t.index ["feature_block_id"], name: "index_feature_block_dependencies_on_feature_block_id"
+  end
+
+  create_table "feature_blocks", force: :cascade do |t|
+    t.string "key", null: false
+    t.string "display_name", null: false
+    t.string "tagline"
+    t.text "description"
+    t.string "icon"
+    t.string "category"
+    t.string "tier", default: "free", null: false
+    t.integer "sort_order", default: 0
+    t.boolean "is_core", default: false
+    t.jsonb "tutorial_data", default: {}
+    t.string "estimated_setup"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "activate_path"
+    t.index ["key"], name: "index_feature_blocks_on_key", unique: true
   end
 
   create_table "identities", force: :cascade do |t|
@@ -625,6 +653,21 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_23_200003) do
     t.datetime "created_at", null: false
   end
 
+  create_table "smart_suggestions", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "feature_block_id", null: false
+    t.string "rule_key", null: false
+    t.string "reason_text"
+    t.integer "priority", default: 50
+    t.string "status", default: "pending"
+    t.datetime "dismissed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["feature_block_id"], name: "index_smart_suggestions_on_feature_block_id"
+    t.index ["user_id", "status"], name: "index_smart_suggestions_on_user_id_and_status"
+    t.index ["user_id"], name: "index_smart_suggestions_on_user_id"
+  end
+
   create_table "spending_categories", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "spending_type_id", null: false
@@ -751,6 +794,20 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_23_200003) do
     t.index ["user_id"], name: "index_user_emails_on_user_id"
   end
 
+  create_table "user_feature_activations", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "feature_block_id", null: false
+    t.datetime "activated_at"
+    t.datetime "deactivated_at"
+    t.datetime "tutorial_completed_at"
+    t.datetime "tutorial_skipped_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["feature_block_id"], name: "index_user_feature_activations_on_feature_block_id"
+    t.index ["user_id", "feature_block_id"], name: "idx_user_feature_activations_unique", unique: true
+    t.index ["user_id"], name: "index_user_feature_activations_on_user_id"
+  end
+
   create_table "user_login_audits", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "user_email", null: false
@@ -781,6 +838,18 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_23_200003) do
     t.index ["user_id"], name: "index_user_login_audits_on_user_id"
   end
 
+  create_table "user_onboarding_profiles", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "persona"
+    t.integer "wizard_step"
+    t.datetime "wizard_completed_at"
+    t.bigint "first_account_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["first_account_id"], name: "index_user_onboarding_profiles_on_first_account_id"
+    t.index ["user_id"], name: "index_user_onboarding_profiles_on_user_id", unique: true
+  end
+
   create_table "user_phones", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "phone_number", null: false
@@ -806,6 +875,21 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_23_200003) do
     t.index ["user_id", "report_key"], name: "idx_user_report_layouts_user_key", unique: true
     t.index ["user_id", "slot_number"], name: "idx_user_report_layouts_user_slot", unique: true
     t.index ["user_id"], name: "index_user_report_layouts_on_user_id"
+  end
+
+  create_table "user_tutorial_progress", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "feature_block_id", null: false
+    t.integer "current_step", default: 0
+    t.integer "total_steps", default: 0
+    t.string "status", default: "pending"
+    t.datetime "started_at"
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["feature_block_id"], name: "index_user_tutorial_progress_on_feature_block_id"
+    t.index ["user_id", "feature_block_id"], name: "idx_user_tutorial_progress_unique", unique: true
+    t.index ["user_id"], name: "index_user_tutorial_progress_on_user_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -872,6 +956,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_23_200003) do
   add_foreign_key "dashboard_month_snapshots", "users"
   add_foreign_key "dashboard_slots", "dashboard_cards"
   add_foreign_key "dashboard_slots", "users"
+  add_foreign_key "feature_block_dependencies", "feature_blocks"
+  add_foreign_key "feature_block_dependencies", "feature_blocks", column: "depends_on_id"
   add_foreign_key "identities", "users"
   add_foreign_key "import_session_rows", "import_sessions"
   add_foreign_key "import_sessions", "accounts"
@@ -916,6 +1002,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_23_200003) do
   add_foreign_key "recurring_transfers", "buckets", column: "to_bucket_id"
   add_foreign_key "recurring_transfers", "income_frequency_masters", column: "frequency_master_id"
   add_foreign_key "recurring_transfers", "users"
+  add_foreign_key "smart_suggestions", "feature_blocks"
+  add_foreign_key "smart_suggestions", "users"
   add_foreign_key "spending_categories", "spending_types"
   add_foreign_key "spending_categories", "users"
   add_foreign_key "spending_limits_history", "users"
@@ -932,7 +1020,13 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_23_200003) do
   add_foreign_key "user_account_types", "account_type_masters"
   add_foreign_key "user_account_types", "users"
   add_foreign_key "user_emails", "users"
+  add_foreign_key "user_feature_activations", "feature_blocks"
+  add_foreign_key "user_feature_activations", "users"
   add_foreign_key "user_login_audits", "users"
+  add_foreign_key "user_onboarding_profiles", "accounts", column: "first_account_id"
+  add_foreign_key "user_onboarding_profiles", "users"
   add_foreign_key "user_phones", "users"
   add_foreign_key "user_report_layouts", "users"
+  add_foreign_key "user_tutorial_progress", "feature_blocks"
+  add_foreign_key "user_tutorial_progress", "users"
 end

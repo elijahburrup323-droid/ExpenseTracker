@@ -20,6 +20,12 @@
       <div class="flex items-baseline space-x-3">
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Payments</h1>
         <span class="text-lg font-semibold text-gray-700 dark:text-gray-300" data-payments-target="total"></span>
+        <% if @tutorial_available %>
+          <a href="<%= request.path %>?start_tutorial=1" class="inline-flex items-center px-2.5 py-1 text-xs font-medium text-brand-600 bg-brand-50 rounded-lg hover:bg-brand-100 transition">
+            <svg class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            Tour
+          </a>
+        <% end %>
       </div>
       <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Track your spending and manage transactions</p>
     </div>
@@ -74,7 +80,8 @@
       <button type="button"
               class="inline-flex items-center justify-center flex-1 sm:flex-none min-h-[44px] px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
               data-payments-target="addButton"
-              data-action="click->payments#startAdding">
+              data-action="click->payments#startAdding"
+              data-tutorial="add-payment-btn">
         <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
         </svg>
@@ -95,6 +102,8 @@
   </div>
 
   <%# Filter Bar — CSS Grid with explicit tablet/desktop breakpoints %>
+  <%# data-tutorial marker for tutorial overlay %>
+  <!-- payments-table marker is on the table, payment-filters is on the filter grid -->
   <style>
     .payments-filter-grid {
       display: grid;
@@ -160,7 +169,7 @@
       overflow: hidden;
     }
   </style>
-  <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4 mb-4 ring-1 ring-gray-200 dark:ring-gray-700">
+  <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4 mb-4 ring-1 ring-gray-200 dark:ring-gray-700" data-tutorial="payment-filters">
     <div class="payments-filter-grid">
       <%# Start Date %>
       <div class="pf-start" style="min-width: 160px;">
@@ -251,7 +260,7 @@
   </div>
 
   <%# Table — overflow-x-auto enables horizontal scroll on narrow screens %>
-  <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-x-auto ring-1 ring-gray-200 dark:ring-gray-700 min-w-0">
+  <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-x-auto ring-1 ring-gray-200 dark:ring-gray-700 min-w-0" data-tutorial="payments-table">
     <table class="min-w-[800px] w-full divide-y divide-gray-200 dark:divide-gray-700">
       <thead class="bg-gray-50 dark:bg-gray-800" data-payments-target="tableHead">
         <tr>

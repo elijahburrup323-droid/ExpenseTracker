@@ -39,6 +39,14 @@ class User < ApplicationRecord
   has_many :import_templates, dependent: :destroy
   has_many :import_sessions, dependent: :destroy
 
+  # Progressive Feature Disclosure
+  has_one  :onboarding_profile, class_name: "UserOnboardingProfile", dependent: :destroy
+  has_many :feature_activations, class_name: "UserFeatureActivation", dependent: :destroy
+  has_many :active_feature_blocks, -> { where(user_feature_activations: { deactivated_at: nil }) },
+           through: :feature_activations, source: :feature_block
+  has_many :tutorial_progress, class_name: "UserTutorialProgress", dependent: :destroy
+  has_many :smart_suggestions, dependent: :destroy
+
   validates :email, presence: true, uniqueness: true, unless: :phone_only_user?
   validates :phone_number, uniqueness: true, allow_blank: true
   validates :secondary_email, uniqueness: true, allow_blank: true,
@@ -116,6 +124,19 @@ class User < ApplicationRecord
 
   def connected_providers
     identities.pluck(:provider)
+  end
+
+  # Progressive Feature Disclosure helpers
+  def active_feature_block_keys
+    @_active_block_keys ||= active_feature_blocks.pluck(:key).to_set
+  end
+
+  def feature_active?(key)
+    active_feature_block_keys.include?(key.to_s)
+  end
+
+  def onboarding_complete?
+    onboarding_profile&.wizard_completed_at.present?
   end
 
   # CM-25: Earliest allowed month for dashboard navigation
