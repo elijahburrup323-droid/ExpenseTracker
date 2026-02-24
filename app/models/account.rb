@@ -27,6 +27,12 @@ class Account < ApplicationRecord
   validates :balance, numericality: true
   validates :beginning_balance, numericality: true
 
+  # Returns 1 for DEBIT (asset) accounts, -1 for CREDIT (liability) accounts.
+  # All balance operations multiply by this value to get correct sign behavior.
+  def balance_multiplier
+    account_type_master&.normal_balance_type == "CREDIT" ? -1 : 1
+  end
+
   def buckets_enabled?
     buckets.active.exists?
   end

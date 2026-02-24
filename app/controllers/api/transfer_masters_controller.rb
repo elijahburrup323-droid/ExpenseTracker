@@ -32,11 +32,11 @@ module Api
           # Only adjust account balances for inter-account transfers
           unless transfer.from_account_id == transfer.to_account_id
             from_acct = transfer.from_account
-            from_acct.balance -= transfer.amount
+            from_acct.balance -= from_acct.balance_multiplier * transfer.amount
             from_acct.save!
 
             to_acct = transfer.to_account
-            to_acct.balance += transfer.amount
+            to_acct.balance += to_acct.balance_multiplier * transfer.amount
             to_acct.save!
           end
 
@@ -63,9 +63,9 @@ module Api
         if @transfer.update(transfer_params)
           # Reverse old transfer (only if inter-account)
           unless old_was_reallocation
-            old_from.balance += old_amount
+            old_from.balance += old_from.balance_multiplier * old_amount
             old_from.save!
-            old_to.balance -= old_amount
+            old_to.balance -= old_to.balance_multiplier * old_amount
             old_to.save!
           end
 
@@ -75,9 +75,9 @@ module Api
           new_is_reallocation = new_from.id == new_to.id
 
           unless new_is_reallocation
-            new_from.balance -= @transfer.amount
+            new_from.balance -= new_from.balance_multiplier * @transfer.amount
             new_from.save!
-            new_to.balance += @transfer.amount
+            new_to.balance += new_to.balance_multiplier * @transfer.amount
             new_to.save!
           end
 
@@ -98,11 +98,11 @@ module Api
         # Only adjust account balances for inter-account transfers
         unless @transfer.from_account_id == @transfer.to_account_id
           from_acct = @transfer.from_account
-          from_acct.balance += @transfer.amount
+          from_acct.balance += from_acct.balance_multiplier * @transfer.amount
           from_acct.save!
 
           to_acct = @transfer.to_account
-          to_acct.balance -= @transfer.amount
+          to_acct.balance -= to_acct.balance_multiplier * @transfer.amount
           to_acct.save!
         end
 

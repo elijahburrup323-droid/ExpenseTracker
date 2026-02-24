@@ -235,10 +235,21 @@ export default class extends Controller {
   }
 
   _buildAccountOptions(selectedId = null) {
-    return this.accounts.map(a => {
+    const debit = this.accounts.filter(a => (a.normal_balance_type || "DEBIT") === "DEBIT")
+    const credit = this.accounts.filter(a => a.normal_balance_type === "CREDIT")
+    let html = debit.map(a => {
       const sel = selectedId != null && a.id === selectedId ? "selected" : ""
       return `<option value="${a.id}" ${sel}>${escapeHtml(a.name)}</option>`
     }).join("")
+    if (credit.length > 0) {
+      html += `<optgroup label="Liability Accounts">`
+      html += credit.map(a => {
+        const sel = selectedId != null && a.id === selectedId ? "selected" : ""
+        return `<option value="${a.id}" ${sel}>${escapeHtml(a.name)}</option>`
+      }).join("")
+      html += `</optgroup>`
+    }
+    return html
   }
 
   _buildCategoryOptions(selectedId = null) {

@@ -36,7 +36,7 @@ module Api
           sync_tags!(payment)
           learn_category_defaults!(payment)
           account = payment.account
-          account.balance -= payment.amount
+          account.balance -= account.balance_multiplier * payment.amount
           account.save!
           handle_bucket_execution_create(payment) if payment.is_bucket_execution && payment.bucket_id.present?
           flag_open_month_has_data(payment.payment_date, "payment")
@@ -64,11 +64,11 @@ module Api
         if @payment.update(payment_params)
           sync_tags!(@payment)
           learn_category_defaults!(@payment)
-          old_account.balance += old_amount
+          old_account.balance += old_account.balance_multiplier * old_amount
           old_account.save!
 
           new_account = @payment.reload.account
-          new_account.balance -= @payment.amount
+          new_account.balance -= new_account.balance_multiplier * @payment.amount
           new_account.save!
 
           handle_bucket_execution_update(@payment, old_bucket_id, old_was_bucket_execution, old_amount)
@@ -84,7 +84,7 @@ module Api
     def destroy
       ActiveRecord::Base.transaction do
         account = @payment.account
-        account.balance += @payment.amount
+        account.balance += account.balance_multiplier * @payment.amount
         account.save!
         reverse_bucket_execution(@payment) if @payment.is_bucket_execution && @payment.bucket_id.present?
         @payment.soft_delete!
@@ -332,10 +332,10 @@ module Api
       )
 
       from_account.reload
-      from_account.balance -= payment.amount
+      from_account.balance -= from_account.balance_multiplier * payment.amount
       from_account.save!
       to_account.reload
-      to_account.balance += payment.amount
+      to_account.balance += to_account.balance_multiplier * payment.amount
       to_account.save!
     end
 
@@ -348,10 +348,10 @@ module Api
       from_account = transfer.from_account
       to_account = transfer.to_account
       from_account.reload
-      from_account.balance += transfer.amount
+      from_account.balance += from_account.balance_multiplier * transfer.amount
       from_account.save!
       to_account.reload
-      to_account.balance -= transfer.amount
+      to_account.balance -= to_account.balance_multiplier * transfer.amount
       to_account.save!
 
       transfer.soft_delete!

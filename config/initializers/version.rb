@@ -19,6 +19,12 @@ APP_ALL_VERSIONS = [
       "Account Types: Normal Balance pill badges on both Account Type Masters (admin) and Account Types (user) screens (CM-21)",
       "Account Types: Segmented DEBIT/CREDIT control in Add/Edit modals for both admin and custom types (CM-21)",
       "Dashboard: Net Worth now correctly calculates as assets minus liabilities using normal_balance_type (CM-21)",
+      "Deposits: Account dropdown restricted to DEBIT-normal (asset) accounts only — server-side validation blocks CREDIT accounts (CM-22)",
+      "Payments: Sign-aware balance math — CREDIT account payments increase liability balance instead of decreasing it (CM-22)",
+      "Transfers: Sign-aware balance math for all DEBIT/CREDIT account combinations — correct handling of liability payoff, cash advance, and inter-liability transfers (CM-22)",
+      "Accounts API: Now includes normal_balance_type in JSON response for client-side filtering (CM-22)",
+      "AccountBalanceService: Sign-aware recomputation — reconciliation and dashboard balances correct for liability accounts (CM-22)",
+      "Payments dropdown: Liability accounts grouped under 'Liability Accounts' optgroup for clear visual separation (CM-22)",
     ]
   },
   {

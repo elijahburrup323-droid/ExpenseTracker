@@ -468,8 +468,9 @@ export default class extends Controller {
   // --- Dropdown Builders ---
 
   _rebuildAccountDropdown() {
+    const debitAccounts = this.accounts.filter(a => (a.normal_balance_type || "DEBIT") === "DEBIT")
     let html = `<option value="">No Account</option>`
-    html += this.accounts.map(a => `<option value="${a.id}">${this._esc(a.name)}</option>`).join("")
+    html += debitAccounts.map(a => `<option value="${a.id}">${this._esc(a.name)}</option>`).join("")
     this.modalAccountTarget.innerHTML = html
   }
 
