@@ -40,6 +40,8 @@ APP_ALL_VERSIONS = [
       "Dashboard Net Worth card: Fixed calculation to use Account.net_worth_for() instead of raw sum(:balance) (CM-27)",
       "Accounts API: New display_balance field in JSON response — applies balance_multiplier for consistent frontend display (CM-27)",
       "Dashboard Accounts card: 'Total' label renamed to 'Net Worth' for clarity (CM-27)",
+      "Dashboard expand: Piston open — expanded cards scroll to top automatically, no more scrolled-down landing state (CM-28)",
+      "Dashboard expand: Centered layout — expanded card content bounded to 1000px max-width with auto margins (CM-28)",
     ]
   },
   {

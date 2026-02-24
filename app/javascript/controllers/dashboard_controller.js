@@ -300,6 +300,21 @@ export default class extends Controller {
     wrapper.setAttribute("data-expanded", "true")
     this.expandedCardType = wrapper.dataset.cardType
     if (this.sortable) this.sortable.option("disabled", true)
+
+    // Center content in expanded mode with bounded width
+    wrapper.querySelectorAll("[data-role='card-content'], [data-role='front-content'], [data-role='back-content']").forEach(el => {
+      el.style.maxWidth = "1000px"
+      el.style.marginLeft = "auto"
+      el.style.marginRight = "auto"
+      el.style.width = "100%"
+    })
+
+    // Piston open: scroll to the top of the expanded card after render
+    requestAnimationFrame(() => {
+      wrapper.scrollIntoView({ block: "start", behavior: "instant" })
+      // Also reset any internal scroll containers
+      wrapper.querySelectorAll("[data-role='card-content']").forEach(el => { el.scrollTop = 0 })
+    })
   }
 
   _collapseCard() {
@@ -314,6 +329,14 @@ export default class extends Controller {
     grid.style.minHeight = ""
     wrapper.style.gridColumn = ""
     wrapper.style.minHeight = ""
+
+    // Remove expanded centering styles
+    wrapper.querySelectorAll("[data-role='card-content'], [data-role='front-content'], [data-role='back-content']").forEach(el => {
+      el.style.maxWidth = ""
+      el.style.marginLeft = ""
+      el.style.marginRight = ""
+      el.style.width = ""
+    })
 
     this._updateExpandIcons(wrapper, false)
     wrapper.removeAttribute("data-expanded")
