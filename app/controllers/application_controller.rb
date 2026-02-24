@@ -41,6 +41,14 @@ class ApplicationController < ActionController::Base
     return if controller_name == "onboarding"
     return if request.path.start_with?("/api/")
     return if current_user.onboarding_complete?
+
+    # Existing users (pre-feature-store) who already have accounts should NOT
+    # be forced through the wizard — auto-complete their onboarding with all features
+    if current_user.accounts.exists?
+      auto_complete_onboarding(current_user)
+      return
+    end
+
     redirect_to onboarding_path
   end
 
@@ -72,6 +80,26 @@ class ApplicationController < ActionController::Base
     end
   rescue
     # Non-critical — don't break page if tutorial loading fails
+  end
+
+  def auto_complete_onboarding(user)
+    now = Time.current
+
+    # Create or update onboarding profile as complete
+    profile = user.onboarding_profile || user.build_onboarding_profile
+    profile.persona ||= "full_manager"
+    profile.wizard_completed_at ||= now
+    profile.save!
+
+    # Activate ALL feature blocks with tutorials marked complete
+    FeatureBlock.find_each do |block|
+      UserFeatureActivation.find_or_create_by!(user_id: user.id, feature_block_id: block.id) do |a|
+        a.activated_at = now
+        a.tutorial_completed_at = now
+      end
+    end
+  rescue ActiveRecord::RecordNotUnique
+    retry
   end
 
   def configure_permitted_parameters
