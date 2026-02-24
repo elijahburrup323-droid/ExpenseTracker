@@ -34,6 +34,7 @@ APP_ALL_VERSIONS = [
       "Soft Close Summary: Type-based asset/liability classification for net worth section (CM-24)",
       "Net Worth Snapshots: Populate endpoint uses Account.net_worth_for instead of raw sum (CM-24)",
       "Buckets: DEBIT-only constraint — model validation, controller check, and JS dropdown filter block CREDIT accounts (CM-24)",
+      "Dashboard Buckets card: Redesigned centered layout — centered title, centered bucket names/balances, progress bars at 65% width, centered 3-column financial metrics grid (CM-25)",
     ]
   },
   {

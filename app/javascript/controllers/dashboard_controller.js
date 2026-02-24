@@ -756,32 +756,27 @@ export default class extends Controller {
       return
     }
 
-    let html = `<div class="flex items-center justify-between mb-3">
+    let html = `<div class="text-center mb-3">
       <span class="text-xs text-gray-500 dark:text-gray-400">${data.count} bucket${data.count !== 1 ? "s" : ""}</span>
-      <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">${this._currency(data.total_balance)}</span>
+      <div class="text-sm font-semibold text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;">${this._currency(data.total_balance)}</div>
     </div><div class="space-y-2">`
 
     for (const b of (data.buckets || [])) {
       const defaultBadge = b.is_default
-        ? `<span class="ml-1 text-[10px] font-medium text-brand-600 dark:text-brand-400">(Default)</span>`
+        ? ` <span class="text-[10px] font-medium text-brand-600 dark:text-brand-400">(Default)</span>`
         : ""
 
       let progressHtml = ""
       if (b.progress_pct != null) {
         const color = b.progress_pct >= 100 ? "bg-green-500" : b.progress_pct >= 50 ? "bg-brand-500" : "bg-yellow-500"
-        progressHtml = `<div class="mt-1 w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+        progressHtml = `<div class="mx-auto mt-1 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden" style="max-width: 65%;">
           <div class="${color} h-full rounded-full" style="width: ${b.progress_pct}%"></div>
         </div>`
       }
 
-      html += `<div>
-        <div class="flex items-center justify-between">
-          <div class="flex items-center min-w-0">
-            <span class="text-sm text-gray-700 dark:text-gray-300 truncate">${this._esc(b.name)}</span>
-            ${defaultBadge}
-          </div>
-          <span class="text-sm font-semibold text-gray-900 dark:text-white ml-2 flex-shrink-0 tabular-nums">${this._currency(b.balance)}</span>
-        </div>
+      html += `<div class="text-center py-1">
+        <div class="text-sm font-semibold text-gray-900 dark:text-white">${this._esc(b.name)}${defaultBadge}</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400" style="font-variant-numeric: tabular-nums;">${this._currency(b.balance)}</div>
         ${progressHtml}
       </div>`
     }

@@ -1,10 +1,8 @@
 <div class="relative flex-1 flex flex-col" data-role="flipper" style="transform-style: preserve-3d; transition: transform 0.6s;">
-  <%# === FRONT SIDE: Simplified bucket list === %>
+  <%# === FRONT SIDE: Bucket overview === %>
   <div class="flex flex-col flex-1" data-role="front" style="backface-visibility: hidden;">
-    <div class="flex items-center justify-between mb-4">
-      <div class="flex items-center">
-        <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200"><%= card.title %></h2>
-      </div>
+    <div class="text-center mb-4">
+      <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200"><%= card.title %></h2>
     </div>
     <div class="flex-1 overflow-y-auto" data-role="card-content">
       <% if @buckets_summary[:empty] %>
@@ -12,32 +10,30 @@
       <% else %>
         <%# === SIMPLE LAYOUT (small card mode) === %>
         <div data-role="simple-layout">
-          <div class="flex items-center justify-between mb-3">
+          <div class="text-center mb-3">
             <span class="text-xs text-gray-500 dark:text-gray-400"><%= @buckets_summary[:count] %> bucket<%= @buckets_summary[:count] != 1 ? "s" : "" %></span>
-            <span class="text-sm font-semibold text-gray-900 dark:text-white"><%= number_to_currency(@buckets_summary[:total_balance]) %></span>
+            <div class="text-sm font-semibold text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(@buckets_summary[:total_balance]) %></div>
           </div>
           <div class="space-y-3">
             <% @buckets_summary[:account_groups].each do |group| %>
               <div>
-                <div class="mb-1">
-                  <span class="text-xs font-bold text-gray-800 dark:text-gray-200 uppercase tracking-wider"><%= group[:account_name] %></span>
+                <div class="text-center mb-1.5">
+                  <span class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider"><%= group[:account_name] %></span>
                 </div>
-                <div class="space-y-1.5 pl-2 border-l-2 border-gray-200 dark:border-gray-600">
+                <div class="space-y-2">
                   <% group[:buckets].each do |b| %>
-                    <div>
-                      <div class="flex items-center justify-between">
-                        <div class="flex items-center min-w-0">
-                          <span class="text-sm text-gray-700 dark:text-gray-300 truncate"><%= b.name %></span>
-                          <% if b.is_default %>
-                            <span class="ml-1 text-[10px] font-medium text-brand-600 dark:text-brand-400">(Default)</span>
-                          <% end %>
-                        </div>
-                        <span class="text-sm font-semibold text-gray-900 dark:text-white ml-2 flex-shrink-0"><%= number_to_currency(b.current_balance) %></span>
+                    <div class="text-center py-1">
+                      <div class="text-sm font-semibold text-gray-900 dark:text-white">
+                        <%= b.name %>
+                        <% if b.is_default %>
+                          <span class="text-[10px] font-medium text-brand-600 dark:text-brand-400">(Default)</span>
+                        <% end %>
                       </div>
+                      <div class="text-xs text-gray-500 dark:text-gray-400" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(b.current_balance) %></div>
                       <% if b.target_amount.present? && b.target_amount > 0 %>
                         <% pct = [(b.current_balance.to_f / b.target_amount.to_f * 100).round(1), 100].min %>
                         <% bar_color = pct >= 100 ? "bg-green-500" : pct >= 50 ? "bg-brand-500" : "bg-yellow-500" %>
-                        <div class="mt-1 w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                        <div class="mx-auto mt-1 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden" style="max-width: 65%;">
                           <div class="<%= bar_color %> h-full rounded-full" style="width: <%= pct %>%"></div>
                         </div>
                       <% end %>
@@ -49,18 +45,18 @@
           </div>
         </div>
 
-        <%# === EXPANDED LAYOUT (CM-24: full detail with financial columns) === %>
+        <%# === EXPANDED LAYOUT (full detail with financial columns) === %>
         <div data-role="expanded-layout">
-          <div class="flex items-center justify-between mb-4">
-            <span class="text-sm text-gray-500 dark:text-gray-400"><%= @buckets_summary[:count] %> bucket<%= @buckets_summary[:count] != 1 ? "s" : "" %></span>
-            <span class="text-sm font-semibold text-gray-900 dark:text-white">Total: <%= number_to_currency(@buckets_summary[:total_balance]) %></span>
+          <div class="text-center mb-4">
+            <span class="text-xs text-gray-500 dark:text-gray-400"><%= @buckets_summary[:count] %> bucket<%= @buckets_summary[:count] != 1 ? "s" : "" %></span>
+            <div class="text-sm font-semibold text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;">Total: <%= number_to_currency(@buckets_summary[:total_balance]) %></div>
           </div>
           <div class="space-y-4">
             <% @buckets_summary[:account_groups].each do |group| %>
               <div>
-                <div class="flex items-center justify-between mb-2 pb-1 border-b border-gray-200 dark:border-gray-600">
+                <div class="text-center mb-2 pb-1 border-b border-gray-200 dark:border-gray-600">
                   <span class="text-xs font-bold text-gray-800 dark:text-gray-200 uppercase tracking-wider"><%= group[:account_name] %></span>
-                  <span class="text-xs font-semibold text-gray-700 dark:text-gray-300"><%= number_to_currency(group[:account_total]) %></span>
+                  <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 ml-2" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(group[:account_total]) %></span>
                 </div>
                 <div class="space-y-3">
                   <% group[:buckets].each do |b| %>
@@ -72,64 +68,43 @@
                       spent_val = has_max_spend ? b.spent_ytd.to_f : 0
                       remaining = has_max_spend ? (b.max_spend_per_year.to_f - spent_val) : nil
                     %>
-                    <div>
+                    <div class="text-center py-1.5">
                       <%# Bucket Name %>
-                      <div class="flex items-center">
-                        <span class="text-sm font-semibold text-gray-900 dark:text-white truncate"><%= b.name %></span>
+                      <div class="text-sm font-semibold text-gray-900 dark:text-white">
+                        <%= b.name %>
                         <% if b.is_default %>
-                          <span class="ml-1.5 text-[10px] font-medium text-brand-600 dark:text-brand-400">(Default)</span>
+                          <span class="text-[10px] font-medium text-brand-600 dark:text-brand-400">(Default)</span>
                         <% end %>
                       </div>
                       <% if has_target %>
-                        <%# Two-region grid: left = progress info, right = metrics %>
-                        <div class="mt-1" style="display: grid; grid-template-columns: 42% 1fr; gap: 1rem; align-items: center;">
-                          <div>
-                            <div class="text-xs font-medium text-gray-700 dark:text-gray-300 text-center mb-1" style="font-variant-numeric: tabular-nums;">
-                              <%= number_to_currency(b.current_balance) %> of <%= number_to_currency(b.target_amount) %>
-                            </div>
-                            <div class="h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
-                              <div class="<%= bar_color %> h-full rounded-full" style="width: <%= pct %>%"></div>
-                            </div>
-                          </div>
-                          <% if has_max_spend %>
-                            <div class="flex items-center gap-4" style="font-variant-numeric: tabular-nums;">
-                              <div class="text-right" style="min-width: 5rem;">
-                                <div class="text-[10px] text-gray-500 dark:text-gray-400 uppercase leading-none">Max Spend/Yr</div>
-                                <div class="text-xs font-semibold text-gray-900 dark:text-white"><%= number_to_currency(b.max_spend_per_year) %></div>
-                              </div>
-                              <div class="text-right" style="min-width: 4rem;">
-                                <div class="text-[10px] text-gray-500 dark:text-gray-400 uppercase leading-none">Spent</div>
-                                <div class="text-xs font-semibold text-gray-900 dark:text-white"><%= number_to_currency(spent_val) %></div>
-                              </div>
-                              <div class="text-right" style="min-width: 4rem;">
-                                <div class="text-[10px] text-gray-500 dark:text-gray-400 uppercase leading-none">Remaining</div>
-                                <div class="text-xs font-semibold <%= remaining && remaining > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' %>"><%= number_to_currency(remaining || 0) %></div>
-                              </div>
-                            </div>
-                          <% end %>
+                        <%# Progress text + bar centered %>
+                        <div class="text-xs text-gray-600 dark:text-gray-300 mt-1" style="font-variant-numeric: tabular-nums;">
+                          <span class="font-semibold"><%= number_to_currency(b.current_balance) %></span> of <%= number_to_currency(b.target_amount) %>
+                        </div>
+                        <div class="mx-auto mt-1 h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden" style="max-width: 65%;">
+                          <div class="<%= bar_color %> h-full rounded-full" style="width: <%= pct %>%"></div>
                         </div>
                       <% else %>
-                        <%# No target — two-region grid with balance text and optional metrics %>
-                        <div class="mt-1" style="display: grid; grid-template-columns: 42% 1fr; gap: 1rem; align-items: center;">
-                          <div class="text-xs text-gray-500 dark:text-gray-400" style="font-variant-numeric: tabular-nums;">
-                            Balance: <%= number_to_currency(b.current_balance) %>
+                        <%# No target — just show balance %>
+                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1" style="font-variant-numeric: tabular-nums;">
+                          Balance: <%= number_to_currency(b.current_balance) %>
+                        </div>
+                      <% end %>
+                      <% if has_max_spend %>
+                        <%# Financial metrics: centered 3-column grid %>
+                        <div class="flex justify-center gap-4 sm:gap-6 mt-2" style="font-variant-numeric: tabular-nums;">
+                          <div class="text-center">
+                            <div class="text-[10px] text-gray-400 dark:text-gray-500 uppercase leading-tight">Max Spend/Yr</div>
+                            <div class="text-xs font-semibold text-gray-900 dark:text-white"><%= number_to_currency(b.max_spend_per_year) %></div>
                           </div>
-                          <% if has_max_spend %>
-                            <div class="flex items-center gap-4" style="font-variant-numeric: tabular-nums;">
-                              <div class="text-right" style="min-width: 5rem;">
-                                <div class="text-[10px] text-gray-500 dark:text-gray-400 uppercase leading-none">Max Spend/Yr</div>
-                                <div class="text-xs font-semibold text-gray-900 dark:text-white"><%= number_to_currency(b.max_spend_per_year) %></div>
-                              </div>
-                              <div class="text-right" style="min-width: 4rem;">
-                                <div class="text-[10px] text-gray-500 dark:text-gray-400 uppercase leading-none">Spent</div>
-                                <div class="text-xs font-semibold text-gray-900 dark:text-white"><%= number_to_currency(spent_val) %></div>
-                              </div>
-                              <div class="text-right" style="min-width: 4rem;">
-                                <div class="text-[10px] text-gray-500 dark:text-gray-400 uppercase leading-none">Remaining</div>
-                                <div class="text-xs font-semibold <%= remaining && remaining > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' %>"><%= number_to_currency(remaining || 0) %></div>
-                              </div>
-                            </div>
-                          <% end %>
+                          <div class="text-center">
+                            <div class="text-[10px] text-gray-400 dark:text-gray-500 uppercase leading-tight">Spent</div>
+                            <div class="text-xs font-semibold text-gray-900 dark:text-white"><%= number_to_currency(spent_val) %></div>
+                          </div>
+                          <div class="text-center">
+                            <div class="text-[10px] text-gray-400 dark:text-gray-500 uppercase leading-tight">Remaining</div>
+                            <div class="text-xs font-semibold <%= remaining && remaining > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' %>"><%= number_to_currency(remaining || 0) %></div>
+                          </div>
                         </div>
                       <% end %>
                     </div>
@@ -168,7 +143,7 @@
 
   <%# === BACK SIDE: Detail view with account totals and metrics === %>
   <div class="absolute inset-0 flex flex-col" data-role="back" style="backface-visibility: hidden; transform: rotateY(180deg); pointer-events: none;">
-    <div class="flex items-center justify-between mb-4">
+    <div class="text-center mb-4">
       <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Bucket Details</h2>
     </div>
     <div class="flex-1 overflow-y-auto">
@@ -176,21 +151,19 @@
         <div class="space-y-3">
           <% @buckets_summary[:account_groups].each do |group| %>
             <div>
-              <div class="flex items-center justify-between mb-1">
+              <div class="text-center mb-1.5 pb-1 border-b border-gray-200 dark:border-gray-600">
                 <span class="text-xs font-bold text-gray-800 dark:text-gray-200 uppercase tracking-wider"><%= group[:account_name] %></span>
-                <span class="text-xs font-semibold text-gray-700 dark:text-gray-300"><%= number_to_currency(group[:account_total]) %></span>
+                <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 ml-2" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(group[:account_total]) %></span>
               </div>
-              <div class="space-y-1 pl-2 border-l-2 border-gray-200 dark:border-gray-600">
+              <div class="space-y-1.5">
                 <% group[:buckets].each do |b| %>
-                  <div>
-                    <div class="flex items-center justify-between">
-                      <span class="text-xs text-gray-600 dark:text-gray-400 truncate"><%= b.name %></span>
-                      <span class="text-xs font-semibold text-gray-900 dark:text-white ml-2"><%= number_to_currency(b.current_balance) %></span>
-                    </div>
+                  <div class="text-center py-0.5">
+                    <div class="text-xs font-semibold text-gray-900 dark:text-white"><%= b.name %></div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(b.current_balance) %></div>
                     <% if b.max_spend_per_year.present? %>
-                      <div class="flex justify-between text-[10px] text-gray-400 dark:text-gray-500">
-                        <span>Avail: <span class="<%= b.available_to_spend <= 0 ? 'text-red-500' : 'text-green-600 dark:text-green-400' %> font-semibold"><%= number_to_currency(b.available_to_spend) %></span></span>
-                        <span>of <%= number_to_currency(b.max_spend_per_year) %>/yr</span>
+                      <div class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5" style="font-variant-numeric: tabular-nums;">
+                        Avail: <span class="<%= b.available_to_spend <= 0 ? 'text-red-500' : 'text-green-600 dark:text-green-400' %> font-semibold"><%= number_to_currency(b.available_to_spend) %></span>
+                        of <%= number_to_currency(b.max_spend_per_year) %>/yr
                       </div>
                     <% end %>
                   </div>
