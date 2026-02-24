@@ -42,6 +42,9 @@ APP_ALL_VERSIONS = [
       "Dashboard Accounts card: 'Total' label renamed to 'Net Worth' for clarity (CM-27)",
       "Dashboard expand: Piston open — expanded cards scroll to top automatically, no more scrolled-down landing state (CM-28)",
       "Dashboard expand: Centered layout — expanded card content bounded to 1000px max-width with auto margins (CM-28)",
+      "Dashboard: 'Recent Activity' renamed to 'Recent Payments' — title updated in both small and expanded card views (CM-29)",
+      "Dashboard Recent Payments: Internal scroll added — card body scrolls when items exceed visible height without expanding card (CM-29)",
+      "Dashboard Recent Payments: Row layout improved — descriptions truncate with ellipsis, amounts stay right-aligned with no gap stretching (CM-29)",
     ]
   },
   {

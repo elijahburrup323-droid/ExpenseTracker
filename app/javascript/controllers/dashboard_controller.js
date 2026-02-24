@@ -764,15 +764,15 @@ export default class extends Controller {
       const c = colors[i % colors.length]
       html += `
         <li class="flex items-center justify-between">
-          <div class="flex items-center space-x-2">
-            <span class="w-7 h-7 rounded-lg bg-${c}-100 dark:bg-${c}-900/30 flex items-center justify-center">
+          <div class="flex items-center space-x-2 min-w-0">
+            <span class="w-7 h-7 rounded-lg bg-${c}-100 dark:bg-${c}-900/30 flex items-center justify-center flex-shrink-0">
               <svg class="w-4 h-4 text-${c}-500 dark:text-${c}-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a5 5 0 00-10 0v2M12 12v3m-3-3h6m-9 7h12a2 2 0 002-2v-4a2 2 0 00-2-2H6a2 2 0 00-2 2v4a2 2 0 002 2z"/>
               </svg>
             </span>
-            <span class="text-sm text-gray-700 dark:text-gray-300"><span class="text-gray-400 dark:text-gray-500">${this._esc(p.date)}</span> ${this._esc(p.description)}</span>
+            <span class="text-sm text-gray-700 dark:text-gray-300 truncate"><span class="text-gray-400 dark:text-gray-500">${this._esc(p.date)}</span> ${this._esc(p.description)}</span>
           </div>
-          <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">${this._currency(p.amount)}</span>
+          <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums flex-shrink-0 ml-2">${this._currency(p.amount)}</span>
         </li>`
     })
     content.innerHTML = html

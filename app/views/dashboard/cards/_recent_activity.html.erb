@@ -15,20 +15,20 @@
         </button>
       </div>
     </div>
-    <ul class="space-y-3 flex-1" data-role="card-content">
+    <ul class="space-y-3 flex-1 overflow-y-auto" style="max-height: calc(100% - 5rem); -webkit-overflow-scrolling: touch;" data-role="card-content">
       <% activity_colors = %w[blue green purple amber sky] %>
       <% @recent_payments.each_with_index do |payment, i| %>
         <% c = activity_colors[i % activity_colors.length] %>
         <li class="flex items-center justify-between">
-          <div class="flex items-center space-x-2">
-            <span class="w-7 h-7 rounded-lg bg-<%= c %>-100 dark:bg-<%= c %>-900/30 flex items-center justify-center">
+          <div class="flex items-center space-x-2 min-w-0">
+            <span class="w-7 h-7 rounded-lg bg-<%= c %>-100 dark:bg-<%= c %>-900/30 flex items-center justify-center flex-shrink-0">
               <svg class="w-4 h-4 text-<%= c %>-500 dark:text-<%= c %>-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a5 5 0 00-10 0v2M12 12v3m-3-3h6m-9 7h12a2 2 0 002-2v-4a2 2 0 00-2-2H6a2 2 0 00-2 2v4a2 2 0 002 2z"/>
               </svg>
             </span>
-            <span class="text-sm text-gray-700 dark:text-gray-300"><span class="text-gray-400 dark:text-gray-500"><%= payment.payment_date.strftime("%-m/%-d") %></span> <%= payment.description %></span>
+            <span class="text-sm text-gray-700 dark:text-gray-300 truncate"><span class="text-gray-400 dark:text-gray-500"><%= payment.payment_date.strftime("%-m/%-d") %></span> <%= payment.description %></span>
           </div>
-          <span class="text-sm font-semibold text-gray-900 dark:text-white"><%= number_to_currency(payment.amount) %></span>
+          <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums flex-shrink-0 ml-2"><%= number_to_currency(payment.amount) %></span>
         </li>
       <% end %>
       <% if @recent_payments.empty? %>

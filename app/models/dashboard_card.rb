@@ -15,7 +15,7 @@ class DashboardCard < ApplicationRecord
     { card_key: "accounts_overview",  title: "Accounts",           card_type: "accounts_overview",  slot: 2 },
     { card_key: "net_worth",          title: "Net Worth",          card_type: "net_worth",          slot: 3 },
     { card_key: "income_spending",    title: "Income & Spending",  card_type: "income_spending",    slot: 4 },
-    { card_key: "recent_activity",    title: "Recent Activity",    card_type: "recent_activity",    slot: 5 },
+    { card_key: "recent_activity",    title: "Recent Payments",    card_type: "recent_activity",    slot: 5 },
     { card_key: "buckets",            title: "Buckets",            card_type: "buckets",            slot: 6 },
   ].freeze
 
