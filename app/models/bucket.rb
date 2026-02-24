@@ -25,6 +25,7 @@ class Bucket < ApplicationRecord
   validate :only_one_default_per_account, if: :is_default?
   validate :only_one_priority_zero_per_account
   validate :account_belongs_to_user
+  validate :account_must_be_debit_normal
   validate :max_spend_not_greater_than_target
 
   # Compute the bucket year window based on bucket_year_start_month.
@@ -91,6 +92,13 @@ class Bucket < ApplicationRecord
   end
 
   private
+
+  def account_must_be_debit_normal
+    return unless account_id_changed? || new_record?
+    if account&.account_type_master&.normal_balance_type == "CREDIT"
+      errors.add(:account, "must be a DEBIT-normal (asset) account. Buckets cannot be created on liability accounts.")
+    end
+  end
 
   def account_belongs_to_user
     if account_id.present? && user_id.present?

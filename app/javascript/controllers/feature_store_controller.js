@@ -2,8 +2,9 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static targets = [
-    "loading", "treeContainer", "tooltip",
-    "confirmModal", "confirmTitle", "confirmMessage", "confirmBtn"
+    "loading", "treeContainer", "cardContainer", "tooltip",
+    "confirmModal", "confirmTitle", "confirmMessage", "confirmBtn",
+    "viewToggle"
   ]
   static values = { apiUrl: String, activateUrl: String, deactivateUrl: String, csrfToken: String }
 
@@ -11,8 +12,10 @@ export default class extends Controller {
     this.blocks = []
     this.blockMap = {}
     this.pendingAction = null
+    this.dismissedKeys = new Set(JSON.parse(localStorage.getItem("fsDismissed") || "[]"))
+    this.viewMode = localStorage.getItem("featureStoreView") || "cards"
     this.fetchBlocks()
-    this._onResize = () => this._drawConnectors()
+    this._onResize = () => { if (this.viewMode === "tree") this._drawConnectors() }
     window.addEventListener("resize", this._onResize)
   }
 
@@ -32,10 +35,36 @@ export default class extends Controller {
     this.render()
   }
 
-  // ── Layout Calculation ──
+  // ── View Toggle ──
+
+  switchToCards() {
+    this.viewMode = "cards"
+    localStorage.setItem("featureStoreView", "cards")
+    this.render()
+  }
+
+  switchToTree() {
+    this.viewMode = "tree"
+    localStorage.setItem("featureStoreView", "tree")
+    this.render()
+  }
+
+  _updateToggleUI() {
+    this.viewToggleTargets.forEach(btn => {
+      const isActive = btn.dataset.view === this.viewMode
+      btn.classList.toggle("bg-brand-600", isActive)
+      btn.classList.toggle("text-white", isActive)
+      btn.classList.toggle("shadow-sm", isActive)
+      btn.classList.toggle("text-gray-500", !isActive)
+      btn.classList.toggle("dark:text-gray-400", !isActive)
+      btn.classList.toggle("hover:text-gray-700", !isActive)
+      btn.classList.toggle("hover:bg-gray-100", !isActive)
+    })
+  }
+
+  // ── Layout Calculation (Tree View) ──
 
   _computeRows() {
-    // Compute dependency depth for each block → row assignment
     const depth = {}
     const compute = (key) => {
       if (depth[key] !== undefined) return depth[key]
@@ -53,7 +82,6 @@ export default class extends Controller {
     }
     this.blocks.forEach(b => compute(b.key))
 
-    // Group by rows
     const rows = {}
     this.blocks.forEach(b => {
       const r = depth[b.key] || 0
@@ -61,19 +89,33 @@ export default class extends Controller {
       rows[r].push(b)
     })
 
-    // Sort each row by sort_order
     Object.values(rows).forEach(row => row.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)))
 
     return { rows, depth }
   }
 
-  // ── Rendering ──
+  // ── Main Render ──
 
   render() {
     this.loadingTarget.classList.add("hidden")
-    const { rows, depth } = this._computeRows()
-    const rowKeys = Object.keys(rows).map(Number).sort((a, b) => a - b)
+    this._updateToggleUI()
 
+    if (this.viewMode === "tree") {
+      this.cardContainerTarget.classList.add("hidden")
+      this.treeContainerTarget.classList.remove("hidden")
+      this._renderTree()
+    } else {
+      this.treeContainerTarget.classList.add("hidden")
+      this.cardContainerTarget.classList.remove("hidden")
+      this._renderCards()
+    }
+  }
+
+  // ── Tree View Rendering ──
+
+  _renderTree() {
+    const { rows } = this._computeRows()
+    const rowKeys = Object.keys(rows).map(Number).sort((a, b) => a - b)
     const rowLabels = ["Foundation", "Core Features", "Advanced", "Expert"]
 
     let html = `<svg class="tech-tree-svg" data-feature-store-target="svgLayer"></svg>`
@@ -83,7 +125,7 @@ export default class extends Controller {
       html += `<div class="tech-tree-row" data-row="${r}">`
       html += `<div class="tech-tree-row-label">${label}</div>`
       html += `<div class="tech-tree-nodes">`
-      rows[r].forEach(b => { html += this._nodeHtml(b) })
+      rows[r].forEach(b => { html += this._treeNodeHtml(b) })
       html += `</div></div>`
     })
 
@@ -102,7 +144,7 @@ export default class extends Controller {
     requestAnimationFrame(() => this._drawConnectors())
   }
 
-  _nodeHtml(block) {
+  _treeNodeHtml(block) {
     const icon = this._iconSvg(block.icon)
     const active = block.active
     const isCore = block.is_core
@@ -126,7 +168,6 @@ export default class extends Controller {
     const tierClass = `node-tier-${block.tier || "free"}`
     const recommendedBadge = recommended ? `<div class="node-recommended-badge">★</div>` : ""
 
-    // Determine actions — combine click + hover into one data-action string
     let actions = ["mouseenter->feature-store#showTooltip", "mouseleave->feature-store#hideTooltip"]
     let dataAttrs = ""
     if (active && !isCore) {
@@ -160,7 +201,227 @@ export default class extends Controller {
     `
   }
 
-  // ── SVG Connectors ──
+  // ── Card View Rendering ──
+
+  _renderCards() {
+    let html = ""
+
+    // Recommended section
+    const recommended = this.blocks.filter(b => b.recommended && !b.active && !this.dismissedKeys.has(b.key))
+    const allActive = this.blocks.every(b => b.active)
+
+    if (recommended.length > 0) {
+      html += `<div class="mb-8">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+          <svg class="h-5 w-5 text-yellow-500 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          Recommended for You
+        </h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">`
+      recommended.slice(0, 3).forEach(b => {
+        html += this._recommendedCardHtml(b)
+      })
+      html += `</div></div>`
+    } else if (allActive) {
+      html += `<div class="mb-8">
+        <div class="rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 p-6 flex flex-col items-center justify-center text-center">
+          <svg class="h-10 w-10 text-yellow-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"/>
+          </svg>
+          <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">All features activated!</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Have an idea for a new feature? We'd love to hear it.</p>
+        </div>
+      </div>`
+    }
+
+    // All features grid
+    html += `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">`
+    this.blocks.forEach(b => {
+      html += this._featureCardHtml(b)
+    })
+    html += `</div>`
+
+    // Legend
+    html += `<div class="tech-tree-legend">
+      <span class="legend-item"><span class="legend-dot active"></span> Active</span>
+      <span class="legend-item"><span class="legend-dot inactive"></span> Inactive</span>
+      <span class="legend-item"><span class="legend-dot core"></span> Core (always on)</span>
+      <span class="legend-item"><span class="legend-dot locked"></span> Locked</span>
+      <span class="legend-item"><span class="legend-dot tier-paid"></span> Premium</span>
+      <span class="legend-item"><span class="legend-dot tier-advanced"></span> Advanced</span>
+    </div>`
+
+    this.cardContainerTarget.innerHTML = html
+  }
+
+  _recommendedCardHtml(block) {
+    const icon = this._iconSvg(block.icon)
+    const depsOk = block.dependencies_met !== false
+    const tierBadge = this._tierBadgeHtml(block.tier)
+
+    return `
+      <div class="fs-card fs-card-dismiss relative rounded-xl border-2 border-yellow-400 dark:border-yellow-500/60 bg-yellow-50/50 dark:bg-yellow-900/10 p-5 hover:shadow-md" data-recommended-card data-block-key="${this._esc(block.key)}">
+        <button type="button" class="absolute top-3 right-3 w-6 h-6 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                data-action="click->feature-store#dismissRecommendation"
+                data-suggestion-id="${block.suggestion_id || ""}"
+                data-block-key="${this._esc(block.key)}"
+                title="Dismiss recommendation">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+        ${tierBadge}
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3 bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400">
+          <div class="w-6 h-6">${icon}</div>
+        </div>
+        <h3 class="font-semibold text-gray-900 dark:text-white text-sm">${this._esc(block.display_name)}</h3>
+        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2">${this._esc(block.description || block.tagline || "")}</p>
+        <div class="mt-4 flex items-center justify-between">
+          <span class="inline-flex items-center text-xs text-yellow-600 dark:text-yellow-400 font-medium">
+            <svg class="h-3.5 w-3.5 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            Recommended
+          </span>
+          ${depsOk ?
+            `<button class="text-xs font-medium text-white bg-brand-600 hover:bg-brand-700 px-3 py-1.5 rounded-lg transition"
+                     data-action="click->feature-store#nodeActivateClick"
+                     data-key="${this._esc(block.key)}">Activate</button>` :
+            `<span class="text-xs text-gray-400">Dependencies needed</span>`}
+        </div>
+      </div>
+    `
+  }
+
+  _featureCardHtml(block) {
+    const icon = this._iconSvg(block.icon)
+    const active = block.active
+    const isCore = block.is_core
+    const depsOk = block.dependencies_met !== false
+    const tier = block.tier || "free"
+
+    // Border color logic
+    let borderClass = "border-gray-200 dark:border-gray-700"
+    let bgClass = "bg-white dark:bg-gray-800"
+    let opacityClass = ""
+
+    if (active) {
+      if (isCore) {
+        borderClass = "border-indigo-500 dark:border-indigo-400"
+      } else if (tier === "paid") {
+        borderClass = "border-amber-500 dark:border-amber-400"
+      } else if (tier === "advanced") {
+        borderClass = "border-blue-500 dark:border-blue-400"
+      } else {
+        borderClass = "border-green-500 dark:border-green-400"
+      }
+      bgClass = "bg-white dark:bg-gray-800"
+    } else if (!depsOk) {
+      opacityClass = "opacity-50"
+    }
+
+    // Icon bg
+    let iconBg = "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400"
+    if (active) {
+      if (isCore) {
+        iconBg = "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400"
+      } else if (tier === "paid") {
+        iconBg = "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
+      } else if (tier === "advanced") {
+        iconBg = "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+      } else {
+        iconBg = "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
+      }
+    }
+
+    const tierBadge = this._tierBadgeHtml(tier)
+
+    // Status label
+    let statusLabel = ""
+    if (active && isCore) {
+      statusLabel = `<span class="text-xs font-medium text-indigo-600 dark:text-indigo-400">Core Feature</span>`
+    } else if (active) {
+      statusLabel = `<span class="inline-flex items-center text-xs font-medium text-green-600 dark:text-green-400">
+        <svg class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/></svg>
+        Active</span>`
+    } else if (!depsOk) {
+      statusLabel = `<span class="inline-flex items-center text-xs text-gray-400">
+        <svg class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75"/></svg>
+        Dependencies needed</span>`
+    } else {
+      statusLabel = `<span class="text-xs text-gray-500 dark:text-gray-400">Available</span>`
+    }
+
+    // Action button
+    let actionBtn = ""
+    if (active && !isCore) {
+      actionBtn = `<button class="text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium transition"
+                           data-action="click->feature-store#nodeDeactivateClick"
+                           data-key="${this._esc(block.key)}"
+                           data-name="${this._esc(block.display_name)}"
+                           data-has-cascade="${(block.cascade_deactivate_names || []).length > 0}"
+                           data-cascade-names="${this._esc((block.cascade_deactivate_names || []).join(", "))}">Deactivate</button>`
+    } else if (!active && depsOk) {
+      actionBtn = `<button class="text-xs font-medium text-white bg-brand-600 hover:bg-brand-700 px-3 py-1.5 rounded-lg transition"
+                           data-action="click->feature-store#nodeActivateClick"
+                           data-key="${this._esc(block.key)}">Activate</button>`
+    }
+
+    return `
+      <div class="fs-card relative rounded-xl border-2 ${borderClass} ${bgClass} ${opacityClass} p-5">
+        ${tierBadge}
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3 ${iconBg}">
+          <div class="w-6 h-6">${icon}</div>
+        </div>
+        <h3 class="font-semibold text-gray-900 dark:text-white text-sm">${this._esc(block.display_name)}</h3>
+        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2">${this._esc(block.description || block.tagline || "")}</p>
+        ${block.estimated_setup ? `<p class="mt-1 text-xs text-gray-400 dark:text-gray-500">${this._esc(block.estimated_setup)} setup</p>` : ""}
+        <div class="mt-4 flex items-center justify-between">
+          ${statusLabel}
+          ${actionBtn}
+        </div>
+      </div>
+    `
+  }
+
+  _tierBadgeHtml(tier) {
+    if (tier === "paid") {
+      return `<span class="absolute top-3 right-3 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 ring-1 ring-amber-300/50 dark:ring-amber-500/30">Premium</span>`
+    }
+    if (tier === "advanced") {
+      return `<span class="absolute top-3 right-3 text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 ring-1 ring-blue-300/50 dark:ring-blue-500/30">Advanced</span>`
+    }
+    return ""
+  }
+
+  // ── Dismiss Recommendation ──
+
+  async dismissRecommendation(event) {
+    event.stopPropagation()
+    const btn = event.currentTarget
+    const blockKey = btn.dataset.blockKey
+    const suggestionId = btn.dataset.suggestionId
+    const card = btn.closest("[data-recommended-card]")
+
+    // Animate out
+    if (card) {
+      card.classList.add("fs-card-hiding")
+    }
+
+    // Track locally
+    this.dismissedKeys.add(blockKey)
+    localStorage.setItem("fsDismissed", JSON.stringify([...this.dismissedKeys]))
+
+    // API dismiss if we have suggestion ID
+    if (suggestionId) {
+      try {
+        await fetch(`/api/smart_suggestions/${suggestionId}/dismiss`, {
+          method: "POST",
+          headers: { "X-CSRF-Token": this.csrfTokenValue, "Accept": "application/json" }
+        })
+      } catch (e) { /* non-critical */ }
+    }
+
+    // Re-render after animation
+    setTimeout(() => this._renderCards(), 220)
+  }
+
+  // ── SVG Connectors (Tree View) ──
 
   _drawConnectors() {
     const svg = this.treeContainerTarget.querySelector(".tech-tree-svg")
@@ -205,7 +466,7 @@ export default class extends Controller {
     svg.innerHTML = paths
   }
 
-  // ── Tooltip ──
+  // ── Tooltip (Tree View) ──
 
   showTooltip(event) {
     const node = event.currentTarget
@@ -219,7 +480,6 @@ export default class extends Controller {
         <span class="tip-status tip-status-${node.dataset.tooltipActive.toLowerCase()}">${node.dataset.tooltipActive}</span>
       </div>
     `
-    // Position above the node
     const nRect = node.getBoundingClientRect()
     const cRect = this.treeContainerTarget.getBoundingClientRect()
     tip.style.left = (nRect.left + nRect.width / 2 - cRect.left) + "px"

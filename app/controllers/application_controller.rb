@@ -65,19 +65,9 @@ class ApplicationController < ActionController::Base
     @tutorial_available = true
     @tutorial_block_key = block.key
 
-    # Tour button (start_tutorial=1) always starts the tutorial regardless of progress
+    # Tutorials only start via Tour button or activation redirect (start_tutorial=1)
+    # Never auto-start — this prevents existing users from seeing unexpected walkthroughs
     if params[:start_tutorial] == "1"
-      @tutorial_steps = steps
-      return
-    end
-
-    # Check if tutorial already completed/skipped
-    return if activation.tutorial_completed_at.present? || activation.tutorial_skipped_at.present?
-    progress = UserTutorialProgress.find_by(user_id: current_user.id, feature_block_id: block.id)
-    return if progress&.status.in?(%w[completed skipped])
-
-    # Auto-start on first visit (no progress record yet)
-    if progress.nil?
       @tutorial_steps = steps
     end
   rescue

@@ -239,6 +239,19 @@
     width: 14px; height: 14px; border-radius: 50%;
     background: rgb(234 179 8); color: white; font-size: 0.5rem; line-height: 1;
   }
+
+  /* ── Card View ── */
+  .fs-card {
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
+  }
+  .fs-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+  .fs-card-dismiss {
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .fs-card-dismiss.fs-card-hiding {
+    opacity: 0;
+    transform: scale(0.95);
+  }
 </style>
 
 <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
@@ -249,9 +262,35 @@
      data-feature-store-csrf-token-value="<%= form_authenticity_token %>">
 
   <%# Header %>
-  <div class="text-center mb-8">
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Build Your Budget</h1>
-    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Click any available feature to activate it. Dependencies flow top-to-bottom.</p>
+  <div class="text-center mb-6">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Feature Store</h1>
+    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Discover and activate features to build your perfect budget tool.</p>
+  </div>
+
+  <%# View Toggle %>
+  <div class="flex justify-center mb-6">
+    <div class="inline-flex rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-1">
+      <button type="button"
+              data-action="click->feature-store#switchToCards"
+              data-feature-store-target="viewToggle"
+              data-view="cards"
+              class="inline-flex items-center px-4 py-1.5 text-sm font-medium rounded-md transition">
+        <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+        </svg>
+        Card View
+      </button>
+      <button type="button"
+              data-action="click->feature-store#switchToTree"
+              data-feature-store-target="viewToggle"
+              data-view="tree"
+              class="inline-flex items-center px-4 py-1.5 text-sm font-medium rounded-md transition">
+        <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+        </svg>
+        Tech Tree
+      </button>
+    </div>
   </div>
 
   <%# Loading state %>
@@ -260,11 +299,14 @@
       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
       <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
     </svg>
-    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Loading tech tree...</p>
+    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Loading features...</p>
   </div>
 
+  <%# Card View Container %>
+  <div data-feature-store-target="cardContainer" class="hidden"></div>
+
   <%# Tech Tree Container %>
-  <div data-feature-store-target="treeContainer" class="tech-tree-container"></div>
+  <div data-feature-store-target="treeContainer" class="tech-tree-container hidden"></div>
 
   <%# Tooltip (positioned absolutely within container) %>
   <div data-feature-store-target="tooltip" class="tech-tree-tooltip hidden"></div>

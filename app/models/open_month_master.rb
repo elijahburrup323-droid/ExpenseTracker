@@ -52,9 +52,12 @@ class OpenMonthMaster < ApplicationRecord
                          .where(received_flag: true)
                          .where(entry_date: month_start..month_end)
                          .sum(:amount)
-      beg_bal = budget_accounts.sum(:beginning_balance)
-      end_bal = budget_accounts.sum(:balance)
-      nw = user.accounts.sum(:balance)
+      # Budget totals: DEBIT-only for cash position
+      credit_ids = AccountTypeMaster.where(normal_balance_type: "CREDIT").pluck(:id)
+      debit_budget = budget_accounts.where.not(account_type_master_id: credit_ids)
+      beg_bal = debit_budget.sum(:beginning_balance)
+      end_bal = debit_budget.sum(:balance)
+      nw = Account.net_worth_for(user.accounts)[:net_worth]
 
       DashboardMonthSnapshot.find_or_initialize_by(
         user_id: user_id, year: year, month: month

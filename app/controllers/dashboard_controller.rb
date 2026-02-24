@@ -17,9 +17,13 @@ class DashboardController < ApplicationController
     @month_start = Date.new(@open_month.current_year, @open_month.current_month, 1)
     @month_end = @month_start.next_month
 
+    # DEBIT-only classification — reused by Card 1 budget filter, Card 3, Card 4
+    credit_master_ids = AccountTypeMaster.where(normal_balance_type: "CREDIT").pluck(:id)
+
     # Card 1: Spending Overview (Tracking-Only mode)
     # Since bills_master does not exist, all users are in tracking-only mode.
-    budget_accounts = @accounts.where(include_in_budget: true)
+    # Budget accounts are DEBIT-only (liquid assets, not liabilities)
+    budget_accounts = @accounts.where(include_in_budget: true).where.not(account_type_master_id: credit_master_ids)
     @spent_mtd = current_user.payments
                              .where(payment_date: @month_start...@month_end)
                              .sum(:amount)
@@ -83,7 +87,6 @@ class DashboardController < ApplicationController
     # Card 2: Accounts — all accounts (passed as @accounts)
 
     # Card 3: Net Worth — assets minus liabilities (read-layer normalization via normal_balance_type)
-    credit_master_ids = AccountTypeMaster.where(normal_balance_type: "CREDIT").pluck(:id)
     asset_total = @accounts.where.not(account_type_master_id: credit_master_ids).sum(:balance)
     liability_total = @accounts.where(account_type_master_id: credit_master_ids).sum(:balance)
     @net_worth = asset_total - liability_total

@@ -11,7 +11,7 @@ module Api
     # params: { months_back: 1..12 }
     def populate
       months_back = params[:months_back].to_i.clamp(1, 12)
-      current_net_worth = current_user.accounts.sum(:balance).to_f
+      current_net_worth = Account.net_worth_for(current_user.accounts)[:net_worth]
       earliest = current_user.created_at.beginning_of_month.to_date
 
       records_created = 0

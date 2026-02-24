@@ -4,6 +4,9 @@ module Api
       blocks = FeatureBlock.ordered.includes(:dependencies, :dependents, :prerequisite_blocks, :dependent_blocks)
       active_ids = current_user.feature_activations.active.pluck(:feature_block_id).to_set
       suggestions = current_user.smart_suggestions.pending.pluck(:feature_block_id).to_set
+      suggestion_ids_by_block = current_user.smart_suggestions.pending
+        .where(feature_block_id: blocks.pluck(:id))
+        .pluck(:feature_block_id, :id).to_h
 
       # Pre-build a block lookup for cascade computation
       all_blocks = blocks.to_a
@@ -29,6 +32,7 @@ module Api
           dependencies_met: deps_met,
           cascade_deactivate_names: cascade_deps.map(&:display_name),
           recommended: suggestions.include?(b.id),
+          suggestion_id: suggestion_ids_by_block[b.id],
           tutorial_data: b.tutorial_data,
           dependency_keys: b.prerequisite_blocks.map(&:key)
         }

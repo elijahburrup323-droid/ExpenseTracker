@@ -27,6 +27,15 @@ class Account < ApplicationRecord
   validates :balance, numericality: true
   validates :beginning_balance, numericality: true
 
+  # Computes { assets:, liabilities:, net_worth: } from any accounts scope.
+  # Single source of truth for net worth math — replaces all raw sum(:balance) calls.
+  def self.net_worth_for(accounts_scope)
+    credit_ids = AccountTypeMaster.where(normal_balance_type: "CREDIT").pluck(:id)
+    asset_total = accounts_scope.where.not(account_type_master_id: credit_ids).sum(:balance)
+    liability_total = accounts_scope.where(account_type_master_id: credit_ids).sum(:balance)
+    { assets: asset_total.to_f, liabilities: liability_total.to_f, net_worth: (asset_total - liability_total).to_f }
+  end
+
   # Returns 1 for DEBIT (asset) accounts, -1 for CREDIT (liability) accounts.
   # All balance operations multiply by this value to get correct sign behavior.
   def balance_multiplier

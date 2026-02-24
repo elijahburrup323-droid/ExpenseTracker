@@ -176,11 +176,6 @@
     </style>
   </head>
   <body class="font-sans bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">
-    <% if defined?(QA_MODE) && QA_MODE %>
-      <div class="bg-red-600 text-white text-center py-4 px-4 font-bold text-lg tracking-wide z-[9999] sticky top-0">
-        NEW RELEASE QA MODE &mdash; v<%= APP_VERSION %>
-      </div>
-    <% end %>
     <% if user_signed_in? %>
       <div data-controller="sidebar month-actions"
            data-sidebar-save-url-value="<%= api_sidebar_state_path %>"
@@ -332,6 +327,11 @@
               </div>
             </div>
           </div>
+          <% if defined?(QA_MODE) && QA_MODE %>
+            <div class="bg-red-600 text-white text-center py-2 px-4 font-bold text-sm tracking-wide">
+              QA MODE &mdash; v<%= APP_VERSION %>
+            </div>
+          <% end %>
           <div class="flex-1">
             <%= yield %>
           </div>

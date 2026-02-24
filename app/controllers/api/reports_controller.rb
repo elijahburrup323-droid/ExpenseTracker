@@ -811,16 +811,24 @@ module Api
 
         if is_closed
           snaps = (snapshots_by_period[[y_val, m_val]] || []).select { |s| account_ids.include?(s.account_id) }
-          total_assets = snaps.select { |s| s.ending_balance.to_f >= 0 }.sum { |s| s.ending_balance.to_f }.round(2)
-          total_liabilities = snaps.select { |s| s.ending_balance.to_f < 0 }.sum { |s| s.ending_balance.to_f }.round(2)
-          net_worth = (total_assets + total_liabilities).round(2)
+          # Type-based classification: use account_type_master_id, not balance sign
+          credit_ids = AccountTypeMaster.where(normal_balance_type: "CREDIT").pluck(:id)
+          credit_acct_ids = current_user.accounts.unscoped.where(account_type_master_id: credit_ids).pluck(:id).to_set
+          asset_snaps = snaps.reject { |s| credit_acct_ids.include?(s.account_id) }
+          liability_snaps = snaps.select { |s| credit_acct_ids.include?(s.account_id) }
+          total_assets = asset_snaps.sum { |s| s.ending_balance.to_f }.round(2)
+          total_liabilities = liability_snaps.sum { |s| s.ending_balance.to_f }.round(2)
+          net_worth = (total_assets - total_liabilities).round(2)
           { label: label, year: y_val, month: m_val, total_assets: total_assets, total_liabilities: total_liabilities, net_worth: net_worth, source: "snapshot" }
         elsif is_open
           balances = AccountBalanceService.balances_as_of(current_user, Date.today)
           filtered = balances.select { |aid, _| account_ids.include?(aid) }
-          total_assets = filtered.values.select { |v| v >= 0 }.sum.to_f.round(2)
-          total_liabilities = filtered.values.select { |v| v < 0 }.sum.to_f.round(2)
-          net_worth = (total_assets + total_liabilities).round(2)
+          # Type-based classification
+          credit_ids = AccountTypeMaster.where(normal_balance_type: "CREDIT").pluck(:id)
+          credit_acct_ids = current_user.accounts.where(account_type_master_id: credit_ids).pluck(:id).to_set
+          total_assets = filtered.reject { |aid, _| credit_acct_ids.include?(aid) }.values.sum.to_f.round(2)
+          total_liabilities = filtered.select { |aid, _| credit_acct_ids.include?(aid) }.values.sum.to_f.round(2)
+          net_worth = (total_assets - total_liabilities).round(2)
           { label: label, year: y_val, month: m_val, total_assets: total_assets, total_liabilities: total_liabilities, net_worth: net_worth, source: "live" }
         end
       end.compact
@@ -970,10 +978,14 @@ module Api
         }
       end
 
-      # Section 4: Net Worth (from snapshots)
-      total_assets = snapshots.select { |s| s.ending_balance.to_f >= 0 }.sum { |s| s.ending_balance.to_f }.round(2)
-      total_liabilities = snapshots.select { |s| s.ending_balance.to_f < 0 }.sum { |s| s.ending_balance.to_f }.round(2)
-      net_worth_val = (total_assets + total_liabilities).round(2)
+      # Section 4: Net Worth (type-based classification)
+      credit_ids = AccountTypeMaster.where(normal_balance_type: "CREDIT").pluck(:id)
+      credit_acct_ids = current_user.accounts.unscoped.where(account_type_master_id: credit_ids).pluck(:id).to_set
+      asset_snaps = snapshots.reject { |s| credit_acct_ids.include?(s.account_id) }
+      liability_snaps = snapshots.select { |s| credit_acct_ids.include?(s.account_id) }
+      total_assets = asset_snaps.sum { |s| s.ending_balance.to_f }.round(2)
+      total_liabilities = liability_snaps.sum { |s| s.ending_balance.to_f }.round(2)
+      net_worth_val = (total_assets - total_liabilities).round(2)
 
       {
         exists: true,

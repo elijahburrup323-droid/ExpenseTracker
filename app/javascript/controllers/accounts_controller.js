@@ -699,9 +699,14 @@ export default class extends Controller {
 
   _updateTotal() {
     if (!this.hasTotalTarget) return
-    const sum = this.accounts
+    const assets = this.accounts
+      .filter(a => (a.normal_balance_type || "DEBIT") === "DEBIT")
       .reduce((acc, a) => acc + parseFloat(a.balance || 0), 0)
-    this.totalTarget.textContent = `— Total: ${sum.toLocaleString("en-US", { style: "currency", currency: "USD" })}`
+    const liabilities = this.accounts
+      .filter(a => a.normal_balance_type === "CREDIT")
+      .reduce((acc, a) => acc + parseFloat(a.balance || 0), 0)
+    const netWorth = assets - liabilities
+    this.totalTarget.textContent = `— Net Worth: ${netWorth.toLocaleString("en-US", { style: "currency", currency: "USD" })}`
   }
 
   goToReconciliation(event) {

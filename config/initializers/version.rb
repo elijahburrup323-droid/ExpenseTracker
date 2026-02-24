@@ -25,6 +25,15 @@ APP_ALL_VERSIONS = [
       "Accounts API: Now includes normal_balance_type in JSON response for client-side filtering (CM-22)",
       "AccountBalanceService: Sign-aware recomputation — reconciliation and dashboard balances correct for liability accounts (CM-22)",
       "Payments dropdown: Liability accounts grouped under 'Liability Accounts' optgroup for clear visual separation (CM-22)",
+      "Net Worth: Account.net_worth_for class helper — single source of truth for assets minus liabilities calculation (CM-24)",
+      "Accounts screen: Total now shows Net Worth (assets minus liabilities) instead of straight sum (CM-24)",
+      "Dashboard Card 2: Pie chart uses absolute balance values; total shows net worth via Account.net_worth_for (CM-24)",
+      "Dashboard Card 4: Budget accounts filtered to DEBIT-only — liability accounts excluded from cash position (CM-24)",
+      "Month Close: Snapshots use DEBIT-only budget totals and type-based net worth calculation (CM-24)",
+      "Net Worth Report: Type-based asset/liability classification replaces sign-based (balance >= 0) logic (CM-24)",
+      "Soft Close Summary: Type-based asset/liability classification for net worth section (CM-24)",
+      "Net Worth Snapshots: Populate endpoint uses Account.net_worth_for instead of raw sum (CM-24)",
+      "Buckets: DEBIT-only constraint — model validation, controller check, and JS dropdown filter block CREDIT accounts (CM-24)",
     ]
   },
   {

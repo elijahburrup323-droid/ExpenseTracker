@@ -23,4 +23,6 @@ echo "=== Database migrate ==="
 bundle exec rake db:migrate
 echo "=== Seed quotes ==="
 bundle exec rails runner "load 'db/seeds/quotes_seed.rb'"
+echo "=== Seed feature blocks ==="
+bundle exec rails runner "load 'db/seeds/feature_blocks.rb'"
 echo "=== Build complete ==="

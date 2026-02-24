@@ -23,6 +23,10 @@ module Api
       account = current_user.accounts.find_by(id: bucket.account_id)
       return render json: { errors: ["Account not found"] }, status: :unprocessable_entity unless account
 
+      if account.account_type_master&.normal_balance_type == "CREDIT"
+        return render json: { errors: ["Buckets can only be created on asset (DEBIT) accounts."] }, status: :unprocessable_entity
+      end
+
       is_first_bucket = !current_user.buckets.where(account_id: bucket.account_id).exists?
 
       ActiveRecord::Base.transaction do
