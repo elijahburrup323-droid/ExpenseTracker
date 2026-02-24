@@ -99,6 +99,7 @@ export default class extends Controller {
     this.accounts = []
     this.categories = []
     this.sessionRows = []
+    this.transactionGroups = []
     this.classifyFilter = "all"
     this.classifyPage = 1
     this.classifyPerPage = 25
@@ -114,11 +115,11 @@ export default class extends Controller {
   goNext() {
     if (this.step === 1 && !this._validateStep1()) return
     if (this.step === 2 && !this._validateStep2()) return
-    if (this.step === 3) this._saveClassifications()
+    if (this.step === 3 && !this._validateStep3()) return
     if (this.step === 4 && !this._validateStep4()) return
 
     if (this.step === 2) this._submitMapping()
-    else if (this.step === 3) this._submitClassifications()
+    else if (this.step === 3) this._submitStep3()
     else if (this.step === 4) this._submitAssignments()
     else {
       this.step++
@@ -699,8 +700,9 @@ export default class extends Controller {
           this.sessionRows = data.rows || []
         }
 
-        // Auto-classify all rows
+        // Auto-classify rows and build groups for Q&A
         this._autoClassify()
+        this._buildTransactionGroups()
         this.step = 3
         this._renderStep()
       } else {
@@ -714,17 +716,26 @@ export default class extends Controller {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // STEP 3: Classify Transactions
+  // STEP 3: Q&A Transaction Grouping
   // ═══════════════════════════════════════════════════════════════
   _autoClassify() {
     this.sessionRows.forEach(row => {
       const mapped = row.mapped_data || {}
       const amount = parseFloat(mapped.amount) || 0
-      const desc = (mapped.description || "").toLowerCase()
+      const desc = (mapped.description || "")
 
-      // Transfer detection
-      if (TRANSFER_KEYWORDS.some(kw => kw.test(desc))) {
+      // Transfer detection with direction
+      const transferMatch = desc.match(/transfer\s+(to|from)\s+\w+\s+\*(\d+)/i)
+      if (transferMatch) {
         row.classification = "transfer"
+        row._transferDirection = transferMatch[1].toLowerCase()
+        row._accountSuffix = "*" + transferMatch[2]
+      } else if (TRANSFER_KEYWORDS.some(kw => kw.test(desc))) {
+        row.classification = "transfer"
+        row._transferDirection = amount < 0 ? "to" : "from"
+        row._accountSuffix = null
+      } else if (amount === 0) {
+        row.classification = "skip"
       } else if (this.amountConvention === "negative_expense") {
         row.classification = amount < 0 ? "payment" : "deposit"
       } else {
@@ -733,15 +744,404 @@ export default class extends Controller {
     })
   }
 
-  _saveClassifications() {
-    // Read current state from DOM selects
+  _normalizeForGrouping(description) {
+    const desc = (description || "").trim()
+    // Transfer pattern: "Transfer to/from AccountType *XXXX"
+    const transferMatch = desc.match(/transfer\s+(to|from)\s+\w+\s+\*(\d+)/i)
+    if (transferMatch) {
+      return `TRANSFER_${transferMatch[1].toUpperCase()}_*${transferMatch[2]}`
+    }
+    let normalized = desc.toUpperCase()
+    normalized = normalized.replace(/\s+/g, " ")
+    // Remove LASTNAME,FIRSTNAME patterns
+    normalized = normalized.replace(/\b[A-Z]+,\s*[A-Z]+\b/g, "")
+    // Remove trailing reference codes (*VU9EX2DF3)
+    normalized = normalized.replace(/\*[A-Z0-9]{3,}/g, "")
+    // Remove long digit sequences (account numbers, phone numbers)
+    normalized = normalized.replace(/\b\d{4,}\b/g, "")
+    // Remove # followed by number
+    normalized = normalized.replace(/#\s*\d+/g, "")
+    // Clean up extra spaces
+    normalized = normalized.replace(/\s+/g, " ").trim()
+    // Take first 3 meaningful words (length > 1)
+    const words = normalized.split(" ").filter(w => w.length > 1)
+    return words.slice(0, 3).join(" ") || normalized.split(" ")[0] || "UNKNOWN"
+  }
+
+  _buildTransactionGroups() {
+    const groupMap = new Map()
+
     this.sessionRows.forEach(row => {
-      const sel = document.getElementById(`si-classify-${row.id}`)
-      if (sel) row.classification = sel.value
+      const mapped = row.mapped_data || {}
+      const key = this._normalizeForGrouping(mapped.description)
+
+      if (!groupMap.has(key)) {
+        const transferMatch = (mapped.description || "").match(/transfer\s+(to|from)\s+\w+\s+\*(\d+)/i)
+        groupMap.set(key, {
+          key,
+          displayName: mapped.description || key,
+          rows: [],
+          count: 0,
+          totalAmount: 0,
+          sampleDescriptions: new Set(),
+          isTransfer: !!transferMatch || row.classification === "transfer",
+          transferDirection: transferMatch ? transferMatch[1].toLowerCase() : (row._transferDirection || null),
+          accountSuffix: transferMatch ? "*" + transferMatch[2] : (row._accountSuffix || null),
+          classification: row.classification,
+          assignedCategory: null,
+          assignedSourceName: null,
+          assignedAccountId: null,
+        })
+      }
+
+      const group = groupMap.get(key)
+      group.rows.push(row)
+      group.count++
+      group.totalAmount += parseFloat(mapped.amount) || 0
+      if (group.sampleDescriptions.size < 3) {
+        group.sampleDescriptions.add(mapped.description || "")
+      }
+      if ((mapped.description || "").length > group.displayName.length) {
+        group.displayName = mapped.description
+      }
+    })
+
+    this.transactionGroups = Array.from(groupMap.values()).map(g => ({
+      ...g,
+      sampleDescriptions: Array.from(g.sampleDescriptions),
+    }))
+
+    // Sort: transfers first, then by absolute total descending
+    this.transactionGroups.sort((a, b) => {
+      if (a.isTransfer && !b.isTransfer) return -1
+      if (!a.isTransfer && b.isTransfer) return 1
+      return Math.abs(b.totalAmount) - Math.abs(a.totalAmount)
     })
   }
 
   _renderStep3() {
+    const totalGroups = this.transactionGroups.length
+    const answeredGroups = this.transactionGroups.filter(g => {
+      if (g.isTransfer) return !!g.assignedAccountId
+      if (!g.classification) return false
+      if (g.classification === "payment") return !!g.assignedCategory
+      if (g.classification === "transfer") return !!g.assignedAccountId
+      return true // deposit, skip
+    }).length
+    const transferGroups = this.transactionGroups.filter(g => g.isTransfer)
+    const otherGroups = this.transactionGroups.filter(g => !g.isTransfer)
+    const progressPct = totalGroups > 0 ? Math.round((answeredGroups / totalGroups) * 100) : 0
+
+    // Build transfer cards
+    let transferCardsHtml = ""
+    if (transferGroups.length > 0) {
+      let cards = ""
+      transferGroups.forEach((group, idx) => {
+        const direction = group.transferDirection === "from" ? "Money coming in from" : "Money going to"
+        const dirIcon = group.transferDirection === "from"
+          ? '<svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>'
+          : '<svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>'
+
+        const acctOptions = this.accounts.map(a =>
+          `<option value="${a.id}" ${group.assignedAccountId == a.id ? "selected" : ""}>${escapeHtml(a.name)}</option>`
+        ).join("")
+
+        const answered = !!group.assignedAccountId
+        const borderClass = answered ? "border-green-300 dark:border-green-700 bg-green-50/50 dark:bg-green-900/10" : "border-blue-200 dark:border-blue-800"
+        const checkmark = answered ? '<svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>' : ''
+
+        cards += `
+          <div class="p-4 rounded-lg border ${borderClass} transition-all">
+            <div class="flex items-start justify-between mb-2">
+              <div class="flex items-center gap-2">
+                ${dirIcon}
+                <div>
+                  <div class="text-sm font-semibold text-gray-900 dark:text-white">${escapeHtml(group.displayName)}</div>
+                  <div class="text-xs text-gray-500 dark:text-gray-400">${group.count} transaction${group.count !== 1 ? "s" : ""} &middot; ${formatCurrency(group.totalAmount)}</div>
+                </div>
+              </div>
+              ${checkmark}
+            </div>
+            <div class="flex items-center gap-3 mt-3">
+              <label class="text-xs font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                Which account is ${escapeHtml(group.accountSuffix || "this")}?
+              </label>
+              <select class="flex-1 rounded text-xs px-2 py-1.5 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-brand-500 focus:border-brand-500"
+                      data-action="change->smart-import#groupAccountChanged" data-group-idx="${idx}" data-is-transfer="true">
+                <option value="">Select account...</option>
+                ${acctOptions}
+              </select>
+            </div>
+            <div class="mt-2 text-xs text-gray-400 dark:text-gray-500">${direction} ${escapeHtml(group.accountSuffix || "another account")}</div>
+          </div>`
+      })
+
+      transferCardsHtml = `
+        <div class="mb-6">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Transfers (${transferGroups.length} groups)</h3>
+          </div>
+          <div class="space-y-3">${cards}</div>
+        </div>`
+    }
+
+    // Build other group cards
+    let otherCardsHtml = ""
+    if (otherGroups.length > 0) {
+      const catOptions = this.categories.map(c =>
+        `<option value="${c.id}">${escapeHtml(c.name)}</option>`
+      ).join("")
+
+      let cards = ""
+      otherGroups.forEach((group, rawIdx) => {
+        const idx = transferGroups.length + rawIdx
+        const amount = group.totalAmount
+        const amtClass = amount < 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"
+
+        const samples = group.sampleDescriptions.slice(0, 2).map(s =>
+          `<div class="text-xs text-gray-400 dark:text-gray-500 truncate">${escapeHtml(s)}</div>`
+        ).join("")
+
+        // Type buttons
+        const types = ["payment", "deposit", "transfer", "skip"]
+        const typeLabels = { payment: "Payment", deposit: "Deposit", transfer: "Transfer", skip: "Skip" }
+        const typeColors = {
+          payment: { active: "bg-red-600 text-white", inactive: "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-red-100 dark:hover:bg-red-900/30" },
+          deposit: { active: "bg-green-600 text-white", inactive: "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-green-100 dark:hover:bg-green-900/30" },
+          transfer: { active: "bg-blue-600 text-white", inactive: "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-blue-100 dark:hover:bg-blue-900/30" },
+          skip: { active: "bg-gray-600 text-white", inactive: "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600" },
+        }
+
+        const typeButtons = types.map(t => {
+          const isActive = group.classification === t
+          const colorClass = isActive ? typeColors[t].active : typeColors[t].inactive
+          return `<button class="px-3 py-1 text-xs font-medium rounded-md ${colorClass} transition"
+                          data-action="click->smart-import#groupTypeSelected" data-group-idx="${idx}" data-type="${t}">
+                    ${typeLabels[t]}
+                  </button>`
+        }).join("")
+
+        // Conditional fields based on classification
+        let conditionalHtml = ""
+        if (group.classification === "payment") {
+          const selectedCat = group.assignedCategory || ""
+          conditionalHtml = `
+            <div class="mt-3 flex items-center gap-2">
+              <label class="text-xs font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">Category:</label>
+              <select class="flex-1 rounded text-xs px-2 py-1.5 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-brand-500"
+                      data-action="change->smart-import#groupCategoryChanged" data-group-idx="${idx}">
+                <option value="">Select category...</option>
+                ${this.categories.map(c =>
+                  `<option value="${c.id}" ${c.id == selectedCat ? "selected" : ""}>${escapeHtml(c.name)}</option>`
+                ).join("")}
+              </select>
+            </div>`
+        } else if (group.classification === "deposit") {
+          const srcName = group.assignedSourceName || group.displayName
+          conditionalHtml = `
+            <div class="mt-3 flex items-center gap-2">
+              <label class="text-xs font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">Source:</label>
+              <input type="text" class="flex-1 rounded text-xs px-2 py-1.5 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-brand-500"
+                     value="${escapeHtml(srcName)}" placeholder="Source name..."
+                     data-action="change->smart-import#groupSourceChanged" data-group-idx="${idx}">
+            </div>`
+        } else if (group.classification === "transfer") {
+          const acctOpts = this.accounts.map(a =>
+            `<option value="${a.id}" ${group.assignedAccountId == a.id ? "selected" : ""}>${escapeHtml(a.name)}</option>`
+          ).join("")
+          conditionalHtml = `
+            <div class="mt-3 flex items-center gap-2">
+              <label class="text-xs font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">Account:</label>
+              <select class="flex-1 rounded text-xs px-2 py-1.5 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-brand-500"
+                      data-action="change->smart-import#groupAccountChanged" data-group-idx="${idx}">
+                <option value="">Select account...</option>
+                ${acctOpts}
+              </select>
+            </div>`
+        }
+
+        const answered = group.classification && (
+          (group.classification === "payment" && group.assignedCategory) ||
+          (group.classification === "deposit") ||
+          (group.classification === "transfer" && group.assignedAccountId) ||
+          (group.classification === "skip")
+        )
+        const cardBorder = answered
+          ? "border-green-300 dark:border-green-700 bg-green-50/30 dark:bg-green-900/5"
+          : "border-gray-200 dark:border-gray-700"
+        const checkmark = answered
+          ? '<svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>'
+          : ''
+
+        cards += `
+          <div class="p-4 rounded-lg border ${cardBorder} transition-all">
+            <div class="flex items-start justify-between mb-1">
+              <div>
+                <div class="text-sm font-semibold text-gray-900 dark:text-white">${escapeHtml(group.key)}</div>
+                <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">${group.count} transaction${group.count !== 1 ? "s" : ""} &middot; <span class="${amtClass} font-medium">${formatCurrency(group.totalAmount)}</span></div>
+              </div>
+              ${checkmark}
+            </div>
+            ${samples}
+            <div class="flex flex-wrap gap-1.5 mt-3">${typeButtons}</div>
+            ${conditionalHtml}
+          </div>`
+      })
+
+      otherCardsHtml = `
+        <div>
+          <div class="flex items-center gap-2 mb-3">
+            <span class="w-3 h-3 rounded-full bg-gray-500"></span>
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Other Transactions (${otherGroups.length} groups)</h3>
+          </div>
+          <div class="space-y-3">${cards}</div>
+        </div>`
+    }
+
+    this.phaseContainerTarget.innerHTML = `
+      <div class="space-y-4 pb-4">
+        <div class="text-center">
+          <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+            Let's sort your transactions
+            ${tooltipHtml("We grouped similar transactions together. Answer once per group and we'll apply it to all matching transactions.")}
+          </h2>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">${totalGroups} unique groups from ${this.sessionRows.length} transactions</p>
+        </div>
+
+        <div class="flex items-center gap-3 p-3 bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800 rounded-lg">
+          <div class="flex-1">
+            <div class="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div class="h-full bg-brand-600 rounded-full transition-all duration-300" style="width:${progressPct}%"></div>
+            </div>
+          </div>
+          <span class="text-xs font-semibold text-brand-700 dark:text-brand-300 whitespace-nowrap">${answeredGroups} / ${totalGroups} groups</span>
+        </div>
+
+        ${transferCardsHtml}
+        ${otherCardsHtml}
+      </div>
+    `
+  }
+
+  groupTypeSelected(e) {
+    const idx = parseInt(e.target.dataset.groupIdx)
+    const type = e.target.dataset.type
+    const group = this.transactionGroups[idx]
+    if (!group) return
+
+    group.classification = type
+    group.rows.forEach(row => { row.classification = type })
+
+    // Auto-fill source name for deposits
+    if (type === "deposit" && !group.assignedSourceName) {
+      group.assignedSourceName = group.displayName
+    }
+    this._renderStep3()
+  }
+
+  groupCategoryChanged(e) {
+    const idx = parseInt(e.target.dataset.groupIdx)
+    const group = this.transactionGroups[idx]
+    if (group) {
+      group.assignedCategory = e.target.value
+      this._renderStep3()
+    }
+  }
+
+  groupAccountChanged(e) {
+    const idx = parseInt(e.target.dataset.groupIdx)
+    const group = this.transactionGroups[idx]
+    if (group) {
+      group.assignedAccountId = e.target.value
+      this._renderStep3()
+    }
+  }
+
+  groupSourceChanged(e) {
+    const idx = parseInt(e.target.dataset.groupIdx)
+    const group = this.transactionGroups[idx]
+    if (group) group.assignedSourceName = e.target.value
+  }
+
+  _validateStep3() {
+    for (const group of this.transactionGroups) {
+      if (!group.classification) {
+        alert(`Please classify the "${group.key}" group.`)
+        return false
+      }
+      if (group.isTransfer && !group.assignedAccountId) {
+        alert(`Please select an account for "${group.key}".`)
+        return false
+      }
+      if (group.classification === "payment" && !group.assignedCategory) {
+        alert(`Please select a category for "${group.key}".`)
+        return false
+      }
+      if (group.classification === "transfer" && !group.assignedAccountId) {
+        alert(`Please select an account for "${group.key}".`)
+        return false
+      }
+    }
+    return true
+  }
+
+  _applyGroupAnswers() {
+    this.transactionGroups.forEach(group => {
+      group.rows.forEach(row => {
+        row.classification = group.classification
+
+        if (group.classification === "payment") {
+          row.assigned_data = { spending_category_id: group.assignedCategory }
+        } else if (group.classification === "deposit") {
+          row.assigned_data = { source_name: group.assignedSourceName || group.displayName }
+        } else if (group.classification === "transfer" || group.isTransfer) {
+          if (row._transferDirection === "from") {
+            row.assigned_data = { from_account_id: group.assignedAccountId }
+          } else {
+            row.assigned_data = { to_account_id: group.assignedAccountId }
+          }
+        }
+      })
+    })
+  }
+
+  async _submitStep3() {
+    this._applyGroupAnswers()
+
+    const classifications = {}
+    this.sessionRows.forEach(r => { classifications[r.id] = r.classification })
+
+    try {
+      const res = await fetch(`${this.sessionsUrlValue}/${this.sessionId}/classify`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "X-CSRF-Token": this.csrfTokenValue,
+        },
+        body: JSON.stringify({ classifications }),
+      })
+
+      if (res.ok) {
+        this.classifyFilter = "all"
+        this.classifyPage = 1
+        this.step = 4
+        this._renderStep()
+      } else {
+        const err = await res.json()
+        alert(err.errors?.[0] || "Failed to save classifications.")
+      }
+    } catch (e) {
+      alert("Network error. Please try again.")
+      console.error(e)
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // STEP 4: Review Import
+  // ═══════════════════════════════════════════════════════════════
+  _renderStep4() {
     const counts = { all: this.sessionRows.length, payment: 0, deposit: 0, transfer: 0, skip: 0 }
     this.sessionRows.forEach(r => { if (counts[r.classification] !== undefined) counts[r.classification]++ })
 
@@ -758,12 +1158,20 @@ export default class extends Controller {
 
     const dotColor = { payment: "bg-red-500", deposit: "bg-green-500", transfer: "bg-blue-500", skip: "bg-gray-400" }
 
-    let tabsHtml = `<button class="${tabClass("all")}" data-action="click->smart-import#classifyFilterAll">All (${counts.all})</button>`
+    let tabsHtml = `<button class="${tabClass("all")}" data-action="click->smart-import#reviewFilterAll">All (${counts.all})</button>`
     for (const key of ["payment", "deposit", "transfer", "skip"]) {
-      tabsHtml += `<button class="${tabClass(key)}" data-action="click->smart-import#classifyFilter" data-filter="${key}">
+      tabsHtml += `<button class="${tabClass(key)}" data-action="click->smart-import#reviewFilter" data-filter="${key}">
         <span class="inline-block w-2 h-2 rounded-full ${dotColor[key]} mr-1"></span>${key.charAt(0).toUpperCase() + key.slice(1)} (${counts[key]})
       </button>`
     }
+
+    const catOptions = this.categories.map(c =>
+      `<option value="${c.id}">${escapeHtml(c.name)}</option>`
+    ).join("")
+
+    const acctOptions = this.accounts.map(a =>
+      `<option value="${a.id}">${escapeHtml(a.name)}</option>`
+    ).join("")
 
     let rowsHtml = ""
     pageRows.forEach(row => {
@@ -777,26 +1185,50 @@ export default class extends Controller {
         skip: "bg-gray-50 dark:bg-gray-800/30",
       }[row.classification] || ""
 
-      const selectBorder = {
-        payment: "border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-900/30",
-        deposit: "border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-900/30",
-        transfer: "border-blue-300 bg-blue-50 dark:border-blue-700 dark:bg-blue-900/30",
-        skip: "border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-800",
-      }[row.classification] || ""
+      // Type dropdown
+      const typeOpts = ["payment", "deposit", "transfer", "skip"].map(t =>
+        `<option value="${t}" ${row.classification === t ? "selected" : ""}>${t.charAt(0).toUpperCase() + t.slice(1)}</option>`
+      ).join("")
+
+      // Detail column based on classification
+      let detailHtml = ""
+      if (row.classification === "payment") {
+        const currentCat = row.assigned_data?.spending_category_id || ""
+        detailHtml = `<select class="w-full rounded text-xs px-2 py-1 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-brand-500"
+                             data-assign-row="${row.id}" data-assign-field="spending_category_id">
+                        <option value="">Category...</option>
+                        ${this.categories.map(c =>
+                          `<option value="${c.id}" ${c.id == currentCat ? "selected" : ""}>${escapeHtml(c.name)}</option>`
+                        ).join("")}
+                      </select>`
+      } else if (row.classification === "deposit") {
+        const srcName = row.assigned_data?.source_name || mapped.description || ""
+        detailHtml = `<input type="text" class="w-full rounded text-xs px-2 py-1 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-brand-500"
+                            value="${escapeHtml(srcName)}" placeholder="Source..."
+                            data-assign-row="${row.id}" data-assign-field="source_name">`
+      } else if (row.classification === "transfer") {
+        const acctId = row.assigned_data?.to_account_id || row.assigned_data?.from_account_id || ""
+        const fieldName = row._transferDirection === "from" ? "from_account_id" : "to_account_id"
+        detailHtml = `<select class="w-full rounded text-xs px-2 py-1 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-brand-500"
+                             data-assign-row="${row.id}" data-assign-field="${fieldName}">
+                        <option value="">Account...</option>
+                        ${this.accounts.map(a =>
+                          `<option value="${a.id}" ${a.id == acctId ? "selected" : ""}>${escapeHtml(a.name)}</option>`
+                        ).join("")}
+                      </select>`
+      }
 
       rowsHtml += `<tr class="${rowBg}">
         <td class="px-3 py-2 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">${escapeHtml(mapped.date || "")}</td>
         <td class="px-3 py-2 text-sm font-medium text-gray-900 dark:text-white">${escapeHtml(mapped.description || "")}</td>
         <td class="px-3 py-2 text-sm font-medium ${amtClass} text-right tabular-nums whitespace-nowrap">${formatCurrency(amount)}</td>
         <td class="px-3 py-2">
-          <select id="si-classify-${row.id}" class="rounded text-xs px-2 py-1 ${selectBorder} dark:text-white focus:ring-brand-500 focus:border-brand-500"
-                  data-action="change->smart-import#classificationChanged" data-row-id="${row.id}">
-            <option value="payment" ${row.classification === "payment" ? "selected" : ""}>Payment</option>
-            <option value="deposit" ${row.classification === "deposit" ? "selected" : ""}>Deposit</option>
-            <option value="transfer" ${row.classification === "transfer" ? "selected" : ""}>Transfer</option>
-            <option value="skip" ${row.classification === "skip" ? "selected" : ""}>Skip</option>
+          <select class="rounded text-xs px-2 py-1 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-brand-500"
+                  data-action="change->smart-import#reviewTypeChanged" data-row-id="${row.id}" style="width:90px">
+            ${typeOpts}
           </select>
         </td>
+        <td class="px-3 py-2" style="min-width:150px">${detailHtml}</td>
       </tr>`
     })
 
@@ -804,10 +1236,10 @@ export default class extends Controller {
       <div class="space-y-4 pb-4">
         <div class="text-center">
           <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
-            How should we file each transaction?
-            ${tooltipHtml("Each row needs to go somewhere — it's either a payment (money out), a deposit (money in), a transfer between your accounts, or something to skip.")}
+            Review your import
+            ${tooltipHtml("Everything is pre-filled from your answers. Review the details and make any individual adjustments before importing.")}
           </h2>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">We auto-sorted <strong>${counts.all}</strong> transactions. Review and adjust if needed.</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Verify the details look correct. You can override individual rows here.</p>
         </div>
 
         <div class="flex flex-wrap gap-2">${tabsHtml}</div>
@@ -819,7 +1251,8 @@ export default class extends Controller {
                 <th class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Date</th>
                 <th class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Description</th>
                 <th class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase text-right">Amount</th>
-                <th class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase" style="width:130px">Type</th>
+                <th class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase" style="width:100px">Type</th>
+                <th class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase" style="width:180px">Details</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100 dark:divide-gray-700">${rowsHtml}</tbody>
@@ -830,38 +1263,84 @@ export default class extends Controller {
           <span>Showing ${(this.classifyPage - 1) * this.classifyPerPage + 1}-${Math.min(this.classifyPage * this.classifyPerPage, filtered.length)} of ${filtered.length}</span>
           <div class="flex gap-1">
             <button class="px-2 py-1 rounded border border-gray-300 dark:border-gray-600 ${this.classifyPage <= 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}"
-                    ${this.classifyPage <= 1 ? "disabled" : ""} data-action="click->smart-import#classifyPrev">Prev</button>
+                    ${this.classifyPage <= 1 ? "disabled" : ""} data-action="click->smart-import#reviewPrev">Prev</button>
             <button class="px-2 py-1 rounded border border-gray-300 dark:border-gray-600 ${this.classifyPage >= totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}"
-                    ${this.classifyPage >= totalPages ? "disabled" : ""} data-action="click->smart-import#classifyNext">Next</button>
+                    ${this.classifyPage >= totalPages ? "disabled" : ""} data-action="click->smart-import#reviewNext">Next</button>
           </div>
         </div>
       </div>
     `
   }
 
-  classifyFilterAll() { this.classifyFilter = "all"; this.classifyPage = 1; this._saveClassifications(); this._renderStep3() }
-  classifyFilter(e) {
-    this._saveClassifications()
+  reviewFilterAll() { this.classifyFilter = "all"; this.classifyPage = 1; this._saveReviewState(); this._renderStep4() }
+  reviewFilter(e) {
+    this._saveReviewState()
     this.classifyFilter = e.target.closest("[data-filter]")?.dataset.filter || "all"
     this.classifyPage = 1
-    this._renderStep3()
+    this._renderStep4()
   }
-  classifyPrev() { if (this.classifyPage > 1) { this._saveClassifications(); this.classifyPage--; this._renderStep3() } }
-  classifyNext() { this._saveClassifications(); this.classifyPage++; this._renderStep3() }
+  reviewPrev() { if (this.classifyPage > 1) { this._saveReviewState(); this.classifyPage--; this._renderStep4() } }
+  reviewNext() { this._saveReviewState(); this.classifyPage++; this._renderStep4() }
 
-  classificationChanged(e) {
+  reviewTypeChanged(e) {
     const rowId = parseInt(e.target.dataset.rowId)
     const row = this.sessionRows.find(r => r.id === rowId)
-    if (row) row.classification = e.target.value
+    if (row) {
+      row.classification = e.target.value
+      this._saveReviewState()
+      this._renderStep4()
+    }
   }
 
-  async _submitClassifications() {
-    this._saveClassifications()
+  _saveReviewState() {
+    this.sessionRows.forEach(row => {
+      const fields = this.phaseContainerTarget.querySelectorAll(`[data-assign-row="${row.id}"]`)
+      if (fields.length > 0) {
+        if (!row.assigned_data) row.assigned_data = {}
+        fields.forEach(el => {
+          const field = el.dataset.assignField
+          const val = el.value
+          if (val) row.assigned_data[field] = val
+        })
+      }
+    })
+  }
+
+  _validateStep4() {
+    this._saveReviewState()
+
+    for (const row of this.sessionRows) {
+      if (row.classification === "skip") continue
+      const mapped = row.mapped_data || {}
+
+      if (row.classification === "payment" && !row.assigned_data?.spending_category_id) {
+        alert(`Please assign a category for: ${mapped.description || "row " + row.row_number}`)
+        return false
+      }
+      if (row.classification === "transfer" && !row.assigned_data?.to_account_id && !row.assigned_data?.from_account_id) {
+        alert(`Please select an account for transfer: ${mapped.description || "row " + row.row_number}`)
+        return false
+      }
+    }
+    return true
+  }
+
+  async _submitAssignments() {
+    this._saveReviewState()
+
+    // Build classifications and assignments together
     const classifications = {}
-    this.sessionRows.forEach(r => { classifications[r.id] = r.classification })
+    const assignments = {}
+    this.sessionRows.forEach(row => {
+      classifications[row.id] = row.classification
+      if (row.classification !== "skip" && row.assigned_data && Object.keys(row.assigned_data).length > 0) {
+        assignments[row.id] = row.assigned_data
+      }
+    })
 
     try {
-      const res = await fetch(`${this.sessionsUrlValue}/${this.sessionId}/classify`, {
+      // Submit classifications
+      await fetch(`${this.sessionsUrlValue}/${this.sessionId}/classify`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -871,259 +1350,6 @@ export default class extends Controller {
         body: JSON.stringify({ classifications }),
       })
 
-      if (res.ok) {
-        this.step = 4
-        this._renderStep()
-      } else {
-        const err = await res.json()
-        alert(err.errors?.[0] || "Failed to save classifications.")
-      }
-    } catch (e) {
-      alert("Network error. Please try again.")
-      console.error(e)
-    }
-  }
-
-  // ═══════════════════════════════════════════════════════════════
-  // STEP 4: Assign Fields
-  // ═══════════════════════════════════════════════════════════════
-  _renderStep4() {
-    const payments = this.sessionRows.filter(r => r.classification === "payment")
-    const deposits = this.sessionRows.filter(r => r.classification === "deposit")
-    const transfers = this.sessionRows.filter(r => r.classification === "transfer")
-
-    const catOptions = this.categories.map(c =>
-      `<option value="${c.id}">${escapeHtml(c.name)}</option>`
-    ).join("")
-
-    const acctOptions = this.accounts.map(a =>
-      `<option value="${a.id}">${escapeHtml(a.name)}</option>`
-    ).join("")
-
-    const selectedAccount = this.accounts.find(a => a.id === this._selectedAccountId)
-    const selectedAccountName = selectedAccount ? selectedAccount.name : "Selected Account"
-
-    let paymentsHtml = ""
-    if (payments.length > 0) {
-      let payRows = ""
-      payments.forEach(row => {
-        const m = row.mapped_data || {}
-        const currentCat = row.assigned_data?.spending_category_id || ""
-        payRows += `<tr>
-          <td class="px-3 py-2 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">${escapeHtml(m.date || "")}</td>
-          <td class="px-3 py-2 text-sm font-medium text-gray-900 dark:text-white">${escapeHtml(m.description || "")}</td>
-          <td class="px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 text-right tabular-nums whitespace-nowrap">${formatCurrency(m.amount)}</td>
-          <td class="px-3 py-2">
-            <select class="w-full rounded text-xs px-2 py-1 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-brand-500"
-                    data-assign-row="${row.id}" data-assign-field="spending_category_id">
-              <option value="">Select category...</option>
-              ${catOptions.replace(`value="${currentCat}"`, `value="${currentCat}" selected`)}
-            </select>
-          </td>
-        </tr>`
-      })
-
-      const payTotal = payments.reduce((s, r) => s + Math.abs(parseFloat(r.mapped_data?.amount) || 0), 0)
-
-      paymentsHtml = `
-        <div class="mb-6">
-          <div class="flex items-center gap-2 mb-3">
-            <span class="w-3 h-3 rounded-full bg-red-500"></span>
-            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Payments (${payments.length})</h3>
-            <span class="text-xs px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 font-medium">${formatCurrency(payTotal)} total</span>
-          </div>
-          <div class="p-3 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg mb-3">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <span class="text-xs font-medium text-red-800 dark:text-red-300">Set default category for all:</span>
-              <div class="flex gap-2 items-center">
-                <select id="si-bulk-cat" class="rounded text-xs px-2 py-1 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white" style="width:180px">
-                  <option value="">Select category...</option>
-                  ${catOptions}
-                </select>
-                <button class="px-3 py-1 text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 transition"
-                        data-action="click->smart-import#bulkApplyCategory">Apply to All</button>
-              </div>
-            </div>
-          </div>
-          <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-            <table class="w-full text-left">
-              <thead class="bg-gray-50 dark:bg-gray-700/50">
-                <tr>
-                  <th class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Date</th>
-                  <th class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Description</th>
-                  <th class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase text-right">Amount</th>
-                  <th class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase" style="width:200px">Category <span class="text-red-500">*</span></th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-100 dark:divide-gray-700">${payRows}</tbody>
-            </table>
-          </div>
-        </div>`
-    }
-
-    let depositsHtml = ""
-    if (deposits.length > 0) {
-      let depRows = ""
-      deposits.forEach(row => {
-        const m = row.mapped_data || {}
-        const currentSrc = row.assigned_data?.source_name || m.description || ""
-        depRows += `<tr>
-          <td class="px-3 py-2 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">${escapeHtml(m.date || "")}</td>
-          <td class="px-3 py-2 text-sm font-medium text-gray-900 dark:text-white">${escapeHtml(m.description || "")}</td>
-          <td class="px-3 py-2 text-sm font-medium text-green-600 dark:text-green-400 text-right tabular-nums whitespace-nowrap">${formatCurrency(m.amount)}</td>
-          <td class="px-3 py-2">
-            <input type="text" class="w-full rounded text-xs px-2 py-1 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-brand-500"
-                   value="${escapeHtml(currentSrc)}" placeholder="Source name..."
-                   data-assign-row="${row.id}" data-assign-field="source_name">
-          </td>
-        </tr>`
-      })
-
-      const depTotal = deposits.reduce((s, r) => s + Math.abs(parseFloat(r.mapped_data?.amount) || 0), 0)
-
-      depositsHtml = `
-        <div class="mb-6">
-          <div class="flex items-center gap-2 mb-3">
-            <span class="w-3 h-3 rounded-full bg-green-500"></span>
-            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Deposits (${deposits.length})</h3>
-            <span class="text-xs px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 font-medium">${formatCurrency(depTotal)} total</span>
-          </div>
-          <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-            <table class="w-full text-left">
-              <thead class="bg-gray-50 dark:bg-gray-700/50">
-                <tr>
-                  <th class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Date</th>
-                  <th class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Description</th>
-                  <th class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase text-right">Amount</th>
-                  <th class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase" style="width:200px">Source Name <span class="text-red-500">*</span></th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-100 dark:divide-gray-700">${depRows}</tbody>
-            </table>
-          </div>
-        </div>`
-    }
-
-    let transfersHtml = ""
-    if (transfers.length > 0) {
-      let xferRows = ""
-      transfers.forEach(row => {
-        const m = row.mapped_data || {}
-        const currentAcct = row.assigned_data?.to_account_id || ""
-        xferRows += `<tr>
-          <td class="px-3 py-2 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">${escapeHtml(m.date || "")}</td>
-          <td class="px-3 py-2 text-sm font-medium text-gray-900 dark:text-white">${escapeHtml(m.description || "")}</td>
-          <td class="px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 text-right tabular-nums whitespace-nowrap">${formatCurrency(m.amount)}</td>
-          <td class="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">${escapeHtml(selectedAccountName)}</td>
-          <td class="px-3 py-2">
-            <select class="w-full rounded text-xs px-2 py-1 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-brand-500"
-                    data-assign-row="${row.id}" data-assign-field="to_account_id">
-              <option value="">Select account...</option>
-              ${acctOptions.replace(`value="${currentAcct}"`, `value="${currentAcct}" selected`)}
-            </select>
-          </td>
-        </tr>`
-      })
-
-      const xferTotal = transfers.reduce((s, r) => s + Math.abs(parseFloat(r.mapped_data?.amount) || 0), 0)
-
-      transfersHtml = `
-        <div class="mb-6">
-          <div class="flex items-center gap-2 mb-3">
-            <span class="w-3 h-3 rounded-full bg-blue-500"></span>
-            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Transfers (${transfers.length})</h3>
-            <span class="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">${formatCurrency(xferTotal)} total</span>
-          </div>
-          <div class="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg mb-3">
-            <svg class="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <div class="text-xs text-blue-800 dark:text-blue-300">Source account is <strong>${escapeHtml(selectedAccountName)}</strong>. Select the destination for each transfer.</div>
-          </div>
-          <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-            <table class="w-full text-left">
-              <thead class="bg-gray-50 dark:bg-gray-700/50">
-                <tr>
-                  <th class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Date</th>
-                  <th class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Description</th>
-                  <th class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase text-right">Amount</th>
-                  <th class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">From</th>
-                  <th class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase" style="width:200px">To Account <span class="text-red-500">*</span></th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-100 dark:divide-gray-700">${xferRows}</tbody>
-            </table>
-          </div>
-        </div>`
-    }
-
-    this.phaseContainerTarget.innerHTML = `
-      <div class="space-y-2 pb-4">
-        <div class="text-center mb-4">
-          <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
-            A few more details for each group
-            ${tooltipHtml("Payments need a spending category so they show up in your budget reports. Deposits need a source name. Transfers need a destination account.")}
-          </h2>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Assign the required fields for each transaction type.</p>
-        </div>
-        ${paymentsHtml}
-        ${depositsHtml}
-        ${transfersHtml}
-      </div>
-    `
-  }
-
-  bulkApplyCategory() {
-    const catId = document.getElementById("si-bulk-cat")?.value
-    if (!catId) { alert("Please select a category first."); return }
-    const selects = this.phaseContainerTarget.querySelectorAll('[data-assign-field="spending_category_id"]')
-    selects.forEach(sel => {
-      if (!sel.value) sel.value = catId
-    })
-  }
-
-  _validateStep4() {
-    const payments = this.sessionRows.filter(r => r.classification === "payment")
-    const transfers = this.sessionRows.filter(r => r.classification === "transfer")
-
-    // Check all payments have a category
-    for (const row of payments) {
-      const sel = this.phaseContainerTarget.querySelector(`[data-assign-row="${row.id}"][data-assign-field="spending_category_id"]`)
-      if (sel && !sel.value) {
-        alert("Please assign a spending category to all payments.")
-        return false
-      }
-    }
-
-    // Check all transfers have a destination account
-    for (const row of transfers) {
-      const sel = this.phaseContainerTarget.querySelector(`[data-assign-row="${row.id}"][data-assign-field="to_account_id"]`)
-      if (sel && !sel.value) {
-        alert("Please select a destination account for all transfers.")
-        return false
-      }
-    }
-
-    return true
-  }
-
-  async _submitAssignments() {
-    // Collect assignment data from DOM
-    const assignments = {}
-    this.sessionRows.forEach(row => {
-      if (row.classification === "skip") return
-      const data = {}
-      const fields = this.phaseContainerTarget.querySelectorAll(`[data-assign-row="${row.id}"]`)
-      fields.forEach(el => {
-        const field = el.dataset.assignField
-        const val = el.value
-        if (val) data[field] = val
-      })
-      if (Object.keys(data).length > 0) {
-        assignments[row.id] = data
-        row.assigned_data = data
-      }
-    })
-
-    try {
       // Submit assignments
       const res = await fetch(`${this.sessionsUrlValue}/${this.sessionId}/assign`, {
         method: "PATCH",

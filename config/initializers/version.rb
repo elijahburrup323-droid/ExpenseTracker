@@ -1,10 +1,21 @@
-APP_VERSION = "1.3.19"
+APP_VERSION = "1.3.20"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.20",
+    changes: [
+      "Smart Import: Step 3 rewritten as Q&A cards — groups similar transactions by normalized description, user answers once per group instead of per row (CM-2)",
+      "Smart Import: Transfer grouping — transfers auto-detected by account suffix (*2685, *2876 etc.) with direction-aware from/to account assignment (CM-2)",
+      "Smart Import: Step 4 rewritten as combined Review table — pre-filled with group answers, supports per-row overrides with filter tabs and pagination (CM-2)",
+      "Smart Import: Fixed debit/credit column combining — separate Credit and Debit columns now merge into single amount for banks that split them (CM-2)",
+      "Smart Import: Fixed transfer direction — incoming transfers (Transfer from *XXXX) now correctly set from_account_id instead of always using import account as from (CM-2)",
+      "Smart Import: Stepper labels updated — Step 3 'Classify' renamed to 'Questions', Step 4 'Assign' renamed to 'Review' (CM-2)",
+    ]
+  },
   {
     version: "1.3.19",
     changes: [

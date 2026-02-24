@@ -103,10 +103,17 @@ class ImportExecutorService
     date = parse_date(mapped["date"])
     amount = mapped["amount"].to_d.abs
 
-    to_account = @user.accounts.find(data[:to_account_id])
+    # Determine direction: from_account_id means money is coming IN to import account
+    if data[:from_account_id].present?
+      from_account = @user.accounts.find(data[:from_account_id])
+      to_account = @account
+    else
+      from_account = @account
+      to_account = @user.accounts.find(data[:to_account_id])
+    end
 
     transfer = @user.transfer_masters.create!(
-      from_account: @account,
+      from_account: from_account,
       to_account: to_account,
       transfer_date: date,
       amount: amount,
@@ -115,10 +122,10 @@ class ImportExecutorService
 
     # Adjust account balances for inter-account transfers
     # (matches transfer_masters_controller.rb lines 33-41)
-    unless @account.id == to_account.id
-      @account.reload
-      @account.balance -= transfer.amount
-      @account.save!
+    unless from_account.id == to_account.id
+      from_account.reload
+      from_account.balance -= transfer.amount
+      from_account.save!
 
       to_account.reload
       to_account.balance += transfer.amount

@@ -81,6 +81,19 @@ module Api
           mapped[field_key] = value
         end
 
+        # Combine separate debit/credit columns into a single amount
+        if mapped["amount"].blank? && (mapped["credit"].present? || mapped["debit"].present?)
+          credit_val = mapped["credit"].to_s.gsub(/[^0-9.\-]/, "").to_f
+          debit_val = mapped["debit"].to_s.gsub(/[^0-9.\-]/, "").to_f
+          if credit_val != 0
+            mapped["amount"] = credit_val.abs
+          elsif debit_val != 0
+            mapped["amount"] = -(debit_val.abs)
+          else
+            mapped["amount"] = 0
+          end
+        end
+
         # Normalize amount based on convention
         if mapped["amount"].present?
           amt = mapped["amount"].to_s.gsub(/[^0-9.\-]/, "").to_f
