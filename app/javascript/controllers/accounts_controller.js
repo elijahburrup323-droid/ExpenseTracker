@@ -648,8 +648,8 @@ export default class extends Controller {
           valB = (b.institution || "").toLowerCase()
           return valA < valB ? -dir : valA > valB ? dir : 0
         case "balance":
-          valA = parseFloat(a.balance) || 0
-          valB = parseFloat(b.balance) || 0
+          valA = parseFloat(a.display_balance != null ? a.display_balance : a.balance) || 0
+          valB = parseFloat(b.display_balance != null ? b.display_balance : b.balance) || 0
           return (valA - valB) * dir
         case "in_budget":
           valA = a.include_in_budget ? 1 : 0
@@ -699,14 +699,13 @@ export default class extends Controller {
 
   _updateTotal() {
     if (!this.hasTotalTarget) return
-    const assets = this.accounts
-      .filter(a => (a.normal_balance_type || "DEBIT") === "DEBIT")
-      .reduce((acc, a) => acc + parseFloat(a.balance || 0), 0)
-    const liabilities = this.accounts
-      .filter(a => a.normal_balance_type === "CREDIT")
-      .reduce((acc, a) => acc + parseFloat(a.balance || 0), 0)
-    const netWorth = assets - liabilities
-    this.totalTarget.textContent = `— Net Worth: ${netWorth.toLocaleString("en-US", { style: "currency", currency: "USD" })}`
+    const netWorth = this.accounts.reduce((sum, a) => {
+      const db = a.display_balance != null ? parseFloat(a.display_balance) : parseFloat(a.balance || 0)
+      return sum + db
+    }, 0)
+    const formatted = netWorth.toLocaleString("en-US", { style: "currency", currency: "USD" })
+    const colorClass = netWorth < 0 ? "text-red-600 dark:text-red-400" : ""
+    this.totalTarget.innerHTML = `<span class="${colorClass}">— Net Worth: ${formatted}</span>`
   }
 
   goToReconciliation(event) {
@@ -719,18 +718,22 @@ export default class extends Controller {
   _formatBalance(balance) {
     const num = parseFloat(balance)
     if (!num && num !== 0) return "&mdash;"
-    return `$${num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    const sign = num < 0 ? "-" : ""
+    return `${sign}$${Math.abs(num).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
   renderDisplayRow(acc) {
     const budgetToggle = this._renderBudgetToggle(acc.include_in_budget, acc.id)
+    const isLiability = acc.normal_balance_type === "CREDIT"
+    const displayBal = acc.display_balance != null ? acc.display_balance : acc.balance
+    const balanceColorClass = isLiability ? "text-red-600 dark:text-red-400" : "text-gray-900 dark:text-white"
 
     return `<tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
       <td class="px-6 py-4">${iconFor(acc.icon_key, acc.color_key)}</td>
       <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white cursor-pointer" data-id="${acc.id}" data-action="dblclick->accounts#goToReconciliation">${escapeHtml(acc.name)}</td>
       <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">${escapeHtml(acc.account_type_description || acc.account_type_name || "")}</td>
       <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">${escapeHtml(acc.institution || "")}</td>
-      <td class="px-6 py-4 text-sm text-gray-900 dark:text-white text-right tabular-nums font-mono">${this._formatBalance(acc.balance)}</td>
+      <td class="px-6 py-4 text-sm ${balanceColorClass} text-right tabular-nums font-mono">${this._formatBalance(displayBal)}</td>
       <td class="px-6 py-4 text-center">${budgetToggle}</td>
       <td class="px-6 py-4 text-right space-x-2 whitespace-nowrap">
         <button type="button"

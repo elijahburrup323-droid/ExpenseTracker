@@ -188,9 +188,12 @@ export default class extends Controller {
 
   populateAccountDropdowns(fromId = "", toId = "") {
     const activeAccounts = this.accounts.filter(a => !a.deleted_at)
-    const optionsHtml = activeAccounts.map(a =>
-      `<option value="${a.id}">${escapeHtml(a.name)}  —  $${parseFloat(a.balance).toLocaleString("en-US", { minimumFractionDigits: 2 })}</option>`
-    ).join("")
+    const optionsHtml = activeAccounts.map(a => {
+      const displayBal = a.display_balance != null ? parseFloat(a.display_balance) : parseFloat(a.balance)
+      const sign = displayBal < 0 ? "-" : ""
+      const formatted = `${sign}$${Math.abs(displayBal).toLocaleString("en-US", { minimumFractionDigits: 2 })}`
+      return `<option value="${a.id}">${escapeHtml(a.name)}  —  ${formatted}</option>`
+    }).join("")
 
     this.modalFromTarget.innerHTML = `<option value="">Select account...</option>${optionsHtml}`
     this.modalToTarget.innerHTML = `<option value="">Select account...</option>${optionsHtml}`

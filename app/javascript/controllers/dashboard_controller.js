@@ -511,7 +511,7 @@ export default class extends Controller {
           <div class="flex items-center">
             <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Accounts</h2>
           </div>
-          <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">Total: ${this._currency(total)}</span>
+          <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">Net Worth: ${this._currency(total)}</span>
         </div>
         <ul class="space-y-3 flex-1">`
       if (accounts.length === 0) {
@@ -519,6 +519,9 @@ export default class extends Controller {
       } else {
         accounts.forEach((a, i) => {
           const c = colors[i % colors.length]
+          const displayBal = a.display_balance != null ? a.display_balance : a.balance
+          const isLiability = a.normal_balance_type === "CREDIT"
+          const balColor = isLiability ? "text-red-600 dark:text-red-400" : "text-gray-900 dark:text-white"
           html += `
             <li class="flex items-center justify-between">
               <div class="flex items-center space-x-2">
@@ -529,7 +532,7 @@ export default class extends Controller {
                 </span>
                 <span class="text-sm text-gray-700 dark:text-gray-300">${this._esc(a.name)}</span>
               </div>
-              <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">${this._currency(a.balance)}</span>
+              <span class="text-sm font-semibold ${balColor} tabular-nums">${this._currency(displayBal)}</span>
             </li>`
         })
       }
@@ -539,20 +542,22 @@ export default class extends Controller {
 
     const backContent = wrapper.querySelector("[data-role='back-content']")
     if (backContent) {
-      const sorted = [...accounts].sort((a, b) => b.balance - a.balance)
+      // Use absolute balance for pie chart (liabilities shown as positive slices)
+      const sorted = [...accounts].sort((a, b) => Math.abs(b.balance) - Math.abs(a.balance))
+      const absTotal = accounts.reduce((sum, a) => sum + Math.abs(a.balance), 0)
       let html = `
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Accounts</h2>
-          <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">Total: ${this._currency(total)}</span>
+          <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">Net Worth: ${this._currency(total)}</span>
         </div>
         <div class="flex-1 flex flex-col items-center justify-center overflow-hidden">`
 
-      if (total > 0 && sorted.length > 0) {
+      if (absTotal > 0 && sorted.length > 0) {
         const cx = 50, cy = 50, r = 45
         let angle = -90.0
         let paths = ""
         sorted.forEach((a, i) => {
-          const pct = a.balance / total * 100
+          const pct = Math.abs(a.balance) / absTotal * 100
           if (pct <= 0) return
           const color = pieColorsHex[i % pieColorsHex.length]
           const sweep = (pct / 100.0) * 360.0
@@ -576,11 +581,14 @@ export default class extends Controller {
         html += `<div class="mt-2 w-full space-y-1 overflow-y-auto" style="max-height: 5.5rem;">`
         sorted.forEach((a, i) => {
           const color = pieColorsHex[i % pieColorsHex.length]
-          const pct = total > 0 ? Math.round(a.balance / total * 100) : 0
+          const displayBal = a.display_balance != null ? a.display_balance : a.balance
+          const pct = absTotal > 0 ? Math.round(Math.abs(a.balance) / absTotal * 100) : 0
+          const isLiability = a.normal_balance_type === "CREDIT"
+          const balColor = isLiability ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-gray-300"
           html += `
             <div class="flex items-center text-xs px-1 min-w-0">
               <span class="w-2 h-2 rounded-full flex-shrink-0" style="background:${color}"></span>
-              <span class="text-gray-700 dark:text-gray-300 truncate ml-1.5 min-w-0">${this._esc(a.name)} &mdash; ${this._currency(a.balance)} &mdash; ${pct}%</span>
+              <span class="${balColor} truncate ml-1.5 min-w-0">${this._esc(a.name)} &mdash; ${this._currency(displayBal)} &mdash; ${pct}%</span>
             </div>`
         })
         html += `</div>`

@@ -203,18 +203,22 @@ module Api
     end
 
     def compute_accounts_overview(ctx)
-      all_accounts = current_user.accounts.includes(:account_type).ordered
+      credit_ids = AccountTypeMaster.where(normal_balance_type: "CREDIT").pluck(:id).to_set
+      all_accounts = current_user.accounts.includes(:account_type, :account_type_master).ordered
       accounts_list = all_accounts.map do |a|
-        bal = ctx[:all_balances][a.id]
-        { name: a.name, balance: (bal || a.balance).to_f.round(2) }
+        bal = (ctx[:all_balances][a.id] || a.balance).to_f
+        is_liability = credit_ids.include?(a.account_type_master_id)
+        display_bal = is_liability ? -bal.abs : bal
+        { name: a.name, balance: bal.round(2), display_balance: display_bal.round(2), normal_balance_type: is_liability ? "CREDIT" : "DEBIT" }
       end
-      accounts_total = accounts_list.sum { |a| a[:balance] }.round(2)
+      nw = Account.net_worth_for(current_user.accounts)
 
-      { accounts: accounts_list, total: accounts_total }
+      { accounts: accounts_list, total: nw[:net_worth].round(2) }
     end
 
     def compute_net_worth(ctx)
-      net_worth_val = current_user.accounts.sum(:balance).to_f.round(2)
+      nw = Account.net_worth_for(current_user.accounts)
+      net_worth_val = nw[:net_worth].round(2)
       snapshots = current_user.net_worth_snapshots.eligible_for_user(current_user).recent(6).to_a.sort_by(&:snapshot_date)
       if snapshots.size >= 2
         prev_amount = snapshots[-2].amount.to_f

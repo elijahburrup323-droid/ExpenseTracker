@@ -36,6 +36,10 @@ APP_ALL_VERSIONS = [
       "Buckets: DEBIT-only constraint — model validation, controller check, and JS dropdown filter block CREDIT accounts (CM-24)",
       "Dashboard Buckets card: Redesigned centered layout — centered title, centered bucket names/balances, progress bars at 65% width, centered 3-column financial metrics grid (CM-25)",
       "Dashboard: Flip icon standardized — all 6 cards now use identical ArrowPath (circular arrows) icon for flip/rotate action (CM-26)",
+      "Liability Display Standardization: liability accounts display as negative balance with red text across all surfaces — Accounts table, Dashboard Accounts card, Dashboard Net Worth card, transfer dropdowns (CM-27)",
+      "Dashboard Net Worth card: Fixed calculation to use Account.net_worth_for() instead of raw sum(:balance) (CM-27)",
+      "Accounts API: New display_balance field in JSON response — applies balance_multiplier for consistent frontend display (CM-27)",
+      "Dashboard Accounts card: 'Total' label renamed to 'Net Worth' for clarity (CM-27)",
     ]
   },
   {

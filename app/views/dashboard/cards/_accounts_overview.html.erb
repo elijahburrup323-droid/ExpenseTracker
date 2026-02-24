@@ -1,16 +1,19 @@
 <%
   color_cycle = %w[blue green purple amber sky red]
   pie_colors_hex = %w[#3b82f6 #22c55e #a855f7 #f59e0b #0ea5e9 #ef4444]
+  credit_master_ids = AccountTypeMaster.where(normal_balance_type: "CREDIT").pluck(:id).to_set
   nw_data = Account.net_worth_for(@accounts)
   card2_total = nw_data[:net_worth]
-  sorted_accounts = @accounts.sort_by { |a| -a.balance.to_f }
+  sorted_accounts = @accounts.sort_by { |a| -a.balance.to_f.abs }
   pie_slices = []
   # Pie chart uses absolute balance values for proportional display
   abs_total = @accounts.sum { |a| a.balance.to_f.abs }
   if abs_total > 0
     sorted_accounts.each_with_index do |account, i|
       pct = (account.balance.to_f.abs / abs_total * 100)
-      pie_slices << { name: account.name, balance: account.balance.to_f, pct: pct, color: pie_colors_hex[i % pie_colors_hex.length] }
+      is_liability = credit_master_ids.include?(account.account_type_master_id)
+      display_bal = is_liability ? -account.balance.to_f.abs : account.balance.to_f
+      pie_slices << { name: account.name, balance: account.balance.to_f, display_balance: display_bal, is_liability: is_liability, pct: pct, color: pie_colors_hex[i % pie_colors_hex.length] }
     end
   end
 %>
@@ -22,11 +25,14 @@
         <div class="flex items-center">
           <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200"><%= card.title %></h2>
         </div>
-        <span class="text-sm font-semibold text-gray-900 dark:text-white">Total: <%= number_to_currency(card2_total) %></span>
+        <span class="text-sm font-semibold text-gray-900 dark:text-white">Net Worth: <%= number_to_currency(card2_total) %></span>
       </div>
       <ul class="space-y-3 flex-1">
         <% sorted_accounts.each_with_index do |account, i| %>
           <% c = color_cycle[i % color_cycle.length] %>
+          <% is_liability = credit_master_ids.include?(account.account_type_master_id) %>
+          <% display_bal = is_liability ? -account.balance.to_f.abs : account.balance.to_f %>
+          <% bal_color = is_liability ? "text-red-600 dark:text-red-400" : "text-gray-900 dark:text-white" %>
           <li class="flex items-center justify-between">
             <div class="flex items-center space-x-2">
               <span class="w-7 h-7 rounded-lg bg-<%= c %>-100 dark:bg-<%= c %>-900/30 flex items-center justify-center">
@@ -36,7 +42,7 @@
               </span>
               <span class="text-sm text-gray-700 dark:text-gray-300"><%= account.name %></span>
             </div>
-            <span class="text-sm font-semibold text-gray-900 dark:text-white"><%= number_to_currency(account.balance) %></span>
+            <span class="text-sm font-semibold <%= bal_color %>"><%= number_to_currency(display_bal) %></span>
           </li>
         <% end %>
         <% if @accounts.empty? %>
@@ -73,7 +79,7 @@
     <div data-role="back-content">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200"><%= card.title %></h2>
-        <span class="text-sm font-semibold text-gray-900 dark:text-white">Total: <%= number_to_currency(card2_total) %></span>
+        <span class="text-sm font-semibold text-gray-900 dark:text-white">Net Worth: <%= number_to_currency(card2_total) %></span>
       </div>
       <div class="flex-1 flex flex-col items-center justify-center overflow-hidden">
       <% if pie_slices.any? %>
@@ -107,9 +113,10 @@
         </svg>
         <div class="mt-2 w-full space-y-1 overflow-y-auto" style="max-height: 5.5rem;">
           <% pie_slices.each do |slice| %>
+            <% legend_color = slice[:is_liability] ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-gray-300" %>
             <div class="flex items-center text-xs px-1 min-w-0">
               <span class="w-2 h-2 rounded-full flex-shrink-0" style="background:<%= slice[:color] %>"></span>
-              <span class="text-gray-700 dark:text-gray-300 truncate ml-1.5 min-w-0"><%= slice[:name] %> &mdash; <%= number_to_currency(slice[:balance]) %> &mdash; <%= slice[:pct].round(0) %>%</span>
+              <span class="<%= legend_color %> truncate ml-1.5 min-w-0"><%= slice[:name] %> &mdash; <%= number_to_currency(slice[:display_balance]) %> &mdash; <%= slice[:pct].round(0) %>%</span>
             </div>
           <% end %>
         </div>
