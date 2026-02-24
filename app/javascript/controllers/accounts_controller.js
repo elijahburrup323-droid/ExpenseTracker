@@ -10,7 +10,7 @@ export default class extends Controller {
     "modalType", "modalInstitution", "modalBalance", "modalBudget",
     "modalIconPicker", "modalError"
   ]
-  static values = { apiUrl: String, typesUrl: String, csrfToken: String, typesPageUrl: String, depositsPageUrl: String, paymentsPageUrl: String, openMonthUrl: String, reconciliationUrl: String }
+  static values = { apiUrl: String, typesUrl: String, csrfToken: String, typesPageUrl: String, depositsPageUrl: String, paymentsPageUrl: String, transfersPageUrl: String, openMonthUrl: String, reconciliationUrl: String }
 
   connect() {
     this.accounts = []
@@ -396,7 +396,7 @@ export default class extends Controller {
         this.renderTable()
       } else if (response.status === 409) {
         const data = await response.json().catch(() => ({}))
-        this._showBlockedDeleteModal(data.has_deposits, data.has_payments)
+        this._showBlockedDeleteModal(data.has_deposits, data.has_payments, data.has_transfers)
       } else {
         const data = await response.json().catch(() => ({}))
         alert(data.errors?.[0] || "Failed to delete account")
@@ -410,16 +410,13 @@ export default class extends Controller {
     this.addButtonTarget.disabled = false
   }
 
-  _showBlockedDeleteModal(hasDeposits, hasPayments) {
-    let bodyText = ""
-    if (hasDeposits && hasPayments) {
-      bodyText = "This account can\u2019t be deleted because it has Deposits and Payments recorded on it."
-    } else if (hasDeposits) {
-      bodyText = "This account can\u2019t be deleted because it has Deposits recorded on it."
-    } else {
-      bodyText = "This account can\u2019t be deleted because it has Payments recorded on it."
-    }
+  _showBlockedDeleteModal(hasDeposits, hasPayments, hasTransfers) {
+    const reasons = []
+    if (hasDeposits) reasons.push("Deposits")
+    if (hasPayments) reasons.push("Payments")
+    if (hasTransfers) reasons.push("Transfers")
 
+    const bodyText = `This account can\u2019t be deleted because it has ${reasons.join(" and ")} recorded on it.`
     this.blockedDeleteBodyTarget.textContent = bodyText
 
     let buttonsHtml = ""
@@ -430,6 +427,10 @@ export default class extends Controller {
     if (hasPayments) {
       buttonsHtml += `<a href="${this.paymentsPageUrlValue}"
         class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg shadow-sm transition">Go to Payments</a>`
+    }
+    if (hasTransfers) {
+      buttonsHtml += `<a href="${this.transfersPageUrlValue}"
+        class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg shadow-sm transition">Go to Transfers</a>`
     }
     buttonsHtml += `<button type="button"
       class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-900 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"

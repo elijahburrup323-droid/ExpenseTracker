@@ -6,6 +6,7 @@
      data-accounts-types-page-url-value="<%= account_types_path %>"
      data-accounts-deposits-page-url-value="<%= income_entries_path %>"
      data-accounts-payments-page-url-value="<%= payments_path %>"
+     data-accounts-transfers-page-url-value="<%= transfer_masters_path %>"
      data-accounts-open-month-url-value="<%= api_open_month_master_path %>"
      data-accounts-reconciliation-url-value="<%= account_reconciliation_path %>">
 
@@ -141,7 +142,7 @@
             <h3 class="text-lg font-medium text-gray-900 dark:text-white">Can't delete this account</h3>
             <p class="mt-2 text-sm text-gray-500 dark:text-gray-400" data-accounts-target="blockedDeleteBody"></p>
             <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">
-              <strong>What you can do:</strong> Move those Deposits/Payments to another account, or delete the related Deposits/Payments first, then try again.
+              <strong>What you can do:</strong> Move those Deposits/Payments/Transfers to another account, or delete them first, then try again.
             </p>
           </div>
         </div>

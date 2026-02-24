@@ -71,12 +71,14 @@ module Api
     def destroy
       has_deposits = @account.income_entries.exists?
       has_payments = @account.payments.exists?
+      has_transfers = @account.transfers_from.exists? || @account.transfers_to.exists?
 
-      if has_deposits || has_payments
+      if has_deposits || has_payments || has_transfers
         return render json: {
           blocked: true,
           has_deposits: has_deposits,
-          has_payments: has_payments
+          has_payments: has_payments,
+          has_transfers: has_transfers
         }, status: :conflict
       end
 
