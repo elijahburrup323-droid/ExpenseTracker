@@ -35,6 +35,7 @@ APP_ALL_VERSIONS = [
       "Net Worth Snapshots: Populate endpoint uses Account.net_worth_for instead of raw sum (CM-24)",
       "Buckets: DEBIT-only constraint — model validation, controller check, and JS dropdown filter block CREDIT accounts (CM-24)",
       "Dashboard Buckets card: Redesigned centered layout — centered title, centered bucket names/balances, progress bars at 65% width, centered 3-column financial metrics grid (CM-25)",
+      "Dashboard: Flip icon standardized — all 6 cards now use identical ArrowPath (circular arrows) icon for flip/rotate action (CM-26)",
     ]
   },
   {
