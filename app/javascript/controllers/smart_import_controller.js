@@ -86,7 +86,7 @@ export default class extends Controller {
   }
 
   // ─── Lifecycle ────────────────────────────────────────────────
-  connect() {
+  async connect() {
     this.step = 1
     this.sessionId = null
     this.fileType = null
@@ -104,8 +104,7 @@ export default class extends Controller {
     this.classifyPerPage = 25
     this.matchedTemplate = null
 
-    this._fetchAccounts()
-    this._fetchCategories()
+    await Promise.all([this._fetchAccounts(), this._fetchCategories()])
     this._renderStep()
   }
 
