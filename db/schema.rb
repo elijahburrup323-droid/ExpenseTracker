@@ -39,6 +39,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_24_210001) do
     t.datetime "updated_at", null: false
     t.bigint "owner_user_id"
     t.datetime "deleted_at"
+    t.string "normal_balance_type", limit: 6, default: "DEBIT", null: false
     t.index ["normalized_key"], name: "idx_atm_system_normalized_key_unique", unique: true, where: "((owner_user_id IS NULL) AND (deleted_at IS NULL))"
     t.index ["owner_user_id", "normalized_key"], name: "idx_atm_user_normalized_key_unique", unique: true, where: "((owner_user_id IS NOT NULL) AND (deleted_at IS NULL))"
     t.index ["owner_user_id"], name: "index_account_type_masters_on_owner_user_id"
@@ -773,6 +774,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_24_210001) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "custom_description", limit: 255
+    t.string "normal_balance_type", limit: 6, default: "DEBIT", null: false
     t.index ["account_type_master_id"], name: "index_user_account_types_on_account_type_master_id"
     t.index ["user_id", "account_type_master_id"], name: "idx_user_account_types_unique", unique: true
     t.index ["user_id"], name: "index_user_account_types_on_user_id"

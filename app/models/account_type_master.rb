@@ -8,6 +8,7 @@ class AccountTypeMaster < ApplicationRecord
 
   validates :display_name, presence: true, length: { maximum: 80 }
   validates :normalized_key, presence: true
+  validates :normal_balance_type, inclusion: { in: %w[DEBIT CREDIT] }
   validate :normalized_key_unique_within_scope
 
   scope :active, -> { where(is_active: true) }
@@ -30,27 +31,31 @@ class AccountTypeMaster < ApplicationRecord
   end
 
   CANONICAL_TYPES = [
-    { display_name: "Checking",              description: "Standard checking account for everyday transactions" },
-    { display_name: "Savings",               description: "Standard savings account" },
-    { display_name: "High Yield Savings",    description: "Savings account with higher interest rate" },
-    { display_name: "Money Market",          description: "Money market account with higher rates and limited transactions" },
-    { display_name: "Cash Card",             description: "Prepaid or stored-value card (Venmo, CashApp, etc.)" },
-    { display_name: "Credit Card",           description: "Revolving credit card account" },
-    { display_name: "Line of Credit",        description: "Revolving line of credit" },
-    { display_name: "HELOC",                 description: "Home equity line of credit" },
-    { display_name: "Mortgage",              description: "Home mortgage loan" },
-    { display_name: "Auto Loan",             description: "Vehicle financing loan" },
-    { display_name: "Student Loan",          description: "Education loan" },
-    { display_name: "Personal Loan",         description: "Unsecured personal loan" },
-    { display_name: "Business Loan",         description: "Business financing loan" },
-    { display_name: "401(k)",                description: "Employer-sponsored retirement plan" },
-    { display_name: "IRA",                   description: "Individual retirement account (Traditional)" },
-    { display_name: "Roth IRA",              description: "Individual retirement account (Roth, post-tax)" },
-    { display_name: "Brokerage",             description: "Taxable investment/brokerage account" },
-    { display_name: "HSA",                   description: "Health savings account" },
-    { display_name: "529 Plan",              description: "Education savings plan" },
-    { display_name: "Other Asset Account",   description: "Asset account not covered by other types" },
-    { display_name: "Other Liability Account", description: "Liability account not covered by other types" },
+    { display_name: "Checking",              description: "Standard checking account for everyday transactions",            normal_balance_type: "DEBIT" },
+    { display_name: "Savings",               description: "Standard savings account",                                      normal_balance_type: "DEBIT" },
+    { display_name: "High Yield Savings",    description: "Savings account with higher interest rate",                     normal_balance_type: "DEBIT" },
+    { display_name: "Money Market",          description: "Money market account with higher rates and limited transactions", normal_balance_type: "DEBIT" },
+    { display_name: "Cash Card",             description: "Prepaid or stored-value card (Venmo, CashApp, etc.)",           normal_balance_type: "DEBIT" },
+    { display_name: "Credit Card",           description: "Revolving credit card account",                                 normal_balance_type: "CREDIT" },
+    { display_name: "Line of Credit",        description: "Revolving line of credit",                                      normal_balance_type: "CREDIT" },
+    { display_name: "HELOC",                 description: "Home equity line of credit",                                    normal_balance_type: "CREDIT" },
+    { display_name: "Mortgage",              description: "Home mortgage loan",                                            normal_balance_type: "CREDIT" },
+    { display_name: "Auto Loan",             description: "Vehicle financing loan",                                        normal_balance_type: "CREDIT" },
+    { display_name: "Student Loan",          description: "Education loan",                                                normal_balance_type: "CREDIT" },
+    { display_name: "Personal Loan",         description: "Unsecured personal loan",                                       normal_balance_type: "CREDIT" },
+    { display_name: "Business Loan",         description: "Business financing loan",                                       normal_balance_type: "CREDIT" },
+    { display_name: "401(k)",                description: "Employer-sponsored retirement plan",                             normal_balance_type: "DEBIT" },
+    { display_name: "IRA",                   description: "Individual retirement account (Traditional)",                    normal_balance_type: "DEBIT" },
+    { display_name: "Roth IRA",              description: "Individual retirement account (Roth, post-tax)",                normal_balance_type: "DEBIT" },
+    { display_name: "Brokerage",             description: "Taxable investment/brokerage account",                           normal_balance_type: "DEBIT" },
+    { display_name: "HSA",                   description: "Health savings account",                                        normal_balance_type: "DEBIT" },
+    { display_name: "529 Plan",              description: "Education savings plan",                                        normal_balance_type: "DEBIT" },
+    { display_name: "Other Asset Account",   description: "Asset account not covered by other types",                      normal_balance_type: "DEBIT" },
+    { display_name: "Other Liability Account", description: "Liability account not covered by other types",                normal_balance_type: "CREDIT" },
+    { display_name: "Personal Loan Receivable",    description: "Money owed to you via personal loan (asset)",             normal_balance_type: "DEBIT" },
+    { display_name: "Personal Loan Payable",       description: "Money you owe on a personal loan (liability)",            normal_balance_type: "CREDIT" },
+    { display_name: "Contract for Deed Receivable", description: "Contract for deed — you are the seller/lender (asset)",  normal_balance_type: "DEBIT" },
+    { display_name: "Contract for Deed Payable",   description: "Contract for deed — you are the buyer/borrower (liability)", normal_balance_type: "CREDIT" },
   ].freeze
 
   def self.ensure_system_types!
@@ -61,6 +66,7 @@ class AccountTypeMaster < ApplicationRecord
       create!(
         display_name: type[:display_name],
         description: type[:description],
+        normal_balance_type: type[:normal_balance_type] || "DEBIT",
         is_active: true,
         sort_order: idx + 1
       )
@@ -71,8 +77,19 @@ class AccountTypeMaster < ApplicationRecord
     existing_ids = UserAccountType.where(user_id: user.id).pluck(:account_type_master_id)
     system_types.active.ordered.each do |master|
       next if existing_ids.include?(master.id)
-      UserAccountType.create!(user: user, account_type_master: master, is_enabled: true)
+      UserAccountType.create!(user: user, account_type_master: master, is_enabled: true, normal_balance_type: master.normal_balance_type)
     end
+  end
+
+  # Idempotent utility: re-sync all user_account_types.normal_balance_type from their master
+  def self.resync_user_normal_balance_types!
+    connection.execute(<<-SQL.squish)
+      UPDATE user_account_types
+      SET normal_balance_type = atm.normal_balance_type
+      FROM account_type_masters atm
+      WHERE user_account_types.account_type_master_id = atm.id
+        AND user_account_types.normal_balance_type != atm.normal_balance_type
+    SQL
   end
 
   private

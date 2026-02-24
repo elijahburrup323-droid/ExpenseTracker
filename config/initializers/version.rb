@@ -14,6 +14,11 @@ APP_ALL_VERSIONS = [
       "Smart Import: Fixed debit/credit column combining — separate Credit and Debit columns now merge into single amount for banks that split them (CM-2)",
       "Smart Import: Fixed transfer direction — incoming transfers (Transfer from *XXXX) now correctly set from_account_id instead of always using import account as from (CM-2)",
       "Smart Import: Stepper labels updated — Step 3 'Classify' renamed to 'Questions', Step 4 'Assign' renamed to 'Review' (CM-2)",
+      "Account Types: Added normal_balance_type field (DEBIT/CREDIT) to classify asset vs liability account types (CM-21)",
+      "Account Types: 4 new master types — Personal Loan Receivable, Personal Loan Payable, Contract for Deed Receivable, Contract for Deed Payable (CM-21)",
+      "Account Types: Normal Balance pill badges on both Account Type Masters (admin) and Account Types (user) screens (CM-21)",
+      "Account Types: Segmented DEBIT/CREDIT control in Add/Edit modals for both admin and custom types (CM-21)",
+      "Dashboard: Net Worth now correctly calculates as assets minus liabilities using normal_balance_type (CM-21)",
     ]
   },
   {

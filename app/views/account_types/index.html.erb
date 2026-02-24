@@ -39,13 +39,14 @@
         <tr>
           <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Name</th>
           <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
+          <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-28">Normal Balance</th>
           <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-20">Use</th>
           <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">Actions</th>
         </tr>
       </thead>
       <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700" data-account-types-target="tableBody">
         <tr>
-          <td colspan="4" class="px-6 py-8 text-center text-sm text-gray-400 dark:text-gray-500">Loading...</td>
+          <td colspan="5" class="px-6 py-8 text-center text-sm text-gray-400 dark:text-gray-500">Loading...</td>
         </tr>
       </tbody>
     </table>
@@ -88,6 +89,20 @@
                    placeholder="e.g. Brokerage or 401k account"
                    maxlength="255"
                    data-action="keydown->account-types#modalKeydown">
+          </div>
+          <%# Normal Balance %>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Normal Balance</label>
+            <div class="flex rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600" data-account-types-target="modalNormalBalance">
+              <button type="button"
+                      class="flex-1 px-4 py-2 text-sm font-medium transition-colors bg-emerald-600 text-white"
+                      data-value="DEBIT"
+                      data-action="click->account-types#selectNormalBalance">DEBIT (Asset)</button>
+              <button type="button"
+                      class="flex-1 px-4 py-2 text-sm font-medium transition-colors bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                      data-value="CREDIT"
+                      data-action="click->account-types#selectNormalBalance">CREDIT (Liability)</button>
+            </div>
           </div>
           <%# Error %>
           <div data-account-types-target="modalError" class="hidden text-sm text-red-600 dark:text-red-400"></div>

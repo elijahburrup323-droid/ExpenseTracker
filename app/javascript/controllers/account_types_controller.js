@@ -8,7 +8,7 @@ function escapeHtml(str) {
 export default class extends Controller {
   static targets = [
     "tableBody", "toggleAllButton",
-    "modal", "modalTitle", "modalName", "modalDescription", "modalError",
+    "modal", "modalTitle", "modalName", "modalDescription", "modalNormalBalance", "modalError",
     "deleteModal", "deleteModalName", "deleteModalError"
   ]
   static values = { apiUrl: String, csrfToken: String }
@@ -226,9 +226,11 @@ export default class extends Controller {
 
   openAddModal() {
     this._modalEditingMasterId = null
+    this._selectedNormalBalance = "DEBIT"
     this.modalTitleTarget.textContent = "Add Custom Type"
     this.modalNameTarget.value = ""
     this.modalDescriptionTarget.value = ""
+    this._syncNormalBalanceButtons()
     this.modalErrorTarget.classList.add("hidden")
     this.modalTarget.classList.remove("hidden")
     this.modalNameTarget.focus()
@@ -240,9 +242,11 @@ export default class extends Controller {
     if (!type || !type.is_custom) return
 
     this._modalEditingMasterId = masterId
+    this._selectedNormalBalance = type.normal_balance_type || "DEBIT"
     this.modalTitleTarget.textContent = "Edit Custom Type"
     this.modalNameTarget.value = type.display_name
     this.modalDescriptionTarget.value = type.master_description || ""
+    this._syncNormalBalanceButtons()
     this.modalErrorTarget.classList.add("hidden")
     this.modalTarget.classList.remove("hidden")
     this.modalNameTarget.focus()
@@ -264,7 +268,7 @@ export default class extends Controller {
 
     if (!name) { this._showModalError("Name is required."); return }
 
-    const body = { user_account_type: { display_name: name, description: description || null } }
+    const body = { user_account_type: { display_name: name, description: description || null, normal_balance_type: this._selectedNormalBalance || "DEBIT" } }
 
     const isEdit = !!this._modalEditingMasterId
     const url = isEdit ? `${this.apiUrlValue}/${this._modalEditingMasterId}` : this.apiUrlValue
@@ -340,6 +344,38 @@ export default class extends Controller {
     }
   }
 
+  // --- Normal Balance ---
+
+  _renderNormalBalancePill(nbt) {
+    if (nbt === "CREDIT") {
+      return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">CREDIT</span>`
+    }
+    return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">DEBIT</span>`
+  }
+
+  selectNormalBalance(event) {
+    this._selectedNormalBalance = event.currentTarget.dataset.value
+    this._syncNormalBalanceButtons()
+  }
+
+  _syncNormalBalanceButtons() {
+    if (!this.hasModalNormalBalanceTarget) return
+    const container = this.modalNormalBalanceTarget
+    const buttons = container.querySelectorAll("button")
+    buttons.forEach(btn => {
+      const isSelected = btn.dataset.value === this._selectedNormalBalance
+      if (btn.dataset.value === "DEBIT") {
+        btn.className = isSelected
+          ? "flex-1 px-4 py-2 text-sm font-medium transition-colors bg-emerald-600 text-white"
+          : "flex-1 px-4 py-2 text-sm font-medium transition-colors bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+      } else {
+        btn.className = isSelected
+          ? "flex-1 px-4 py-2 text-sm font-medium transition-colors bg-red-600 text-white"
+          : "flex-1 px-4 py-2 text-sm font-medium transition-colors bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+      }
+    })
+  }
+
   // --- Rendering ---
 
   renderTable() {
@@ -352,7 +388,7 @@ export default class extends Controller {
       const msg = this._viewAll
         ? "No account types available."
         : 'No account types enabled. Toggle "View All" to see all available types.'
-      this.tableBodyTarget.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-sm text-gray-400 dark:text-gray-500">${msg}</td></tr>`
+      this.tableBodyTarget.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-sm text-gray-400 dark:text-gray-500">${msg}</td></tr>`
       return
     }
 
@@ -377,6 +413,7 @@ export default class extends Controller {
       return `<tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
         <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">${escapeHtml(t.display_name)}${customBadge}</td>
         <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">${this._renderDescription(t)}</td>
+        <td class="px-6 py-4 text-center">${this._renderNormalBalancePill(t.normal_balance_type)}</td>
         <td class="px-6 py-4 text-center">${this._renderUseToggle(t.is_enabled, t.account_type_master_id)}</td>
         <td class="px-6 py-4 text-center space-x-1 whitespace-nowrap">${actions}</td>
       </tr>`

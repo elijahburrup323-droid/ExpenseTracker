@@ -21,7 +21,8 @@ module Api
           description: uat&.custom_description.presence || m.description,
           is_enabled: uat&.is_enabled || false,
           is_custom: m.custom?,
-          sort_order: m.sort_order
+          sort_order: m.sort_order,
+          normal_balance_type: m.normal_balance_type
         }
       }
     end
@@ -29,10 +30,12 @@ module Api
     def create
       name = params.dig(:user_account_type, :display_name)&.strip
       desc = params.dig(:user_account_type, :description)&.strip
+      nbt = params.dig(:user_account_type, :normal_balance_type)&.upcase || "DEBIT"
 
       master = AccountTypeMaster.new(
         display_name: name,
         description: desc,
+        normal_balance_type: nbt,
         owner_user_id: current_user.id,
         is_active: true,
         sort_order: (AccountTypeMaster.maximum(:sort_order) || 0) + 1
@@ -42,7 +45,8 @@ module Api
         if master.save
           uat = current_user.user_account_types.create!(
             account_type_master: master,
-            is_enabled: true
+            is_enabled: true,
+            normal_balance_type: master.normal_balance_type
           )
           render json: {
             id: uat.id,
@@ -53,7 +57,8 @@ module Api
             description: master.description,
             is_enabled: true,
             is_custom: true,
-            sort_order: master.sort_order
+            sort_order: master.sort_order,
+            normal_balance_type: master.normal_balance_type
           }, status: :created
         else
           render json: { errors: master.errors.full_messages }, status: :unprocessable_entity
@@ -80,7 +85,7 @@ module Api
         uat.custom_description = params.dig(:user_account_type, :custom_description)
       end
 
-      # For custom types, allow editing display_name and description on the master
+      # For custom types, allow editing display_name, description, and normal_balance_type on the master
       if master.custom?
         if params[:user_account_type]&.key?(:display_name)
           master.display_name = params.dig(:user_account_type, :display_name)&.strip
@@ -88,6 +93,10 @@ module Api
         end
         if params[:user_account_type]&.key?(:description)
           master.description = params.dig(:user_account_type, :description)&.strip
+        end
+        if params[:user_account_type]&.key?(:normal_balance_type)
+          master.normal_balance_type = params.dig(:user_account_type, :normal_balance_type)&.upcase
+          uat.normal_balance_type = master.normal_balance_type
         end
       end
 
@@ -105,7 +114,8 @@ module Api
         custom_description: uat.custom_description,
         description: uat.custom_description.presence || master.description,
         is_enabled: uat.is_enabled,
-        is_custom: master.custom?
+        is_custom: master.custom?,
+        normal_balance_type: master.normal_balance_type
       }
     rescue ActiveRecord::RecordInvalid => e
       render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity

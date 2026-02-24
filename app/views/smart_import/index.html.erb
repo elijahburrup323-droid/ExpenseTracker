@@ -5,6 +5,8 @@
      data-smart-import-accounts-url-value="<%= api_accounts_path %>"
      data-smart-import-categories-url-value="<%= api_spending_categories_path %>"
      data-smart-import-csrf-token-value="<%= form_authenticity_token %>"
+     data-smart-import-spending-types-url-value="<%= api_spending_types_path %>"
+     data-smart-import-account-types-url-value="<%= api_user_account_types_path %>"
 >
 
   <%# Page Header %>
@@ -86,6 +88,107 @@
           <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
           Import Transactions
         </button>
+      </div>
+    </div>
+  </div>
+
+  <%# Account Child Modal — create account without leaving Smart Import %>
+  <div class="hidden fixed inset-0 z-[60]" data-smart-import-target="accountChildModal">
+    <div class="fixed inset-0 bg-gray-500/75 dark:bg-gray-900/80 transition-opacity" data-action="click->smart-import#cancelAccountChild"></div>
+    <div class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
+        <div class="flex items-center justify-between px-6 pt-5 pb-0">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Add Account</h3>
+          <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition" data-action="click->smart-import#cancelAccountChild">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="px-6 py-4 space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Account Name <span class="text-red-500">*</span></label>
+            <input type="text" maxlength="80" placeholder="e.g. Chase Checking, Savings..."
+                   data-smart-import-target="childAccountName"
+                   data-action="keydown->smart-import#handleChildAccountKeydown"
+                   class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2.5">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Account Type</label>
+            <select data-smart-import-target="childAccountType"
+                    data-action="keydown->smart-import#handleChildAccountKeydown"
+                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2.5">
+              <option value="">Default</option>
+            </select>
+          </div>
+          <div class="hidden rounded-lg bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 dark:text-red-400" data-smart-import-target="childAccountError"></div>
+        </div>
+        <div class="flex justify-end space-x-3 px-6 pb-5 pt-2">
+          <button type="button"
+                  class="px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition"
+                  data-action="click->smart-import#cancelAccountChild">
+            Cancel
+          </button>
+          <button type="button"
+                  class="px-4 py-2.5 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition"
+                  data-action="click->smart-import#saveAccountChild">
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%# Category Child Modal — create category without leaving Smart Import %>
+  <div class="hidden fixed inset-0 z-[60]" data-smart-import-target="categoryChildModal">
+    <div class="fixed inset-0 bg-gray-500/75 dark:bg-gray-900/80 transition-opacity" data-action="click->smart-import#cancelCategoryChild"></div>
+    <div class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
+        <div class="flex items-center justify-between px-6 pt-5 pb-0">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Add Category</h3>
+          <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition" data-action="click->smart-import#cancelCategoryChild">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="px-6 py-4 space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category Name <span class="text-red-500">*</span></label>
+            <input type="text" maxlength="80" placeholder="e.g. Groceries, Gas, Rent..."
+                   data-smart-import-target="childCategoryName"
+                   data-action="keydown->smart-import#handleChildCategoryKeydown"
+                   class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2.5">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+            <input type="text" maxlength="255" placeholder="Optional short description..."
+                   data-smart-import-target="childCategoryDesc"
+                   data-action="keydown->smart-import#handleChildCategoryKeydown"
+                   class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2.5">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Spending Type <span class="text-red-500">*</span></label>
+            <select data-smart-import-target="childCategoryType"
+                    data-action="keydown->smart-import#handleChildCategoryKeydown"
+                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-brand-500 focus:ring-brand-500 px-3 py-2.5">
+              <option value="">Select type...</option>
+            </select>
+          </div>
+          <div class="hidden rounded-lg bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 dark:text-red-400" data-smart-import-target="childCategoryError"></div>
+        </div>
+        <div class="flex justify-end space-x-3 px-6 pb-5 pt-2">
+          <button type="button"
+                  class="px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition"
+                  data-action="click->smart-import#cancelCategoryChild">
+            Cancel
+          </button>
+          <button type="button"
+                  class="px-4 py-2.5 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition"
+                  data-action="click->smart-import#saveCategoryChild">
+            Save
+          </button>
+        </div>
       </div>
     </div>
   </div>

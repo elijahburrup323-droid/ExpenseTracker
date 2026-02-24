@@ -76,7 +76,7 @@ module Api
     end
 
     def master_params
-      params.require(:account_type_master).permit(:display_name, :description, :is_active)
+      params.require(:account_type_master).permit(:display_name, :description, :is_active, :normal_balance_type)
     end
 
     def serialize(m)
@@ -86,7 +86,8 @@ module Api
         normalized_key: m.normalized_key,
         description: m.description,
         is_active: m.is_active,
-        sort_order: m.sort_order
+        sort_order: m.sort_order,
+        normal_balance_type: m.normal_balance_type
       }
     end
   end

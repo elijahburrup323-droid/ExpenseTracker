@@ -76,6 +76,8 @@ export default class extends Controller {
   static targets = [
     "stepper", "stepperContainer", "progressBar", "stepLabel",
     "phaseContainer", "backBtn", "cancelBtn", "nextBtn", "importBtn",
+    "accountChildModal", "childAccountName", "childAccountType", "childAccountError",
+    "categoryChildModal", "childCategoryName", "childCategoryDesc", "childCategoryType", "childCategoryError",
   ]
   static values = {
     sessionsUrl: String,
@@ -83,6 +85,8 @@ export default class extends Controller {
     accountsUrl: String,
     categoriesUrl: String,
     csrfToken: String,
+    spendingTypesUrl: String,
+    accountTypesUrl: String,
   }
 
   // ─── Lifecycle ────────────────────────────────────────────────
@@ -98,14 +102,31 @@ export default class extends Controller {
     this.amountConvention = "negative_expense"
     this.accounts = []
     this.categories = []
+    this.accountTypes = []
+    this.spendingTypes = []
     this.sessionRows = []
     this.transactionGroups = []
     this.classifyFilter = "all"
     this.classifyPage = 1
     this.classifyPerPage = 25
     this.matchedTemplate = null
+    this._pendingSelect = null
 
-    await Promise.all([this._fetchAccounts(), this._fetchCategories()])
+    // Event delegation for "Add New" sentinel options on selects without explicit Stimulus actions (e.g. Step 4 review rows)
+    this.element.addEventListener("change", (e) => {
+      if (e.target.tagName !== "SELECT") return
+      if (e.target.value === "__new_account__") {
+        e.target.value = ""
+        this._pendingSelect = e.target
+        this.openAccountChild()
+      } else if (e.target.value === "__new_category__") {
+        e.target.value = ""
+        this._pendingSelect = e.target
+        this.openCategoryChild()
+      }
+    })
+
+    await Promise.all([this._fetchAccounts(), this._fetchCategories(), this._fetchAccountTypes(), this._fetchSpendingTypes()])
     this._renderStep()
   }
 
@@ -153,6 +174,20 @@ export default class extends Controller {
       const res = await fetch(this.categoriesUrlValue, { headers: { "Accept": "application/json" } })
       if (res.ok) this.categories = await res.json()
     } catch (e) { console.error("Failed to fetch categories:", e) }
+  }
+
+  async _fetchAccountTypes() {
+    try {
+      const res = await fetch(this.accountTypesUrlValue, { headers: { "Accept": "application/json" } })
+      if (res.ok) this.accountTypes = await res.json()
+    } catch (e) { console.error("Failed to fetch account types:", e) }
+  }
+
+  async _fetchSpendingTypes() {
+    try {
+      const res = await fetch(this.spendingTypesUrlValue, { headers: { "Accept": "application/json" } })
+      if (res.ok) this.spendingTypes = await res.json()
+    } catch (e) { console.error("Failed to fetch spending types:", e) }
   }
 
   // ─── Step Rendering ───────────────────────────────────────────
@@ -208,10 +243,6 @@ export default class extends Controller {
   // STEP 1: Upload File & Select Account
   // ═══════════════════════════════════════════════════════════════
   _renderStep1() {
-    const accountOptions = this.accounts.map(a =>
-      `<option value="${a.id}">${escapeHtml(a.name)}${a.institution ? ' (' + escapeHtml(a.institution) + ')' : ''}</option>`
-    ).join("")
-
     this.phaseContainerTarget.innerHTML = `
       <div class="space-y-6 pb-4">
         <div class="text-center">
@@ -225,9 +256,10 @@ export default class extends Controller {
         <div class="max-w-md mx-auto space-y-4">
           <div class="ring-2 ring-brand-500 rounded-lg p-3 transition-all" id="si-account-highlight">
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Account</label>
-            <select id="si-account-select" class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm focus:ring-brand-500 focus:border-brand-500">
+            <select id="si-account-select" class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm focus:ring-brand-500 focus:border-brand-500"
+                    data-action="change->smart-import#step1AccountChanged">
               <option value="">Select an account...</option>
-              ${accountOptions}
+              ${this._accountOptionsHtml()}
             </select>
           </div>
 
@@ -842,10 +874,6 @@ export default class extends Controller {
           ? '<svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>'
           : '<svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>'
 
-        const acctOptions = this.accounts.map(a =>
-          `<option value="${a.id}" ${group.assignedAccountId == a.id ? "selected" : ""}>${escapeHtml(a.name)}</option>`
-        ).join("")
-
         const answered = !!group.assignedAccountId
         const borderClass = answered ? "border-green-300 dark:border-green-700 bg-green-50/50 dark:bg-green-900/10" : "border-blue-200 dark:border-blue-800"
         const checkmark = answered ? '<svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>' : ''
@@ -869,7 +897,7 @@ export default class extends Controller {
               <select class="flex-1 rounded text-xs px-2 py-1.5 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-brand-500 focus:border-brand-500"
                       data-action="change->smart-import#groupAccountChanged" data-group-idx="${idx}" data-is-transfer="true">
                 <option value="">Select account...</option>
-                ${acctOptions}
+                ${this._accountOptionsHtml(group.assignedAccountId)}
               </select>
             </div>
             <div class="mt-2 text-xs text-gray-400 dark:text-gray-500">${direction} ${escapeHtml(group.accountSuffix || "another account")}</div>
@@ -889,10 +917,6 @@ export default class extends Controller {
     // Build other group cards
     let otherCardsHtml = ""
     if (otherGroups.length > 0) {
-      const catOptions = this.categories.map(c =>
-        `<option value="${c.id}">${escapeHtml(c.name)}</option>`
-      ).join("")
-
       let cards = ""
       otherGroups.forEach((group, rawIdx) => {
         const idx = transferGroups.length + rawIdx
@@ -932,9 +956,7 @@ export default class extends Controller {
               <select class="flex-1 rounded text-xs px-2 py-1.5 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-brand-500"
                       data-action="change->smart-import#groupCategoryChanged" data-group-idx="${idx}">
                 <option value="">Select category...</option>
-                ${this.categories.map(c =>
-                  `<option value="${c.id}" ${c.id == selectedCat ? "selected" : ""}>${escapeHtml(c.name)}</option>`
-                ).join("")}
+                ${this._categoryOptionsHtml(selectedCat)}
               </select>
             </div>`
         } else if (group.classification === "deposit") {
@@ -947,16 +969,13 @@ export default class extends Controller {
                      data-action="change->smart-import#groupSourceChanged" data-group-idx="${idx}">
             </div>`
         } else if (group.classification === "transfer") {
-          const acctOpts = this.accounts.map(a =>
-            `<option value="${a.id}" ${group.assignedAccountId == a.id ? "selected" : ""}>${escapeHtml(a.name)}</option>`
-          ).join("")
           conditionalHtml = `
             <div class="mt-3 flex items-center gap-2">
               <label class="text-xs font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">Account:</label>
               <select class="flex-1 rounded text-xs px-2 py-1.5 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-brand-500"
                       data-action="change->smart-import#groupAccountChanged" data-group-idx="${idx}">
                 <option value="">Select account...</option>
-                ${acctOpts}
+                ${this._accountOptionsHtml(group.assignedAccountId)}
               </select>
             </div>`
         }
@@ -1041,6 +1060,12 @@ export default class extends Controller {
   }
 
   groupCategoryChanged(e) {
+    if (e.target.value === "__new_category__") {
+      e.target.value = ""
+      this._pendingSelect = e.target
+      this.openCategoryChild()
+      return
+    }
     const idx = parseInt(e.target.dataset.groupIdx)
     const group = this.transactionGroups[idx]
     if (group) {
@@ -1050,6 +1075,12 @@ export default class extends Controller {
   }
 
   groupAccountChanged(e) {
+    if (e.target.value === "__new_account__") {
+      e.target.value = ""
+      this._pendingSelect = e.target
+      this.openAccountChild()
+      return
+    }
     const idx = parseInt(e.target.dataset.groupIdx)
     const group = this.transactionGroups[idx]
     if (group) {
@@ -1165,14 +1196,6 @@ export default class extends Controller {
       </button>`
     }
 
-    const catOptions = this.categories.map(c =>
-      `<option value="${c.id}">${escapeHtml(c.name)}</option>`
-    ).join("")
-
-    const acctOptions = this.accounts.map(a =>
-      `<option value="${a.id}">${escapeHtml(a.name)}</option>`
-    ).join("")
-
     let rowsHtml = ""
     pageRows.forEach(row => {
       const mapped = row.mapped_data || {}
@@ -1197,9 +1220,7 @@ export default class extends Controller {
         detailHtml = `<select class="w-full rounded text-xs px-2 py-1 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-brand-500"
                              data-assign-row="${row.id}" data-assign-field="spending_category_id">
                         <option value="">Category...</option>
-                        ${this.categories.map(c =>
-                          `<option value="${c.id}" ${c.id == currentCat ? "selected" : ""}>${escapeHtml(c.name)}</option>`
-                        ).join("")}
+                        ${this._categoryOptionsHtml(currentCat)}
                       </select>`
       } else if (row.classification === "deposit") {
         const srcName = row.assigned_data?.source_name || mapped.description || ""
@@ -1212,9 +1233,7 @@ export default class extends Controller {
         detailHtml = `<select class="w-full rounded text-xs px-2 py-1 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-brand-500"
                              data-assign-row="${row.id}" data-assign-field="${fieldName}">
                         <option value="">Account...</option>
-                        ${this.accounts.map(a =>
-                          `<option value="${a.id}" ${a.id == acctId ? "selected" : ""}>${escapeHtml(a.name)}</option>`
-                        ).join("")}
+                        ${this._accountOptionsHtml(acctId)}
                       </select>`
       }
 
@@ -1610,5 +1629,189 @@ export default class extends Controller {
 
   goToDashboard() {
     window.location.href = "/"
+  }
+
+  // ─── Dropdown Option Helpers ──────────────────────────────────
+  _accountOptionsHtml(selectedId = "") {
+    return `<option value="__new_account__" class="text-brand-600 font-medium">+ Add New Account</option>
+      <option disabled>──────────</option>` +
+      this.accounts.map(a =>
+        `<option value="${a.id}" ${a.id == selectedId ? "selected" : ""}>${escapeHtml(a.name)}${a.institution ? ' (' + escapeHtml(a.institution) + ')' : ''}</option>`
+      ).join("")
+  }
+
+  _categoryOptionsHtml(selectedId = "") {
+    return `<option value="__new_category__" class="text-brand-600 font-medium">+ Add New Category</option>
+      <option disabled>──────────</option>` +
+      this.categories.map(c =>
+        `<option value="${c.id}" ${c.id == selectedId ? "selected" : ""}>${escapeHtml(c.name)}</option>`
+      ).join("")
+  }
+
+  // ─── Sentinel Interception ────────────────────────────────────
+  step1AccountChanged(e) {
+    if (e.target.value === "__new_account__") {
+      e.target.value = ""
+      this._pendingSelect = e.target
+      this.openAccountChild()
+    }
+  }
+
+  // ─── Account Child Modal ──────────────────────────────────────
+  openAccountChild() {
+    const typeOpts = this.accountTypes
+      .filter(at => at.is_enabled !== false)
+      .map(at => `<option value="${at.account_type_master_id}">${escapeHtml(at.display_name)}</option>`)
+      .join("")
+    this.childAccountTypeTarget.innerHTML = `<option value="">Default</option>${typeOpts}`
+    this.childAccountNameTarget.value = ""
+    this.childAccountTypeTarget.value = ""
+    this.childAccountErrorTarget.classList.add("hidden")
+    this.childAccountErrorTarget.textContent = ""
+    this.accountChildModalTarget.classList.remove("hidden")
+    setTimeout(() => this.childAccountNameTarget.focus(), 50)
+  }
+
+  async saveAccountChild() {
+    const name = this.childAccountNameTarget.value.trim()
+    if (!name) {
+      this.childAccountErrorTarget.textContent = "Account name is required."
+      this.childAccountErrorTarget.classList.remove("hidden")
+      this.childAccountNameTarget.focus()
+      return
+    }
+
+    const account_type_master_id = this.childAccountTypeTarget.value || undefined
+    const body = { account: { name, account_type_master_id, institution: "", balance: 0, include_in_budget: true } }
+
+    try {
+      const res = await fetch(this.accountsUrlValue, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "X-CSRF-Token": this.csrfTokenValue,
+        },
+        body: JSON.stringify(body),
+      })
+
+      if (res.ok) {
+        const newAcct = await res.json()
+        this.accounts.push(newAcct)
+        this.accounts.sort((a, b) => (a.name || "").localeCompare(b.name || ""))
+        if (this._pendingSelect) {
+          this._pendingSelect.innerHTML = `<option value="">Select an account...</option>${this._accountOptionsHtml(newAcct.id)}`
+          this._pendingSelect.value = String(newAcct.id)
+          // Trigger change event so existing handlers process the selection
+          this._pendingSelect.dispatchEvent(new Event("change", { bubbles: true }))
+        }
+        this._closeAccountChild()
+      } else {
+        const data = await res.json()
+        const msg = data.errors?.[0] || "Failed to create account."
+        this.childAccountErrorTarget.textContent = msg
+        this.childAccountErrorTarget.classList.remove("hidden")
+      }
+    } catch (e) {
+      this.childAccountErrorTarget.textContent = "Network error. Please try again."
+      this.childAccountErrorTarget.classList.remove("hidden")
+    }
+  }
+
+  cancelAccountChild() { this._closeAccountChild() }
+
+  _closeAccountChild() {
+    this.accountChildModalTarget.classList.add("hidden")
+    if (this._pendingSelect && !this._pendingSelect.value) {
+      this._pendingSelect.value = ""
+    }
+    this._pendingSelect = null
+  }
+
+  handleChildAccountKeydown(e) {
+    if (e.key === "Enter") { e.preventDefault(); this.saveAccountChild() }
+  }
+
+  // ─── Category Child Modal ─────────────────────────────────────
+  openCategoryChild() {
+    const typeOpts = this.spendingTypes
+      .map(t => `<option value="${t.id}">${escapeHtml(t.name)}</option>`)
+      .join("")
+    this.childCategoryTypeTarget.innerHTML = `<option value="">Select type...</option>${typeOpts}`
+    this.childCategoryNameTarget.value = ""
+    this.childCategoryDescTarget.value = ""
+    this.childCategoryTypeTarget.value = ""
+    this.childCategoryErrorTarget.classList.add("hidden")
+    this.childCategoryErrorTarget.textContent = ""
+    this.categoryChildModalTarget.classList.remove("hidden")
+    setTimeout(() => this.childCategoryNameTarget.focus(), 50)
+  }
+
+  async saveCategoryChild() {
+    const name = this.childCategoryNameTarget.value.trim()
+    if (!name) {
+      this.childCategoryErrorTarget.textContent = "Category name is required."
+      this.childCategoryErrorTarget.classList.remove("hidden")
+      this.childCategoryNameTarget.focus()
+      return
+    }
+
+    const typeId = this.childCategoryTypeTarget.value
+    if (!typeId) {
+      this.childCategoryErrorTarget.textContent = "Spending type is required."
+      this.childCategoryErrorTarget.classList.remove("hidden")
+      this.childCategoryTypeTarget.focus()
+      return
+    }
+
+    const description = this.childCategoryDescTarget.value.trim() || name
+    const body = { spending_category: { name, description, spending_type_id: Number(typeId) } }
+
+    try {
+      const res = await fetch(this.categoriesUrlValue, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "X-CSRF-Token": this.csrfTokenValue,
+        },
+        body: JSON.stringify(body),
+      })
+
+      if (res.ok) {
+        const newCat = await res.json()
+        this.categories.push(newCat)
+        this.categories.sort((a, b) => (a.name || "").localeCompare(b.name || ""))
+        if (this._pendingSelect) {
+          this._pendingSelect.innerHTML = `<option value="">Select category...</option>${this._categoryOptionsHtml(newCat.id)}`
+          this._pendingSelect.value = String(newCat.id)
+          // Trigger change event so existing handlers process the selection
+          this._pendingSelect.dispatchEvent(new Event("change", { bubbles: true }))
+        }
+        this._closeCategoryChild()
+      } else {
+        const data = await res.json()
+        const msg = data.errors?.[0] || "Failed to create category."
+        this.childCategoryErrorTarget.textContent = msg
+        this.childCategoryErrorTarget.classList.remove("hidden")
+      }
+    } catch (e) {
+      this.childCategoryErrorTarget.textContent = "Network error. Please try again."
+      this.childCategoryErrorTarget.classList.remove("hidden")
+    }
+  }
+
+  cancelCategoryChild() { this._closeCategoryChild() }
+
+  _closeCategoryChild() {
+    this.categoryChildModalTarget.classList.add("hidden")
+    if (this._pendingSelect && !this._pendingSelect.value) {
+      this._pendingSelect.value = ""
+    }
+    this._pendingSelect = null
+  }
+
+  handleChildCategoryKeydown(e) {
+    if (e.key === "Enter") { e.preventDefault(); this.saveCategoryChild() }
   }
 }
