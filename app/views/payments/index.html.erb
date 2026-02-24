@@ -24,6 +24,12 @@
       <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Track your spending and manage transactions</p>
     </div>
     <div class="flex items-center space-x-2">
+      <%= link_to smart_import_path, class: "inline-flex items-center justify-center flex-1 sm:flex-none min-h-[44px] px-4 py-2 border border-brand-600 text-sm font-medium rounded-lg shadow-sm text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition" do %>
+        <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+        </svg>
+        Smart Import
+      <% end %>
       <%= render "shared/upload_modal",
             entity: "payment",
             api_url: api_payments_path,

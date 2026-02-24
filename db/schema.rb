@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_23_200000) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_23_200003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_stat_statements"
   enable_extension "plpgsql"
@@ -243,6 +243,74 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_23_200000) do
     t.index ["provider", "uid"], name: "index_identities_on_provider_and_uid", unique: true
     t.index ["user_id", "provider"], name: "index_identities_on_user_id_and_provider", unique: true
     t.index ["user_id"], name: "index_identities_on_user_id"
+  end
+
+  create_table "import_session_rows", force: :cascade do |t|
+    t.bigint "import_session_id", null: false
+    t.integer "row_number", null: false
+    t.jsonb "raw_data", default: {}
+    t.jsonb "mapped_data", default: {}
+    t.string "classification", limit: 20
+    t.jsonb "assigned_data", default: {}
+    t.string "status", limit: 20, default: "pending", null: false
+    t.string "error_message", limit: 500
+    t.string "duplicate_key", limit: 128
+    t.string "created_record_type", limit: 40
+    t.bigint "created_record_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["import_session_id", "classification"], name: "idx_isr_session_class"
+    t.index ["import_session_id", "duplicate_key"], name: "idx_isr_duplicate_key"
+    t.index ["import_session_id", "row_number"], name: "idx_isr_session_row", unique: true
+    t.index ["import_session_id", "status"], name: "idx_isr_session_status"
+    t.index ["import_session_id"], name: "index_import_session_rows_on_import_session_id"
+  end
+
+  create_table "import_sessions", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "import_template_id"
+    t.bigint "account_id", null: false
+    t.string "file_name", limit: 255, null: false
+    t.string "file_type", limit: 10, null: false
+    t.string "status", limit: 20, default: "parsing", null: false
+    t.integer "row_count", default: 0, null: false
+    t.integer "imported_count", default: 0, null: false
+    t.integer "skipped_count", default: 0, null: false
+    t.integer "duplicate_count", default: 0, null: false
+    t.integer "error_count", default: 0, null: false
+    t.jsonb "column_mapping", default: {}
+    t.string "detected_date_format", limit: 20
+    t.string "detected_amount_convention", limit: 20
+    t.datetime "started_at"
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_import_sessions_on_account_id"
+    t.index ["import_template_id"], name: "index_import_sessions_on_import_template_id"
+    t.index ["user_id", "status"], name: "idx_import_sessions_user_status"
+    t.index ["user_id"], name: "index_import_sessions_on_user_id"
+  end
+
+  create_table "import_templates", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "name", limit: 120, null: false
+    t.string "file_type", limit: 10, null: false
+    t.string "column_signature", limit: 64
+    t.jsonb "column_mapping", default: {}
+    t.jsonb "classification_rules", default: {}
+    t.jsonb "assignment_defaults", default: {}
+    t.bigint "default_account_id"
+    t.string "amount_sign_convention", limit: 20, default: "negative_expense"
+    t.string "date_format", limit: 20
+    t.integer "use_count", default: 0, null: false
+    t.datetime "last_used_at"
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["default_account_id"], name: "index_import_templates_on_default_account_id"
+    t.index ["user_id", "column_signature"], name: "idx_import_templates_user_sig", where: "(deleted_at IS NULL)"
+    t.index ["user_id", "name"], name: "idx_import_templates_user_name", unique: true, where: "(deleted_at IS NULL)"
+    t.index ["user_id"], name: "index_import_templates_on_user_id"
   end
 
   create_table "income_entries", force: :cascade do |t|
@@ -805,6 +873,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_23_200000) do
   add_foreign_key "dashboard_slots", "dashboard_cards"
   add_foreign_key "dashboard_slots", "users"
   add_foreign_key "identities", "users"
+  add_foreign_key "import_session_rows", "import_sessions"
+  add_foreign_key "import_sessions", "accounts"
+  add_foreign_key "import_sessions", "import_templates"
+  add_foreign_key "import_sessions", "users"
+  add_foreign_key "import_templates", "accounts", column: "default_account_id"
+  add_foreign_key "import_templates", "users"
   add_foreign_key "income_entries", "accounts"
   add_foreign_key "income_entries", "income_frequency_masters", column: "frequency_master_id"
   add_foreign_key "income_entries", "income_recurrings"

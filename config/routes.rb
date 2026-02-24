@@ -62,6 +62,9 @@ Rails.application.routes.draw do
   # Buckets (HTML page)
   resources :buckets, only: [:index]
 
+  # Smart Import (HTML page)
+  get "smart_import", to: "smart_import#index", as: :smart_import
+
   # Account Type Masters (HTML page, agent-only)
   resources :account_type_masters, only: [:index]
 
@@ -190,6 +193,17 @@ Rails.application.routes.draw do
       get "diagnostics", action: :diagnostics
     end
     resources :balance_adjustments, only: [:create, :update, :destroy]
+    # Smart Import
+    resources :import_sessions, only: [:create, :show] do
+      member do
+        patch :map_columns
+        patch :classify
+        patch :assign
+        post :execute
+        get :duplicates
+      end
+    end
+    resources :import_templates, only: [:index, :create, :update, :destroy]
     resources :net_worth_snapshots, only: [:index] do
       collection do
         post :populate

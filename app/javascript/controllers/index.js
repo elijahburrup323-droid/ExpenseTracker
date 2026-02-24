@@ -50,6 +50,7 @@ import SsPlannerController from "controllers/ss_planner_controller"
 import LegalPageAdminController from "controllers/legal_page_admin_controller"
 import TextScaleController from "controllers/text_scale_controller"
 import RecurringTransfersController from "controllers/recurring_transfers_controller"
+import SmartImportController from "controllers/smart_import_controller"
 
 application.register("flash", FlashController)
 application.register("dropdown", DropdownController)
@@ -101,3 +102,4 @@ application.register("ss-planner", SsPlannerController)
 application.register("legal-page-admin", LegalPageAdminController)
 application.register("text-scale", TextScaleController)
 application.register("recurring-transfers", RecurringTransfersController)
+application.register("smart-import", SmartImportController)

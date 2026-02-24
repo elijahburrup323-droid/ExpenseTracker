@@ -1,0 +1,85 @@
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+     data-controller="smart-import"
+     data-smart-import-sessions-url-value="<%= api_import_sessions_path %>"
+     data-smart-import-templates-url-value="<%= api_import_templates_path %>"
+     data-smart-import-accounts-url-value="<%= api_accounts_path %>"
+     data-smart-import-categories-url-value="<%= api_spending_categories_path %>"
+     data-smart-import-csrf-token-value="<%= form_authenticity_token %>"
+>
+
+  <%# Page Header %>
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Smart Import</h1>
+    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Import transactions from your bank in a few easy steps</p>
+  </div>
+
+  <%# Wizard Card %>
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+
+    <%# Step Indicator Bar %>
+    <div class="px-6 pt-6 pb-4" data-smart-import-target="stepperContainer">
+      <div class="flex items-center justify-center" data-smart-import-target="stepper">
+        <% [
+          { num: 1, label: "Upload" },
+          { num: 2, label: "Map Columns" },
+          { num: 3, label: "Classify" },
+          { num: 4, label: "Assign" },
+          { num: 5, label: "Import" }
+        ].each_with_index do |step, i| %>
+          <% if i > 0 %>
+            <div class="w-8 sm:w-12 h-0.5 bg-gray-300 dark:bg-gray-600 mx-1" data-smart-import-connector="<%= i %>"></div>
+          <% end %>
+          <div class="flex flex-col items-center" data-smart-import-step="<%= step[:num] %>">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all duration-300
+                        border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500 bg-white dark:bg-gray-800"
+                 data-smart-import-step-circle="<%= step[:num] %>">
+              <%= step[:num] %>
+            </div>
+            <span class="text-xs mt-1 text-gray-400 dark:text-gray-500 hidden sm:block" data-smart-import-step-label="<%= step[:num] %>"><%= step[:label] %></span>
+          </div>
+        <% end %>
+      </div>
+
+      <%# Progress Bar %>
+      <div class="mt-4 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+        <div class="h-full bg-brand-600 rounded-full transition-all duration-500" style="width: 0%" data-smart-import-target="progressBar"></div>
+      </div>
+    </div>
+
+    <%# Phase Containers (all hidden initially, controller shows step 1) %>
+    <div class="px-6 pb-2" data-smart-import-target="phaseContainer">
+      <%# Each step is rendered dynamically by the Stimulus controller %>
+    </div>
+
+    <%# Wizard Footer %>
+    <div class="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+      <div class="text-xs text-gray-400 dark:text-gray-500" data-smart-import-target="stepLabel">Step 1 of 5</div>
+      <div class="flex items-center space-x-2">
+        <button class="hidden inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition"
+                data-smart-import-target="backBtn"
+                data-action="click->smart-import#goBack">
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>
+          Back
+        </button>
+        <button class="hidden inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition"
+                data-smart-import-target="cancelBtn"
+                data-action="click->smart-import#cancel">
+          Cancel
+        </button>
+        <button class="inline-flex items-center px-4 py-1.5 text-sm font-medium rounded-lg text-white bg-brand-600 hover:bg-brand-700 transition shadow-sm"
+                data-smart-import-target="nextBtn"
+                data-action="click->smart-import#goNext">
+          Next
+          <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+        </button>
+        <button class="hidden inline-flex items-center px-4 py-1.5 text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 transition shadow-sm"
+                data-smart-import-target="importBtn"
+                data-action="click->smart-import#executeImport">
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          Import Transactions
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

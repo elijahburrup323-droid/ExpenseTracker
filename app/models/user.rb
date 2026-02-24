@@ -36,6 +36,8 @@ class User < ApplicationRecord
   has_many :user_report_layouts, dependent: :destroy
   has_many :recurring_obligations, dependent: :destroy
   has_many :recurring_transfers, dependent: :destroy
+  has_many :import_templates, dependent: :destroy
+  has_many :import_sessions, dependent: :destroy
 
   validates :email, presence: true, uniqueness: true, unless: :phone_only_user?
   validates :phone_number, uniqueness: true, allow_blank: true

@@ -1487,6 +1487,108 @@ phone_verifications
     </div>
   </div>
 
+  <%# ── import_templates ── %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">import_templates</h2>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Saved column mapping templates for Smart Import — auto-suggested by column signature on repeat imports</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead><tr class="border-b border-gray-100 dark:border-gray-700"><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Column</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Type</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Constraints</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Description</th></tr></thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr><td class="px-6 py-2 font-mono font-medium text-gray-900 dark:text-white">id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">PK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Primary key</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">user_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; users</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Owning user</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">name</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar(120)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">User-given template name</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">file_type</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar(10)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">csv, ofx, qfx, or qbo</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">column_signature</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar(64)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">SHA-256 of sorted lowercase column headers</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">column_mapping</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">jsonb</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Column index &rarr; field key mapping</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">classification_rules</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">jsonb</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Saved classification overrides</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">assignment_defaults</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">jsonb</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Saved assignment defaults</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">default_account_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; accounts</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Default target account (nullable)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">amount_sign_convention</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar(20)</td><td class="px-6 py-2">default: negative_is_expense</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">How to interpret negative amounts</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">date_format</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar(20)</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Detected/selected date format</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">use_count</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">integer</td><td class="px-6 py-2">default: 0</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Times this template was used</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">last_used_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Last import using this template</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">deleted_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Soft delete timestamp</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">created_at / updated_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Timestamps</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5"><li>UNIQUE INDEX (user_id, name) WHERE deleted_at IS NULL</li><li>INDEX (user_id, column_signature) WHERE deleted_at IS NULL</li></ul>
+    </div>
+  </div>
+
+  <%# ── import_sessions ── %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">import_sessions</h2>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Tracks each Smart Import wizard run — file metadata, status, and import counts</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead><tr class="border-b border-gray-100 dark:border-gray-700"><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Column</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Type</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Constraints</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Description</th></tr></thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr><td class="px-6 py-2 font-mono font-medium text-gray-900 dark:text-white">id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">PK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Primary key</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">user_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; users</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Owning user</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">import_template_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; import_templates</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Template used (nullable)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">account_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; accounts</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Target import account</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">file_name</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar(255)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Original uploaded file name</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">file_type</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar(10)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">csv, ofx, qfx, or qbo</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">status</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar(20)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> default: parsing</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">parsing/mapping/classifying/assigning/ready/importing/completed/failed</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">row_count</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">integer</td><td class="px-6 py-2">default: 0</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Total rows parsed from file</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">imported_count</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">integer</td><td class="px-6 py-2">default: 0</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Successfully imported rows</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">skipped_count</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">integer</td><td class="px-6 py-2">default: 0</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Rows classified as skip</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">duplicate_count</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">integer</td><td class="px-6 py-2">default: 0</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Duplicate rows detected</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">error_count</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">integer</td><td class="px-6 py-2">default: 0</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Rows that failed to import</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">column_mapping</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">jsonb</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Column mapping used for this session</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">detected_date_format</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar(20)</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Auto-detected date format</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">detected_amount_convention</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar(20)</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Amount sign convention used</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">started_at / completed_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Import execution timestamps</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">created_at / updated_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Timestamps</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5"><li>INDEX (user_id)</li><li>INDEX (account_id)</li><li>INDEX (import_template_id)</li></ul>
+    </div>
+  </div>
+
+  <%# ── import_session_rows ── %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">import_session_rows</h2>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Individual rows parsed from an import file — raw data, mapped fields, classification, and import status</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead><tr class="border-b border-gray-100 dark:border-gray-700"><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Column</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Type</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Constraints</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Description</th></tr></thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr><td class="px-6 py-2 font-mono font-medium text-gray-900 dark:text-white">id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">PK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Primary key</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">import_session_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; import_sessions</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Parent import session</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">row_number</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">integer</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Row position in source file</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">raw_data</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">jsonb</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Original column values as parsed</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">mapped_data</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">jsonb</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Normalized fields (date, description, amount, reference)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">classification</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar(20)</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">payment, deposit, transfer, or skip</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">assigned_data</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">jsonb</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Category/source/destination per classification</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">status</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar(20)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> default: pending</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">pending/imported/skipped/duplicate/error</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">error_message</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">text</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Error details if import failed</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">duplicate_key</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar(64)</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">SHA-256 hash for duplicate detection</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">created_record_type</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar(30)</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Payment/IncomeEntry/TransferMaster</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">created_record_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">FK to the created record</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">created_at / updated_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Timestamps</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5"><li>INDEX (import_session_id)</li><li>INDEX (import_session_id, status)</li><li>INDEX (duplicate_key)</li></ul>
+    </div>
+  </div>
+
   <%# ── Foreign Keys Summary ── %>
   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 overflow-hidden">
     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">

@@ -1,10 +1,27 @@
-APP_VERSION = "1.3.18"
-QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
+APP_VERSION = "1.3.19"
+QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
-MANUAL_CHANGE_SEQ = 45  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.19",
+    changes: [
+      "Smart Import: 5-step wizard for importing bank transactions from CSV, OFX, QFX, and QBO files (CM-1)",
+      "Smart Import: Step 1 — Account selection and file upload with drag-and-drop zone, CSV parsed client-side, OFX/QFX/QBO parsed server-side via Nokogiri (CM-1)",
+      "Smart Import: Step 2 — Column mapping with auto-detection heuristics and confidence indicators (HIGH/MEDIUM/LOW), date format detection, amount sign convention (CM-1)",
+      "Smart Import: Step 3 — Transaction classification (Payment/Deposit/Transfer/Skip) with auto-classify, filter tabs, bulk actions, and pagination (CM-1)",
+      "Smart Import: Step 4 — Assignment details per classification — spending categories for payments, source names for deposits, destination accounts for transfers (CM-1)",
+      "Smart Import: Step 5 — Confirmation summary with counts, totals, duplicate warnings, progress bar during import, and save-as-template prompt (CM-1)",
+      "Smart Import: Baby-step UX — conversational question headers, hover tooltips explaining each step, main-element highlighting, micro-feedback on completion (CM-1)",
+      "Smart Import: Saved templates — auto-suggest matching templates by column signature (SHA-256), full template CRUD management (CM-1)",
+      "Smart Import: Duplicate detection — SHA-256 hash of date+amount+description compared against existing records within +-3 day window (CM-1)",
+      "Smart Import: Import executor creates Payment, IncomeEntry, and TransferMaster records with correct balance adjustments in individual transactions (CM-1)",
+      "Database: New import_templates, import_sessions, and import_session_rows tables with jsonb column mapping and classification data (CM-1)",
+      "Navigation: Smart Import added to Accounts sidebar group and as button on Payments, Deposits, and Transfers screens (CM-1)",
+    ]
+  },
   {
     version: "1.3.18",
     changes: [
