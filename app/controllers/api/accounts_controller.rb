@@ -99,10 +99,16 @@ module Api
 
     def resolve_account_type(account)
       return if account.account_type_id.present?
-      return unless account.account_type_master_id.present?
 
-      master = AccountTypeMaster.find_by(id: account.account_type_master_id)
+      if account.account_type_master_id.present?
+        master = AccountTypeMaster.find_by(id: account.account_type_master_id)
+      else
+        # No type info provided — use first active master as default
+        master = AccountTypeMaster.where(is_active: true).order(:sort_order).first
+      end
       return unless master
+
+      account.account_type_master_id ||= master.id
 
       # Find or create a legacy account_type record for this user matching the master
       legacy = current_user.account_types.unscoped
