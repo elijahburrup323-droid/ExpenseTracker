@@ -267,7 +267,6 @@ module Api
       recent = base
                  .order(payment_date: :desc, sort_order: :desc)
                  .includes(:account, spending_category: :spending_type)
-                 .limit(5)
                  .map { |p| { date: p.payment_date.strftime("%-m/%-d"), description: p.description, amount: p.amount.to_f } }
 
       { recent: recent }

@@ -128,20 +128,18 @@ class DashboardController < ApplicationController
                                           .order(:created_at)
     @new_account_balance_total = @new_budget_accounts.sum(:beginning_balance)
 
-    # Card 5: Recent Activity — open-month scoped, last 5 payments
+    # Card 5: Recent Activity — all open-month payments (scrollable card)
     @recent_payments = current_user.payments
                                    .where(payment_date: @month_start...@month_end)
                                    .order(payment_date: :desc, sort_order: :desc)
                                    .includes(:account, spending_category: :spending_type)
-                                   .limit(5)
 
-    # Card 4 back & Card 5 back: Recent income entries for the month
+    # Card 4 back & Card 5 back: All income entries for the month (scrollable)
     @recent_income_entries = current_user.income_entries
                                          .where(received_flag: true)
                                          .where(entry_date: @month_start...@month_end)
                                          .order(entry_date: :desc)
                                          .includes(:account)
-                                         .limit(5)
 
     # Card 6: Buckets summary (grouped by account)
     user_buckets = current_user.buckets.active.includes(:account).ordered
