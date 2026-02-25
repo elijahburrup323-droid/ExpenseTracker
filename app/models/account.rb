@@ -29,17 +29,37 @@ class Account < ApplicationRecord
 
   # Computes { assets:, liabilities:, net_worth: } from any accounts scope.
   # Single source of truth for net worth math — replaces all raw sum(:balance) calls.
+  # Liabilities are stored as negative values, so net_worth = assets + liabilities.
   def self.net_worth_for(accounts_scope)
     credit_ids = AccountTypeMaster.where(normal_balance_type: "CREDIT").pluck(:id)
     asset_total = accounts_scope.where.not(account_type_master_id: credit_ids).sum(:balance)
     liability_total = accounts_scope.where(account_type_master_id: credit_ids).sum(:balance)
-    { assets: asset_total.to_f, liabilities: liability_total.to_f, net_worth: (asset_total - liability_total).to_f }
+    { assets: asset_total.to_f, liabilities: liability_total.to_f, net_worth: (asset_total + liability_total).to_f }
   end
 
-  # Returns 1 for DEBIT (asset) accounts, -1 for CREDIT (liability) accounts.
-  # All balance operations multiply by this value to get correct sign behavior.
-  def balance_multiplier
-    account_type_master&.normal_balance_type == "CREDIT" ? -1 : 1
+  # --- Centralized balance operations ---
+  # All account types use the same arithmetic: payments subtract, deposits add,
+  # transfers-in add, transfers-out subtract. No sign multiplier needed because
+  # CREDIT (liability) accounts store negative balances directly.
+
+  def apply_payment!(amount)
+    self.balance -= amount
+    save!
+  end
+
+  def reverse_payment!(amount)
+    self.balance += amount
+    save!
+  end
+
+  def apply_transfer_in!(amount)
+    self.balance += amount
+    save!
+  end
+
+  def apply_transfer_out!(amount)
+    self.balance -= amount
+    save!
   end
 
   def buckets_enabled?

@@ -64,10 +64,9 @@ class ImportExecutorService
       notes: "Imported via Smart Import"
     )
 
-    # Adjust account balance (matches payments_controller.rb line 39)
+    # Adjust account balance (sign-aware via centralized method)
     @account.reload
-    @account.balance -= payment.amount
-    @account.save!
+    @account.apply_payment!(payment.amount)
 
     flag_open_month(date, "payment")
     row.update!(created_record_type: "Payment", created_record_id: payment.id)
@@ -88,7 +87,12 @@ class ImportExecutorService
       received_flag: true
     )
 
-    # Adjust account balance (matches income_entries_controller.rb line 19)
+    # Guard: deposits to CREDIT (liability) accounts are invalid
+    if @account.account_type_master&.normal_balance_type == "CREDIT"
+      raise "Deposits cannot be imported to liability (CREDIT) accounts. Use a transfer instead."
+    end
+
+    # Adjust account balance (deposits only to DEBIT accounts, no multiplier needed)
     @account.reload
     @account.balance += entry.amount
     @account.save!
@@ -120,16 +124,12 @@ class ImportExecutorService
       memo: mapped["description"].to_s.truncate(255)
     )
 
-    # Adjust account balances for inter-account transfers
-    # (matches transfer_masters_controller.rb lines 33-41)
+    # Adjust account balances for inter-account transfers (sign-aware via centralized methods)
     unless from_account.id == to_account.id
       from_account.reload
-      from_account.balance -= transfer.amount
-      from_account.save!
-
+      from_account.apply_transfer_out!(transfer.amount)
       to_account.reload
-      to_account.balance += transfer.amount
-      to_account.save!
+      to_account.apply_transfer_in!(transfer.amount)
     end
 
     flag_open_month(date, "transfer")

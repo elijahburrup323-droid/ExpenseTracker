@@ -31,13 +31,8 @@ module Api
         if transfer.save
           # Only adjust account balances for inter-account transfers
           unless transfer.from_account_id == transfer.to_account_id
-            from_acct = transfer.from_account
-            from_acct.balance -= from_acct.balance_multiplier * transfer.amount
-            from_acct.save!
-
-            to_acct = transfer.to_account
-            to_acct.balance += to_acct.balance_multiplier * transfer.amount
-            to_acct.save!
+            transfer.from_account.apply_transfer_out!(transfer.amount)
+            transfer.to_account.apply_transfer_in!(transfer.amount)
           end
 
           apply_transfer_bucket_transactions(transfer)
@@ -63,10 +58,8 @@ module Api
         if @transfer.update(transfer_params)
           # Reverse old transfer (only if inter-account)
           unless old_was_reallocation
-            old_from.balance += old_from.balance_multiplier * old_amount
-            old_from.save!
-            old_to.balance -= old_to.balance_multiplier * old_amount
-            old_to.save!
+            old_from.apply_transfer_in!(old_amount)   # reverse the transfer-out
+            old_to.apply_transfer_out!(old_amount)    # reverse the transfer-in
           end
 
           # Apply new transfer (only if inter-account)
@@ -75,10 +68,8 @@ module Api
           new_is_reallocation = new_from.id == new_to.id
 
           unless new_is_reallocation
-            new_from.balance -= new_from.balance_multiplier * @transfer.amount
-            new_from.save!
-            new_to.balance += new_to.balance_multiplier * @transfer.amount
-            new_to.save!
+            new_from.apply_transfer_out!(@transfer.amount)
+            new_to.apply_transfer_in!(@transfer.amount)
           end
 
           # Reverse old bucket transactions and apply new ones
@@ -97,13 +88,8 @@ module Api
       ActiveRecord::Base.transaction do
         # Only adjust account balances for inter-account transfers
         unless @transfer.from_account_id == @transfer.to_account_id
-          from_acct = @transfer.from_account
-          from_acct.balance += from_acct.balance_multiplier * @transfer.amount
-          from_acct.save!
-
-          to_acct = @transfer.to_account
-          to_acct.balance -= to_acct.balance_multiplier * @transfer.amount
-          to_acct.save!
+          @transfer.from_account.apply_transfer_in!(@transfer.amount)   # reverse the transfer-out
+          @transfer.to_account.apply_transfer_out!(@transfer.amount)    # reverse the transfer-in
         end
 
         reverse_transfer_bucket_transactions(@transfer.from_bucket_id, @transfer.to_bucket_id, @transfer.amount, @transfer)

@@ -1,13 +1,17 @@
 APP_VERSION = "1.3.20"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
-MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 1  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
   {
     version: "1.3.20",
     changes: [
+      "Accounting Sign Architecture: Centralized balance operations (apply_payment!, reverse_payment!, apply_transfer_in!, apply_transfer_out!) on Account model — single source of truth for sign-aware math via balance_multiplier (CM-31)",
+      "Accounting Sign Architecture: Fixed ImportExecutorService missing balance_multiplier — Smart Import to CREDIT accounts now produces correct balances (CM-31)",
+      "Accounting Sign Architecture: Added CREDIT deposit guard in Smart Import — deposits to liability accounts blocked with clear error message (CM-31)",
+      "Accounting Sign Architecture: Refactored PaymentsController and TransferMastersController to use centralized Account balance methods, eliminating inline arithmetic duplication (CM-31)",
       "Smart Import: Step 3 rewritten as Q&A cards — groups similar transactions by normalized description, user answers once per group instead of per row (CM-2)",
       "Smart Import: Transfer grouping — transfers auto-detected by account suffix (*2685, *2876 etc.) with direction-aware from/to account assignment (CM-2)",
       "Smart Import: Step 4 rewritten as combined Review table — pre-filled with group answers, supports per-row overrides with filter tabs and pagination (CM-2)",

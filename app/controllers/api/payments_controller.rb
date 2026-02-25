@@ -35,9 +35,7 @@ module Api
         if payment.save
           sync_tags!(payment)
           learn_category_defaults!(payment)
-          account = payment.account
-          account.balance -= account.balance_multiplier * payment.amount
-          account.save!
+          payment.account.apply_payment!(payment.amount)
           handle_bucket_execution_create(payment) if payment.is_bucket_execution && payment.bucket_id.present?
           flag_open_month_has_data(payment.payment_date, "payment")
           render json: payment_json(payment), status: :created
@@ -64,12 +62,10 @@ module Api
         if @payment.update(payment_params)
           sync_tags!(@payment)
           learn_category_defaults!(@payment)
-          old_account.balance += old_account.balance_multiplier * old_amount
-          old_account.save!
+          old_account.reverse_payment!(old_amount)
 
           new_account = @payment.reload.account
-          new_account.balance -= new_account.balance_multiplier * @payment.amount
-          new_account.save!
+          new_account.apply_payment!(@payment.amount)
 
           handle_bucket_execution_update(@payment, old_bucket_id, old_was_bucket_execution, old_amount)
 
@@ -83,9 +79,7 @@ module Api
 
     def destroy
       ActiveRecord::Base.transaction do
-        account = @payment.account
-        account.balance += account.balance_multiplier * @payment.amount
-        account.save!
+        @payment.account.reverse_payment!(@payment.amount)
         reverse_bucket_execution(@payment) if @payment.is_bucket_execution && @payment.bucket_id.present?
         @payment.soft_delete!
       end
@@ -332,11 +326,9 @@ module Api
       )
 
       from_account.reload
-      from_account.balance -= from_account.balance_multiplier * payment.amount
-      from_account.save!
+      from_account.apply_transfer_out!(payment.amount)
       to_account.reload
-      to_account.balance += to_account.balance_multiplier * payment.amount
-      to_account.save!
+      to_account.apply_transfer_in!(payment.amount)
     end
 
     def cleanup_bucket_auto_transfer(payment)
@@ -348,11 +340,9 @@ module Api
       from_account = transfer.from_account
       to_account = transfer.to_account
       from_account.reload
-      from_account.balance += from_account.balance_multiplier * transfer.amount
-      from_account.save!
+      from_account.apply_transfer_in!(transfer.amount)   # reverse the transfer-out
       to_account.reload
-      to_account.balance -= to_account.balance_multiplier * transfer.amount
-      to_account.save!
+      to_account.apply_transfer_out!(transfer.amount)    # reverse the transfer-in
 
       transfer.soft_delete!
     end
