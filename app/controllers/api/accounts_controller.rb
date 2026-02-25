@@ -86,7 +86,7 @@ module Api
       type_name = master&.display_name || a.account_type&.name || ""
       type_desc = master&.description || a.account_type&.description || ""
       nbt = master&.normal_balance_type || "DEBIT"
-      display_bal = nbt == "CREDIT" ? -a.balance.to_f.abs : a.balance.to_f
+      display_bal = a.balance.to_f
       a.as_json(only: [:id, :name, :institution, :balance, :include_in_budget, :icon_key, :color_key, :sort_order])
         .merge(
           account_type_id: a.account_type_id,

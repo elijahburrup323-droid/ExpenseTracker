@@ -221,7 +221,7 @@ module Api
       accounts_list = all_accounts.map do |a|
         bal = (ctx[:all_balances][a.id] || a.balance).to_f
         is_liability = credit_ids.include?(a.account_type_master_id)
-        display_bal = is_liability ? -bal.abs : bal
+        display_bal = bal
         { name: a.name, balance: bal.round(2), display_balance: display_bal.round(2), normal_balance_type: is_liability ? "CREDIT" : "DEBIT" }
       end
       nw = Account.net_worth_for(current_user.accounts)
