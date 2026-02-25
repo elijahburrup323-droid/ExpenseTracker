@@ -86,10 +86,10 @@ class DashboardController < ApplicationController
 
     # Card 2: Accounts — all accounts (passed as @accounts)
 
-    # Card 3: Net Worth — assets minus liabilities (read-layer normalization via normal_balance_type)
+    # Card 3: Net Worth — assets plus liabilities (liabilities stored as negative)
     asset_total = @accounts.where.not(account_type_master_id: credit_master_ids).sum(:balance)
     liability_total = @accounts.where(account_type_master_id: credit_master_ids).sum(:balance)
-    @net_worth = asset_total - liability_total
+    @net_worth = asset_total + liability_total
     backfill_net_worth_snapshots_if_needed
     @net_worth_snapshots = current_user.net_worth_snapshots.eligible_for_user(current_user).recent(6).to_a.sort_by(&:snapshot_date)
     if @net_worth_snapshots.size >= 2
@@ -191,10 +191,10 @@ class DashboardController < ApplicationController
       snap.update!(amount: dms.net_worth) if snap.new_record? || snap.amount != dms.net_worth
     end
 
-    # Add/update current month snapshot with live net worth (assets minus liabilities)
+    # Add/update current month snapshot with live net worth (assets + liabilities, liabilities stored negative)
     current_month_end = Date.new(@open_month.current_year, @open_month.current_month, -1)
     credit_ids = AccountTypeMaster.where(normal_balance_type: "CREDIT").pluck(:id)
-    live_nw = current_user.accounts.where.not(account_type_master_id: credit_ids).sum(:balance) -
+    live_nw = current_user.accounts.where.not(account_type_master_id: credit_ids).sum(:balance) +
               current_user.accounts.where(account_type_master_id: credit_ids).sum(:balance)
     snap = current_user.net_worth_snapshots.find_or_initialize_by(snapshot_date: current_month_end)
     snap.update!(amount: live_nw)

@@ -14,13 +14,6 @@ module Api
     def create
       entry = current_user.income_entries.build(entry_params)
 
-      # Deposits are only valid for DEBIT-normal (asset) accounts
-      if entry.account_id.present?
-        acct = current_user.accounts.find_by(id: entry.account_id)
-        if acct&.account_type_master&.normal_balance_type == "CREDIT"
-          return render json: { errors: ["Deposits cannot be made to liability (CREDIT) accounts. Use a transfer to pay down a liability."] }, status: :unprocessable_entity
-        end
-      end
 
       ActiveRecord::Base.transaction do
         if entry.save
@@ -35,14 +28,6 @@ module Api
     end
 
     def update
-      # Deposits are only valid for DEBIT-normal (asset) accounts
-      new_account_id = params.dig(:income_entry, :account_id)
-      if new_account_id.present?
-        acct = current_user.accounts.find_by(id: new_account_id)
-        if acct&.account_type_master&.normal_balance_type == "CREDIT"
-          return render json: { errors: ["Deposits cannot be made to liability (CREDIT) accounts. Use a transfer to pay down a liability."] }, status: :unprocessable_entity
-        end
-      end
 
       old_amount = @entry.amount
       old_account_id = @entry.account_id
