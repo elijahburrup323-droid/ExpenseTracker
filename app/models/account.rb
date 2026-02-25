@@ -27,14 +27,63 @@ class Account < ApplicationRecord
   validates :balance, numericality: true
   validates :beginning_balance, numericality: true
 
-  # Computes { assets:, liabilities:, net_worth: } from any accounts scope.
-  # Single source of truth for net worth math — replaces all raw sum(:balance) calls.
-  # Liabilities are stored as negative values, so net_worth = assets + liabilities.
+  # Computes { assets:, liabilities:, net_worth: } using the full formula:
+  # Net Worth = (Accounts + Assets + Investments + Receivables) − (Liabilities + Payables)
+  #
+  # Since CREDIT accounts store negative balances and FinancingInstrument#net_worth_value
+  # returns negative for PAYABLE: net_worth = account_balances + asset_values +
+  # investment_values + financing_values.
+  #
+  # Single source of truth for net worth math — all net worth goes through this method.
   def self.net_worth_for(accounts_scope)
     credit_ids = AccountTypeMaster.where(normal_balance_type: "CREDIT").pluck(:id)
-    asset_total = accounts_scope.where.not(account_type_master_id: credit_ids).sum(:balance)
-    liability_total = accounts_scope.where(account_type_master_id: credit_ids).sum(:balance)
-    { assets: asset_total.to_f, liabilities: liability_total.to_f, net_worth: (asset_total + liability_total).to_f }
+
+    # 1. Account balances (existing behavior)
+    account_asset_total = accounts_scope.where.not(account_type_master_id: credit_ids).sum(:balance)
+    account_liability_total = accounts_scope.where(account_type_master_id: credit_ids).sum(:balance)
+
+    # 2-4. New modules: Assets, Investments, Financing
+    user_id = accounts_scope.limit(1).pick(:user_id)
+    asset_total = BigDecimal("0")
+    investment_total = BigDecimal("0")
+    financing_total = BigDecimal("0")
+
+    if user_id.present?
+      # Assets: always positive (DEBIT-normal)
+      asset_total = Asset.where(user_id: user_id, include_in_net_worth: true)
+                         .where(deleted_at: nil)
+                         .sum(:current_value)
+
+      # Investment holdings: market value (shares_held * current_price)
+      investment_total = InvestmentHolding
+                           .where(user_id: user_id, include_in_net_worth: true)
+                           .where(deleted_at: nil)
+                           .where.not(current_price: nil)
+                           .sum("shares_held * current_price")
+
+      # Financing instruments: PAYABLE = negative, RECEIVABLE = positive
+      payable_total = FinancingInstrument
+                        .where(user_id: user_id, instrument_type: "PAYABLE", include_in_net_worth: true)
+                        .where(deleted_at: nil)
+                        .sum(:current_principal)
+      receivable_total = FinancingInstrument
+                           .where(user_id: user_id, instrument_type: "RECEIVABLE", include_in_net_worth: true)
+                           .where(deleted_at: nil)
+                           .sum(:current_principal)
+      financing_total = receivable_total - payable_total
+    end
+
+    # Combine all components
+    total_assets = account_asset_total + asset_total + investment_total +
+                   (financing_total > 0 ? financing_total : BigDecimal("0"))
+    total_liabilities = account_liability_total +
+                        (financing_total < 0 ? financing_total : BigDecimal("0"))
+
+    {
+      assets: total_assets.to_f,
+      liabilities: total_liabilities.to_f,
+      net_worth: (total_assets + total_liabilities).to_f
+    }
   end
 
   # --- Centralized balance operations ---

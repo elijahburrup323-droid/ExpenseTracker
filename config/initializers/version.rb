@@ -1,10 +1,20 @@
-APP_VERSION = "1.3.20"
+APP_VERSION = "1.3.21"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
-MANUAL_CHANGE_SEQ = 3  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.21",
+    changes: [
+      "Assets Module: Database tables for asset_types (14 system defaults + custom per-user) and assets with current_value, include_in_net_worth, and soft delete (Instruction Set 1/4)",
+      "Investments Module: Database tables for investment_holdings, investment_transactions, and investment_lots with FIFO cost basis tracking (Instruction Set 1/4)",
+      "Financing Module: Database tables for financing_instruments (PAYABLE/RECEIVABLE), financing_payments with allocation tracking, and amortization_schedule_entries (Instruction Set 1/4)",
+      "Net Worth: Updated Account.net_worth_for to include Assets, Investment Holdings, and Financing Instruments — formula: (Accounts + Assets + Investments + Receivables) - (Liabilities + Payables) (Instruction Set 1/4)",
+      "Feature Store: Added assets, investments, and financing feature blocks in Net Worth category with accounts_basic dependency (Instruction Set 1/4)",
+    ]
+  },
   {
     version: "1.3.20",
     changes: [

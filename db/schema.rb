@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_25_000003) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_25_000013) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_stat_statements"
   enable_extension "plpgsql"
@@ -85,6 +85,66 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_25_000003) do
     t.index ["account_type_master_id"], name: "index_accounts_on_account_type_master_id"
     t.index ["user_id", "sort_order"], name: "index_accounts_on_user_id_and_sort_order"
     t.index ["user_id"], name: "index_accounts_on_user_id"
+  end
+
+  create_table "amortization_schedule_entries", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "financing_instrument_id", null: false
+    t.integer "period_number", null: false
+    t.date "due_date", null: false
+    t.decimal "payment_amount", precision: 12, scale: 2, null: false
+    t.decimal "principal_amount", precision: 12, scale: 2, null: false
+    t.decimal "interest_amount", precision: 12, scale: 2, null: false
+    t.decimal "extra_principal_amount", precision: 12, scale: 2, default: "0.0", null: false
+    t.decimal "beginning_balance", precision: 12, scale: 2, null: false
+    t.decimal "ending_balance", precision: 12, scale: 2, null: false
+    t.boolean "is_actual", default: false, null: false
+    t.bigint "financing_payment_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["financing_instrument_id", "period_number"], name: "idx_amort_entries_instr_period", unique: true
+    t.index ["financing_instrument_id"], name: "index_amortization_schedule_entries_on_financing_instrument_id"
+    t.index ["financing_payment_id"], name: "index_amortization_schedule_entries_on_financing_payment_id"
+    t.index ["user_id", "financing_instrument_id"], name: "idx_amort_entries_user_instr"
+    t.index ["user_id"], name: "index_amortization_schedule_entries_on_user_id"
+  end
+
+  create_table "asset_types", force: :cascade do |t|
+    t.bigint "user_id"
+    t.string "name", limit: 80, null: false
+    t.string "normalized_key", limit: 80, null: false
+    t.string "description", limit: 255
+    t.string "icon_key", limit: 40
+    t.boolean "is_active", default: true, null: false
+    t.integer "sort_order", default: 0, null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["normalized_key"], name: "idx_asset_types_system_key_unique", unique: true, where: "((user_id IS NULL) AND (deleted_at IS NULL))"
+    t.index ["sort_order"], name: "index_asset_types_on_sort_order"
+    t.index ["user_id", "normalized_key"], name: "idx_asset_types_user_key_unique", unique: true, where: "((user_id IS NOT NULL) AND (deleted_at IS NULL))"
+    t.index ["user_id"], name: "index_asset_types_on_user_id"
+  end
+
+  create_table "assets", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "asset_type_id", null: false
+    t.string "name", limit: 80, null: false
+    t.string "description", limit: 255
+    t.decimal "current_value", precision: 12, scale: 2, default: "0.0", null: false
+    t.decimal "purchase_price", precision: 12, scale: 2
+    t.date "purchase_date"
+    t.boolean "include_in_net_worth", default: true, null: false
+    t.string "notes", limit: 1000
+    t.integer "sort_order", default: 0, null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "user_id, lower((name)::text)", name: "idx_assets_user_name_unique", unique: true, where: "(deleted_at IS NULL)"
+    t.index ["asset_type_id"], name: "index_assets_on_asset_type_id"
+    t.index ["user_id", "asset_type_id"], name: "index_assets_on_user_id_and_asset_type_id"
+    t.index ["user_id", "deleted_at"], name: "index_assets_on_user_id_and_deleted_at"
+    t.index ["user_id"], name: "index_assets_on_user_id"
   end
 
   create_table "balance_adjustments", force: :cascade do |t|
@@ -260,6 +320,58 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_25_000003) do
     t.index ["key"], name: "index_feature_blocks_on_key", unique: true
   end
 
+  create_table "financing_instruments", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "account_id"
+    t.string "name", limit: 80, null: false
+    t.string "description", limit: 255
+    t.string "instrument_type", limit: 10, null: false
+    t.string "instrument_subtype", limit: 40
+    t.decimal "original_principal", precision: 12, scale: 2, null: false
+    t.decimal "current_principal", precision: 12, scale: 2, null: false
+    t.decimal "interest_rate", precision: 7, scale: 4, null: false
+    t.integer "term_months", null: false
+    t.date "start_date", null: false
+    t.date "maturity_date"
+    t.string "payment_frequency", limit: 20, default: "MONTHLY", null: false
+    t.decimal "monthly_payment", precision: 12, scale: 2
+    t.string "lender_or_borrower", limit: 120
+    t.boolean "include_in_net_worth", default: true, null: false
+    t.text "notes"
+    t.integer "sort_order", default: 0, null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "user_id, lower((name)::text)", name: "idx_fin_instr_user_name_unique", unique: true, where: "(deleted_at IS NULL)"
+    t.index ["account_id"], name: "index_financing_instruments_on_account_id"
+    t.index ["user_id", "deleted_at"], name: "index_financing_instruments_on_user_id_and_deleted_at"
+    t.index ["user_id", "instrument_type"], name: "idx_fin_instr_user_type"
+    t.index ["user_id"], name: "index_financing_instruments_on_user_id"
+  end
+
+  create_table "financing_payments", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "financing_instrument_id", null: false
+    t.date "payment_date", null: false
+    t.decimal "total_amount", precision: 12, scale: 2, null: false
+    t.decimal "principal_amount", precision: 12, scale: 2, default: "0.0", null: false
+    t.decimal "interest_amount", precision: 12, scale: 2, default: "0.0", null: false
+    t.decimal "extra_principal_amount", precision: 12, scale: 2, default: "0.0", null: false
+    t.decimal "escrow_amount", precision: 12, scale: 2, default: "0.0", null: false
+    t.decimal "fees_amount", precision: 12, scale: 2, default: "0.0", null: false
+    t.decimal "principal_balance_after", precision: 12, scale: 2, null: false
+    t.integer "payment_number"
+    t.string "notes", limit: 500
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["financing_instrument_id", "payment_date"], name: "idx_fin_payments_instr_date"
+    t.index ["financing_instrument_id"], name: "index_financing_payments_on_financing_instrument_id"
+    t.index ["user_id", "deleted_at"], name: "idx_fin_payments_user_deleted"
+    t.index ["user_id", "payment_date"], name: "idx_fin_payments_user_date"
+    t.index ["user_id"], name: "index_financing_payments_on_user_id"
+  end
+
   create_table "identities", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "provider", null: false
@@ -412,6 +524,72 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_25_000003) do
     t.index ["frequency_master_id"], name: "index_income_user_frequencies_on_frequency_master_id"
     t.index ["user_id", "frequency_master_id"], name: "idx_income_user_freq_unique", unique: true
     t.index ["user_id"], name: "index_income_user_frequencies_on_user_id"
+  end
+
+  create_table "investment_holdings", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "account_id", null: false
+    t.string "ticker_symbol", limit: 20
+    t.string "security_name", limit: 120, null: false
+    t.string "security_type", limit: 40, default: "STOCK", null: false
+    t.decimal "shares_held", precision: 16, scale: 6, default: "0.0", null: false
+    t.decimal "cost_basis_total", precision: 12, scale: 2, default: "0.0", null: false
+    t.decimal "current_price", precision: 12, scale: 4
+    t.datetime "price_as_of"
+    t.boolean "include_in_net_worth", default: true, null: false
+    t.text "notes"
+    t.integer "sort_order", default: 0, null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "ticker_symbol"], name: "idx_inv_holdings_acct_ticker_unique", unique: true, where: "((deleted_at IS NULL) AND (ticker_symbol IS NOT NULL))"
+    t.index ["account_id"], name: "index_investment_holdings_on_account_id"
+    t.index ["user_id", "account_id"], name: "index_investment_holdings_on_user_id_and_account_id"
+    t.index ["user_id", "deleted_at"], name: "index_investment_holdings_on_user_id_and_deleted_at"
+    t.index ["user_id"], name: "index_investment_holdings_on_user_id"
+  end
+
+  create_table "investment_lots", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "investment_holding_id", null: false
+    t.bigint "buy_transaction_id", null: false
+    t.bigint "sell_transaction_id"
+    t.date "acquired_date", null: false
+    t.decimal "shares_acquired", precision: 16, scale: 6, null: false
+    t.decimal "shares_remaining", precision: 16, scale: 6, null: false
+    t.decimal "cost_per_share", precision: 12, scale: 4, null: false
+    t.decimal "cost_basis", precision: 12, scale: 2, null: false
+    t.string "status", limit: 10, default: "OPEN", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["buy_transaction_id"], name: "index_investment_lots_on_buy_transaction_id"
+    t.index ["investment_holding_id", "acquired_date"], name: "idx_inv_lots_holding_acquired"
+    t.index ["investment_holding_id", "status"], name: "idx_inv_lots_holding_status"
+    t.index ["investment_holding_id"], name: "index_investment_lots_on_investment_holding_id"
+    t.index ["sell_transaction_id"], name: "index_investment_lots_on_sell_transaction_id"
+    t.index ["user_id", "status"], name: "idx_inv_lots_user_status"
+    t.index ["user_id"], name: "index_investment_lots_on_user_id"
+  end
+
+  create_table "investment_transactions", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "investment_holding_id", null: false
+    t.string "transaction_type", limit: 10, null: false
+    t.date "transaction_date", null: false
+    t.decimal "shares", precision: 16, scale: 6, null: false
+    t.decimal "price_per_share", precision: 12, scale: 4, null: false
+    t.decimal "total_amount", precision: 12, scale: 2, null: false
+    t.decimal "fees", precision: 12, scale: 2, default: "0.0", null: false
+    t.decimal "realized_gain", precision: 12, scale: 2
+    t.string "notes", limit: 500
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["investment_holding_id", "transaction_date"], name: "idx_inv_txns_holding_date"
+    t.index ["investment_holding_id"], name: "index_investment_transactions_on_investment_holding_id"
+    t.index ["user_id", "deleted_at"], name: "idx_inv_txns_user_deleted"
+    t.index ["user_id", "transaction_date"], name: "idx_inv_txns_user_date"
+    t.index ["user_id"], name: "index_investment_transactions_on_user_id"
   end
 
   create_table "legal_page_sections", force: :cascade do |t|
@@ -942,6 +1120,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_25_000003) do
   add_foreign_key "accounts", "account_type_masters"
   add_foreign_key "accounts", "account_types"
   add_foreign_key "accounts", "users"
+  add_foreign_key "amortization_schedule_entries", "financing_instruments"
+  add_foreign_key "amortization_schedule_entries", "financing_payments"
+  add_foreign_key "amortization_schedule_entries", "users"
+  add_foreign_key "asset_types", "users"
+  add_foreign_key "assets", "asset_types"
+  add_foreign_key "assets", "users"
   add_foreign_key "balance_adjustments", "accounts"
   add_foreign_key "balance_adjustments", "users"
   add_foreign_key "bucket_transactions", "buckets"
@@ -960,6 +1144,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_25_000003) do
   add_foreign_key "dashboard_slots", "users"
   add_foreign_key "feature_block_dependencies", "feature_blocks"
   add_foreign_key "feature_block_dependencies", "feature_blocks", column: "depends_on_id"
+  add_foreign_key "financing_instruments", "accounts"
+  add_foreign_key "financing_instruments", "users"
+  add_foreign_key "financing_payments", "financing_instruments"
+  add_foreign_key "financing_payments", "users"
   add_foreign_key "identities", "users"
   add_foreign_key "import_session_rows", "import_sessions"
   add_foreign_key "import_sessions", "accounts"
@@ -976,6 +1164,14 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_25_000003) do
   add_foreign_key "income_recurrings", "users"
   add_foreign_key "income_user_frequencies", "income_frequency_masters", column: "frequency_master_id"
   add_foreign_key "income_user_frequencies", "users"
+  add_foreign_key "investment_holdings", "accounts"
+  add_foreign_key "investment_holdings", "users"
+  add_foreign_key "investment_lots", "investment_holdings"
+  add_foreign_key "investment_lots", "investment_transactions", column: "buy_transaction_id"
+  add_foreign_key "investment_lots", "investment_transactions", column: "sell_transaction_id"
+  add_foreign_key "investment_lots", "users"
+  add_foreign_key "investment_transactions", "investment_holdings"
+  add_foreign_key "investment_transactions", "users"
   add_foreign_key "legal_page_sections", "legal_pages"
   add_foreign_key "net_worth_snapshots", "users"
   add_foreign_key "open_month_masters", "users"

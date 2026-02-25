@@ -183,12 +183,26 @@ Any modification to Net Worth aggregation, Cost basis method, Amortization math,
 - **Sidebar Flash Pulse** — When a feature is activated, the user is redirected to `activate_path?flash_sidebar=1&amp;start_tutorial=1`. The navbar adds a `sidebar-flash-pulse` CSS animation class to the matching sidebar link to draw attention.
 - **Legend** — Feature store legend includes "Free" (green), "Paid Tier" (gold), "Advanced Tier" (blue), "Core" (locked), and "Recommended" (star) indicators.
 
+### Assets, Investments &amp; Financing
+- **asset_types** — Asset category definitions: id, user_id (FK users, nullable = system type), name, normalized_key, description, icon_key, is_active, sort_order, deleted_at, timestamps.
+- **assets** — User physical/intangible assets: id, user_id (FK users), asset_type_id (FK asset_types), name, description, current_value (authoritative), purchase_price, purchase_date, include_in_net_worth, notes, sort_order, deleted_at, timestamps.
+- **investment_holdings** — Per-security holdings within investment accounts: id, user_id (FK users), account_id (FK accounts), ticker_symbol, security_name, security_type (STOCK/ETF/MUTUAL_FUND/BOND/CRYPTO/CASH/OTHER), shares_held, cost_basis_total, current_price, price_as_of, include_in_net_worth, notes, sort_order, deleted_at, timestamps.
+- **investment_transactions** — Buy/sell/dividend/split transactions: id, user_id (FK users), investment_holding_id (FK investment_holdings), transaction_type (BUY/SELL/DIVIDEND/SPLIT), transaction_date, shares, price_per_share, total_amount, fees, realized_gain (SELL only), notes, deleted_at, timestamps.
+- **investment_lots** — FIFO cost basis lots: id, user_id (FK users), investment_holding_id (FK investment_holdings), buy_transaction_id (FK investment_transactions), sell_transaction_id (FK investment_transactions, optional), acquired_date, shares_acquired, shares_remaining, cost_per_share, cost_basis, status (OPEN/PARTIAL/CLOSED), timestamps. No deleted_at.
+- **financing_instruments** — PAYABLE/RECEIVABLE financing: id, user_id (FK users), account_id (FK accounts, optional), name, description, instrument_type (PAYABLE/RECEIVABLE), instrument_subtype (MORTGAGE/AUTO_LOAN/etc.), original_principal, current_principal, interest_rate, term_months, start_date, maturity_date, payment_frequency, monthly_payment, lender_or_borrower, include_in_net_worth, notes, sort_order, deleted_at, timestamps.
+- **financing_payments** — Payment history: id, user_id (FK users), financing_instrument_id (FK financing_instruments), payment_date, total_amount, principal_amount, interest_amount, extra_principal_amount, escrow_amount, fees_amount, principal_balance_after, payment_number, notes, deleted_at, timestamps.
+- **amortization_schedule_entries** — Projected amortization rows: id, user_id (FK users), financing_instrument_id (FK financing_instruments), period_number, due_date, payment_amount, principal_amount, interest_amount, extra_principal_amount, beginning_balance, ending_balance, is_actual, financing_payment_id (FK financing_payments, optional), timestamps. No deleted_at.
+
 ### Key Relationships
-- User has_many: spending_types, spending_categories, spending_limit_histories, account_types, accounts, payments, income_user_frequencies, income_recurrings, income_entries, transfer_masters, account_month_snapshots, dashboard_month_snapshots, balance_adjustments, reconciliation_records, import_templates, import_sessions; has_one: open_month_master
+- User has_many: spending_types, spending_categories, spending_limit_histories, account_types, accounts, payments, income_user_frequencies, income_recurrings, income_entries, transfer_masters, account_month_snapshots, dashboard_month_snapshots, balance_adjustments, reconciliation_records, import_templates, import_sessions, asset_types, assets, investment_holdings, investment_transactions, investment_lots, financing_instruments, financing_payments, amortization_schedule_entries; has_one: open_month_master
 - SpendingType has_many spending_categories; SpendingCategory has_many payments
-- AccountType has_many accounts; Account has_many payments, transfers_from, transfers_to, account_month_snapshots
+- AccountType has_many accounts; Account has_many payments, transfers_from, transfers_to, account_month_snapshots, investment_holdings
 - IncomeRecurring has_many income_entries; both link to frequency_master and optional account
-- All user-owned models use soft delete (deleted_at) with default_scope
+- AssetType has_many assets; Asset belongs_to asset_type
+- InvestmentHolding has_many investment_transactions, investment_lots; belongs_to account
+- InvestmentTransaction has_many investment_lots (as buy_transaction); optional sell_transaction link
+- FinancingInstrument has_many financing_payments, amortization_schedule_entries; optional belongs_to account
+- All user-owned models use soft delete (deleted_at) with default_scope (except investment_lots and amortization_schedule_entries)
 
 ## Routes Structure
 ```

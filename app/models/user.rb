@@ -39,6 +39,16 @@ class User < ApplicationRecord
   has_many :import_templates, dependent: :destroy
   has_many :import_sessions, dependent: :destroy
 
+  # Assets, Investments & Financing
+  has_many :asset_types, dependent: :destroy
+  has_many :assets, dependent: :destroy
+  has_many :investment_holdings, dependent: :destroy
+  has_many :investment_transactions, dependent: :destroy
+  has_many :investment_lots, dependent: :destroy
+  has_many :financing_instruments, dependent: :destroy
+  has_many :financing_payments, dependent: :destroy
+  has_many :amortization_schedule_entries, dependent: :destroy
+
   # Progressive Feature Disclosure
   has_one  :onboarding_profile, class_name: "UserOnboardingProfile", dependent: :destroy
   has_many :feature_activations, class_name: "UserFeatureActivation", dependent: :destroy
