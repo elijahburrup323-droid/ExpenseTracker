@@ -15,7 +15,7 @@
         </button>
       </div>
     </div>
-    <ul class="space-y-3 flex-1 overflow-y-auto" style="max-height: calc(100% - 5rem); -webkit-overflow-scrolling: touch;" data-role="card-content">
+    <ul class="space-y-3 flex-1 overflow-y-auto" style="max-height: 320px; -webkit-overflow-scrolling: touch;" data-role="card-content" data-current-page="1" data-has-more="<%= @recent_payments_has_more %>" data-total-count="<%= @recent_payments_total %>">
       <% activity_colors = %w[blue green purple amber sky] %>
       <% @recent_payments.each_with_index do |payment, i| %>
         <% c = activity_colors[i % activity_colors.length] %>
@@ -33,6 +33,15 @@
       <% end %>
       <% if @recent_payments.empty? %>
         <li class="text-sm text-gray-400 dark:text-gray-500">No recent payments.</li>
+      <% end %>
+      <% if @recent_payments_has_more %>
+        <li class="text-center py-2" data-role="load-more-sentinel">
+          <button type="button"
+                  class="text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium"
+                  data-action="click->dashboard#loadMorePayments">
+            Load more (<%= @recent_payments_total - 10 %> remaining)
+          </button>
+        </li>
       <% end %>
     </ul>
     <div class="mt-auto border-t border-gray-100 dark:border-gray-700 flex items-center justify-between" data-role="card-footer">

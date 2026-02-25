@@ -128,11 +128,14 @@ class DashboardController < ApplicationController
                                           .order(:created_at)
     @new_account_balance_total = @new_budget_accounts.sum(:beginning_balance)
 
-    # Card 5: Recent Activity — all open-month payments (scrollable card)
-    @recent_payments = current_user.payments
-                                   .where(payment_date: @month_start...@month_end)
-                                   .order(payment_date: :desc, sort_order: :desc)
-                                   .includes(:account, spending_category: :spending_type)
+    # Card 5: Recent Activity — first page of open-month payments (load more via AJAX)
+    payments_base = current_user.payments.where(payment_date: @month_start...@month_end)
+    @recent_payments_total = payments_base.count
+    @recent_payments_has_more = @recent_payments_total > 10
+    @recent_payments = payments_base
+                         .order(payment_date: :desc, sort_order: :desc)
+                         .includes(:account, spending_category: :spending_type)
+                         .limit(10)
 
     # Card 4 back & Card 5 back: All income entries for the month (scrollable)
     @recent_income_entries = current_user.income_entries

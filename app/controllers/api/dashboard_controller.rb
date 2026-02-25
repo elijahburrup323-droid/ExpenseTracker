@@ -47,7 +47,8 @@ module Api
         as_of_date: as_of_date, all_balances: all_balances,
         beg_balances: beg_balances,
         budget_accounts: budget_accounts, budget_ids: budget_ids,
-        tag_ids: tag_ids
+        tag_ids: tag_ids,
+        page: params[:page]
       }
 
       slots_data = slots.filter_map do |slot|
@@ -92,6 +93,18 @@ module Api
       end
 
       render json: response
+    end
+
+    # GET /api/dashboard/recent_activity_page?month=2&year=2026&page=2
+    def recent_activity_page
+      month = (params[:month] || Date.today.month).to_i.clamp(1, 12)
+      year = (params[:year] || Date.today.year).to_i.clamp(2000, 2100)
+      month_start = Date.new(year, month, 1)
+      month_end = month_start.next_month
+      tag_ids = Array(params[:tag_ids]).map(&:to_i).reject(&:zero?)
+
+      ctx = { month_start: month_start, month_end: month_end, tag_ids: tag_ids, page: params[:page] }
+      render json: compute_recent_activity(ctx)
     end
 
     # PUT /api/dashboard/reorder_slots
@@ -208,7 +221,7 @@ module Api
       accounts_list = all_accounts.map do |a|
         bal = (ctx[:all_balances][a.id] || a.balance).to_f
         is_liability = credit_ids.include?(a.account_type_master_id)
-        display_bal = bal
+        display_bal = is_liability ? -bal.abs : bal
         { name: a.name, balance: bal.round(2), display_balance: display_bal.round(2), normal_balance_type: is_liability ? "CREDIT" : "DEBIT" }
       end
       nw = Account.net_worth_for(current_user.accounts)
@@ -259,17 +272,26 @@ module Api
       { beginning_balance: beginning_balance, income: income, expenses: expenses, new_accounts: new_accounts, current_balance: current_balance }
     end
 
+    RECENT_ACTIVITY_PAGE_SIZE = 10
+
     def compute_recent_activity(ctx)
+      page = (ctx[:page] || 1).to_i.clamp(1, 1000)
+      per_page = RECENT_ACTIVITY_PAGE_SIZE
+
       base = tag_filtered_scope(
         current_user.payments.where(payment_date: ctx[:month_start]...ctx[:month_end]),
         ctx[:tag_ids]
       )
+
+      total_count = base.count
       recent = base
                  .order(payment_date: :desc, sort_order: :desc)
                  .includes(:account, spending_category: :spending_type)
+                 .offset((page - 1) * per_page)
+                 .limit(per_page)
                  .map { |p| { date: p.payment_date.strftime("%-m/%-d"), description: p.description, amount: p.amount.to_f } }
 
-      { recent: recent }
+      { recent: recent, total_count: total_count, page: page, per_page: per_page, has_more: (page * per_page) < total_count }
     end
 
     def compute_buckets(_ctx)

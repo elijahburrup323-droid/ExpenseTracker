@@ -1,17 +1,14 @@
 APP_VERSION = "1.3.20"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
-MANUAL_CHANGE_SEQ = 2  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 3  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
   {
     version: "1.3.20",
     changes: [
-      "Accounting Sign Architecture: Removed balance_multiplier — CREDIT accounts now store negative balances directly, all arithmetic uses direct add/subtract without sign inversion (CM-32)",
-      "Accounting Sign Architecture: Removed display sign-flipping — accounts API and dashboard now return stored balance directly, overpaid liabilities naturally cross zero to positive (CM-32)",
-      "Accounting Sign Architecture: Removed CREDIT deposit restriction — income entries can now be deposited to liability accounts, reducing the balance toward zero (CM-32)",
-      "Accounting Sign Architecture: Updated net worth formula across all surfaces (dashboard, reports, snapshots) — assets + liabilities since liabilities are stored negative (CM-32)",
+      "Dashboard Recent Payments: server-side pagination (10 per page) with Load More button, fixed 320px max-height for consistent card heights, expanded mode lifts height cap (CM-6)",
       "Accounting Sign Architecture: Centralized balance operations (apply_payment!, reverse_payment!, apply_transfer_in!, apply_transfer_out!) on Account model — single source of truth for sign-aware math via balance_multiplier (CM-31)",
       "Accounting Sign Architecture: Fixed ImportExecutorService missing balance_multiplier — Smart Import to CREDIT accounts now produces correct balances (CM-31)",
       "Accounting Sign Architecture: Added CREDIT deposit guard in Smart Import — deposits to liability accounts blocked with clear error message (CM-31)",

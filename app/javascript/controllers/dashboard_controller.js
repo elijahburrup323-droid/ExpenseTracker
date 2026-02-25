@@ -7,7 +7,7 @@ export default class extends Controller {
     "cardsGrid", "slotWrapper",
     "tagFilterWrapper", "tagFilterBtn", "tagFilterLabel", "tagFilterDropdown", "tagCheckboxList"
   ]
-  static values = { apiUrl: String, reorderUrl: String, openMonthUrl: String, tagsUrl: String, month: Number, year: Number, earliestMonth: Number, earliestYear: Number }
+  static values = { apiUrl: String, recentActivityUrl: String, reorderUrl: String, openMonthUrl: String, tagsUrl: String, month: Number, year: Number, earliestMonth: Number, earliestYear: Number }
 
   connect() {
     this.currentMonth = this.monthValue
@@ -282,6 +282,66 @@ export default class extends Controller {
     }
   }
 
+  async loadMorePayments(event) {
+    const wrapper = event.target.closest("[data-dashboard-target='slotWrapper']")
+    if (!wrapper) return
+    const content = wrapper.querySelector("[data-role='card-content']")
+    if (!content) return
+
+    const currentPage = parseInt(content.dataset.currentPage || "1")
+    const hasMore = content.dataset.hasMore === "true"
+    if (!hasMore) return
+
+    const nextPage = currentPage + 1
+    let url = `${this.recentActivityUrlValue}?month=${this.currentMonth}&year=${this.currentYear}&page=${nextPage}`
+    if (this._selectedTagIds && this._selectedTagIds.length > 0) {
+      url += this._selectedTagIds.map(id => `&tag_ids[]=${id}`).join("")
+    }
+
+    // Show loading state
+    const sentinel = content.querySelector("[data-role='load-more-sentinel']")
+    if (sentinel) sentinel.innerHTML = '<span class="text-xs text-gray-400 dark:text-gray-500">Loading...</span>'
+
+    try {
+      const res = await fetch(url, { headers: { "Accept": "application/json" } })
+      if (!res.ok) return
+      const data = await res.json()
+      const colors = ["blue", "green", "purple", "amber", "sky"]
+      const existingItems = content.querySelectorAll("li:not([data-role='load-more-sentinel'])")
+      const colorOffset = existingItems.length
+
+      let html = ""
+      ;(data.recent || []).forEach((p, i) => {
+        const c = colors[(colorOffset + i) % colors.length]
+        html += `<li class="flex items-center justify-between">
+          <div class="flex items-center space-x-2 min-w-0">
+            <span class="w-7 h-7 rounded-lg bg-${c}-100 dark:bg-${c}-900/30 flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4 text-${c}-500 dark:text-${c}-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a5 5 0 00-10 0v2M12 12v3m-3-3h6m-9 7h12a2 2 0 002-2v-4a2 2 0 00-2-2H6a2 2 0 00-2 2v4a2 2 0 002 2z"/>
+              </svg>
+            </span>
+            <span class="text-sm text-gray-700 dark:text-gray-300 truncate"><span class="text-gray-400 dark:text-gray-500">${this._esc(p.date)}</span> ${this._esc(p.description)}</span>
+          </div>
+          <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums flex-shrink-0 ml-2">${this._currency(p.amount)}</span>
+        </li>`
+      })
+
+      if (sentinel) sentinel.remove()
+      content.insertAdjacentHTML("beforeend", html)
+
+      content.dataset.currentPage = String(nextPage)
+      content.dataset.hasMore = String(data.has_more)
+
+      if (data.has_more) {
+        const remaining = data.total_count - (nextPage * data.per_page)
+        content.insertAdjacentHTML("beforeend", `<li class="text-center py-2" data-role="load-more-sentinel">
+          <button type="button" class="text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium"
+                  data-action="click->dashboard#loadMorePayments">Load more (${remaining} remaining)</button>
+        </li>`)
+      }
+    } catch (e) { /* silently fail */ }
+  }
+
   _expandCard(wrapper) {
     if (!this.hasCardsGridTarget) return
     const grid = this.cardsGridTarget
@@ -301,12 +361,13 @@ export default class extends Controller {
     this.expandedCardType = wrapper.dataset.cardType
     if (this.sortable) this.sortable.option("disabled", true)
 
-    // Center content in expanded mode with bounded width
+    // Center content in expanded mode with bounded width + lift height cap
     wrapper.querySelectorAll("[data-role='card-content'], [data-role='front-content'], [data-role='back-content']").forEach(el => {
       el.style.maxWidth = "1000px"
       el.style.marginLeft = "auto"
       el.style.marginRight = "auto"
       el.style.width = "100%"
+      el.style.maxHeight = "none"
     })
 
     // Piston open: scroll to the top of the expanded card after render
@@ -330,12 +391,13 @@ export default class extends Controller {
     wrapper.style.gridColumn = ""
     wrapper.style.minHeight = ""
 
-    // Remove expanded centering styles
+    // Remove expanded centering styles + restore height cap
     wrapper.querySelectorAll("[data-role='card-content'], [data-role='front-content'], [data-role='back-content']").forEach(el => {
       el.style.maxWidth = ""
       el.style.marginLeft = ""
       el.style.marginRight = ""
       el.style.width = ""
+      el.style.maxHeight = ""
     })
 
     this._updateExpandIcons(wrapper, false)
@@ -753,7 +815,15 @@ export default class extends Controller {
     const content = wrapper.querySelector("[data-role='card-content']")
     if (!content) return
     const payments = data.recent || []
+    const totalCount = data.total_count || payments.length
+    const hasMore = data.has_more || false
+    const perPage = data.per_page || 10
     const colors = ["blue", "green", "purple", "amber", "sky"]
+
+    // Reset pagination state
+    content.dataset.currentPage = "1"
+    content.dataset.hasMore = String(hasMore)
+    content.dataset.totalCount = String(totalCount)
 
     if (payments.length === 0) {
       content.innerHTML = `<li class="text-sm text-gray-400 dark:text-gray-500">No payments this month.</li>`
@@ -775,6 +845,13 @@ export default class extends Controller {
           <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums flex-shrink-0 ml-2">${this._currency(p.amount)}</span>
         </li>`
     })
+    if (hasMore) {
+      const remaining = totalCount - perPage
+      html += `<li class="text-center py-2" data-role="load-more-sentinel">
+        <button type="button" class="text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium"
+                data-action="click->dashboard#loadMorePayments">Load more (${remaining} remaining)</button>
+      </li>`
+    }
     content.innerHTML = html
   }
 
