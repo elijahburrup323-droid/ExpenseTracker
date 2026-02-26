@@ -12,9 +12,9 @@
 }
 
 @layer components {
-  /* Dashboard grid: min-height from token, 1fr equalises rows to tallest card */
+  /* Dashboard grid: fixed row height — all rows identical, content scrolls */
   .dash-grid {
-    grid-auto-rows: minmax(var(--dash-card-h), 1fr);
+    grid-auto-rows: var(--dash-card-h);
   }
 
   /* Card wrapper: fills grid row, no content-driven overflow */
