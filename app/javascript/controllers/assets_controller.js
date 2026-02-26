@@ -131,7 +131,7 @@ export default class extends Controller {
     const cv = this._fmt(a.current_value)
     const nwToggle = this._renderNetWorthToggle(a.include_in_net_worth, a.id)
     return `<tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-      <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">${escapeHtml(a.name)}</td>
+      <td class="px-6 py-4 text-sm font-medium"><a href="/assets/${a.id}" class="text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 hover:underline">${escapeHtml(a.name)}</a></td>
       <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">${escapeHtml(a.asset_type_name || "")}</td>
       <td class="px-6 py-4 text-sm text-gray-900 dark:text-white text-right tabular-nums">${pp}</td>
       <td class="px-6 py-4 text-sm text-green-600 dark:text-green-400 text-right tabular-nums font-semibold">${cv}</td>

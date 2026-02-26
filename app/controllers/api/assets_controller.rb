@@ -1,10 +1,14 @@
 module Api
   class AssetsController < BaseController
-    before_action :set_asset, only: [:update, :destroy]
+    before_action :set_asset, only: [:show, :update, :destroy]
 
     def index
       assets = current_user.assets.ordered.includes(:asset_type)
       render json: assets.map { |a| asset_json(a) }
+    end
+
+    def show
+      render json: asset_json(@asset)
     end
 
     def create

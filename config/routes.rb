@@ -74,6 +74,7 @@ Rails.application.routes.draw do
   # Assets (HTML pages)
   get "assets", to: "assets#index", as: :assets
   get "assets/list", to: "assets#list", as: :assets_list
+  get "assets/:id", to: "assets#show", as: :asset_detail
 
   # Investments (HTML pages)
   get "investments", to: "investments#index", as: :investments
@@ -239,7 +240,7 @@ Rails.application.routes.draw do
     put "tutorial/progress", to: "tutorial#progress"
     # Assets API
     resources :asset_types, only: [:index, :create, :update, :destroy]
-    resources :assets, only: [:index, :create, :update, :destroy] do
+    resources :assets, only: [:index, :show, :create, :update, :destroy] do
       resources :asset_valuations, only: [:index, :create, :update, :destroy]
     end
 

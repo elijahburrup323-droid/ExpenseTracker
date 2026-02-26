@@ -21,4 +21,9 @@ class AssetsController < ApplicationController
 
   def list
   end
+
+  def show
+    @asset = current_user.assets.includes(:asset_type).find_by(id: params[:id])
+    redirect_to assets_list_path, alert: "Asset not found" unless @asset
+  end
 end

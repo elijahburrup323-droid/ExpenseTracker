@@ -57,6 +57,7 @@ import OnboardingController from "controllers/onboarding_controller"
 import SuggestionBannerController from "controllers/suggestion_banner_controller"
 import TutorialController from "controllers/tutorial_controller"
 import AssetsController from "controllers/assets_controller"
+import AssetDetailController from "controllers/asset_detail_controller"
 
 application.register("flash", FlashController)
 application.register("dropdown", DropdownController)
@@ -115,3 +116,4 @@ application.register("onboarding", OnboardingController)
 application.register("suggestion-banner", SuggestionBannerController)
 application.register("tutorial", TutorialController)
 application.register("assets", AssetsController)
+application.register("asset-detail", AssetDetailController)
