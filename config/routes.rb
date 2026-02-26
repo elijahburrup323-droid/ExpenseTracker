@@ -71,6 +71,18 @@ Rails.application.routes.draw do
   # Smart Import (HTML page)
   get "smart_import", to: "smart_import#index", as: :smart_import
 
+  # Assets (HTML pages)
+  get "assets", to: "assets#index", as: :assets
+  get "assets/list", to: "assets#list", as: :assets_list
+
+  # Investments (HTML pages)
+  get "investments", to: "investments#index", as: :investments
+  get "investments/accounts", to: "investments#accounts", as: :investment_accounts
+
+  # Financing (HTML pages)
+  get "financing/loans-notes", to: "financing#loans_notes", as: :financing_loans_notes
+  get "financing/contracts-for-deed", to: "financing#contracts_for_deed", as: :financing_contracts_for_deed
+
   # Account Type Masters (HTML page, agent-only)
   resources :account_type_masters, only: [:index]
 
