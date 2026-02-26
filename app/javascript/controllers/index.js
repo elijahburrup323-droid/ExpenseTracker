@@ -59,6 +59,8 @@ import TutorialController from "controllers/tutorial_controller"
 import AssetsController from "controllers/assets_controller"
 import AssetDetailController from "controllers/asset_detail_controller"
 import InvestmentAccountsController from "controllers/investment_accounts_controller"
+import InvestmentHoldingsController from "controllers/investment_holdings_controller"
+import HoldingDetailController from "controllers/holding_detail_controller"
 
 application.register("flash", FlashController)
 application.register("dropdown", DropdownController)
@@ -119,3 +121,5 @@ application.register("tutorial", TutorialController)
 application.register("assets", AssetsController)
 application.register("asset-detail", AssetDetailController)
 application.register("investment-accounts", InvestmentAccountsController)
+application.register("investment-holdings", InvestmentHoldingsController)
+application.register("holding-detail", HoldingDetailController)

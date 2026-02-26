@@ -31,4 +31,14 @@ class InvestmentsController < ApplicationController
 
   def accounts
   end
+
+  def holdings
+    @account = current_user.investment_accounts.active.find_by(id: params[:id])
+    redirect_to investments_path, alert: "Account not found" unless @account
+  end
+
+  def holding_detail
+    @holding = current_user.investment_holdings.find_by(id: params[:id])
+    redirect_to investments_path, alert: "Holding not found" unless @holding
+  end
 end

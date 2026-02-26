@@ -1,10 +1,17 @@
-APP_VERSION = "1.3.25"
+APP_VERSION = "1.3.26"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.26",
+    changes: [
+      "Investments: Holdings screen at /investments/accounts/:id — view all holdings for an investment account with sortable columns (Symbol, Description, Shares, Market Price, Market Value, Cost Basis, Unrealized Gain, % Gain/Loss). Click account cards on dashboard to navigate. Click symbol to view holding detail. (CM-9)",
+      "Investments: Holding detail screen at /investments/holding/:id — summary metrics (Total Shares, Market Value, Cost Basis, Unrealized Gain/Loss) with 4 tabs: Transactions (full trade history with colored type badges), Performance (placeholder), Dividends (filtered view with reinvestment indicator), and Notes (save to API). (CM-9)"
+    ]
+  },
   {
     version: "1.3.25",
     changes: [
