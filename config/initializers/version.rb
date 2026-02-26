@@ -24,6 +24,8 @@ APP_ALL_VERSIONS = [
       "Assets Module: asset_valuations table for valuation history with auto-sync to asset current_value via AssetValuationService (CM-28)",
       "Assets Module: API endpoints for assets CRUD, asset_types CRUD (system + custom), and nested asset_valuations CRUD (CM-28)",
       "Dashboard Cards: Fixed grid row height enforcement — moved dash-grid to @utility for Tailwind v4 responsive variant, added inline CSS for CDN compatibility; all 6 cards now locked at 28rem (448px) across rows",
+      "Assets Dashboard: /assets screen with metrics (Total Asset Value, Total Excluded, Asset Count) and Asset Type Breakdown cards (CM-29)",
+      "Assets List: /assets/list screen with full CRUD, modal-based add/edit, inline net worth toggle, type filtering, sortable columns (CM-29)",
     ]
   },
   {

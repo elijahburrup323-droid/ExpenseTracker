@@ -56,6 +56,7 @@ import FeatureStoreController from "controllers/feature_store_controller"
 import OnboardingController from "controllers/onboarding_controller"
 import SuggestionBannerController from "controllers/suggestion_banner_controller"
 import TutorialController from "controllers/tutorial_controller"
+import AssetsController from "controllers/assets_controller"
 
 application.register("flash", FlashController)
 application.register("dropdown", DropdownController)
@@ -113,3 +114,4 @@ application.register("feature-store", FeatureStoreController)
 application.register("onboarding", OnboardingController)
 application.register("suggestion-banner", SuggestionBannerController)
 application.register("tutorial", TutorialController)
+application.register("assets", AssetsController)
