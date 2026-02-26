@@ -804,7 +804,18 @@ export default class extends Controller {
       html += `</div>`
     }
 
-    html += `<p class="text-[10px] text-gray-400 dark:text-gray-500 mt-2 text-center">Your net worth chart will build automatically as more months are added.</p>`
+    // Asset / Liability breakdown
+    html += `<div class="mt-2 space-y-1">`
+    html += `<div class="flex items-center justify-between"><span class="text-[11px] text-gray-500 dark:text-gray-400">Assets</span><span class="text-[11px] font-medium text-gray-900 dark:text-white tabular-nums">${this._currency(data.assets || 0)}</span></div>`
+    html += `<div class="flex items-center justify-between"><span class="text-[11px] text-gray-500 dark:text-gray-400">Liabilities</span><span class="text-[11px] font-medium text-gray-900 dark:text-white tabular-nums">${this._currency(data.liabilities || 0)}</span></div>`
+    const dr = data.debt_ratio
+    if (dr == null) {
+      html += `<div class="flex items-center justify-between"><span class="text-[11px] text-gray-500 dark:text-gray-400">Debt Ratio</span><span class="text-[11px] text-gray-400 dark:text-gray-500">\u2014</span></div>`
+    } else {
+      const drColor = dr > 100 ? 'text-red-600 dark:text-red-400' : dr <= 50 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-900 dark:text-white'
+      html += `<div class="flex items-center justify-between"><span class="text-[11px] text-gray-500 dark:text-gray-400">Debt Ratio</span><span class="text-[11px] font-medium ${drColor} tabular-nums">${dr.toFixed(1)}%</span></div>`
+    }
+    html += `</div>`
     content.innerHTML = html
   }
 

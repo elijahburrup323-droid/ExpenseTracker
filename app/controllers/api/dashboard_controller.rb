@@ -276,7 +276,12 @@ module Api
       end
       snapshot_data = snapshots.map { |s| { label: s.snapshot_date.strftime("%b %Y"), amount: s.amount.to_f } }
 
-      { value: net_worth_val, change: nw_change.round(2), change_pct: nw_pct, snapshots: snapshot_data }
+      assets = nw[:assets].round(2)
+      liabilities = nw[:liabilities].abs.round(2)
+      debt_ratio = assets > 0 ? (liabilities / assets * 100).round(1) : nil
+
+      { value: net_worth_val, change: nw_change.round(2), change_pct: nw_pct, snapshots: snapshot_data,
+        assets: assets, liabilities: liabilities, debt_ratio: debt_ratio }
     end
 
     def compute_income_spending(ctx)

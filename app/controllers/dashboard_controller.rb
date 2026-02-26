@@ -106,6 +106,9 @@ class DashboardController < ApplicationController
     asset_total = @accounts.where.not(account_type_master_id: credit_master_ids).sum(:balance)
     liability_total = @accounts.where(account_type_master_id: credit_master_ids).sum(:balance)
     @net_worth = asset_total + liability_total
+    @net_worth_assets = asset_total.to_f.round(2)
+    @net_worth_liabilities = liability_total.abs.to_f.round(2)
+    @debt_ratio = @net_worth_assets > 0 ? (@net_worth_liabilities / @net_worth_assets * 100).round(1) : nil
     backfill_net_worth_snapshots_if_needed
     @net_worth_snapshots = current_user.net_worth_snapshots.eligible_for_user(current_user).recent(6).to_a.sort_by(&:snapshot_date)
     if @net_worth_snapshots.size >= 2

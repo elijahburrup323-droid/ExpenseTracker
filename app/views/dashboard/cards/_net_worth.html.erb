@@ -78,7 +78,29 @@
         </div>
       <% end %>
 
-      <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-2 text-center">Your net worth chart will build automatically as more months are added.</p>
+      <%# Asset / Liability breakdown %>
+      <div class="mt-2 space-y-1">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] text-gray-500 dark:text-gray-400">Assets</span>
+          <span class="text-[11px] font-medium text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(@net_worth_assets) %></span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] text-gray-500 dark:text-gray-400">Liabilities</span>
+          <span class="text-[11px] font-medium text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(@net_worth_liabilities) %></span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] text-gray-500 dark:text-gray-400">Debt Ratio</span>
+          <% if @debt_ratio.nil? %>
+            <span class="text-[11px] text-gray-400 dark:text-gray-500">&mdash;</span>
+          <% elsif @debt_ratio > 100 %>
+            <span class="text-[11px] font-medium text-red-600 dark:text-red-400" style="font-variant-numeric: tabular-nums;"><%= @debt_ratio %>%</span>
+          <% elsif @debt_ratio <= 50 %>
+            <span class="text-[11px] font-medium text-emerald-600 dark:text-emerald-400" style="font-variant-numeric: tabular-nums;"><%= @debt_ratio %>%</span>
+          <% else %>
+            <span class="text-[11px] font-medium text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;"><%= @debt_ratio %>%</span>
+          <% end %>
+        </div>
+      </div>
     </div>
 
     <% if current_user.budgethq_agent? %>
