@@ -11,6 +11,7 @@ class FinancingPayment < ApplicationRecord
 
   scope :by_date, -> { order(:payment_date, :payment_number) }
   scope :active, -> { where(deleted_at: nil) }
+  scope :recent, ->(limit = 100) { order(payment_date: :desc).limit(limit) }
 
   validates :payment_date, presence: true
   validates :total_amount, numericality: { greater_than: 0 }

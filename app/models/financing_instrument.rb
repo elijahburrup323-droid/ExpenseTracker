@@ -37,7 +37,8 @@ class FinancingInstrument < ApplicationRecord
   validates :original_principal, numericality: { greater_than: 0 }
   validates :current_principal, numericality: true
   validates :interest_rate, numericality: { greater_than_or_equal_to: 0 }
-  validates :term_months, numericality: { only_integer: true, greater_than: 0 }
+  validates :term_months, numericality: { only_integer: true, greater_than: 0, less_than_or_equal_to: 480,
+    message: "cannot exceed 480 months (40 years)" }
   validates :start_date, presence: true
   validates :payment_frequency, presence: true, inclusion: { in: PAYMENT_FREQUENCIES }
   validates :monthly_payment, numericality: { greater_than: 0 }, allow_nil: true

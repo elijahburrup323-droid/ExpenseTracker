@@ -15,6 +15,7 @@ class InvestmentTransaction < ApplicationRecord
   scope :buys, -> { where(transaction_type: "BUY") }
   scope :sells, -> { where(transaction_type: "SELL") }
   scope :by_date, -> { order(:transaction_date, :created_at) }
+  scope :recent, ->(limit = 100) { order(transaction_date: :desc).limit(limit) }
 
   validates :transaction_type, presence: true, inclusion: { in: TRANSACTION_TYPES }
   validates :transaction_date, presence: true

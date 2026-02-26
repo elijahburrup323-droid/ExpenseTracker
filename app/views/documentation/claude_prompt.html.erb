@@ -121,6 +121,20 @@ Any modification to Net Worth aggregation, Cost basis method, Amortization math,
 - **Models with Auditable**: Asset, AssetType, InvestmentHolding, InvestmentTransaction, FinancingInstrument, FinancingPayment.
 - **Models with RecalculationAuditable**: InvestmentHolding, FinancingInstrument.
 
+### 9. Performance Guardrails &amp; Scalability Standards (Instruction Set 3/4)
+- **All financial calculations** must be server-side and decimal-safe. No full-table scans on transactional tables in production.
+- **Pagination required**: All list screens must paginate beyond 100 records. Valuation history paginates beyond 200 records. No screen may render more than 500 rows at once.
+- **Paginatable concern** (`app/controllers/concerns/paginatable.rb`): Include in API controllers for standardized pagination (offset/limit) and sorting with column allowlists. MAX_PER_PAGE = 500.
+- **Lazy loading**: Heavy tabs (amortization schedules, transaction history) must be loaded on demand. Charts render only the visible dataset, not full-history preload.
+- **Assets**: Valuation history paginates at 200. Charts render visible dataset only. Indexes on (asset_id, valuation_date) — ready for future valuation_history table.
+- **Investments**: FIFO recalculation processes only affected transactions forward from trigger date (bounded). Max recommended transactions per holding: 5,000 (constant `InvestmentHolding::MAX_RECOMMENDED_TRANSACTIONS`). Holdings list uses SQL-level aggregation via `with_computed_values` scope (no per-row loops).
+- **Financing**: Maximum amortization term: 480 months (validated in model). Amortization schedule generates in memory via `AmortizationService.generate_schedule` — only persisted when confirmed. Forward recalculation begins at affected payment period only.
+- **Recalculation Safety** (`app/services/recalculation_safety_service.rb`): Wraps all recalculations with timing. If recalculation exceeds 5 seconds: logs warning and creates audit record with `performance_warning: true` metadata.
+- **FIFO Service** (`app/services/fifo_recalculation_service.rb`): Bounded forward-only FIFO recalculation. Includes `transaction_count_check` advisory method.
+- **Amortization Service** (`app/services/amortization_service.rb`): In-memory schedule generation, bulk insert for persistence, forward-only recalculation from affected period with audit logging.
+- **Database indexes**: All required indexes present — investment_transactions(holding_id, trade_date), financing_payments(financing_id, payment_date), audit_logs(entity_type, entity_id), amortization_schedule_entries(financing_instrument_id, period_number).
+- **Final directive**: No recalculation or aggregation logic may scale linearly across entire datasets. All logic must be bounded and indexed.
+
 ## Admin Role
 - **budgethq_agent** boolean on users table (default false). Only DJ and Elijah have this flag.
 - Admin users see an "Admin" group in the sidebar containing: DBU, Diagnostics, Documentation, Quotes, Frequency Masters, Acct Type Masters, Reports Maint, and Audit Logs. Clicking the Admin group heading navigates to the Admin Users management screen (/admin/users).

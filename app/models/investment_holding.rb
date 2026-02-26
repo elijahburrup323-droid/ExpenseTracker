@@ -12,6 +12,7 @@ class InvestmentHolding < ApplicationRecord
   default_scope { where(deleted_at: nil) }
 
   SECURITY_TYPES = %w[STOCK ETF MUTUAL_FUND BOND CRYPTO CASH OTHER].freeze
+  MAX_RECOMMENDED_TRANSACTIONS = 5_000
 
   scope :active, -> { where(deleted_at: nil) }
   scope :ordered, -> { order(:sort_order, :security_name) }
@@ -40,11 +41,30 @@ class InvestmentHolding < ApplicationRecord
     include_in_net_worth ? market_value : BigDecimal("0")
   end
 
-  # Recalculate shares_held and cost_basis_total from open lots
-  def recalculate_from_lots!
-    open_lots = investment_lots.where(status: %w[OPEN PARTIAL])
-    self.shares_held = open_lots.sum(:shares_remaining)
-    self.cost_basis_total = open_lots.sum { |lot| lot.shares_remaining * lot.cost_per_share }.round(2)
-    save!
+  # Optimized portfolio summary via single SQL query (no per-row loops).
+  # Returns array of hashes: [{ id:, security_name:, shares_held:, cost_basis_total:, market_value:, unrealized_gain: }]
+  scope :with_computed_values, -> {
+    select(
+      "investment_holdings.*",
+      "(shares_held * COALESCE(current_price, 0)) AS computed_market_value",
+      "((shares_held * COALESCE(current_price, 0)) - cost_basis_total) AS computed_unrealized_gain"
+    )
+  }
+
+  # Returns true if the holding has more transactions than the recommended maximum.
+  def transaction_count_exceeded?
+    investment_transactions.unscope(where: :deleted_at).count > MAX_RECOMMENDED_TRANSACTIONS
+  end
+
+  # Recalculate shares_held and cost_basis_total from open lots.
+  # Uses bounded forward-only processing — only recalculates from affected lots.
+  def recalculate_from_lots!(from_date: nil)
+    RecalculationSafetyService.with_safety(entity: self, user_id: user_id) do
+      lots = investment_lots.where(status: %w[OPEN PARTIAL])
+      lots = lots.where("acquired_date >= ?", from_date) if from_date
+      self.shares_held = lots.sum(:shares_remaining)
+      self.cost_basis_total = lots.sum("shares_remaining * cost_per_share").to_d.round(2)
+      save!
+    end
   end
 end

@@ -14,6 +14,11 @@ APP_ALL_VERSIONS = [
       "Net Worth: Updated Account.net_worth_for to include Assets, Investment Holdings, and Financing Instruments — formula: (Accounts + Assets + Investments + Receivables) - (Liabilities + Payables) (Instruction Set 1/4)",
       "Feature Store: Added assets, investments, and financing feature blocks in Net Worth category with accounts_basic dependency (Instruction Set 1/4)",
       "Audit Trail: audit_logs table with Auditable concern for Assets, Investments & Financing — tracks CREATE/UPDATE/DELETE/RECALCULATION events with before/after JSON diffs, staff-only viewer at /admin/audit_logs (Instruction Set 2/4)",
+      "Performance Guardrails: RecalculationSafetyService wraps recalculations with timing and 5-second warning threshold (Instruction Set 3/4)",
+      "Performance Guardrails: Bounded forward-only FIFO recalculation via FifoRecalculationService — only processes affected transactions forward (Instruction Set 3/4)",
+      "Performance Guardrails: AmortizationService for in-memory schedule generation, bulk insert, and forward-only recalculation from affected period (Instruction Set 3/4)",
+      "Performance Guardrails: Financing term_months capped at 480 months (40 years), investment holdings warn at 5,000+ transactions (Instruction Set 3/4)",
+      "Performance Guardrails: Paginatable concern for API controllers with MAX_PER_PAGE=500, SQL-level aggregation via InvestmentHolding.with_computed_values scope (Instruction Set 3/4)",
     ]
   },
   {
