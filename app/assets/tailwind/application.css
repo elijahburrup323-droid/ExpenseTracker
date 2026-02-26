@@ -11,12 +11,12 @@
   }
 }
 
-@layer components {
-  /* Dashboard grid: fixed row height — all rows identical, content scrolls */
-  .dash-grid {
-    grid-auto-rows: var(--dash-card-h);
-  }
+/* Dashboard grid: @utility so md:dash-grid responsive variant works */
+@utility dash-grid {
+  grid-auto-rows: var(--dash-card-h);
+}
 
+@layer components {
   /* Card wrapper: fills grid row, no content-driven overflow */
   .dash-card {
     height: 100%;
