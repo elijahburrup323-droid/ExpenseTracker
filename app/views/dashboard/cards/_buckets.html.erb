@@ -4,7 +4,7 @@
     <div class="text-center mb-4">
       <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200"><%= card.title %></h2>
     </div>
-    <div class="flex-1 overflow-y-auto" data-role="card-content">
+    <div class="flex-1 min-h-0 overflow-y-auto" data-role="card-content">
       <% if @buckets_summary[:empty] %>
         <p class="text-sm text-gray-400 dark:text-gray-500 text-center py-4">No buckets yet. Create one to start allocating money.</p>
       <% else %>

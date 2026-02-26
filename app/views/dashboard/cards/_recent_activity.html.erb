@@ -15,7 +15,7 @@
         </button>
       </div>
     </div>
-    <ul class="space-y-3 flex-1 overflow-y-auto" style="max-height: 320px; -webkit-overflow-scrolling: touch;" data-role="card-content" data-current-page="1" data-has-more="<%= @recent_payments_has_more %>" data-total-count="<%= @recent_payments_total %>">
+    <ul class="space-y-3 flex-1 min-h-0 overflow-y-auto" data-role="card-content" data-current-page="1" data-has-more="<%= @recent_payments_has_more %>" data-total-count="<%= @recent_payments_total %>">
       <% activity_colors = %w[blue green purple amber sky] %>
       <% @recent_payments.each_with_index do |payment, i| %>
         <% c = activity_colors[i % activity_colors.length] %>

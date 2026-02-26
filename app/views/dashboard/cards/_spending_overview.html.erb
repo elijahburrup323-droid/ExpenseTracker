@@ -16,7 +16,7 @@
         </button>
       </div>
     </div>
-    <div data-role="card-content">
+    <div class="flex-1 min-h-0 overflow-y-auto" data-role="card-content">
       <div class="flex items-center space-x-4 flex-1">
         <div class="relative w-24 h-24 lg:w-32 lg:h-32 flex-shrink-0">
           <svg viewBox="0 0 36 36" class="w-full h-full">
@@ -74,7 +74,7 @@
         </button>
       </div>
     </div>
-    <div class="flex-1 overflow-y-auto" data-role="card-back-content">
+    <div class="flex-1 overflow-y-auto" data-role="back-content">
       <% color_map = { "blue" => "#3b82f6", "green" => "#22c55e", "gold" => "#eab308", "red" => "#ef4444", "purple" => "#a855f7", "pink" => "#ec4899", "indigo" => "#6366f1", "teal" => "#14b8a6", "orange" => "#f97316", "gray" => "#6b7280" } %>
       <% has_tags = @spending_by_tag.present? && @spending_by_tag.any? %>
       <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;" data-role="breakdown-grid">

@@ -4,7 +4,7 @@
     <div class="flex items-center mb-1">
       <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200"><%= card.title %></h2>
     </div>
-    <div data-role="card-content">
+    <div class="flex-1 min-h-0 overflow-y-auto" data-role="card-content">
       <div class="flex items-baseline space-x-2 mb-3">
         <span class="text-2xl font-bold text-gray-900 dark:text-white"><%= number_to_currency(@net_worth) %></span>
         <% if @net_worth_change >= 0 %>
