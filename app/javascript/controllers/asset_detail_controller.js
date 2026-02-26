@@ -8,7 +8,7 @@ export default class extends Controller {
     "editSection", "viewSection",
     "editName", "editType", "editPurchaseDate", "editPurchasePrice",
     "editCurrentValue", "editNetWorth", "editError",
-    "valTableBody", "valError",
+    "valTableBody", "valError", "valChart",
     "notesArea", "notesSaveBtn", "notesStatus",
     "gainLoss"
   ]
@@ -259,9 +259,98 @@ export default class extends Controller {
   renderValuations() {
     if (this.valuations.length === 0) {
       this.valTableBodyTarget.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-sm text-gray-400 dark:text-gray-500">No valuations yet. Click <strong>Add Valuation</strong> to get started.</td></tr>`
+      this.valChartTarget.innerHTML = ""
       return
     }
     this.valTableBodyTarget.innerHTML = this.valuations.map(v => this._renderValRow(v)).join("")
+    this.renderValuationChart()
+  }
+
+  renderValuationChart() {
+    const container = this.valChartTarget
+    const sorted = [...this.valuations].sort((a, b) =>
+      (a.valuation_date || "").localeCompare(b.valuation_date || "")
+    )
+
+    if (sorted.length === 0) {
+      container.innerHTML = `<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <p class="text-center text-sm text-gray-400 dark:text-gray-500">No valuation history yet.</p>
+      </div>`
+      return
+    }
+
+    const isDark = document.documentElement.classList.contains("dark")
+    const gridColor = isDark ? "#374151" : "#e5e7eb"
+    const labelColor = isDark ? "#9ca3af" : "#6b7280"
+    const axisColor = isDark ? "#4b5563" : "#d1d5db"
+    const lineColor = isDark ? "#a78bfa" : "#7c3aed"
+    const dotFill = isDark ? "#a78bfa" : "#7c3aed"
+    const dotStroke = isDark ? "#1f2937" : "#ffffff"
+
+    const W = 700, H = 300
+    const PAD = { top: 20, right: 30, bottom: 55, left: 85 }
+    const plotW = W - PAD.left - PAD.right
+    const plotH = H - PAD.top - PAD.bottom
+
+    const values = sorted.map(v => parseFloat(v.value) || 0)
+    const minVal = Math.min(...values)
+    const maxVal = Math.max(...values)
+    const range = maxVal - minVal || 1
+    const yMin = minVal - range * 0.1
+    const yMax = maxVal + range * 0.1
+    const yRange = yMax - yMin || 1
+
+    const xScale = (i) => PAD.left + (sorted.length === 1 ? plotW / 2 : (i / (sorted.length - 1)) * plotW)
+    const yScale = (v) => PAD.top + plotH - ((v - yMin) / yRange) * plotH
+
+    // Grid lines (5 horizontal)
+    let gridLines = ""
+    let yLabels = ""
+    for (let i = 0; i <= 4; i++) {
+      const val = yMin + (i / 4) * yRange
+      const y = yScale(val)
+      gridLines += `<line x1="${PAD.left}" y1="${y}" x2="${W - PAD.right}" y2="${y}" stroke="${gridColor}" stroke-width="1"/>`
+      yLabels += `<text x="${PAD.left - 8}" y="${y + 4}" text-anchor="end" fill="${labelColor}" font-size="10">${this._fmt(val)}</text>`
+    }
+
+    // Line (only if more than one point)
+    let polyline = ""
+    if (sorted.length > 1) {
+      const points = sorted.map((v, i) => `${xScale(i)},${yScale(parseFloat(v.value) || 0)}`).join(" ")
+      polyline = `<polyline points="${points}" fill="none" stroke="${lineColor}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`
+    }
+
+    // Data points with tooltips
+    const dots = sorted.map((v, i) => {
+      const x = xScale(i)
+      const y = yScale(parseFloat(v.value) || 0)
+      const dateStr = escapeHtml(v.valuation_date || "")
+      return `<circle cx="${x}" cy="${y}" r="5" fill="${dotFill}" stroke="${dotStroke}" stroke-width="2"><title>${dateStr}: ${this._fmt(v.value)}</title></circle>`
+    }).join("")
+
+    // X-axis labels
+    const maxLabels = Math.min(sorted.length, 12)
+    const step = Math.max(1, Math.ceil(sorted.length / maxLabels))
+    let xLabels = ""
+    for (let i = 0; i < sorted.length; i += step) {
+      const x = xScale(i)
+      const dateStr = sorted[i].valuation_date || ""
+      const parts = dateStr.split("-")
+      const shortLabel = parts.length === 3 ? `${parts[1]}/${parts[2]}/${parts[0].slice(2)}` : dateStr
+      xLabels += `<text x="${x}" y="${H - PAD.bottom + 18}" text-anchor="middle" fill="${labelColor}" font-size="10" transform="rotate(-30 ${x} ${H - PAD.bottom + 18})">${escapeHtml(shortLabel)}</text>`
+    }
+
+    const axes = `<line x1="${PAD.left}" y1="${PAD.top}" x2="${PAD.left}" y2="${PAD.top + plotH}" stroke="${axisColor}" stroke-width="1"/>
+      <line x1="${PAD.left}" y1="${PAD.top + plotH}" x2="${W - PAD.right}" y2="${PAD.top + plotH}" stroke="${axisColor}" stroke-width="1"/>`
+
+    const svg = `<svg viewBox="0 0 ${W} ${H}" class="w-full" xmlns="http://www.w3.org/2000/svg">
+      ${gridLines}${yLabels}${polyline}${dots}${xLabels}${axes}
+    </svg>`
+
+    container.innerHTML = `<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+      <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Valuation Trend</h3>
+      ${svg}
+    </div>`
   }
 
   _renderValRow(v) {
