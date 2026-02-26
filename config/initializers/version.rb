@@ -27,6 +27,7 @@ APP_ALL_VERSIONS = [
       "Assets Module: API endpoints for assets CRUD, asset_types CRUD (system + custom), and nested asset_valuations CRUD (CM-28)",
       "Dashboard Cards: Fixed grid row height enforcement — moved dash-grid to @utility for Tailwind v4 responsive variant, added inline CSS for CDN compatibility; all 6 cards now locked at 28rem (448px) across rows",
       "Assets Dashboard: /assets screen with metrics (Total Asset Value, Total Excluded, Asset Count) and Asset Type Breakdown cards (CM-29)",
+      "Dashboard Accounts Card: Replaced pie chart backside with Assets vs Liabilities horizontal bar comparison showing totals, percentages, and top-3 breakdown. Front side now groups accounts into Assets/Liabilities sections with section totals. (CM-32)",
       "Asset Detail: Valuation Trend Chart — SVG line chart on Valuation History tab showing chronological value trend with purple accent, gridlines, hover tooltips, dark mode support, single-point display, and responsive sizing (CM-31)",
       "Assets List: /assets/list screen with full CRUD, modal-based add/edit, inline net worth toggle, type filtering, sortable columns (CM-29)",
       "Navigation: Removed redundant Recurring Payments and Recurring Deposits sidebar menu items — accessible via tabs in Payments and Deposits screens",

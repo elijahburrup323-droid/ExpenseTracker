@@ -585,102 +585,146 @@ export default class extends Controller {
   _renderAccountsOverview(wrapper, data) {
     if (!data) return
     const colors = ["blue", "green", "purple", "amber", "sky", "red"]
-    const pieColorsHex = ["#3b82f6", "#22c55e", "#a855f7", "#f59e0b", "#0ea5e9", "#ef4444"]
     const accounts = data.accounts || []
     const total = data.total || 0
+
+    // Split into assets (DEBIT) and liabilities (CREDIT)
+    const assetAccounts = accounts.filter(a => a.normal_balance_type !== "CREDIT").sort((a, b) => b.balance - a.balance)
+    const liabilityAccounts = accounts.filter(a => a.normal_balance_type === "CREDIT").sort((a, b) => Math.abs(b.balance) - Math.abs(a.balance))
+    const assetsSum = assetAccounts.reduce((s, a) => s + a.balance, 0)
+    const liabilitiesSum = liabilityAccounts.reduce((s, a) => s + Math.abs(a.balance), 0)
+    const barTotal = assetsSum + liabilitiesSum
+    const assetsPct = barTotal > 0 ? Math.round(assetsSum / barTotal * 100) : 0
+    const liabilitiesPct = barTotal > 0 ? Math.round(liabilitiesSum / barTotal * 100) : 0
+
+    const bankIcon = `<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>`
 
     const frontContent = wrapper.querySelector("[data-role='front-content']")
     if (frontContent) {
       let html = `
-        <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center">
-            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Accounts</h2>
-          </div>
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Accounts</h2>
           <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">Net Worth: ${this._currency(total)}</span>
-        </div>
-        <ul class="space-y-3 flex-1">`
+        </div>`
+
       if (accounts.length === 0) {
-        html += `<li class="text-sm text-gray-400 dark:text-gray-500">No accounts yet.</li>`
+        html += `<p class="text-sm text-gray-400 dark:text-gray-500">No accounts yet.</p>`
       } else {
-        accounts.forEach((a, i) => {
-          const c = colors[i % colors.length]
-          const displayBal = a.display_balance != null ? a.display_balance : a.balance
-          const isLiability = a.normal_balance_type === "CREDIT"
-          const balColor = isLiability ? "text-red-600 dark:text-red-400" : "text-gray-900 dark:text-white"
-          html += `
-            <li class="flex items-center justify-between">
+        // Assets section
+        html += `<div class="mb-3"><p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">Assets</p>`
+        if (assetAccounts.length > 0) {
+          html += `<ul class="space-y-2">`
+          assetAccounts.forEach((a, i) => {
+            const c = colors[i % colors.length]
+            html += `<li class="flex items-center justify-between">
               <div class="flex items-center space-x-2">
-                <span class="w-7 h-7 rounded-lg bg-${c}-100 dark:bg-${c}-900/30 flex items-center justify-center">
-                  <svg class="w-4 h-4 text-${c}-600 dark:text-${c}-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
-                  </svg>
-                </span>
+                <span class="w-6 h-6 rounded-md bg-${c}-100 dark:bg-${c}-900/30 flex items-center justify-center text-${c}-600 dark:text-${c}-400">${bankIcon}</span>
                 <span class="text-sm text-gray-700 dark:text-gray-300">${this._esc(a.name)}</span>
               </div>
-              <span class="text-sm font-semibold ${balColor} tabular-nums">${this._currency(displayBal)}</span>
+              <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">${this._currency(a.balance)}</span>
             </li>`
-        })
+          })
+          html += `</ul>
+            <div class="flex items-center justify-between mt-1.5 pt-1.5 border-t border-gray-100 dark:border-gray-700">
+              <span class="text-xs font-semibold text-gray-600 dark:text-gray-400">Total Assets</span>
+              <span class="text-xs font-semibold text-green-600 dark:text-green-400 tabular-nums">${this._currency(assetsSum)}</span>
+            </div>`
+        } else {
+          html += `<p class="text-xs text-gray-400 dark:text-gray-500 ml-1">No asset accounts.</p>`
+        }
+        html += `</div>`
+
+        // Liabilities section
+        html += `<div><p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">Liabilities</p>`
+        if (liabilityAccounts.length > 0) {
+          html += `<ul class="space-y-2">`
+          liabilityAccounts.forEach((a) => {
+            html += `<li class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <span class="w-6 h-6 rounded-md bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400">${bankIcon}</span>
+                <span class="text-sm text-gray-700 dark:text-gray-300">${this._esc(a.name)}</span>
+              </div>
+              <span class="text-sm font-semibold text-red-600 dark:text-red-400 tabular-nums">${this._currency(-Math.abs(a.balance))}</span>
+            </li>`
+          })
+          html += `</ul>
+            <div class="flex items-center justify-between mt-1.5 pt-1.5 border-t border-gray-100 dark:border-gray-700">
+              <span class="text-xs font-semibold text-gray-600 dark:text-gray-400">Total Liabilities</span>
+              <span class="text-xs font-semibold text-red-600 dark:text-red-400 tabular-nums">${this._currency(liabilitiesSum)}</span>
+            </div>`
+        } else {
+          html += `<p class="text-xs text-gray-400 dark:text-gray-500 ml-1">No liability accounts.</p>`
+        }
+        html += `</div>`
       }
-      html += `</ul>`
       frontContent.innerHTML = html
     }
 
     const backContent = wrapper.querySelector("[data-role='back-content']")
     if (backContent) {
-      // Use absolute balance for pie chart (liabilities shown as positive slices)
-      const sorted = [...accounts].sort((a, b) => Math.abs(b.balance) - Math.abs(a.balance))
-      const absTotal = accounts.reduce((sum, a) => sum + Math.abs(a.balance), 0)
       let html = `
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Accounts</h2>
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Assets vs Liabilities</h2>
           <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">Net Worth: ${this._currency(total)}</span>
-        </div>
-        <div class="flex-1 flex flex-col items-center justify-center overflow-hidden">`
+        </div>`
 
-      if (absTotal > 0 && sorted.length > 0) {
-        const cx = 50, cy = 50, r = 45
-        let angle = -90.0
-        let paths = ""
-        sorted.forEach((a, i) => {
-          const pct = Math.abs(a.balance) / absTotal * 100
-          if (pct <= 0) return
-          const color = pieColorsHex[i % pieColorsHex.length]
-          const sweep = (pct / 100.0) * 360.0
-          const endA = angle + sweep
-          if (sweep >= 359.99) {
-            paths += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${color}"/>`
-          } else {
-            const sr = angle * Math.PI / 180
-            const er = endA * Math.PI / 180
-            const x1 = (cx + r * Math.cos(sr)).toFixed(2)
-            const y1 = (cy + r * Math.sin(sr)).toFixed(2)
-            const x2 = (cx + r * Math.cos(er)).toFixed(2)
-            const y2 = (cy + r * Math.sin(er)).toFixed(2)
-            const large = sweep > 180 ? 1 : 0
-            paths += `<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} Z" fill="${color}"/>`
-          }
-          angle = endA
-        })
-        html += `<svg viewBox="0 0 100 100" class="w-28 h-28 flex-shrink-0">${paths}</svg>`
+      if (barTotal > 0) {
+        // Horizontal bar comparison
+        const aW = Math.max(assetsPct, 8)
+        const lW = Math.max(liabilitiesPct, 8)
+        html += `<div class="mb-4">
+          <div class="flex h-8 rounded-lg overflow-hidden">`
+        if (assetsPct > 0) {
+          html += `<div class="bg-green-500 dark:bg-green-600 flex items-center justify-center" style="width:${aW}%">
+            <span class="text-xs font-bold text-white">${assetsPct}%</span>
+          </div>`
+        }
+        if (liabilitiesPct > 0) {
+          html += `<div class="bg-red-500 dark:bg-red-600 flex items-center justify-center" style="width:${lW}%">
+            <span class="text-xs font-bold text-white">${liabilitiesPct}%</span>
+          </div>`
+        }
+        html += `</div>
+          <div class="flex items-center justify-between mt-2">
+            <span class="text-xs font-semibold text-green-600 dark:text-green-400 tabular-nums">Assets: ${this._currency(assetsSum)}</span>
+            <span class="text-xs font-semibold text-red-600 dark:text-red-400 tabular-nums">Liabilities: ${this._currency(liabilitiesSum)}</span>
+          </div>
+        </div>`
 
-        html += `<div class="mt-2 w-full space-y-1 overflow-y-auto" style="max-height: 5.5rem;">`
-        sorted.forEach((a, i) => {
-          const color = pieColorsHex[i % pieColorsHex.length]
-          const displayBal = a.display_balance != null ? a.display_balance : a.balance
-          const pct = absTotal > 0 ? Math.round(Math.abs(a.balance) / absTotal * 100) : 0
-          const isLiability = a.normal_balance_type === "CREDIT"
-          const balColor = isLiability ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-gray-300"
-          html += `
-            <div class="flex items-center text-xs px-1 min-w-0">
-              <span class="w-2 h-2 rounded-full flex-shrink-0" style="background:${color}"></span>
-              <span class="${balColor} truncate ml-1.5 min-w-0">${this._esc(a.name)} &mdash; ${this._currency(displayBal)} &mdash; ${pct}%</span>
-            </div>`
-        })
+        // Top 3 breakdown
+        html += `<div class="grid grid-cols-2 gap-3">`
+        html += `<div><p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Top Assets</p>`
+        if (assetAccounts.length > 0) {
+          html += `<ul class="space-y-1">`
+          assetAccounts.slice(0, 3).forEach(a => {
+            html += `<li class="flex items-center justify-between">
+              <span class="text-xs text-gray-700 dark:text-gray-300 truncate mr-1">${this._esc(a.name)}</span>
+              <span class="text-xs font-semibold text-gray-900 dark:text-white tabular-nums flex-shrink-0">${this._currency(a.balance)}</span>
+            </li>`
+          })
+          html += `</ul>`
+        } else {
+          html += `<p class="text-xs text-gray-400 dark:text-gray-500">None</p>`
+        }
         html += `</div>`
+
+        html += `<div><p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Top Liabilities</p>`
+        if (liabilityAccounts.length > 0) {
+          html += `<ul class="space-y-1">`
+          liabilityAccounts.slice(0, 3).forEach(a => {
+            html += `<li class="flex items-center justify-between">
+              <span class="text-xs text-gray-700 dark:text-gray-300 truncate mr-1">${this._esc(a.name)}</span>
+              <span class="text-xs font-semibold text-red-600 dark:text-red-400 tabular-nums flex-shrink-0">${this._currency(Math.abs(a.balance))}</span>
+            </li>`
+          })
+          html += `</ul>`
+        } else {
+          html += `<p class="text-xs text-gray-400 dark:text-gray-500">None</p>`
+        }
+        html += `</div></div>`
       } else {
-        html += `<p class="text-sm text-gray-400 dark:text-gray-500">No accounts to chart.</p>`
+        html += `<p class="text-sm text-gray-400 dark:text-gray-500 text-center py-8">No account data available.</p>`
       }
-      html += `</div>`
       backContent.innerHTML = html
     }
   }
