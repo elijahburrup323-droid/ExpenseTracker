@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_26_215427) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_26_220003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_stat_statements"
   enable_extension "plpgsql"
@@ -560,6 +560,20 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_26_215427) do
     t.index ["user_id"], name: "index_income_user_frequencies_on_user_id"
   end
 
+  create_table "investment_accounts", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "name", limit: 80, null: false
+    t.string "account_type", limit: 30, default: "Brokerage", null: false
+    t.boolean "include_in_net_worth", default: true, null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "deleted_at"], name: "index_investment_accounts_on_user_id_and_deleted_at"
+    t.index ["user_id", "name"], name: "idx_investment_accounts_unique_name", unique: true, where: "(deleted_at IS NULL)"
+    t.index ["user_id"], name: "index_investment_accounts_on_user_id"
+  end
+
   create_table "investment_holdings", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "account_id", null: false
@@ -576,8 +590,11 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_26_215427) do
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "investment_account_id"
     t.index ["account_id", "ticker_symbol"], name: "idx_inv_holdings_acct_ticker_unique", unique: true, where: "((deleted_at IS NULL) AND (ticker_symbol IS NOT NULL))"
     t.index ["account_id"], name: "index_investment_holdings_on_account_id"
+    t.index ["investment_account_id", "deleted_at"], name: "idx_holdings_on_inv_account_deleted"
+    t.index ["investment_account_id"], name: "index_investment_holdings_on_investment_account_id"
     t.index ["user_id", "account_id"], name: "index_investment_holdings_on_user_id_and_account_id"
     t.index ["user_id", "deleted_at"], name: "index_investment_holdings_on_user_id_and_deleted_at"
     t.index ["user_id"], name: "index_investment_holdings_on_user_id"
@@ -610,8 +627,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_26_215427) do
     t.bigint "investment_holding_id", null: false
     t.string "transaction_type", limit: 10, null: false
     t.date "transaction_date", null: false
-    t.decimal "shares", precision: 16, scale: 6, null: false
-    t.decimal "price_per_share", precision: 12, scale: 4, null: false
+    t.decimal "shares", precision: 16, scale: 6
+    t.decimal "price_per_share", precision: 12, scale: 4
     t.decimal "total_amount", precision: 12, scale: 2, null: false
     t.decimal "fees", precision: 12, scale: 2, default: "0.0", null: false
     t.decimal "realized_gain", precision: 12, scale: 2
@@ -1200,7 +1217,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_26_215427) do
   add_foreign_key "income_recurrings", "users"
   add_foreign_key "income_user_frequencies", "income_frequency_masters", column: "frequency_master_id"
   add_foreign_key "income_user_frequencies", "users"
+  add_foreign_key "investment_accounts", "users"
   add_foreign_key "investment_holdings", "accounts"
+  add_foreign_key "investment_holdings", "investment_accounts"
   add_foreign_key "investment_holdings", "users"
   add_foreign_key "investment_lots", "investment_holdings"
   add_foreign_key "investment_lots", "investment_transactions", column: "buy_transaction_id"

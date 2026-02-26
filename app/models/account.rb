@@ -55,11 +55,25 @@ class Account < ApplicationRecord
                          .sum(:current_value)
 
       # Investment holdings: market value (shares_held * current_price)
-      investment_total = InvestmentHolding
-                           .where(user_id: user_id, include_in_net_worth: true)
-                           .where(deleted_at: nil)
-                           .where.not(current_price: nil)
-                           .sum("shares_held * current_price")
+      # Filters through investment_accounts (include_in_net_worth + active).
+      # Falls back to holding-level include_in_net_worth for orphan holdings
+      # not yet assigned to an investment account.
+      investment_total = BigDecimal("0")
+
+      # Holdings linked to investment accounts — use account-level filter
+      investment_total += InvestmentHolding
+                            .joins(:investment_account)
+                            .where(investment_accounts: { user_id: user_id, include_in_net_worth: true, active: true })
+                            .where(investment_holdings: { deleted_at: nil })
+                            .where.not(investment_holdings: { current_price: nil })
+                            .sum("investment_holdings.shares_held * investment_holdings.current_price")
+
+      # Holdings without an investment account — use holding-level filter (backward compat)
+      investment_total += InvestmentHolding
+                            .where(user_id: user_id, investment_account_id: nil, include_in_net_worth: true)
+                            .where(deleted_at: nil)
+                            .where.not(current_price: nil)
+                            .sum("shares_held * current_price")
 
       # Financing instruments: PAYABLE = negative, RECEIVABLE = positive
       payable_total = FinancingInstrument

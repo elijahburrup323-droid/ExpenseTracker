@@ -1,10 +1,20 @@
-APP_VERSION = "1.3.21"
+APP_VERSION = "1.3.22"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.22",
+    changes: [
+      "Investments: New investment_accounts table — dedicated accounts for Brokerage, IRA, Roth IRA, 401k, 403b, 529 Plan, HSA, SEP IRA, Trust, Other. Account-level include_in_net_worth and active flags control net worth aggregation. (CM-7)",
+      "Investments: Added REINVEST and FEE transaction types — REINVEST acts as BUY using dividend amount (creates FIFO lots), FEE records expense without changing share count. (CM-7)",
+      "Investments: Cost basis engine (InvestmentTransactionProcessor) — processes BUY/SELL/REINVEST/DIVIDEND/FEE transactions, creates/consumes FIFO lots, calculates realized gains, supports transaction reversal for edits/deletes. (CM-7)",
+      "Investments: Updated validations — shares/price nullable for DIVIDEND/FEE, sell-more-than-owned guard, amount required for DIVIDEND/FEE. (CM-7)",
+      "Net Worth: Updated to filter investments through investment_accounts (include_in_net_worth + active) with backward compatibility for orphan holdings. (CM-7)"
+    ]
+  },
   {
     version: "1.3.21",
     changes: [

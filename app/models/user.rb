@@ -42,6 +42,7 @@ class User < ApplicationRecord
   # Assets, Investments & Financing
   has_many :asset_types, dependent: :destroy
   has_many :assets, dependent: :destroy
+  has_many :investment_accounts, dependent: :destroy
   has_many :investment_holdings, dependent: :destroy
   has_many :investment_transactions, dependent: :destroy
   has_many :investment_lots, dependent: :destroy

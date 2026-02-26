@@ -4,7 +4,8 @@ class InvestmentHolding < ApplicationRecord
   audit_exclude :sort_order
 
   belongs_to :user
-  belongs_to :account
+  belongs_to :account, optional: true
+  belongs_to :investment_account, optional: true
 
   has_many :investment_transactions, dependent: :restrict_with_error
   has_many :investment_lots, dependent: :restrict_with_error
