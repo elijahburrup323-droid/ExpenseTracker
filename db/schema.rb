@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_25_100002) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_26_000003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_stat_statements"
   enable_extension "plpgsql"
@@ -124,6 +124,20 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_25_100002) do
     t.index ["sort_order"], name: "index_asset_types_on_sort_order"
     t.index ["user_id", "normalized_key"], name: "idx_asset_types_user_key_unique", unique: true, where: "((user_id IS NOT NULL) AND (deleted_at IS NULL))"
     t.index ["user_id"], name: "index_asset_types_on_user_id"
+  end
+
+  create_table "asset_valuations", force: :cascade do |t|
+    t.bigint "asset_id", null: false
+    t.date "valuation_date", null: false
+    t.decimal "value", precision: 12, scale: 2, null: false
+    t.string "source", limit: 20, default: "manual", null: false
+    t.string "notes", limit: 500
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["asset_id", "deleted_at"], name: "index_asset_valuations_on_asset_id_and_deleted_at"
+    t.index ["asset_id", "valuation_date"], name: "idx_asset_valuations_asset_date", order: { valuation_date: :desc }
+    t.index ["asset_id"], name: "index_asset_valuations_on_asset_id"
   end
 
   create_table "assets", force: :cascade do |t|
@@ -1140,6 +1154,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_25_100002) do
   add_foreign_key "amortization_schedule_entries", "financing_payments"
   add_foreign_key "amortization_schedule_entries", "users"
   add_foreign_key "asset_types", "users"
+  add_foreign_key "asset_valuations", "assets"
   add_foreign_key "assets", "asset_types"
   add_foreign_key "assets", "users"
   add_foreign_key "audit_logs", "users"

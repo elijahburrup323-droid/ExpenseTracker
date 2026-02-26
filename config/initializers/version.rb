@@ -21,6 +21,8 @@ APP_ALL_VERSIONS = [
       "Performance Guardrails: Paginatable concern for API controllers with MAX_PER_PAGE=500, SQL-level aggregation via InvestmentHolding.with_computed_values scope (Instruction Set 3/4)",
       "Dashboard Cards: CSS design tokens (--dash-card-h) for locked card height, dash-card/dash-card-footer/dash-card-scroll classes as single source of truth for card layout",
       "Dashboard Cards: Visual regression test for card height equality, icon visibility, baseline alignment, flip/expand interactions",
+      "Assets Module: asset_valuations table for valuation history with auto-sync to asset current_value via AssetValuationService (CM-28)",
+      "Assets Module: API endpoints for assets CRUD, asset_types CRUD (system + custom), and nested asset_valuations CRUD (CM-28)",
     ]
   },
   {

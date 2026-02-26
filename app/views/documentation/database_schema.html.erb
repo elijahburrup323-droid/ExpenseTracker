@@ -56,7 +56,11 @@ asset_types
 
 assets
  ├── belongs_to :user                  (user_id FK → users.id)
- └── belongs_to :asset_type            (asset_type_id FK → asset_types.id)
+ ├── belongs_to :asset_type            (asset_type_id FK → asset_types.id)
+ └── has_many :asset_valuations        (asset_valuations.asset_id → assets.id)
+
+asset_valuations
+ └── belongs_to :asset                 (asset_id FK → assets.id)
 
 investment_holdings
  ├── belongs_to :user                  (user_id FK → users.id)
@@ -1830,6 +1834,33 @@ phone_verifications
     <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
       <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Indexes</p>
       <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5"><li>INDEX (user_id, deleted_at)</li><li>INDEX (user_id, asset_type_id)</li><li>UNIQUE (user_id, lower(name)) WHERE deleted_at IS NULL</li></ul>
+    </div>
+  </div>
+
+  <%# ── asset_valuations ── %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">asset_valuations</h2>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Historical asset valuation records — latest auto-updates parent asset's current_value</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead><tr class="border-b border-gray-100 dark:border-gray-700"><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Column</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Type</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Constraints</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Description</th></tr></thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr><td class="px-6 py-2 font-mono font-medium text-gray-900 dark:text-white">id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">PK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Primary key</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">asset_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; assets</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Parent asset</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">valuation_date</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">date</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Date of valuation</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">value</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">decimal(12,2)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Appraised/estimated value</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">source</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar(20)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">default: manual</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">manual / appraisal / system</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">notes</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar(500)</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Optional notes</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">deleted_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Soft-delete timestamp</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">created_at / updated_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Timestamps</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5"><li>INDEX (asset_id, valuation_date DESC)</li><li>INDEX (asset_id, deleted_at)</li></ul>
     </div>
   </div>
 

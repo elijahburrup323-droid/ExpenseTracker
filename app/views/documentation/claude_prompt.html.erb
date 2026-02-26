@@ -218,6 +218,7 @@ Any modification to Net Worth aggregation, Cost basis method, Amortization math,
 ### Assets, Investments &amp; Financing
 - **asset_types** — Asset category definitions: id, user_id (FK users, nullable = system type), name, normalized_key, description, icon_key, is_active, sort_order, deleted_at, timestamps.
 - **assets** — User physical/intangible assets: id, user_id (FK users), asset_type_id (FK asset_types), name, description, current_value (authoritative), purchase_price, purchase_date, include_in_net_worth, notes, sort_order, deleted_at, timestamps.
+- **asset_valuations** — Historical valuation records: id, asset_id (FK assets), valuation_date, value (decimal 12,2), source (manual/appraisal/system), notes, deleted_at, timestamps. Latest valuation auto-updates parent asset's current_value via AssetValuationService.
 - **investment_holdings** — Per-security holdings within investment accounts: id, user_id (FK users), account_id (FK accounts), ticker_symbol, security_name, security_type (STOCK/ETF/MUTUAL_FUND/BOND/CRYPTO/CASH/OTHER), shares_held, cost_basis_total, current_price, price_as_of, include_in_net_worth, notes, sort_order, deleted_at, timestamps.
 - **investment_transactions** — Buy/sell/dividend/split transactions: id, user_id (FK users), investment_holding_id (FK investment_holdings), transaction_type (BUY/SELL/DIVIDEND/SPLIT), transaction_date, shares, price_per_share, total_amount, fees, realized_gain (SELL only), notes, deleted_at, timestamps.
 - **investment_lots** — FIFO cost basis lots: id, user_id (FK users), investment_holding_id (FK investment_holdings), buy_transaction_id (FK investment_transactions), sell_transaction_id (FK investment_transactions, optional), acquired_date, shares_acquired, shares_remaining, cost_per_share, cost_basis, status (OPEN/PARTIAL/CLOSED), timestamps. No deleted_at.
@@ -227,6 +228,7 @@ Any modification to Net Worth aggregation, Cost basis method, Amortization math,
 
 ### Key Relationships
 - User has_many: spending_types, spending_categories, spending_limit_histories, account_types, accounts, payments, income_user_frequencies, income_recurrings, income_entries, transfer_masters, account_month_snapshots, dashboard_month_snapshots, balance_adjustments, reconciliation_records, import_templates, import_sessions, asset_types, assets, investment_holdings, investment_transactions, investment_lots, financing_instruments, financing_payments, amortization_schedule_entries; has_one: open_month_master
+- Asset has_many: asset_valuations (latest valuation auto-syncs current_value)
 - SpendingType has_many spending_categories; SpendingCategory has_many payments
 - AccountType has_many accounts; Account has_many payments, transfers_from, transfers_to, account_month_snapshots, investment_holdings
 - IncomeRecurring has_many income_entries; both link to frequency_master and optional account
@@ -287,6 +289,9 @@ API endpoints (all under /api/):
   /api/account_type_masters ... CRUD + GET :id/can_delete (admin-only, delete blocked if in use by any user)
   /api/user_account_types ..... index + update (is_enabled toggle + custom_description per account type)
   /api/accounts ............... CRUD
+  /api/asset_types ............ CRUD (system types read-only; custom per-user types can be created/updated/deleted; delete blocked if in use)
+  /api/assets ................. CRUD (soft-delete blocked if valuations exist)
+  /api/assets/:id/asset_valuations  CRUD (nested under asset; create auto-updates asset.current_value via AssetValuationService)
   /api/transfer_masters ....... CRUD (with transactional balance updates on both from/to accounts)
   /api/reconciliation ......... data (GET), toggle (PATCH), outside_balance (PUT), statement_counts (PUT), mark_reconciled (PUT), group_states (GET), toggle_group (PUT)
   /api/balance_adjustments .... create, update, destroy (with balance updates)

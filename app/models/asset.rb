@@ -5,6 +5,8 @@ class Asset < ApplicationRecord
   belongs_to :user
   belongs_to :asset_type
 
+  has_many :asset_valuations, dependent: :destroy
+
   default_scope { where(deleted_at: nil) }
 
   scope :active, -> { where(deleted_at: nil) }

@@ -237,6 +237,12 @@ Rails.application.routes.draw do
     end
     # Tutorial API
     put "tutorial/progress", to: "tutorial#progress"
+    # Assets API
+    resources :asset_types, only: [:index, :create, :update, :destroy]
+    resources :assets, only: [:index, :create, :update, :destroy] do
+      resources :asset_valuations, only: [:index, :create, :update, :destroy]
+    end
+
     resources :net_worth_snapshots, only: [:index] do
       collection do
         post :populate
