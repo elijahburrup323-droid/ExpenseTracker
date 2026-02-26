@@ -1,1 +1,41 @@
 @import "tailwindcss";
+
+/* ===== Dashboard Card Design Tokens =====
+   Single source of truth for card height and baseline offset.
+   DO NOT override per-card. Change ONLY here.
+*/
+@layer base {
+  :root {
+    --dash-card-h: 28rem;                /* 448px — locked card height (desktop) */
+    --dash-card-baseline-offset: 0px;     /* footer flush with bottom padding */
+  }
+}
+
+@layer components {
+  /* Dashboard grid: fixed-height rows on desktop */
+  .dash-grid {
+    grid-auto-rows: var(--dash-card-h);
+  }
+
+  /* Card wrapper: locked height, no content-driven growth */
+  .dash-card {
+    height: 100%;
+    max-height: var(--dash-card-h);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Scrollable content zone within cards */
+  .dash-card-scroll {
+    flex: 1 1 0%;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  /* Footer pinned to bottom */
+  .dash-card-footer {
+    margin-top: auto;
+    flex-shrink: 0;
+  }
+}

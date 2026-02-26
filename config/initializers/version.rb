@@ -19,6 +19,8 @@ APP_ALL_VERSIONS = [
       "Performance Guardrails: AmortizationService for in-memory schedule generation, bulk insert, and forward-only recalculation from affected period (Instruction Set 3/4)",
       "Performance Guardrails: Financing term_months capped at 480 months (40 years), investment holdings warn at 5,000+ transactions (Instruction Set 3/4)",
       "Performance Guardrails: Paginatable concern for API controllers with MAX_PER_PAGE=500, SQL-level aggregation via InvestmentHolding.with_computed_values scope (Instruction Set 3/4)",
+      "Dashboard Cards: CSS design tokens (--dash-card-h) for locked card height, dash-card/dash-card-footer/dash-card-scroll classes as single source of truth for card layout",
+      "Dashboard Cards: Visual regression test for card height equality, icon visibility, baseline alignment, flip/expand interactions",
     ]
   },
   {

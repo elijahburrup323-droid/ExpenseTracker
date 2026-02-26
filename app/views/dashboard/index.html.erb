@@ -22,12 +22,12 @@
   <% end %>
 
   <%# ===== 6-CARD GRID (3 x 2, equal size) ===== %>
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 md:[grid-auto-rows:1fr] gap-4 md:gap-6" data-dashboard-target="cardsGrid" data-tutorial="dashboard-cards">
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 md:dash-grid gap-4 md:gap-6" data-dashboard-target="cardsGrid" data-tutorial="dashboard-cards">
 
     <% @slots.each do |slot| %>
       <% card = slot.dashboard_card %>
       <% next unless card&.is_active %>
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 lg:p-6 flex flex-col overflow-hidden min-w-0"
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 lg:p-6 dash-card min-w-0"
            style="perspective: 1000px;"
            data-dashboard-target="slotWrapper"
            data-slot-number="<%= slot.slot_number %>"

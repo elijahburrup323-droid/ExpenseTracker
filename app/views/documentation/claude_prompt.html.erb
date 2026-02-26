@@ -106,6 +106,13 @@ The following are protected and may not be modified without approval:
 - Sticky Hello header behavior, Dashboard grid/card sizing, Sidebar collapse behavior
 - z-index layering, Global CSS spacing/typography system
 - Modal-based CRUD standard (inline editing deprecated)
+- **Dashboard Card Invariants** (locked via design tokens in `app/assets/tailwind/application.css`):
+  - All 6 dashboard cards MUST be equal height — controlled by `--dash-card-h` CSS variable (single source of truth)
+  - Card height MUST NOT change based on content — overflow handled by internal scroll (`dash-card-scroll`)
+  - Bottom divider/baseline line MUST be at the same vertical position across all cards (`.dash-card-footer` with `flex-shrink:0; margin-top:auto`)
+  - Flip icon (↻) and Expand icon (⬜) MUST remain visible on all cards — 44x44px min touch target, inside card footer
+  - CSS classes `dash-grid`, `dash-card`, `dash-card-scroll`, `dash-card-footer` are locked — do not override per-card
+  - Visual regression test: `tests/dashboard-regression.spec.js` — run after any dashboard CSS/layout change
 
 ### 7. Change Control Policy
 Any modification to Net Worth aggregation, Cost basis method, Amortization math, or Directional accounting logic requires explicit architectural approval and updated QA coverage.
