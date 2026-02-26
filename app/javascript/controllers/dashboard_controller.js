@@ -843,6 +843,34 @@ export default class extends Controller {
         </div>
         <span class="text-sm font-semibold text-red-600 dark:text-red-400 tabular-nums">${this._currency(data.expenses)}</span>
       </div>
+      ${(() => {
+        const nc = (data.net_change != null) ? data.net_change : (data.income - data.expenses)
+        const ncPos = nc >= 0
+        const ncColor = ncPos ? "emerald" : "red"
+        const ncSign = ncPos ? "+" : "-"
+        const sr = data.savings_rate
+        const srColor = (sr != null && sr >= 0) ? "emerald" : "red"
+        const srDisplay = (sr != null) ? sr + "%" : "\u2014"
+        const srTextClass = (sr != null) ? "text-" + srColor + "-600 dark:text-" + srColor + "-400" : "text-gray-400 dark:text-gray-500"
+        return '<div class="flex items-center justify-between">' +
+          '<div class="flex items-center space-x-2">' +
+            '<span class="w-6 h-6 rounded bg-' + ncColor + '-100 dark:bg-' + ncColor + '-900/30 flex items-center justify-center">' +
+              '<svg class="w-3.5 h-3.5 text-' + ncColor + '-600 dark:text-' + ncColor + '-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>' +
+            '</span>' +
+            '<span class="text-sm text-gray-700 dark:text-gray-300">Net Change</span>' +
+          '</div>' +
+          '<span class="text-sm font-semibold text-' + ncColor + '-600 dark:text-' + ncColor + '-400 tabular-nums">' + ncSign + this._currency(Math.abs(nc)) + '</span>' +
+        '</div>' +
+        '<div class="flex items-center justify-between">' +
+          '<div class="flex items-center space-x-2">' +
+            '<span class="w-6 h-6 rounded bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">' +
+              '<svg class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm6-4a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zm6-3a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>' +
+            '</span>' +
+            '<span class="text-sm text-gray-700 dark:text-gray-300">Savings Rate</span>' +
+          '</div>' +
+          '<span class="text-sm font-semibold ' + srTextClass + ' tabular-nums">' + srDisplay + '</span>' +
+        '</div>'
+      })()}
       ${accountsHtml}
       <div class="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
         <div class="flex items-center space-x-2">

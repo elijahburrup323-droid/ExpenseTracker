@@ -269,7 +269,10 @@ module Api
                        .map { |a| { name: a.name, beginning_balance: a.beginning_balance.to_f } }
       current_balance = ctx[:all_balances].select { |id, _| ctx[:budget_ids].include?(id) }.values.sum.to_f.round(2)
 
-      { beginning_balance: beginning_balance, income: income, expenses: expenses, new_accounts: new_accounts, current_balance: current_balance }
+      net_change = (income - expenses).round(2)
+      savings_rate = income > 0 ? ((net_change / income) * 100).round(1) : nil
+
+      { beginning_balance: beginning_balance, income: income, expenses: expenses, net_change: net_change, savings_rate: savings_rate, new_accounts: new_accounts, current_balance: current_balance }
     end
 
     RECENT_ACTIVITY_PAGE_SIZE = 10

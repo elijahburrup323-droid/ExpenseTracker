@@ -1,10 +1,16 @@
-APP_VERSION = "1.3.22"
+APP_VERSION = "1.3.23"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.23",
+    changes: [
+      "Dashboard: Income & Spending card now shows Net Change (Income - Expenses) and Savings Rate (%) between Expenses and Current Balance. Net Change displays with sign (+/-) and color semantics (green positive, red negative). Savings Rate shows as percentage with 1 decimal, or em-dash when Income is zero."
+    ]
+  },
   {
     version: "1.3.22",
     changes: [
