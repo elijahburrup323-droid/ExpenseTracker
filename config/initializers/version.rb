@@ -8,6 +8,7 @@ APP_ALL_VERSIONS = [
   {
     version: "1.3.21",
     changes: [
+      "Dashboard: Fixed card height inconsistency — added max-height: 28rem hard ceiling, min-height: 0 on flipper + front flex containers to allow proper flex shrinking, Slot 5 (Recent Activity) scroll containment enforced. All 6 cards now locked at identical 448px height at desktop and iPad widths. (CM-5)",
       "Asset Detail Screen: 4-tab layout at /assets/:id — Overview (2-column: Purchase Date/Price, Current Value, Net Worth pill, Gain/Loss), Valuation History (table with Add/Delete), Notes (free-form textarea), Documents (placeholder scaffold). Inline edit via Edit Asset button. Asset List names now link to detail page. (CM-4)",
       "Assets Module: Database tables for asset_types (14 system defaults + custom per-user) and assets with current_value, include_in_net_worth, and soft delete (Instruction Set 1/4)",
       "Investments Module: Database tables for investment_holdings, investment_transactions, and investment_lots with FIFO cost basis tracking (Instruction Set 1/4)",

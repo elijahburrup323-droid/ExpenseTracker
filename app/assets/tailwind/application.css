@@ -20,6 +20,7 @@
   /* Card wrapper: fills grid row, no content-driven overflow */
   .dash-card {
     height: 100%;
+    max-height: var(--dash-card-h);  /* CM-5: hard ceiling prevents card overflow */
     display: flex;
     flex-direction: column;
     overflow: hidden;

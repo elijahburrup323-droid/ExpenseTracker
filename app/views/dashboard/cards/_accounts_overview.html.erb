@@ -27,7 +27,7 @@
         </div>
         <span class="text-sm font-semibold text-gray-900 dark:text-white">Net Worth: <%= number_to_currency(card2_total) %></span>
       </div>
-      <ul class="space-y-3 flex-1">
+      <ul class="space-y-3">
         <% sorted_accounts.each_with_index do |account, i| %>
           <% c = color_cycle[i % color_cycle.length] %>
           <% is_liability = credit_master_ids.include?(account.account_type_master_id) %>

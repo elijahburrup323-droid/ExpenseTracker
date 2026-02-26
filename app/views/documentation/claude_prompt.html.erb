@@ -108,7 +108,8 @@ The following are protected and may not be modified without approval:
 - Modal-based CRUD standard (inline editing deprecated)
 - **Dashboard Card Invariants** (design tokens in `app/assets/tailwind/application.css` + inline `<style>` in `application.html.erb`):
   - All 6 dashboard cards MUST be equal height — controlled by `--dash-card-h` (28rem/448px) via `grid-auto-rows`
-  - Card height MUST NOT change based on content — overflow handled by internal scroll (`dash-card-scroll`)
+  - Card height MUST NOT change based on content — overflow handled by internal scroll (`dash-card-scroll`). Hard ceiling: `max-height: 28rem` on `.dash-card` at md+ (CM-5)
+  - Flex containment chain: `.dash-card` → `[data-role="flipper"]` → `[data-role="front"]` all require `min-height: 0` to allow flex children to shrink below content size (CM-5)
   - Bottom divider/baseline line MUST be at the same vertical position across all cards (`.dash-card-footer` with `flex-shrink:0; margin-top:auto`)
   - Flip icon (↻) and Expand icon (⬜) MUST remain visible on all cards — 44x44px min touch target, inside card footer
   - CSS classes `dash-grid`, `dash-card`, `dash-card-scroll`, `dash-card-footer` are locked — do not override per-card

@@ -155,14 +155,16 @@
       /* Dashboard card design tokens — matches application.css for CDN fallback */
       @media (min-width: 768px) {
         .md\:dash-grid { grid-auto-rows: 28rem; }
+        .dash-card { max-height: 28rem; } /* CM-5: hard ceiling prevents card overflow */
       }
       .dash-card { height: 100%; display: flex; flex-direction: column; overflow: hidden; }
       .dash-card-scroll { flex: 1 1 0%; min-height: 0; overflow-y: auto; }
       .dash-card-footer { margin-top: auto; flex-shrink: 0; padding-top: 0.5rem; padding-bottom: 0.25rem; }
 
       /* CM-23: Pin card footers to exact same distance from bottom edge */
-      [data-role="flipper"] { display: flex; flex-direction: column; }
-      [data-role="front"] { flex: 1; }
+      /* CM-5: min-height: 0 on flipper + front allows flex children to shrink below content size */
+      [data-role="flipper"] { display: flex; flex-direction: column; min-height: 0; }
+      [data-role="front"] { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 
       /* CM-24: Expanded card layout toggle — show detailed view only when expanded */
       [data-role="expanded-layout"] { display: none; }
