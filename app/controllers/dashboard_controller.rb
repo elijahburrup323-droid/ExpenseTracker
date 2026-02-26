@@ -28,6 +28,22 @@ class DashboardController < ApplicationController
                              .where(payment_date: @month_start...@month_end)
                              .sum(:amount)
 
+    # Card 1: Context + projection metrics
+    prior_snapshots = DashboardMonthSnapshot.where(user: current_user)
+      .active
+      .where("(year * 100 + month) < ?", @month_start.year * 100 + @month_start.month)
+      .order(Arel.sql("year DESC, month DESC"))
+      .limit(3)
+    @three_month_avg = prior_snapshots.size >= 1 ? (prior_snapshots.sum(&:total_spent).to_f / prior_snapshots.size).round(2) : nil
+
+    days_in_month = @month_start.end_of_month.day
+    is_current = @month_start == Date.today.beginning_of_month
+    days_elapsed = is_current ? (Date.today - @month_start).to_i + 1 : days_in_month
+    @daily_avg = days_elapsed > 0 ? (@spent_mtd.to_f / days_elapsed).round(2) : 0.0
+    @projected_month_end = (@daily_avg * days_in_month).round(2)
+    @comparison_pct = @three_month_avg && @three_month_avg > 0 ? ((@spent_mtd.to_f - @three_month_avg) / @three_month_avg * 100).round(1) : nil
+    @comparison_label = "3-month avg"
+
     # Card 1 back: Spending by Category and by Type
     spent_total = @spent_mtd.to_f
     @spending_by_category = current_user.payments

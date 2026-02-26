@@ -32,6 +32,14 @@
         <div>
           <p class="text-lg font-semibold text-gray-800 dark:text-gray-200"><%= number_to_currency(spent_val, precision: 2) %></p>
           <p class="text-sm text-gray-500 dark:text-gray-400">spent this month</p>
+          <% if @comparison_pct.present? %>
+            <% is_over = @comparison_pct > 0 %>
+            <p class="text-[11px] mt-0.5 <%= is_over ? 'text-red-500' : 'text-green-500' %>">
+              <%= is_over ? '+' : '' %><%= @comparison_pct.abs %>% <%= is_over ? 'above' : 'below' %> <%= @comparison_label %>
+            </p>
+          <% end %>
+          <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">Daily Avg: <%= number_to_currency(@daily_avg || 0, precision: 2) %></p>
+          <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">Projected: <%= number_to_currency(@projected_month_end || 0, precision: 2) %></p>
         </div>
       </div>
     </div>

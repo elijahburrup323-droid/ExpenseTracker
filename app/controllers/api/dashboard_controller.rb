@@ -162,6 +162,28 @@ module Api
       )
       spent = base_payments.sum(:amount).to_f
 
+      # 3-month average from closed-month snapshots
+      prior_snapshots = DashboardMonthSnapshot.where(user: current_user)
+        .active
+        .where("(year * 100 + month) < ?", ctx[:month_start].year * 100 + ctx[:month_start].month)
+        .order(Arel.sql("year DESC, month DESC"))
+        .limit(3)
+      three_month_avg = prior_snapshots.size >= 1 ? (prior_snapshots.sum(&:total_spent).to_f / prior_snapshots.size).round(2) : nil
+
+      # Daily average + projected month-end
+      days_in_month = ctx[:month_start].end_of_month.day
+      days_elapsed = if ctx[:month_start] == Date.today.beginning_of_month
+                       (Date.today - ctx[:month_start]).to_i + 1
+                     else
+                       days_in_month
+                     end
+      daily_avg = days_elapsed > 0 ? (spent / days_elapsed).round(2) : 0.0
+      projected_month_end = (daily_avg * days_in_month).round(2)
+
+      # Comparison vs 3-month avg (tracking mode)
+      comparison_pct = three_month_avg && three_month_avg > 0 ? ((spent - three_month_avg) / three_month_avg * 100).round(1) : nil
+      comparison_label = "3-month avg"
+
       by_category = base_payments
         .joins(:spending_category)
         .group("spending_categories.id", "spending_categories.name", "spending_categories.icon_key", "spending_categories.color_key")
@@ -212,7 +234,17 @@ module Api
         { id: id, name: tag_names[id], amount: amt.round(2), pct: spent > 0 ? (amt / spent * 100).round(1) : 0.0 }
       end
 
-      { spent: spent, categories: by_category, types: by_type, tags: by_tag }
+      {
+        spent: spent,
+        three_month_avg: three_month_avg,
+        comparison_pct: comparison_pct,
+        comparison_label: comparison_label,
+        daily_avg: daily_avg,
+        projected_month_end: projected_month_end,
+        days_elapsed: days_elapsed,
+        days_in_month: days_in_month,
+        categories: by_category, types: by_type, tags: by_tag
+      }
     end
 
     def compute_accounts_overview(ctx)

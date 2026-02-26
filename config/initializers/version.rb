@@ -1,10 +1,16 @@
-APP_VERSION = "1.3.24"
+APP_VERSION = "1.3.25"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.25",
+    changes: [
+      "Dashboard: Spending Overview card now shows comparison vs 3-month average (color-coded: red for over, green for under), Daily Average spending, and Projected Month-End spending based on current velocity. Metrics update dynamically on month navigation. Hidden when insufficient history."
+    ]
+  },
   {
     version: "1.3.24",
     changes: [

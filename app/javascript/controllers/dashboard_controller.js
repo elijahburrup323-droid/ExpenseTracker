@@ -498,6 +498,7 @@ export default class extends Controller {
           <div>
             <p class="text-lg font-semibold text-gray-800 dark:text-gray-200 tabular-nums">${spent}</p>
             <p class="text-sm text-gray-500 dark:text-gray-400">spent this month</p>
+            ${this._renderSpendingContext(data)}
           </div>
         </div>`
     }
@@ -580,6 +581,25 @@ export default class extends Controller {
       html += `</div>`
       backContent.innerHTML = html
     }
+  }
+
+  _renderSpendingContext(data) {
+    let h = ''
+    if (data.comparison_pct != null) {
+      const pct = data.comparison_pct
+      const isOver = pct > 0
+      const color = isOver ? 'text-red-500' : 'text-green-500'
+      const sign = isOver ? '+' : ''
+      const word = isOver ? 'above' : 'below'
+      h += `<p class="text-[11px] ${color} mt-0.5">${sign}${Math.abs(pct).toFixed(1)}% ${word} ${data.comparison_label || '3-month avg'}</p>`
+    }
+    if (data.daily_avg != null) {
+      h += `<p class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">Daily Avg: ${this._currency(data.daily_avg)}</p>`
+    }
+    if (data.projected_month_end != null) {
+      h += `<p class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">Projected: ${this._currency(data.projected_month_end)}</p>`
+    }
+    return h
   }
 
   _renderAccountsOverview(wrapper, data) {
