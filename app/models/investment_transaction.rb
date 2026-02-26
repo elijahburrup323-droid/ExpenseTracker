@@ -1,4 +1,7 @@
 class InvestmentTransaction < ApplicationRecord
+  include Auditable
+  audit_include_always :transaction_type, :investment_holding_id
+
   belongs_to :user
   belongs_to :investment_holding
 
@@ -19,8 +22,4 @@ class InvestmentTransaction < ApplicationRecord
   validates :price_per_share, numericality: { greater_than_or_equal_to: 0 }
   validates :total_amount, numericality: true
   validates :fees, numericality: { greater_than_or_equal_to: 0 }
-
-  def soft_delete!
-    update_columns(deleted_at: Time.current)
-  end
 end

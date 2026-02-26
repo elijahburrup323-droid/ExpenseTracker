@@ -1,4 +1,8 @@
 class InvestmentHolding < ApplicationRecord
+  include Auditable
+  include RecalculationAuditable
+  audit_exclude :sort_order
+
   belongs_to :user
   belongs_to :account
 
@@ -19,10 +23,6 @@ class InvestmentHolding < ApplicationRecord
   validates :shares_held, numericality: true
   validates :cost_basis_total, numericality: true
   validates :current_price, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
-
-  def soft_delete!
-    update_columns(deleted_at: Time.current)
-  end
 
   # Market value = shares_held * current_price
   def market_value

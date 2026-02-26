@@ -47,6 +47,7 @@
  ├── has_many :financing_instruments  (financing_instruments.user_id → users.id)
  ├── has_many :financing_payments     (financing_payments.user_id → users.id)
  ├── has_many :amortization_schedule_entries (amortization_schedule_entries.user_id → users.id)
+ ├── has_many :audit_logs                  (audit_logs.user_id → users.id)
  └── (admin) dbu_table_catalogs (standalone, no FK)
 
 asset_types
@@ -2036,6 +2037,34 @@ phone_verifications
     </div>
   </div>
 
+  <%# ── audit_logs ── %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">audit_logs</h2>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Immutable audit trail for Assets, Investments &amp; Financing modules</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead><tr class="border-b border-gray-100 dark:border-gray-700"><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Column</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Type</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Constraints</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Description</th></tr></thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr><td class="px-6 py-2 font-mono font-medium text-gray-900 dark:text-white">id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">PK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Primary key</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">user_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; users</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">User who performed the action</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">entity_type</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar(60)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Model class name (e.g. Asset, InvestmentHolding)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">entity_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">ID of the audited record</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">action_type</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar(30)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">CREATE, UPDATE, DELETE, or RECALCULATION</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">before_json</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">jsonb</td><td class="px-6 py-2"><span class="text-xs bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300 px-1.5 py-0.5 rounded">DEFAULT {}</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Changed fields before the action (old values)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">after_json</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">jsonb</td><td class="px-6 py-2"><span class="text-xs bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300 px-1.5 py-0.5 rounded">DEFAULT {}</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Changed fields after the action (new values)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">metadata</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">jsonb</td><td class="px-6 py-2"><span class="text-xs bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300 px-1.5 py-0.5 rounded">DEFAULT {}</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Extra context (recalculation details, trigger IDs)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">created_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Immutable timestamp (no updated_at)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5"><li>INDEX (user_id)</li><li>INDEX (entity_type)</li><li>INDEX (entity_type, entity_id)</li><li>INDEX (created_at)</li></ul>
+    </div>
+  </div>
+
   <%# ── Foreign Keys Summary ── %>
   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 overflow-hidden">
     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
@@ -2125,6 +2154,7 @@ phone_verifications
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">amortization_schedule_entries</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">cascade (via Rails dependent: :destroy)</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">amortization_schedule_entries</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">financing_instrument_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">financing_instruments.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (DB-level foreign key)</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">amortization_schedule_entries</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">financing_payment_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">financing_payments.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">nullify (optional, set NULL on delete)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">audit_logs</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">cascade (via Rails dependent: :destroy)</td></tr>
         </tbody>
       </table>
     </div>

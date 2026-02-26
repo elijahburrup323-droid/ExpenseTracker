@@ -1,4 +1,7 @@
 class AssetType < ApplicationRecord
+  include Auditable
+  audit_exclude :sort_order, :normalized_key
+
   belongs_to :user, optional: true  # NULL = system type
 
   has_many :assets, dependent: :restrict_with_error
@@ -22,10 +25,6 @@ class AssetType < ApplicationRecord
 
   def in_use?
     assets.exists?
-  end
-
-  def soft_delete!
-    update_columns(deleted_at: Time.current)
   end
 
   private

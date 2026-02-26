@@ -1,4 +1,7 @@
 class FinancingPayment < ApplicationRecord
+  include Auditable
+  audit_include_always :financing_instrument_id
+
   belongs_to :user
   belongs_to :financing_instrument
 
@@ -17,8 +20,4 @@ class FinancingPayment < ApplicationRecord
   validates :escrow_amount, numericality: { greater_than_or_equal_to: 0 }
   validates :fees_amount, numericality: { greater_than_or_equal_to: 0 }
   validates :principal_balance_after, numericality: true
-
-  def soft_delete!
-    update_columns(deleted_at: Time.current)
-  end
 end

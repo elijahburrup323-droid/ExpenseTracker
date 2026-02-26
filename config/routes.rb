@@ -274,12 +274,14 @@ Rails.application.routes.draw do
   # Admin
   namespace :admin do
     resources :users, only: [:index]
+    resources :audit_logs, only: [:index]
   end
 
   # Admin API
   namespace :api do
     namespace :admin do
       resources :users, only: [:index, :update]
+      resources :audit_logs, only: [:index]
     end
     # DBU API (admin only)
     scope :dbu, controller: "dbu", as: :dbu do

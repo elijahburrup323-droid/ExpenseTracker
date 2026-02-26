@@ -48,6 +48,7 @@ class User < ApplicationRecord
   has_many :financing_instruments, dependent: :destroy
   has_many :financing_payments, dependent: :destroy
   has_many :amortization_schedule_entries, dependent: :destroy
+  has_many :audit_logs, dependent: :destroy
 
   # Progressive Feature Disclosure
   has_one  :onboarding_profile, class_name: "UserOnboardingProfile", dependent: :destroy

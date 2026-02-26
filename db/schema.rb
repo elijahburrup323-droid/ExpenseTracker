@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_25_000013) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_25_100002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_stat_statements"
   enable_extension "plpgsql"
@@ -145,6 +145,22 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_25_000013) do
     t.index ["user_id", "asset_type_id"], name: "index_assets_on_user_id_and_asset_type_id"
     t.index ["user_id", "deleted_at"], name: "index_assets_on_user_id_and_deleted_at"
     t.index ["user_id"], name: "index_assets_on_user_id"
+  end
+
+  create_table "audit_logs", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "entity_type", limit: 60, null: false
+    t.bigint "entity_id", null: false
+    t.string "action_type", limit: 30, null: false
+    t.jsonb "before_json", default: {}
+    t.jsonb "after_json", default: {}
+    t.jsonb "metadata", default: {}
+    t.datetime "created_at", null: false
+    t.index ["created_at"], name: "idx_audit_logs_created_at"
+    t.index ["entity_type", "entity_id"], name: "idx_audit_logs_entity"
+    t.index ["entity_type"], name: "idx_audit_logs_entity_type"
+    t.index ["user_id"], name: "idx_audit_logs_user_id"
+    t.index ["user_id"], name: "index_audit_logs_on_user_id"
   end
 
   create_table "balance_adjustments", force: :cascade do |t|
@@ -1126,6 +1142,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_25_000013) do
   add_foreign_key "asset_types", "users"
   add_foreign_key "assets", "asset_types"
   add_foreign_key "assets", "users"
+  add_foreign_key "audit_logs", "users"
   add_foreign_key "balance_adjustments", "accounts"
   add_foreign_key "balance_adjustments", "users"
   add_foreign_key "bucket_transactions", "buckets"

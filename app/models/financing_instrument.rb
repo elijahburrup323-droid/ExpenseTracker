@@ -1,4 +1,9 @@
 class FinancingInstrument < ApplicationRecord
+  include Auditable
+  include RecalculationAuditable
+  audit_exclude :sort_order
+  audit_include_always :instrument_type
+
   belongs_to :user
   belongs_to :account, optional: true
 
@@ -36,10 +41,6 @@ class FinancingInstrument < ApplicationRecord
   validates :start_date, presence: true
   validates :payment_frequency, presence: true, inclusion: { in: PAYMENT_FREQUENCIES }
   validates :monthly_payment, numericality: { greater_than: 0 }, allow_nil: true
-
-  def soft_delete!
-    update_columns(deleted_at: Time.current)
-  end
 
   def payable?
     instrument_type == "PAYABLE"

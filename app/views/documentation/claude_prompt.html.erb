@@ -110,9 +110,20 @@ The following are protected and may not be modified without approval:
 ### 7. Change Control Policy
 Any modification to Net Worth aggregation, Cost basis method, Amortization math, or Directional accounting logic requires explicit architectural approval and updated QA coverage.
 
+### 8. Audit Trail (Instruction Set 2/4)
+- All financial-impacting edits to Assets, Investments, and Financing entities must create an audit record in the `audit_logs` table.
+- Audit records include: user_id, entity_type, entity_id, action_type (CREATE/UPDATE/DELETE/RECALCULATION), before_json, after_json, metadata, created_at.
+- `before_json` and `after_json` store only changed fields (not entire records).
+- No audit record may be editable or deletable via UI. Audit logs are immutable (no `updated_at`).
+- **Auditable concern** (`app/models/concerns/auditable.rb`): Include in any model that needs audit logging. Provides `after_create`, `after_update` callbacks and a `soft_delete!` method that logs DELETE events. Customizable via `audit_exclude` (skip fields) and `audit_include_always` (always-include context fields). Thread-safe `Auditable.with_audit_user(user_id) { ... }` for controller-level user override.
+- **RecalculationAuditable concern** (`app/models/concerns/recalculation_auditable.rb`): Provides explicit class methods `log_fifo_recalculation!` and `log_amortization_recalculation!` — called by recalculation code (Instruction Sets 3-4). No FIFO or amortization recalculation may occur silently.
+- **Staff-only viewer**: `/admin/audit_logs` — accessible only by `budgethq_agent` users. Filterable by entity type and action type.
+- **Models with Auditable**: Asset, AssetType, InvestmentHolding, InvestmentTransaction, FinancingInstrument, FinancingPayment.
+- **Models with RecalculationAuditable**: InvestmentHolding, FinancingInstrument.
+
 ## Admin Role
 - **budgethq_agent** boolean on users table (default false). Only DJ and Elijah have this flag.
-- Admin users see an "Admin" group in the sidebar containing: DBU, Diagnostics, Documentation, Quotes, Frequency Masters, Acct Type Masters, and Reports Maint. Clicking the Admin group heading navigates to the Admin Users management screen (/admin/users).
+- Admin users see an "Admin" group in the sidebar containing: DBU, Diagnostics, Documentation, Quotes, Frequency Masters, Acct Type Masters, Reports Maint, and Audit Logs. Clicking the Admin group heading navigates to the Admin Users management screen (/admin/users).
 - Admin users also see Generate Data buttons on all CRUD screens.
 - Non-admins see the normal user experience without admin tools.
 - Admin user management screen (/admin/users, titled "Admin Users") lets admins search users and toggle admin status via API.

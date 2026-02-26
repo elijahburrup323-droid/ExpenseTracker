@@ -14,6 +14,7 @@ import IncomeUserFrequenciesController from "controllers/income_user_frequencies
 import IncomeRecurringsController from "controllers/income_recurrings_controller"
 import IncomeEntriesController from "controllers/income_entries_controller"
 import SidebarController from "controllers/sidebar_controller"
+import AdminAuditLogsController from "controllers/admin_audit_logs_controller"
 import AdminUsersController from "controllers/admin_users_controller"
 import QuotesController from "controllers/quotes_controller"
 import DbuController from "controllers/dbu_controller"
@@ -70,6 +71,7 @@ application.register("income-user-frequencies", IncomeUserFrequenciesController)
 application.register("income-recurrings", IncomeRecurringsController)
 application.register("income-entries", IncomeEntriesController)
 application.register("sidebar", SidebarController)
+application.register("admin-audit-logs", AdminAuditLogsController)
 application.register("admin-users", AdminUsersController)
 application.register("quotes", QuotesController)
 application.register("dbu", DbuController)

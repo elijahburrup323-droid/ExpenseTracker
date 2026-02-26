@@ -13,6 +13,7 @@ APP_ALL_VERSIONS = [
       "Financing Module: Database tables for financing_instruments (PAYABLE/RECEIVABLE), financing_payments with allocation tracking, and amortization_schedule_entries (Instruction Set 1/4)",
       "Net Worth: Updated Account.net_worth_for to include Assets, Investment Holdings, and Financing Instruments — formula: (Accounts + Assets + Investments + Receivables) - (Liabilities + Payables) (Instruction Set 1/4)",
       "Feature Store: Added assets, investments, and financing feature blocks in Net Worth category with accounts_basic dependency (Instruction Set 1/4)",
+      "Audit Trail: audit_logs table with Auditable concern for Assets, Investments & Financing — tracks CREATE/UPDATE/DELETE/RECALCULATION events with before/after JSON diffs, staff-only viewer at /admin/audit_logs (Instruction Set 2/4)",
     ]
   },
   {

@@ -1,4 +1,7 @@
 class Asset < ApplicationRecord
+  include Auditable
+  audit_exclude :sort_order
+
   belongs_to :user
   belongs_to :asset_type
 
@@ -17,10 +20,6 @@ class Asset < ApplicationRecord
   }
   validates :current_value, numericality: true
   validates :purchase_price, numericality: true, allow_nil: true
-
-  def soft_delete!
-    update_columns(deleted_at: Time.current)
-  end
 
   # Market value for net worth aggregation
   def net_worth_value
