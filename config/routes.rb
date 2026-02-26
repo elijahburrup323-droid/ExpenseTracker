@@ -244,6 +244,9 @@ Rails.application.routes.draw do
       resources :asset_valuations, only: [:index, :create, :update, :destroy]
     end
 
+    # Investment Accounts API
+    resources :investment_accounts, only: [:index, :show, :create, :update, :destroy]
+
     resources :net_worth_snapshots, only: [:index] do
       collection do
         post :populate

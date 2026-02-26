@@ -1,10 +1,17 @@
-APP_VERSION = "1.3.23"
+APP_VERSION = "1.3.24"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.24",
+    changes: [
+      "Investments: Dashboard at /investments — portfolio summary metrics (Total Portfolio Value, Cost Basis, Unrealized Gain/Loss, Realized Gain) with gain/loss color coding, and per-account summary cards showing Market Value, Cost Basis, Unrealized Gain with percentage. (CM-8)",
+      "Investments: Account management at /investments/accounts — full CRUD for investment accounts with modal-based add/edit, sortable columns, filter by account type, inline net-worth toggle, and soft deactivation. (CM-8)"
+    ]
+  },
   {
     version: "1.3.23",
     changes: [

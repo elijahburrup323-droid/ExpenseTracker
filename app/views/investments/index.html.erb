@@ -5,27 +5,100 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <div>
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Investments Dashboard</h1>
-        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Overview of your investment portfolio and performance</p>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Portfolio overview and performance snapshot</p>
       </div>
       <div class="flex items-center space-x-2">
-        <button type="button"
-                disabled
-                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition disabled:opacity-50 disabled:cursor-not-allowed">
+        <%= link_to "#{investment_accounts_path}?open=add",
+            class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition" do %>
           <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
           </svg>
-          Add Holding
-        </button>
+          Add Investment Account
+        <% end %>
       </div>
     </div>
   </div>
 
-  <%# Placeholder content %>
-  <div class="mt-8 text-center py-16">
-    <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/>
-    </svg>
-    <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">Investments Dashboard</h3>
-    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Portfolio charts and performance metrics will appear here in a future update.</p>
+  <%# Summary Metrics — 4-column centered grid %>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+    <%# Total Portfolio Value %>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 text-center">
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Portfolio Value</p>
+      <p class="mt-2 text-2xl font-bold text-gray-900 dark:text-white tabular-nums"><%= number_to_currency(@total_portfolio_value) %></p>
+      <p class="mt-1 text-[11px] text-gray-400 dark:text-gray-500">Active, included in net worth</p>
+    </div>
+
+    <%# Total Cost Basis %>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 text-center">
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Cost Basis</p>
+      <p class="mt-2 text-2xl font-bold text-gray-900 dark:text-white tabular-nums"><%= number_to_currency(@total_cost_basis) %></p>
+      <p class="mt-1 text-[11px] text-gray-400 dark:text-gray-500">Total invested</p>
+    </div>
+
+    <%# Total Unrealized Gain/Loss %>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 text-center">
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Unrealized Gain/Loss</p>
+      <p class="mt-2 text-2xl font-bold tabular-nums <%= @total_unrealized_gain >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' %>">
+        <%= @total_unrealized_gain >= 0 ? "+" : "" %><%= number_to_currency(@total_unrealized_gain) %>
+      </p>
+      <p class="mt-1 text-[11px] text-gray-400 dark:text-gray-500">Market vs cost basis</p>
+    </div>
+
+    <%# Total Realized Gain %>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 text-center">
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Realized Gain (Lifetime)</p>
+      <p class="mt-2 text-2xl font-bold tabular-nums <%= @total_realized_gain >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' %>">
+        <%= @total_realized_gain >= 0 ? "+" : "" %><%= number_to_currency(@total_realized_gain) %>
+      </p>
+      <p class="mt-1 text-[11px] text-gray-400 dark:text-gray-500">From closed positions</p>
+    </div>
+  </div>
+
+  <%# Account Summary Cards %>
+  <div class="mt-8">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Account Summary</h2>
+    <% if @account_summaries.any? %>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <% @account_summaries.each do |acct| %>
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
+            <div class="flex items-center justify-between mb-3">
+              <p class="text-sm font-semibold text-gray-900 dark:text-white truncate mr-2"><%= acct[:name] %></p>
+              <span class="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full"><%= acct[:account_type] %></span>
+            </div>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between">
+                <span class="text-gray-500 dark:text-gray-400">Market Value</span>
+                <span class="font-medium text-gray-900 dark:text-white tabular-nums text-right"><%= number_to_currency(acct[:market_value]) %></span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500 dark:text-gray-400">Cost Basis</span>
+                <span class="font-medium text-gray-900 dark:text-white tabular-nums text-right"><%= number_to_currency(acct[:cost_basis]) %></span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500 dark:text-gray-400">Unrealized Gain</span>
+                <span class="font-medium tabular-nums text-right <%= acct[:unrealized_gain] >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' %>">
+                  <%= acct[:unrealized_gain] >= 0 ? "+" : "" %><%= number_to_currency(acct[:unrealized_gain]) %>
+                  <span class="text-xs">(<%= acct[:gain_pct] %>%)</span>
+                </span>
+              </div>
+            </div>
+            <% unless acct[:include_in_net_worth] %>
+              <p class="mt-3 text-[11px] text-gray-400 dark:text-gray-500 italic">Excluded from net worth</p>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 text-center">
+        <svg class="mx-auto h-10 w-10 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/>
+        </svg>
+        <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">
+          No investment accounts yet.
+          <%= link_to "Add your first account", "#{investment_accounts_path}?open=add", class: "text-brand-600 dark:text-brand-400 hover:text-brand-700 font-medium" %>
+          to get started.
+        </p>
+      </div>
+    <% end %>
   </div>
 </div>
