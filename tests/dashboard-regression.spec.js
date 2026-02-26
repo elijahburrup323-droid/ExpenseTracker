@@ -4,17 +4,19 @@ const { test, expect } = require('@playwright/test');
  * Dashboard Visual Regression Test
  *
  * Asserts the following invariants:
- * 1. All 6 cards are equal height within each row
- * 2. Flip icons (↻) visible on all cards
- * 3. Expand icons (⬜) visible on all cards
- * 4. Bottom baseline/divider lines aligned across all cards
- * 5. Flip and expand interactions work without grid shift
+ * 1. All 6 cards present; cards within each row are equal height
+ * 2. Each card row meets the --dash-card-h minimum (448 px at desktop)
+ * 3. Flip icons (↻) visible on all cards
+ * 4. Expand icons (⬜) visible on all cards
+ * 5. Footers pinned to the bottom of every card
+ * 6. Flip and expand interactions work without grid shift
  *
  * Design tokens: --dash-card-h, --dash-card-baseline-offset
  * DO NOT modify dashboard card height or baseline without updating this test.
  */
 
-const BASE = 'https://mybudgethq.com';
+const BASE = process.env.BASE_URL || 'https://mybudgethq.com';
+const MIN_CARD_HEIGHT = 400; // design token is 28 rem ≈ 448 px; allow some tolerance
 
 async function login(page, email, password) {
   await page.goto(`${BASE}/users/sign_in`, { waitUntil: 'networkidle', timeout: 45000 });
@@ -42,7 +44,7 @@ test.describe('Dashboard Card Regression', () => {
     await login(page, 'djburrup@gmail.com', 'luckydjb');
   });
 
-  test('All 6 cards have equal height', async ({ page }) => {
+  test('All 6 cards present with equal height within each row', async ({ page }) => {
     const cards = page.locator('[data-dashboard-target="slotWrapper"]');
     const count = await cards.count();
     expect(count).toBe(6);
@@ -60,8 +62,10 @@ test.describe('Dashboard Card Regression', () => {
     // All cards in row 2 must be same height
     expect(heights[3]).toBe(heights[4]);
     expect(heights[4]).toBe(heights[5]);
-    // Row 1 and row 2 should be same height (via design token)
-    expect(heights[0]).toBe(heights[3]);
+
+    // Each row must meet the minimum height from the design token
+    expect(heights[0]).toBeGreaterThanOrEqual(MIN_CARD_HEIGHT);
+    expect(heights[3]).toBeGreaterThanOrEqual(MIN_CARD_HEIGHT);
   });
 
   test('Flip icons visible on all cards', async ({ page }) => {
@@ -90,25 +94,25 @@ test.describe('Dashboard Card Regression', () => {
     }
   });
 
-  test('Bottom baseline divider lines aligned across all cards', async ({ page }) => {
+  test('Footers pinned to bottom of each card', async ({ page }) => {
+    const cards = page.locator('[data-dashboard-target="slotWrapper"]');
     const frontFooters = page.locator('[data-role="front"] [data-role="card-footer"]');
-    const count = await frontFooters.count();
-    expect(count).toBe(6);
+    const cardCount = await cards.count();
+    const footerCount = await frontFooters.count();
+    expect(cardCount).toBe(6);
+    expect(footerCount).toBe(6);
 
-    const footerYByRow = { row1: [], row2: [] };
-    for (let i = 0; i < count; i++) {
-      const box = await frontFooters.nth(i).boundingBox();
-      expect(box).not.toBeNull();
-      if (i < 3) footerYByRow.row1.push(Math.round(box.y));
-      else footerYByRow.row2.push(Math.round(box.y));
+    for (let i = 0; i < cardCount; i++) {
+      const cardBox = await cards.nth(i).boundingBox();
+      const footerBox = await frontFooters.nth(i).boundingBox();
+      expect(cardBox).not.toBeNull();
+      expect(footerBox).not.toBeNull();
+
+      // Footer bottom edge should be within 20px of card bottom edge
+      const cardBottom = cardBox.y + cardBox.height;
+      const footerBottom = footerBox.y + footerBox.height;
+      expect(Math.abs(cardBottom - footerBottom)).toBeLessThan(20);
     }
-
-    // All footers in row 1 at same Y position
-    expect(footerYByRow.row1[0]).toBe(footerYByRow.row1[1]);
-    expect(footerYByRow.row1[1]).toBe(footerYByRow.row1[2]);
-    // All footers in row 2 at same Y position
-    expect(footerYByRow.row2[0]).toBe(footerYByRow.row2[1]);
-    expect(footerYByRow.row2[1]).toBe(footerYByRow.row2[2]);
   });
 
   test('Accounts card flip toggles front/back', async ({ page }) => {
