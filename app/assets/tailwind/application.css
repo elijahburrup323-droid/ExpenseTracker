@@ -12,15 +12,14 @@
 }
 
 @layer components {
-  /* Dashboard grid: fixed-height rows on desktop */
+  /* Dashboard grid: min-height from token, 1fr equalises rows to tallest card */
   .dash-grid {
-    grid-auto-rows: var(--dash-card-h);
+    grid-auto-rows: minmax(var(--dash-card-h), 1fr);
   }
 
-  /* Card wrapper: locked height, no content-driven growth */
+  /* Card wrapper: fills grid row, no content-driven overflow */
   .dash-card {
     height: 100%;
-    max-height: var(--dash-card-h);
     display: flex;
     flex-direction: column;
     overflow: hidden;
