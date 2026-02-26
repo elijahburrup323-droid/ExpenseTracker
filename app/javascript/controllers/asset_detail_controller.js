@@ -8,7 +8,7 @@ export default class extends Controller {
     "editSection", "viewSection",
     "editName", "editType", "editPurchaseDate", "editPurchasePrice",
     "editCurrentValue", "editNetWorth", "editError",
-    "valTableBody", "valError", "valChart",
+    "valTableBody", "valError", "valChart", "depreciationContent",
     "notesArea", "notesSaveBtn", "notesStatus",
     "gainLoss"
   ]
@@ -100,6 +100,32 @@ export default class extends Controller {
       gainLossHtml = `<span class="${color} font-semibold">${sign}${this._fmt(gain)}</span>`
     }
 
+    // Projected value display
+    let projectionHtml = ""
+    if (a.projection_enabled && a.projected_value != null) {
+      projectionHtml += `
+          <div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Projected Value (Today)</p>
+            <p class="text-base font-medium text-brand-600 dark:text-brand-400 text-right tabular-nums">${this._fmt(a.projected_value)}
+              <span class="text-xs text-gray-400 dark:text-gray-500 ml-1">Projected</span>
+            </p>
+          </div>`
+    }
+
+    // 5-year projection summary
+    let fiveYearHtml = ""
+    if (a.projection_enabled && a.five_year_projection && a.five_year_projection.length > 0) {
+      const items = a.five_year_projection.map(p =>
+        `<span class="text-xs text-gray-600 dark:text-gray-400 tabular-nums">${p.year}: ${this._fmt(p.value)}</span>`
+      ).join(" &middot; ")
+      fiveYearHtml = `
+      <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">5-Year Projection</p>
+        <div class="flex flex-wrap gap-2">${items}</div>
+        <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 italic">Based on ${escapeHtml(a.depreciation_method === "STRAIGHT_LINE" ? "Straight Line" : "Percentage")} method. Projections are estimates only.</p>
+      </div>`
+    }
+
     this.overviewContentTarget.innerHTML = `
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div class="space-y-4">
@@ -127,8 +153,143 @@ export default class extends Controller {
             <p class="text-sm text-gray-500 dark:text-gray-400">Gain / Loss</p>
             <p class="text-base text-right tabular-nums">${gainLossHtml}</p>
           </div>
+          ${projectionHtml}
+        </div>
+      </div>
+      ${fiveYearHtml}`
+    this.renderDepreciation()
+  }
+
+  // ─── Depreciation Settings ──────────────────────────────
+  renderDepreciation() {
+    const a = this.asset
+    const method = a.depreciation_method || "NONE"
+    const rate = a.annual_rate != null ? a.annual_rate : ""
+    const life = a.useful_life_years != null ? a.useful_life_years : ""
+    const projOn = a.projection_enabled || false
+
+    const inputCls = "w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+
+    this.depreciationContentTarget.innerHTML = `
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">Depreciation / Appreciation Settings</h3>
+        <div class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Method</label>
+              <select data-role="dep-method" class="${inputCls}">
+                <option value="NONE" ${method === "NONE" ? "selected" : ""}>None</option>
+                <option value="STRAIGHT_LINE" ${method === "STRAIGHT_LINE" ? "selected" : ""}>Straight Line</option>
+                <option value="PERCENTAGE" ${method === "PERCENTAGE" ? "selected" : ""}>Percentage</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Annual Rate (%)</label>
+              <input type="number" step="0.01" min="-100" max="100" value="${escapeHtml(String(rate))}"
+                     data-role="dep-rate" class="${inputCls} tabular-nums" placeholder="e.g. -10 or 5">
+              <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Positive = appreciation, Negative = depreciation</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Useful Life (years)</label>
+              <input type="number" step="1" min="1" value="${escapeHtml(String(life))}"
+                     data-role="dep-life" class="${inputCls} tabular-nums" placeholder="e.g. 10">
+              <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Required for Straight Line method</p>
+            </div>
+            <div class="flex items-center justify-between pt-6">
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Enable Projections</label>
+              ${this._renderDepToggle(projOn)}
+            </div>
+          </div>
+          <p class="text-sm text-red-600 dark:text-red-400 hidden" data-role="dep-error"></p>
+          <div class="flex items-center justify-between pt-2">
+            <p class="text-xs text-gray-400 dark:text-gray-500">Projections are display-only and do not affect Net Worth.</p>
+            <button type="button" data-action="click->asset-detail#saveDepreciation"
+                    class="px-4 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg shadow-sm transition">
+              Save Settings
+            </button>
+          </div>
         </div>
       </div>`
+  }
+
+  _renderDepToggle(isOn) {
+    const bg = isOn ? "bg-brand-600" : "bg-gray-300 dark:bg-gray-600"
+    const translate = isOn ? "translate-x-7" : "translate-x-1"
+    return `<button type="button"
+      class="dep-toggle relative inline-flex h-7 w-14 items-center rounded-full transition-colors ${bg}"
+      data-checked="${isOn}"
+      data-action="click->asset-detail#toggleDepProjection"
+      role="switch" aria-checked="${isOn}">
+      <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${translate}"></span>
+    </button>`
+  }
+
+  toggleDepProjection(event) {
+    const btn = event.currentTarget
+    const wasOn = btn.dataset.checked === "true"
+    const nowOn = !wasOn
+    btn.dataset.checked = String(nowOn)
+    btn.setAttribute("aria-checked", String(nowOn))
+    btn.classList.toggle("bg-brand-600", nowOn)
+    btn.classList.toggle("bg-gray-300", !nowOn)
+    btn.classList.toggle("dark:bg-gray-600", !nowOn)
+    const knob = btn.querySelector("span")
+    knob.classList.toggle("translate-x-7", nowOn)
+    knob.classList.toggle("translate-x-1", !nowOn)
+  }
+
+  async saveDepreciation() {
+    const container = this.depreciationContentTarget
+    const method = container.querySelector("[data-role='dep-method']").value
+    const rateVal = container.querySelector("[data-role='dep-rate']").value.trim()
+    const lifeVal = container.querySelector("[data-role='dep-life']").value.trim()
+    const toggle = container.querySelector(".dep-toggle")
+    const projEnabled = toggle?.dataset.checked === "true"
+    const errEl = container.querySelector("[data-role='dep-error']")
+
+    // Validation
+    if (method === "STRAIGHT_LINE" && (!lifeVal || parseInt(lifeVal) <= 0)) {
+      errEl.textContent = "Useful Life must be > 0 for Straight Line method"
+      errEl.classList.remove("hidden")
+      return
+    }
+    if (rateVal && (parseFloat(rateVal) < -100 || parseFloat(rateVal) > 100)) {
+      errEl.textContent = "Annual Rate must be between -100% and +100%"
+      errEl.classList.remove("hidden")
+      return
+    }
+    errEl.classList.add("hidden")
+
+    const body = {
+      asset: {
+        depreciation_method: method,
+        annual_rate: rateVal ? parseFloat(rateVal) : null,
+        useful_life_years: lifeVal ? parseInt(lifeVal) : null,
+        projection_enabled: projEnabled
+      }
+    }
+
+    try {
+      const res = await fetch(`${this.apiUrlValue}/${this.assetIdValue}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": this.csrfTokenValue },
+        body: JSON.stringify(body)
+      })
+      if (res.ok) {
+        this.asset = await res.json()
+        this.renderOverview()
+        this.renderHeader()
+      } else {
+        const err = await res.json().catch(() => ({}))
+        errEl.textContent = err.errors ? err.errors.join(", ") : "Save failed"
+        errEl.classList.remove("hidden")
+      }
+    } catch (e) {
+      errEl.textContent = "Network error"
+      errEl.classList.remove("hidden")
+    }
   }
 
   // ─── Edit Asset ────────────────────────────────────────

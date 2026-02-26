@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_26_000003) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_26_215427) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_stat_statements"
   enable_extension "plpgsql"
@@ -154,6 +154,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_26_000003) do
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "depreciation_method", default: "NONE", null: false
+    t.decimal "annual_rate", precision: 8, scale: 4
+    t.integer "useful_life_years"
+    t.boolean "projection_enabled", default: false, null: false
     t.index "user_id, lower((name)::text)", name: "idx_assets_user_name_unique", unique: true, where: "(deleted_at IS NULL)"
     t.index ["asset_type_id"], name: "index_assets_on_asset_type_id"
     t.index ["user_id", "asset_type_id"], name: "index_assets_on_user_id_and_asset_type_id"

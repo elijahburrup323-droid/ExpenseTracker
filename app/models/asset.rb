@@ -23,8 +23,48 @@ class Asset < ApplicationRecord
   validates :current_value, numericality: true
   validates :purchase_price, numericality: true, allow_nil: true
 
-  # Market value for net worth aggregation
+  DEPRECIATION_METHODS = %w[NONE STRAIGHT_LINE PERCENTAGE].freeze
+  validates :depreciation_method, inclusion: { in: DEPRECIATION_METHODS }
+  validates :useful_life_years, numericality: { greater_than: 0, only_integer: true }, if: -> { depreciation_method == "STRAIGHT_LINE" }
+  validates :annual_rate, numericality: { greater_than_or_equal_to: -100, less_than_or_equal_to: 100 }, allow_nil: true
+
+  # Market value for net worth aggregation (uses actual current_value, NOT projections)
   def net_worth_value
     include_in_net_worth ? current_value.to_d : BigDecimal("0")
+  end
+
+  # Calculate projected value for a given date (display-only, never stored)
+  def projected_value(as_of_date = Date.current)
+    return nil unless projection_enabled && purchase_price.present? && purchase_date.present?
+    return nil if depreciation_method == "NONE"
+
+    years_elapsed = (as_of_date - purchase_date).to_f / 365.25
+    return purchase_price.to_d if years_elapsed <= 0
+
+    case depreciation_method
+    when "STRAIGHT_LINE"
+      return nil unless useful_life_years.present? && useful_life_years > 0
+      annual_dep = purchase_price.to_d / useful_life_years
+      projected = purchase_price.to_d - (annual_dep * years_elapsed)
+      [projected, BigDecimal("0")].max
+    when "PERCENTAGE"
+      return nil unless annual_rate.present?
+      rate = annual_rate.to_d / 100
+      projected = purchase_price.to_d * ((1 + rate) ** years_elapsed)
+      [projected, BigDecimal("0")].max
+    else
+      nil
+    end
+  end
+
+  # 5-year projection summary (array of {year:, value:} hashes)
+  def five_year_projection
+    return [] unless projection_enabled && purchase_price.present? && purchase_date.present? && depreciation_method != "NONE"
+
+    today = Date.current
+    (1..5).map do |y|
+      val = projected_value(today + y.years)
+      { year: today.year + y, value: val&.round(2) }
+    end.compact
   end
 end

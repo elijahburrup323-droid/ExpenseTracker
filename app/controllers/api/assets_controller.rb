@@ -53,16 +53,20 @@ module Api
     def asset_params
       params.require(:asset).permit(
         :name, :asset_type_id, :description, :current_value,
-        :purchase_price, :purchase_date, :include_in_net_worth, :notes
+        :purchase_price, :purchase_date, :include_in_net_worth, :notes,
+        :depreciation_method, :annual_rate, :useful_life_years, :projection_enabled
       )
     end
 
     def asset_json(a)
       a.as_json(only: [:id, :name, :description, :current_value, :purchase_price,
-                        :purchase_date, :include_in_net_worth, :notes, :sort_order])
+                        :purchase_date, :include_in_net_worth, :notes, :sort_order,
+                        :depreciation_method, :annual_rate, :useful_life_years, :projection_enabled])
         .merge(
           asset_type_id: a.asset_type_id,
-          asset_type_name: a.asset_type&.name || ""
+          asset_type_name: a.asset_type&.name || "",
+          projected_value: a.projected_value&.round(2),
+          five_year_projection: a.five_year_projection
         )
     end
   end
