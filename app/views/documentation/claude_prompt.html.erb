@@ -106,12 +106,13 @@ The following are protected and may not be modified without approval:
 - Sticky Hello header behavior, Dashboard grid/card sizing, Sidebar collapse behavior
 - z-index layering, Global CSS spacing/typography system
 - Modal-based CRUD standard (inline editing deprecated)
-- **Dashboard Card Invariants** (locked via design tokens in `app/assets/tailwind/application.css`):
-  - All 6 dashboard cards MUST be equal height — controlled by `--dash-card-h` CSS variable (single source of truth)
+- **Dashboard Card Invariants** (design tokens in `app/assets/tailwind/application.css` + inline `<style>` in `application.html.erb`):
+  - All 6 dashboard cards MUST be equal height — controlled by `--dash-card-h` (28rem/448px) via `grid-auto-rows`
   - Card height MUST NOT change based on content — overflow handled by internal scroll (`dash-card-scroll`)
   - Bottom divider/baseline line MUST be at the same vertical position across all cards (`.dash-card-footer` with `flex-shrink:0; margin-top:auto`)
   - Flip icon (↻) and Expand icon (⬜) MUST remain visible on all cards — 44x44px min touch target, inside card footer
   - CSS classes `dash-grid`, `dash-card`, `dash-card-scroll`, `dash-card-footer` are locked — do not override per-card
+  - **CSS Architecture**: Production uses `cdn.tailwindcss.com` (v3 play CDN) which cannot process custom `@utility`/`@layer` rules. All custom dashboard classes MUST be duplicated in the inline `<style>` block in `app/views/layouts/application.html.erb` (lines 122+). The `application.css` file is the design-time source of truth; the inline styles are the runtime fallback.
   - Visual regression test: `tests/dashboard-regression.spec.js` — run after any dashboard CSS/layout change
 
 ### 7. Change Control Policy
