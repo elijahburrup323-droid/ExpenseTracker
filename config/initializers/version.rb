@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.37"
+APP_VERSION = "1.3.38"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,12 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.38",
+    changes: [
+      "Assets: Unit-Based Lot Tracking for Precious Metals and Cryptocurrency. Add Asset modal now shows quantity, unit label, and initial purchase lot fields when selecting Precious Metals or Crypto types. Asset Detail page includes a new Purchase Lots tab for managing multiple lots, unit-based overview with holdings, cost basis, unrealized gain/loss, and inline price update control. Lot rollups (total quantity, total cost basis) are maintained automatically. Current value is computed from quantity x price per unit. All existing non-unit asset types are unchanged."
+    ]
+  },
   {
     version: "1.3.37",
     changes: [

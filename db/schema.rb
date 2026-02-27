@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_26_220003) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_27_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_stat_statements"
   enable_extension "plpgsql"
@@ -109,6 +109,24 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_26_220003) do
     t.index ["user_id"], name: "index_amortization_schedule_entries_on_user_id"
   end
 
+  create_table "asset_lots", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "asset_id", null: false
+    t.date "acquired_date", null: false
+    t.decimal "quantity", precision: 16, scale: 6, null: false
+    t.decimal "price_per_unit", precision: 12, scale: 4, null: false
+    t.decimal "total_cost", precision: 12, scale: 2, null: false
+    t.string "notes", limit: 500
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["asset_id", "acquired_date"], name: "idx_asset_lots_asset_acquired"
+    t.index ["asset_id", "deleted_at"], name: "idx_asset_lots_asset_deleted"
+    t.index ["asset_id"], name: "index_asset_lots_on_asset_id"
+    t.index ["user_id", "deleted_at"], name: "idx_asset_lots_user_deleted"
+    t.index ["user_id"], name: "index_asset_lots_on_user_id"
+  end
+
   create_table "asset_types", force: :cascade do |t|
     t.bigint "user_id"
     t.string "name", limit: 80, null: false
@@ -158,6 +176,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_26_220003) do
     t.decimal "annual_rate", precision: 8, scale: 4
     t.integer "useful_life_years"
     t.boolean "projection_enabled", default: false, null: false
+    t.decimal "total_quantity", precision: 16, scale: 6
+    t.decimal "total_cost_basis", precision: 12, scale: 2
+    t.decimal "current_price_per_unit", precision: 12, scale: 4
+    t.string "unit_label", limit: 20
     t.index "user_id, lower((name)::text)", name: "idx_assets_user_name_unique", unique: true, where: "(deleted_at IS NULL)"
     t.index ["asset_type_id"], name: "index_assets_on_asset_type_id"
     t.index ["user_id", "asset_type_id"], name: "index_assets_on_user_id_and_asset_type_id"
@@ -1174,6 +1196,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_26_220003) do
   add_foreign_key "amortization_schedule_entries", "financing_instruments"
   add_foreign_key "amortization_schedule_entries", "financing_payments"
   add_foreign_key "amortization_schedule_entries", "users"
+  add_foreign_key "asset_lots", "assets"
+  add_foreign_key "asset_lots", "users"
   add_foreign_key "asset_types", "users"
   add_foreign_key "asset_valuations", "assets"
   add_foreign_key "assets", "asset_types"

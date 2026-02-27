@@ -6,6 +6,7 @@ class Asset < ApplicationRecord
   belongs_to :asset_type
 
   has_many :asset_valuations, dependent: :destroy
+  has_many :asset_lots, dependent: :restrict_with_error
 
   default_scope { where(deleted_at: nil) }
 
@@ -22,7 +23,12 @@ class Asset < ApplicationRecord
   }
   validates :current_value, numericality: true
   validates :purchase_price, numericality: true, allow_nil: true
+  validates :total_quantity, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :total_cost_basis, numericality: true, allow_nil: true
+  validates :current_price_per_unit, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :unit_label, presence: true, length: { maximum: 20 }, if: :unit_based?
 
+  UNIT_BASED_KEYS = ["precious metals", "cryptocurrency"].freeze
   DEPRECIATION_METHODS = %w[NONE STRAIGHT_LINE PERCENTAGE].freeze
   validates :depreciation_method, inclusion: { in: DEPRECIATION_METHODS }
   validates :useful_life_years, numericality: { greater_than: 0, only_integer: true }, if: -> { depreciation_method == "STRAIGHT_LINE" }
@@ -66,5 +72,23 @@ class Asset < ApplicationRecord
       val = projected_value(today + y.years)
       { year: today.year + y, value: val&.round(2) }
     end.compact
+  end
+
+  # Does this asset type track quantity/lots (Precious Metals, Crypto)?
+  def unit_based?
+    asset_type&.normalized_key.in?(UNIT_BASED_KEYS)
+  end
+
+  # Recalculate rollup fields from lots. Call after any lot create/update/delete.
+  def recalculate_from_lots!
+    lots = asset_lots.where(deleted_at: nil)
+    self.total_quantity   = lots.sum(:quantity)
+    self.total_cost_basis = lots.sum(:total_cost)
+
+    if current_price_per_unit.present? && total_quantity.to_d > 0
+      self.current_value = (total_quantity * current_price_per_unit).round(2)
+    end
+
+    save!
   end
 end

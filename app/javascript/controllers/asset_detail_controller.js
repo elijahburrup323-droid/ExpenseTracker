@@ -8,7 +8,9 @@ export default class extends Controller {
     "editSection", "viewSection",
     "editName", "editType", "editPurchaseDate", "editPurchasePrice",
     "editCurrentValue", "editNetWorth", "editError",
+    "editStandardFields", "editUnitFields", "editUnitLabel", "editPricePerUnit",
     "valTableBody", "valError", "valChart", "depreciationContent",
+    "addLotBtn", "lotsTabBtn", "lotsSummary", "lotsTableBody", "lotError", "lotModalTitle",
     "notesArea", "notesSaveBtn", "notesStatus",
     "gainLoss"
   ]
@@ -18,6 +20,7 @@ export default class extends Controller {
     apiUrl: String,
     typesUrl: String,
     valuationsUrl: String,
+    lotsUrl: String,
     csrfToken: String,
     listUrl: String
   }
@@ -26,6 +29,7 @@ export default class extends Controller {
     this.asset = null
     this.assetTypes = []
     this.valuations = []
+    this.lots = []
     this.activeTab = "overview"
     this.editing = false
     this.fetchData()
@@ -41,6 +45,7 @@ export default class extends Controller {
       if (!assetRes.ok) { window.location.href = this.listUrlValue; return }
       this.asset = await assetRes.json()
       this.assetTypes = await typesRes.json()
+      this._configureUnitBasedUI()
       this.renderOverview()
       this.renderHeader()
     } catch (e) {
@@ -72,6 +77,9 @@ export default class extends Controller {
     if (tab === "valuations" && this.valuations.length === 0) {
       this.fetchValuations()
     }
+    if (tab === "lots" && this.lots.length === 0) {
+      this.fetchLots()
+    }
   }
 
   // ─── Header Rendering ─────────────────────────────────
@@ -83,16 +91,149 @@ export default class extends Controller {
     if (typeEl) typeEl.textContent = a.asset_type_name || ""
   }
 
+  // ─── Unit-Based UI Configuration ───────────────────────
+  _configureUnitBasedUI() {
+    const isUnitBased = this.asset.unit_based === true
+
+    // Show/hide "Purchase Lots" tab button
+    if (this.hasLotsTabBtnTarget) {
+      this.lotsTabBtnTarget.classList.toggle("hidden", !isUnitBased)
+    }
+
+    // Show/hide "Add Lot" header button
+    if (this.hasAddLotBtnTarget) {
+      this.addLotBtnTarget.classList.toggle("hidden", !isUnitBased)
+    }
+
+    // Auto-fetch lots for unit-based assets
+    if (isUnitBased && this.lots.length === 0 && this.hasLotsUrlValue) {
+      this.fetchLots()
+    }
+  }
+
   // ─── Overview Tab ──────────────────────────────────────
   renderOverview() {
+    if (this.asset.unit_based) {
+      this._renderUnitBasedOverview()
+    } else {
+      this._renderStandardOverview()
+    }
+    this.renderDepreciation()
+  }
+
+  _renderUnitBasedOverview() {
     const a = this.asset
-    const pp = a.purchase_price != null ? this._fmt(a.purchase_price) : "—"
-    const cv = this._fmt(a.current_value)
-    const pd = a.purchase_date || "—"
+    const tq = a.total_quantity != null ? parseFloat(a.total_quantity) : 0
+    const unitLabel = a.unit_label || "units"
+    const costBasis = a.total_cost_basis != null ? this._fmt(a.total_cost_basis) : "---"
+    const pricePerUnit = a.current_price_per_unit != null ? this._fmt(a.current_price_per_unit) : "---"
+    const currentValue = this._fmt(a.current_value)
     const nw = a.include_in_net_worth
 
-    // Gain/Loss calculation
-    let gainLossHtml = "—"
+    let gainLossHtml = "---"
+    if (a.unrealized_gain != null) {
+      const gain = parseFloat(a.unrealized_gain)
+      const color = gain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+      const sign = gain >= 0 ? "+" : ""
+      gainLossHtml = `<span class="${color} font-semibold">${sign}${this._fmt(gain)}</span>`
+    }
+
+    this.overviewContentTarget.innerHTML = `
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div class="space-y-4">
+          <div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Holdings</p>
+            <p class="text-lg font-bold text-gray-900 dark:text-white">${tq.toLocaleString("en-US", {maximumFractionDigits: 6})} ${escapeHtml(unitLabel)}</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Total Cost Basis</p>
+            <p class="text-base font-medium text-gray-900 dark:text-white tabular-nums">${costBasis}</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Purchase Lots</p>
+            <p class="text-base font-medium text-gray-900 dark:text-white">${a.lot_count || 0} lot${(a.lot_count || 0) === 1 ? '' : 's'}</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Include in Net Worth</p>
+            <p class="text-base font-medium text-gray-900 dark:text-white">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${nw ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'}">${nw ? 'Yes' : 'No'}</span>
+            </p>
+          </div>
+        </div>
+        <div class="space-y-4">
+          <div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Current Price per ${escapeHtml(unitLabel)}</p>
+            <p class="text-base font-medium text-gray-900 dark:text-white text-right tabular-nums">${pricePerUnit}</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Current Total Value</p>
+            <p class="text-lg font-bold text-green-600 dark:text-green-400 text-right tabular-nums">${currentValue}</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Unrealized Gain / Loss</p>
+            <p class="text-base text-right tabular-nums">${gainLossHtml}</p>
+          </div>
+        </div>
+      </div>
+      ${this._renderPriceUpdateControl(a)}`
+  }
+
+  _renderPriceUpdateControl(a) {
+    const unitLabel = a.unit_label || "unit"
+    return `
+    <div class="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
+      <div class="flex items-end gap-4">
+        <div class="flex-1">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Update Current Price per ${escapeHtml(unitLabel)}</label>
+          <input type="number" step="0.0001" min="0" data-role="price-input"
+                 value="${a.current_price_per_unit || ''}"
+                 class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 tabular-nums"
+                 placeholder="Enter current market price">
+        </div>
+        <button type="button" data-action="click->asset-detail#saveCurrentPrice"
+                class="px-4 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg shadow-sm transition whitespace-nowrap">
+          Update Price
+        </button>
+      </div>
+      <p class="text-xs text-gray-400 dark:text-gray-500 mt-1" data-role="price-status"></p>
+    </div>`
+  }
+
+  async saveCurrentPrice() {
+    const input = this.element.querySelector("[data-role='price-input']")
+    const status = this.element.querySelector("[data-role='price-status']")
+    const val = input?.value?.trim()
+    if (!val || parseFloat(val) < 0) {
+      if (status) { status.textContent = "Price must be >= 0"; status.className = "text-xs text-red-500 mt-1" }
+      return
+    }
+
+    try {
+      const res = await fetch(`${this.apiUrlValue}/${this.assetIdValue}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": this.csrfTokenValue },
+        body: JSON.stringify({ asset: { current_price_per_unit: parseFloat(val) } })
+      })
+      if (res.ok) {
+        this.asset = await res.json()
+        this.renderOverview()
+        this.renderHeader()
+      } else {
+        if (status) { status.textContent = "Save failed"; status.className = "text-xs text-red-500 mt-1" }
+      }
+    } catch (e) {
+      if (status) { status.textContent = "Network error"; status.className = "text-xs text-red-500 mt-1" }
+    }
+  }
+
+  _renderStandardOverview() {
+    const a = this.asset
+    const pp = a.purchase_price != null ? this._fmt(a.purchase_price) : "---"
+    const cv = this._fmt(a.current_value)
+    const pd = a.purchase_date || "---"
+    const nw = a.include_in_net_worth
+
+    let gainLossHtml = "---"
     if (a.purchase_price != null && a.purchase_price > 0) {
       const gain = parseFloat(a.current_value) - parseFloat(a.purchase_price)
       const color = gain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
@@ -100,7 +241,6 @@ export default class extends Controller {
       gainLossHtml = `<span class="${color} font-semibold">${sign}${this._fmt(gain)}</span>`
     }
 
-    // Projected value display
     let projectionHtml = ""
     if (a.projection_enabled && a.projected_value != null) {
       projectionHtml += `
@@ -112,7 +252,6 @@ export default class extends Controller {
           </div>`
     }
 
-    // 5-year projection summary
     let fiveYearHtml = ""
     if (a.projection_enabled && a.five_year_projection && a.five_year_projection.length > 0) {
       const items = a.five_year_projection.map(p =>
@@ -157,7 +296,6 @@ export default class extends Controller {
         </div>
       </div>
       ${fiveYearHtml}`
-    this.renderDepreciation()
   }
 
   // ─── Depreciation Settings ──────────────────────────────
@@ -297,15 +435,30 @@ export default class extends Controller {
     if (this.editing) return
     this.editing = true
     const a = this.asset
+    const isUnitBased = a.unit_based === true
 
     this.editNameTarget.value = a.name || ""
     this._rebuildTypeDropdown()
     this.editTypeTarget.value = String(a.asset_type_id || "")
-    this.editPurchaseDateTarget.value = a.purchase_date || ""
-    this.editPurchasePriceTarget.value = a.purchase_price != null ? a.purchase_price : ""
-    this.editCurrentValueTarget.value = a.current_value != null ? a.current_value : ""
     this.editNetWorthTarget.innerHTML = this._renderToggle(a.include_in_net_worth)
     this.editErrorTarget.classList.add("hidden")
+
+    // Toggle standard vs unit-based fields
+    if (this.hasEditStandardFieldsTarget) {
+      this.editStandardFieldsTarget.classList.toggle("hidden", isUnitBased)
+    }
+    if (this.hasEditUnitFieldsTarget) {
+      this.editUnitFieldsTarget.classList.toggle("hidden", !isUnitBased)
+    }
+
+    if (isUnitBased) {
+      if (this.hasEditUnitLabelTarget) this.editUnitLabelTarget.value = a.unit_label || ""
+      if (this.hasEditPricePerUnitTarget) this.editPricePerUnitTarget.value = a.current_price_per_unit != null ? a.current_price_per_unit : ""
+    } else {
+      this.editPurchaseDateTarget.value = a.purchase_date || ""
+      this.editPurchasePriceTarget.value = a.purchase_price != null ? a.purchase_price : ""
+      this.editCurrentValueTarget.value = a.current_value != null ? a.current_value : ""
+    }
 
     this.viewSectionTarget.classList.add("hidden")
     this.editSectionTarget.classList.remove("hidden")
@@ -321,19 +474,35 @@ export default class extends Controller {
   async saveEdit() {
     const name = this.editNameTarget.value.trim()
     const asset_type_id = this.editTypeTarget.value
-    const current_value = this.editCurrentValueTarget.value.trim()
-    const purchase_price = this.editPurchasePriceTarget.value.trim()
-    const purchase_date = this.editPurchaseDateTarget.value || null
     const toggle = this.editNetWorthTarget.querySelector(".nw-toggle")
     const include_in_net_worth = toggle?.dataset.checked === "true"
+    const isUnitBased = this.asset.unit_based === true
 
     if (!name) { this._showEditError("Asset Name is required"); return }
     if (!asset_type_id) { this._showEditError("Type is required"); return }
-    if (!current_value || parseFloat(current_value) < 0) { this._showEditError("Current Value must be >= 0"); return }
-    if (purchase_price && parseFloat(purchase_price) < 0) { this._showEditError("Purchase Price must be >= 0"); return }
 
-    const body = {
-      asset: {
+    let assetData
+    if (isUnitBased) {
+      const unit_label = this.hasEditUnitLabelTarget ? this.editUnitLabelTarget.value.trim() : ""
+      const ppu = this.hasEditPricePerUnitTarget ? this.editPricePerUnitTarget.value.trim() : ""
+      if (!unit_label) { this._showEditError("Unit Label is required"); return }
+      if (ppu && parseFloat(ppu) < 0) { this._showEditError("Price per unit must be >= 0"); return }
+
+      assetData = {
+        name,
+        asset_type_id: Number(asset_type_id),
+        unit_label,
+        include_in_net_worth
+      }
+      if (ppu) assetData.current_price_per_unit = parseFloat(ppu)
+    } else {
+      const current_value = this.editCurrentValueTarget.value.trim()
+      const purchase_price = this.editPurchasePriceTarget.value.trim()
+      const purchase_date = this.editPurchaseDateTarget.value || null
+      if (!current_value || parseFloat(current_value) < 0) { this._showEditError("Current Value must be >= 0"); return }
+      if (purchase_price && parseFloat(purchase_price) < 0) { this._showEditError("Purchase Price must be >= 0"); return }
+
+      assetData = {
         name,
         asset_type_id: Number(asset_type_id),
         current_value: parseFloat(current_value),
@@ -347,7 +516,7 @@ export default class extends Controller {
       const res = await fetch(`${this.apiUrlValue}/${this.assetIdValue}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", "X-CSRF-Token": this.csrfTokenValue },
-        body: JSON.stringify(body)
+        body: JSON.stringify({ asset: assetData })
       })
       if (res.ok) {
         this.asset = await res.json()
@@ -611,6 +780,213 @@ export default class extends Controller {
   _showValError(msg) {
     this.valErrorTarget.textContent = msg
     this.valErrorTarget.classList.remove("hidden")
+  }
+
+  // ─── Purchase Lots Tab ─────────────────────────────────
+  async fetchLots() {
+    if (!this.hasLotsTableBodyTarget) return
+    try {
+      this.lotsTableBodyTarget.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-sm text-gray-400">Loading...</td></tr>`
+      const res = await fetch(this.lotsUrlValue, { credentials: "same-origin" })
+      if (res.ok) {
+        this.lots = await res.json()
+        this.renderLots()
+      }
+    } catch (e) {
+      this.lotsTableBodyTarget.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-sm text-red-500">Failed to load lots.</td></tr>`
+    }
+  }
+
+  renderLots() {
+    if (!this.hasLotsTableBodyTarget) return
+
+    if (this.lots.length === 0) {
+      this.lotsTableBodyTarget.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-sm text-gray-400 dark:text-gray-500">No purchase lots yet. Click <strong>Add Lot</strong> to get started.</td></tr>`
+    } else {
+      this.lotsTableBodyTarget.innerHTML = this.lots.map(l => this._renderLotRow(l)).join("")
+    }
+
+    // Render summary
+    if (this.hasLotsSummaryTarget) {
+      const a = this.asset
+      const tq = a.total_quantity != null ? parseFloat(a.total_quantity) : 0
+      const unitLabel = a.unit_label || "units"
+      const costBasis = a.total_cost_basis != null ? this._fmt(a.total_cost_basis) : "---"
+      const currentValue = this._fmt(a.current_value)
+      let gainHtml = "---"
+      if (a.unrealized_gain != null) {
+        const gain = parseFloat(a.unrealized_gain)
+        const color = gain >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+        const sign = gain >= 0 ? "+" : ""
+        gainHtml = `<span class="${color} font-semibold">${sign}${this._fmt(gain)}</span>`
+      }
+
+      this.lotsSummaryTarget.innerHTML = `
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-4 text-center">
+            <div>
+              <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Holdings</p>
+              <p class="text-lg font-bold text-gray-900 dark:text-white">${tq.toLocaleString("en-US", {maximumFractionDigits: 6})} ${escapeHtml(unitLabel)}</p>
+            </div>
+            <div>
+              <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Cost Basis</p>
+              <p class="text-lg font-bold text-gray-900 dark:text-white tabular-nums">${costBasis}</p>
+            </div>
+            <div>
+              <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Current Value</p>
+              <p class="text-lg font-bold text-green-600 dark:text-green-400 tabular-nums">${currentValue}</p>
+            </div>
+            <div>
+              <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Gain / Loss</p>
+              <p class="text-lg tabular-nums">${gainHtml}</p>
+            </div>
+            <div>
+              <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Lots</p>
+              <p class="text-lg font-bold text-gray-900 dark:text-white">${this.lots.length}</p>
+            </div>
+          </div>
+        </div>`
+    }
+  }
+
+  _renderLotRow(l) {
+    const qty = parseFloat(l.quantity).toLocaleString("en-US", {maximumFractionDigits: 6})
+    const notes = l.notes ? escapeHtml(l.notes) : ""
+    return `<tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+      <td class="px-6 py-3 text-sm text-gray-900 dark:text-white">${escapeHtml(l.acquired_date || "")}</td>
+      <td class="px-6 py-3 text-sm text-gray-900 dark:text-white text-right tabular-nums">${qty}</td>
+      <td class="px-6 py-3 text-sm text-gray-900 dark:text-white text-right tabular-nums">${this._fmt(l.price_per_unit)}</td>
+      <td class="px-6 py-3 text-sm text-gray-900 dark:text-white text-right tabular-nums font-semibold">${this._fmt(l.total_cost)}</td>
+      <td class="px-6 py-3 text-sm text-gray-500 dark:text-gray-400 truncate max-w-[150px]" title="${notes}">${notes}</td>
+      <td class="px-6 py-3 text-right space-x-2">
+        <button type="button" data-id="${l.id}" data-action="click->asset-detail#editLot"
+                class="text-xs font-medium text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300">Edit</button>
+        <button type="button" data-id="${l.id}" data-action="click->asset-detail#deleteLot"
+                class="text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300">Delete</button>
+      </td>
+    </tr>`
+  }
+
+  openAddLot() {
+    if (this.activeTab !== "lots") {
+      const btn = this.tabBtnTargets.find(b => b.dataset.tab === "lots")
+      if (btn) btn.click()
+    }
+    this._editingLotId = null
+    if (this.hasLotModalTitleTarget) this.lotModalTitleTarget.textContent = "Add Purchase Lot"
+    const modal = this.element.querySelector("[data-role='lot-modal']")
+    if (modal) {
+      modal.querySelector("[data-role='lot-date']").value = new Date().toISOString().split("T")[0]
+      modal.querySelector("[data-role='lot-quantity']").value = ""
+      modal.querySelector("[data-role='lot-price']").value = ""
+      modal.querySelector("[data-role='lot-notes']").value = ""
+      const totalEl = modal.querySelector("[data-role='lot-total']")
+      if (totalEl) totalEl.textContent = "$0.00"
+      if (this.hasLotErrorTarget) this.lotErrorTarget.classList.add("hidden")
+      modal.classList.remove("hidden")
+    }
+  }
+
+  editLot(event) {
+    const id = Number(event.currentTarget.dataset.id)
+    const lot = this.lots.find(l => l.id === id)
+    if (!lot) return
+
+    this._editingLotId = id
+    if (this.hasLotModalTitleTarget) this.lotModalTitleTarget.textContent = "Edit Purchase Lot"
+    const modal = this.element.querySelector("[data-role='lot-modal']")
+    if (modal) {
+      modal.querySelector("[data-role='lot-date']").value = lot.acquired_date || ""
+      modal.querySelector("[data-role='lot-quantity']").value = lot.quantity || ""
+      modal.querySelector("[data-role='lot-price']").value = lot.price_per_unit || ""
+      const qty = parseFloat(lot.quantity || 0)
+      const price = parseFloat(lot.price_per_unit || 0)
+      const totalEl = modal.querySelector("[data-role='lot-total']")
+      if (totalEl) totalEl.textContent = this._fmt(qty * price)
+      modal.querySelector("[data-role='lot-notes']").value = lot.notes || ""
+      if (this.hasLotErrorTarget) this.lotErrorTarget.classList.add("hidden")
+      modal.classList.remove("hidden")
+    }
+  }
+
+  cancelLot() {
+    const modal = this.element.querySelector("[data-role='lot-modal']")
+    if (modal) modal.classList.add("hidden")
+    this._editingLotId = null
+  }
+
+  computeModalLotTotal() {
+    const modal = this.element.querySelector("[data-role='lot-modal']")
+    if (!modal) return
+    const qty = parseFloat(modal.querySelector("[data-role='lot-quantity']")?.value) || 0
+    const ppu = parseFloat(modal.querySelector("[data-role='lot-price']")?.value) || 0
+    const totalEl = modal.querySelector("[data-role='lot-total']")
+    if (totalEl) totalEl.textContent = this._fmt(qty * ppu)
+  }
+
+  async saveLot() {
+    const modal = this.element.querySelector("[data-role='lot-modal']")
+    const date = modal.querySelector("[data-role='lot-date']").value
+    const qty = modal.querySelector("[data-role='lot-quantity']").value.trim()
+    const price = modal.querySelector("[data-role='lot-price']").value.trim()
+    const notes = modal.querySelector("[data-role='lot-notes']").value.trim()
+
+    if (!date) { this._showLotError("Acquired Date is required"); return }
+    if (!qty || parseFloat(qty) <= 0) { this._showLotError("Quantity must be > 0"); return }
+    if (!price || parseFloat(price) < 0) { this._showLotError("Price per unit must be >= 0"); return }
+
+    const isEdit = this._editingLotId != null
+    const url = isEdit ? `${this.lotsUrlValue}/${this._editingLotId}` : this.lotsUrlValue
+    const method = isEdit ? "PUT" : "POST"
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": this.csrfTokenValue },
+        body: JSON.stringify({
+          asset_lot: {
+            acquired_date: date,
+            quantity: parseFloat(qty),
+            price_per_unit: parseFloat(price),
+            notes: notes || null
+          }
+        })
+      })
+      if (res.ok || res.status === 201) {
+        this.cancelLot()
+        // Re-fetch lots from server (backend recalculates rollups)
+        await Promise.all([this.fetchLots(), this._refreshAsset()])
+      } else {
+        const err = await res.json().catch(() => ({}))
+        this._showLotError(err.errors ? err.errors.join(", ") : "Save failed")
+      }
+    } catch (e) {
+      this._showLotError("Network error")
+    }
+  }
+
+  async deleteLot(event) {
+    const id = Number(event.currentTarget.dataset.id)
+    if (!confirm("Delete this purchase lot?")) return
+
+    try {
+      const res = await fetch(`${this.lotsUrlValue}/${id}`, {
+        method: "DELETE",
+        headers: { "X-CSRF-Token": this.csrfTokenValue }
+      })
+      if (res.ok || res.status === 204) {
+        this.lots = this.lots.filter(l => l.id !== id)
+        await this._refreshAsset()
+        this.renderLots()
+      }
+    } catch (e) { /* silent */ }
+  }
+
+  _showLotError(msg) {
+    if (this.hasLotErrorTarget) {
+      this.lotErrorTarget.textContent = msg
+      this.lotErrorTarget.classList.remove("hidden")
+    }
   }
 
   // ─── Notes Tab ─────────────────────────────────────────

@@ -64,7 +64,9 @@ module Api
       t.as_json(only: [:id, :name, :description, :icon_key, :is_active, :sort_order])
         .merge(
           is_system: !t.custom?,
-          in_use: t.in_use?
+          in_use: t.in_use?,
+          normalized_key: t.normalized_key,
+          unit_based: t.unit_based?
         )
     end
   end

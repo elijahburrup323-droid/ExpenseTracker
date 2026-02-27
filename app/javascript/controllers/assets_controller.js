@@ -1,12 +1,17 @@
 import { Controller } from "@hotwired/stimulus"
 import { escapeHtml } from "controllers/shared/icon_catalog"
 
+const UNIT_BASED_KEYS = ["precious metals", "cryptocurrency"]
+
 export default class extends Controller {
   static targets = [
     "tableBody", "addButton", "total", "typeFilter",
     "assetModal", "modalTitle", "modalName", "modalType",
     "modalPurchaseDate", "modalPurchasePrice", "modalCurrentValue",
     "modalNetWorth", "modalNotes", "modalError",
+    "modalStandardFields", "modalUnitFields", "modalUnitLabel",
+    "modalFirstLot", "modalLotDate", "modalLotQuantity",
+    "modalLotPricePerUnit", "modalLotTotalCost",
     "deleteModal", "deleteModalName",
     "blockedDeleteModal"
   ]
@@ -127,8 +132,16 @@ export default class extends Controller {
   }
 
   _renderRow(a) {
-    const pp = a.purchase_price != null ? this._fmt(a.purchase_price) : "—"
-    const cv = this._fmt(a.current_value)
+    let pp, cv
+    if (a.unit_based && a.total_quantity != null) {
+      const qty = parseFloat(a.total_quantity || 0)
+      const unit = escapeHtml(a.unit_label || "units")
+      pp = `${qty.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 6 })} ${unit}`
+      if (a.total_cost_basis != null) pp += `<br><span class="text-xs text-gray-400">Cost: ${this._fmt(a.total_cost_basis)}</span>`
+    } else {
+      pp = a.purchase_price != null ? this._fmt(a.purchase_price) : "—"
+    }
+    cv = this._fmt(a.current_value)
     const nwToggle = this._renderNetWorthToggle(a.include_in_net_worth, a.id)
     return `<tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
       <td class="px-6 py-4 text-sm font-medium"><a href="/assets/${a.id}" class="text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 hover:underline">${escapeHtml(a.name)}</a></td>
@@ -174,7 +187,6 @@ export default class extends Controller {
     const nowOn = !wasOn
     const id = Number(btn.dataset.id)
 
-    // Optimistic UI update
     btn.dataset.checked = String(nowOn)
     btn.classList.toggle("bg-brand-600", nowOn)
     btn.classList.toggle("bg-gray-300", !nowOn)
@@ -197,6 +209,36 @@ export default class extends Controller {
           this._updateTotal()
         }
       } catch (e) { /* rollback on next render */ }
+    }
+  }
+
+  // ─── Unit-Based Type Detection ────────────────────────────
+  _isUnitBasedTypeId(typeId) {
+    const t = this.assetTypes.find(at => String(at.id) === String(typeId))
+    return t && UNIT_BASED_KEYS.includes(t.normalized_key)
+  }
+
+  onTypeChange() {
+    const typeId = this.modalTypeTarget.value
+    const isUnit = this._isUnitBasedTypeId(typeId)
+    if (this.hasModalStandardFieldsTarget) {
+      this.modalStandardFieldsTarget.classList.toggle("hidden", isUnit)
+    }
+    if (this.hasModalUnitFieldsTarget) {
+      this.modalUnitFieldsTarget.classList.toggle("hidden", !isUnit)
+    }
+    if (this.hasModalFirstLotTarget) {
+      this.modalFirstLotTarget.classList.toggle("hidden", !isUnit || this.state === "editing")
+    }
+  }
+
+  computeLotTotal() {
+    if (!this.hasModalLotQuantityTarget || !this.hasModalLotPricePerUnitTarget) return
+    const qty = parseFloat(this.modalLotQuantityTarget.value) || 0
+    const ppu = parseFloat(this.modalLotPricePerUnitTarget.value) || 0
+    const total = qty * ppu
+    if (this.hasModalLotTotalCostTarget) {
+      this.modalLotTotalCostTarget.textContent = this._fmt(total)
     }
   }
 
@@ -233,6 +275,10 @@ export default class extends Controller {
     this.modalNotesTarget.value = asset.notes || ""
     this.modalNetWorthTarget.innerHTML = this._renderNetWorthToggle(asset.include_in_net_worth)
 
+    if (this.hasModalUnitLabelTarget) this.modalUnitLabelTarget.value = asset.unit_label || ""
+
+    this.onTypeChange()
+
     this.assetModalTarget.classList.remove("hidden")
     setTimeout(() => this.modalNameTarget.focus(), 50)
   }
@@ -253,11 +299,17 @@ export default class extends Controller {
     const data = this._getModalData()
     if (!data) return
 
+    // Extract first_lot from data to send as separate top-level param
+    const firstLot = data.first_lot
+    delete data.first_lot
+    const body = { asset: data }
+    if (firstLot) body.first_lot = firstLot
+
     try {
       const res = await fetch(this.apiUrlValue, {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-CSRF-Token": this.csrfTokenValue },
-        body: JSON.stringify({ asset: data })
+        body: JSON.stringify(body)
       })
       if (res.ok || res.status === 201) {
         const created = await res.json()
@@ -301,15 +353,45 @@ export default class extends Controller {
   _getModalData() {
     const name = this.modalNameTarget.value.trim()
     const asset_type_id = this.modalTypeTarget.value
-    const current_value = this.modalCurrentValueTarget.value.trim()
-    const purchase_price = this.modalPurchasePriceTarget.value.trim()
-    const purchase_date = this.modalPurchaseDateTarget.value || null
     const notes = this.modalNotesTarget.value.trim() || null
     const toggle = this.modalNetWorthTarget.querySelector(".nw-toggle")
     const include_in_net_worth = toggle?.dataset.checked === "true"
 
     if (!name) { this._showModalError("Asset Name is required"); this.modalNameTarget.focus(); return null }
     if (!asset_type_id) { this._showModalError("Type is required"); this.modalTypeTarget.focus(); return null }
+
+    const isUnit = this._isUnitBasedTypeId(asset_type_id)
+
+    if (isUnit) {
+      const unit_label = this.hasModalUnitLabelTarget ? this.modalUnitLabelTarget.value.trim() : ""
+      if (!unit_label) { this._showModalError("Unit Label is required"); if (this.hasModalUnitLabelTarget) this.modalUnitLabelTarget.focus(); return null }
+
+      const data = { name, asset_type_id: Number(asset_type_id), include_in_net_worth, notes, unit_label }
+
+      if (this.state === "adding" && this.hasModalLotQuantityTarget) {
+        const lotDate = this.hasModalLotDateTarget ? this.modalLotDateTarget.value : ""
+        const lotQty = this.hasModalLotQuantityTarget ? this.modalLotQuantityTarget.value.trim() : ""
+        const lotPpu = this.hasModalLotPricePerUnitTarget ? this.modalLotPricePerUnitTarget.value.trim() : ""
+
+        if (!lotDate) { this._showModalError("Acquired Date is required"); return null }
+        if (!lotQty || parseFloat(lotQty) <= 0) { this._showModalError("Quantity must be > 0"); return null }
+        if (!lotPpu || parseFloat(lotPpu) <= 0) { this._showModalError("Price Per Unit must be > 0"); return null }
+
+        data.first_lot = {
+          acquired_date: lotDate,
+          quantity: parseFloat(lotQty),
+          price_per_unit: parseFloat(lotPpu)
+        }
+        data.current_price_per_unit = parseFloat(lotPpu)
+      }
+
+      return data
+    }
+
+    const current_value = this.modalCurrentValueTarget.value.trim()
+    const purchase_price = this.modalPurchasePriceTarget.value.trim()
+    const purchase_date = this.modalPurchaseDateTarget.value || null
+
     if (!current_value || parseFloat(current_value) < 0) { this._showModalError("Current Value must be >= 0"); this.modalCurrentValueTarget.focus(); return null }
     if (purchase_price && parseFloat(purchase_price) < 0) { this._showModalError("Purchase Price must be >= 0"); this.modalPurchasePriceTarget.focus(); return null }
 
@@ -333,6 +415,14 @@ export default class extends Controller {
     this.modalNotesTarget.value = ""
     this.modalErrorTarget.classList.add("hidden")
     this.modalErrorTarget.textContent = ""
+    if (this.hasModalUnitLabelTarget) this.modalUnitLabelTarget.value = ""
+    if (this.hasModalLotDateTarget) this.modalLotDateTarget.value = new Date().toISOString().split("T")[0]
+    if (this.hasModalLotQuantityTarget) this.modalLotQuantityTarget.value = ""
+    if (this.hasModalLotPricePerUnitTarget) this.modalLotPricePerUnitTarget.value = ""
+    if (this.hasModalLotTotalCostTarget) this.modalLotTotalCostTarget.textContent = "$0.00"
+    if (this.hasModalStandardFieldsTarget) this.modalStandardFieldsTarget.classList.remove("hidden")
+    if (this.hasModalUnitFieldsTarget) this.modalUnitFieldsTarget.classList.add("hidden")
+    if (this.hasModalFirstLotTarget) this.modalFirstLotTarget.classList.remove("hidden")
   }
 
   _showModalError(msg) {

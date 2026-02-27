@@ -27,6 +27,10 @@ class AssetType < ApplicationRecord
     assets.exists?
   end
 
+  def unit_based?
+    normalized_key.in?(Asset::UNIT_BASED_KEYS)
+  end
+
   private
 
   def generate_normalized_key
