@@ -42,8 +42,10 @@ for (const user of USERS) {
       // Verify Liabilities text exists
       await expect(page.locator('text=Liabilities').first()).toBeVisible({ timeout: 5000 });
 
-      // Verify Debt Ratio text exists
-      await expect(page.locator('text=Debt Ratio').first()).toBeVisible({ timeout: 5000 });
+      // Verify metric label exists (Debt Ratio or Cash Coverage depending on user's asset composition)
+      const metricVisible = await page.locator('text=Debt Ratio').first().isVisible({ timeout: 3000 }).catch(() => false) ||
+        await page.locator('text=Cash Coverage').first().isVisible({ timeout: 3000 }).catch(() => false);
+      expect(metricVisible).toBeTruthy();
     });
 
     test('API returns net worth breakdown fields', async ({ page }) => {
@@ -64,12 +66,12 @@ for (const user of USERS) {
       expect(typeof nw.value).toBe('number');
       expect(typeof nw.assets).toBe('number');
       expect(typeof nw.liabilities).toBe('number');
-      // debt_ratio can be null or number
-      if (nw.assets > 0) {
-        expect(typeof nw.debt_ratio).toBe('number');
-        // Verify: debt_ratio = liabilities / assets * 100
+      // metric_value can be null (e.g. no liabilities in cash coverage mode, or no assets)
+      // debt_ratio is only a number when metric_mode is "debt_ratio"
+      if (nw.metric_mode === 'debt_ratio' && nw.assets > 0) {
+        expect(typeof nw.metric_value).toBe('number');
         const expectedRatio = (nw.liabilities / nw.assets * 100);
-        expect(Math.abs(nw.debt_ratio - expectedRatio)).toBeLessThan(0.2);
+        expect(Math.abs(nw.metric_value - expectedRatio)).toBeLessThan(0.2);
       }
       // Verify: assets - liabilities ~= net worth (approximately)
       const computedNW = nw.assets - nw.liabilities;
