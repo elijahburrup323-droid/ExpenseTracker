@@ -3,6 +3,7 @@ class DashboardController < ApplicationController
 
   def index
     _dashboard_index
+    render :index
   rescue => e
     Rails.logger.error("[Dashboard 500] #{e.class}: #{e.message}\n#{e.backtrace.first(10).join("\n")}")
     @dashboard_error = "#{e.class}: #{e.message}"
@@ -263,9 +264,14 @@ class DashboardController < ApplicationController
     @pulse_savings_rate = @current_month_income.to_f > 0 ? ((@current_month_income.to_f - @current_month_payments.to_f) / @current_month_income.to_f * 100).round(1) : nil
 
     # Smart Suggestions — evaluate and get top suggestion for banner
-    evaluator = SmartSuggestionEvaluator.new(current_user)
-    evaluator.evaluate
-    @top_suggestion = evaluator.top_suggestion
+    begin
+      evaluator = SmartSuggestionEvaluator.new(current_user)
+      evaluator.evaluate
+      @top_suggestion = evaluator.top_suggestion
+    rescue => e
+      Rails.logger.error("SmartSuggestionEvaluator failed for user #{current_user.id}: #{e.class}: #{e.message}")
+      @top_suggestion = nil
+    end
   end
 
   private
