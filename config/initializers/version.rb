@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.34"
+APP_VERSION = "1.3.35"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,12 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.35",
+    changes: [
+      "Spending Breakdown drill-down: Click any Category, Spending Type, or Tag in the Spending Breakdown (Card 1 back) to navigate to Payments filtered to that item. Month context is preserved. Filter dropdowns are visibly set on arrival."
+    ]
+  },
   {
     version: "1.3.34",
     changes: [

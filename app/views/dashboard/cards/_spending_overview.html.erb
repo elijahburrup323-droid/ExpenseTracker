@@ -100,7 +100,7 @@
           <% if @spending_by_category.any? %>
             <div class="space-y-1 flex-1">
               <% @spending_by_category.each do |cat| %>
-                <div class="flex items-center justify-between">
+                <%= link_to payments_path(start_date: @month_start.to_s, end_date: (@month_end - 1.day).to_s, category_id: cat[:id]), class: "flex items-center justify-between rounded px-1 -mx-1 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" do %>
                   <div class="flex items-center space-x-1.5 min-w-0 flex-1">
                     <span class="w-2 h-2 rounded-full flex-shrink-0" style="background: <%= color_map[cat[:color_key]] || '#6b7280' %>"></span>
                     <span class="text-xs text-gray-700 dark:text-gray-300 truncate"><%= cat[:name] %></span>
@@ -109,7 +109,7 @@
                     <span class="text-xs font-semibold text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(cat[:amount]) %></span>
                     <span class="text-[10px] text-gray-400 dark:text-gray-500 w-8 text-right" style="font-variant-numeric: tabular-nums;"><%= cat[:pct] %>%</span>
                   </div>
-                </div>
+                <% end %>
               <% end %>
             </div>
             <div class="flex items-center justify-end mt-2 pt-1.5 border-t border-gray-200 dark:border-gray-600">
@@ -132,7 +132,7 @@
           <% if @spending_by_type.any? %>
             <div class="space-y-1 flex-1">
               <% @spending_by_type.each do |st| %>
-                <div class="flex items-center justify-between">
+                <%= link_to payments_path(start_date: @month_start.to_s, end_date: (@month_end - 1.day).to_s, spending_type_id: st[:id]), class: "flex items-center justify-between rounded px-1 -mx-1 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" do %>
                   <div class="flex items-center space-x-1.5 min-w-0 flex-1">
                     <span class="w-2 h-2 rounded-full flex-shrink-0" style="background: <%= color_map[st[:color_key]] || '#6b7280' %>"></span>
                     <span class="text-xs text-gray-700 dark:text-gray-300 truncate"><%= st[:name] %></span>
@@ -141,7 +141,7 @@
                     <span class="text-xs font-semibold text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(st[:amount]) %></span>
                     <span class="text-[10px] text-gray-400 dark:text-gray-500 w-8 text-right" style="font-variant-numeric: tabular-nums;"><%= st[:pct] %>%</span>
                   </div>
-                </div>
+                <% end %>
               <% end %>
             </div>
             <div class="flex items-center justify-end mt-2 pt-1.5 border-t border-gray-200 dark:border-gray-600">
@@ -164,7 +164,7 @@
             <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">By Tag</p>
             <div class="space-y-1 flex-1">
               <% @spending_by_tag.each do |tag| %>
-                <div class="flex items-center justify-between">
+                <%= link_to payments_path(start_date: @month_start.to_s, end_date: (@month_end - 1.day).to_s, tag_id: tag[:id]), class: "flex items-center justify-between rounded px-1 -mx-1 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" do %>
                   <div class="flex items-center space-x-1.5 min-w-0 flex-1">
                     <span class="w-2 h-2 rounded-full flex-shrink-0 bg-brand-400"></span>
                     <span class="text-xs text-gray-700 dark:text-gray-300 truncate"><%= tag[:name] %></span>
@@ -173,7 +173,7 @@
                     <span class="text-xs font-semibold text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(tag[:amount]) %></span>
                     <span class="text-[10px] text-gray-400 dark:text-gray-500 w-8 text-right" style="font-variant-numeric: tabular-nums;"><%= tag[:pct] %>%</span>
                   </div>
-                </div>
+                <% end %>
               <% end %>
             </div>
             <div class="flex items-center justify-end mt-2 pt-1.5 border-t border-gray-200 dark:border-gray-600">

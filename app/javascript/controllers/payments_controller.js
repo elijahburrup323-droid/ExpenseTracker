@@ -92,7 +92,7 @@ export default class extends Controller {
   // --- Default Date Range ---
 
   _setDefaultDateRange() {
-    // Check URL params for pre-set date filters (e.g. from Dashboard "View Details" link)
+    // Check URL params for pre-set date/filter values (e.g. from Dashboard drill-down links)
     const params = new URLSearchParams(window.location.search)
     const urlStart = params.get("start_date")
     const urlEnd = params.get("end_date")
@@ -106,6 +106,10 @@ export default class extends Controller {
       this._defaultStartDate = this._formatDateValue(firstOfMonth)
       this._defaultEndDate = this._formatDateValue(now)
     }
+    // Drill-down filter params from Spending Breakdown
+    this._defaultCategoryId = params.get("category_id") || ""
+    this._defaultSpendingTypeId = params.get("spending_type_id") || ""
+    this._defaultTagId = params.get("tag_id") || ""
   }
 
   _formatDateValue(d) {
@@ -263,6 +267,15 @@ export default class extends Controller {
     // Apply URL-based date filters if present (e.g. from Dashboard "View Details")
     if (this._defaultStartDate) this.filterStartDateTarget.value = this._defaultStartDate
     if (this._defaultEndDate) this.filterEndDateTarget.value = this._defaultEndDate
+
+    // Apply drill-down filter params from Spending Breakdown
+    if (this._defaultCategoryId) this.filterCategoryTarget.value = this._defaultCategoryId
+    if (this._defaultSpendingTypeId) {
+      // Spending type filter uses name, not ID — find the matching type
+      const st = this.spendingTypes.find(t => String(t.id) === this._defaultSpendingTypeId)
+      if (st) this.filterTypeTarget.value = st.name
+    }
+    if (this._defaultTagId && this.hasFilterTagTarget) this.filterTagTarget.value = this._defaultTagId
   }
 
   // --- Filtering ---
