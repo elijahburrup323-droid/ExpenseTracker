@@ -162,7 +162,7 @@ export default class extends Controller {
     const nwToggle = this._renderNetWorthToggle(i.include_in_net_worth, i.id)
 
     return `<tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-      <td class="px-6 py-4 text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">${escapeHtml(i.name)}</td>
+      <td class="px-6 py-4 text-sm font-semibold whitespace-nowrap"><a href="/financing/instruments/${i.id}" class="text-brand-600 dark:text-brand-400 hover:text-brand-800 dark:hover:text-brand-300 hover:underline">${escapeHtml(i.name)}</a></td>
       <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">${subLabel}</td>
       <td class="px-6 py-4 text-sm whitespace-nowrap">${badge}</td>
       <td class="px-6 py-4 text-sm text-gray-900 dark:text-white text-right tabular-nums">${op}</td>

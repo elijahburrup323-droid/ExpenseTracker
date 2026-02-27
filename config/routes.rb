@@ -86,6 +86,7 @@ Rails.application.routes.draw do
   # Financing (HTML pages)
   get "financing/loans-notes", to: "financing#loans_notes", as: :financing_loans_notes
   get "financing/contracts-for-deed", to: "financing#contracts_for_deed", as: :financing_contracts_for_deed
+  get "financing/instruments/:id", to: "financing#show", as: :financing_instrument_detail
 
   # Account Type Masters (HTML page, agent-only)
   resources :account_type_masters, only: [:index]
@@ -257,7 +258,14 @@ Rails.application.routes.draw do
     resources :investment_transactions, only: [:index, :create, :update, :destroy]
 
     # Financing Instruments API
-    resources :financing_instruments, only: [:index, :create, :update, :destroy]
+    resources :financing_instruments, only: [:index, :show, :create, :update, :destroy] do
+      resources :financing_payments, only: [:index, :create, :update, :destroy]
+      resource :amortization_schedule, only: [:show], controller: "amortization_schedules" do
+        post :generate
+        post :simulate_payoff
+        post :reconcile
+      end
+    end
 
     resources :net_worth_snapshots, only: [:index] do
       collection do

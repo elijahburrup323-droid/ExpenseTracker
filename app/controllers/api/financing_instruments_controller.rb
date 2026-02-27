@@ -1,6 +1,6 @@
 module Api
   class FinancingInstrumentsController < BaseController
-    before_action :set_instrument, only: [:update, :destroy]
+    before_action :set_instrument, only: [:show, :update, :destroy]
 
     def index
       instruments = current_user.financing_instruments.active.ordered
@@ -8,6 +8,10 @@ module Api
         instruments = instruments.where.not(instrument_subtype: params[:exclude_subtype])
       end
       render json: instruments.map { |i| instrument_json(i) }
+    end
+
+    def show
+      render json: instrument_json(@instrument)
     end
 
     def create

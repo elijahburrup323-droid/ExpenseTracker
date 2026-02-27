@@ -62,6 +62,7 @@ import InvestmentAccountsController from "controllers/investment_accounts_contro
 import InvestmentHoldingsController from "controllers/investment_holdings_controller"
 import HoldingDetailController from "controllers/holding_detail_controller"
 import FinancingLoansNotesController from "controllers/financing_loans_notes_controller"
+import FinancingDetailController from "controllers/financing_detail_controller"
 
 application.register("flash", FlashController)
 application.register("dropdown", DropdownController)
@@ -125,3 +126,4 @@ application.register("investment-accounts", InvestmentAccountsController)
 application.register("investment-holdings", InvestmentHoldingsController)
 application.register("holding-detail", HoldingDetailController)
 application.register("financing-loans-notes", FinancingLoansNotesController)
+application.register("financing-detail", FinancingDetailController)

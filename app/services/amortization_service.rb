@@ -98,7 +98,7 @@ class AmortizationService
       new_interest_total = instrument.amortization_schedule_entries.reload.sum(:interest_amount)
       new_payoff_date = instrument.amortization_schedule_entries.by_period.last&.due_date
 
-      RecalculationAuditable.log_amortization_recalculation!(
+      FinancingInstrument.log_amortization_recalculation!(
         user_id: user_id,
         instrument: instrument,
         payment_edit_id: nil,
@@ -137,5 +137,5 @@ class AmortizationService
     end
   end
 
-  private_class_method :calculate_payment, :monthly_rate, :advance_date
+  # All helpers are public for use by PaymentAllocationService and AmortizationSchedulesController
 end
