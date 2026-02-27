@@ -120,24 +120,20 @@ module Api
     end
 
     def destroy
+      # Default (primary) bucket cannot be deleted
+      if @bucket.is_default
+        return render json: { errors: ["Cannot delete the default bucket. Reassign the default first or delete non-default buckets only."] }, status: :unprocessable_entity
+      end
+
       siblings = current_user.buckets.where(account_id: @bucket.account_id).where.not(id: @bucket.id)
-      was_default = @bucket.is_default
 
       ActiveRecord::Base.transaction do
         transfer_amount = @bucket.current_balance.to_f
 
-        if siblings.exists?
-          # If deleting the default, auto-promote the lowest-priority sibling
-          if was_default
-            successor = siblings.order(:priority, :name).first
-            # Clear the old default first to avoid unique index violation on priority=0
-            @bucket.update_columns(is_default: false, priority: -1)
-            successor.update_columns(is_default: true, priority: 0)
-          end
+        if transfer_amount > 0 && siblings.exists?
+          recipient = current_user.buckets.find_by(account_id: @bucket.account_id, is_default: true) || siblings.order(:priority, :name).first
 
-          recipient = was_default ? successor : current_user.buckets.find_by(account_id: @bucket.account_id, is_default: true) || siblings.order(:priority, :name).first
-
-          if transfer_amount > 0 && recipient
+          if recipient
             @bucket.bucket_transactions.create!(
               user: current_user,
               txn_date: Date.current,
@@ -159,13 +155,15 @@ module Api
             recipient.update_columns(current_balance: recipient.current_balance + transfer_amount)
           end
         end
-        # If no siblings, this is the only bucket — just delete it (balance stays in account)
 
         @bucket.soft_delete!
       end
       head :no_content
     rescue ActiveRecord::RecordInvalid => e
       render json: { errors: [e.message] }, status: :unprocessable_entity
+    rescue => e
+      Rails.logger.error("[BucketDelete] Unexpected error deleting bucket #{@bucket&.id}: #{e.class} — #{e.message}")
+      render json: { errors: ["Unexpected error deleting bucket. Please try again or contact support."] }, status: :internal_server_error
     end
 
     # POST /api/buckets/:id/fund — move money between buckets in same account
