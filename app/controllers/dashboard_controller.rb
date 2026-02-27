@@ -3,6 +3,7 @@ class DashboardController < ApplicationController
 
   def index
     _render_dashboard
+    render :index
   rescue => e
     Rails.logger.error("[Dashboard 500] user=#{current_user&.id} #{e.class}: #{e.message}\n#{e.backtrace.first(10).join("\n")}")
     render plain: "Dashboard error for user #{current_user&.id}: #{e.class}: #{e.message}\n\n#{e.backtrace.first(15).join("\n")}", status: 200
