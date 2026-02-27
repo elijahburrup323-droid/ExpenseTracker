@@ -89,15 +89,30 @@
           <span class="text-[11px] font-medium text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(@net_worth_liabilities) %></span>
         </div>
         <div class="flex items-center justify-between">
-          <span class="text-[11px] text-gray-500 dark:text-gray-400">Debt Ratio</span>
-          <% if @debt_ratio.nil? %>
-            <span class="text-[11px] text-gray-400 dark:text-gray-500">&mdash;</span>
-          <% elsif @debt_ratio > 100 %>
-            <span class="text-[11px] font-medium text-red-600 dark:text-red-400" style="font-variant-numeric: tabular-nums;"><%= @debt_ratio %>%</span>
-          <% elsif @debt_ratio <= 50 %>
-            <span class="text-[11px] font-medium text-emerald-600 dark:text-emerald-400" style="font-variant-numeric: tabular-nums;"><%= @debt_ratio %>%</span>
+          <span class="text-[11px] text-gray-500 dark:text-gray-400"><%= @nw_metric_label %></span>
+          <% if @nw_metric_value.nil? %>
+            <% if @nw_metric_mode == :cash_coverage %>
+              <span class="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">No Debt</span>
+            <% else %>
+              <span class="text-[11px] text-gray-400 dark:text-gray-500">&mdash;</span>
+            <% end %>
+          <% elsif @nw_metric_mode == :debt_ratio %>
+            <% if @nw_metric_value > 100 %>
+              <span class="text-[11px] font-medium text-red-600 dark:text-red-400" style="font-variant-numeric: tabular-nums;"><%= @nw_metric_value %>%</span>
+            <% elsif @nw_metric_value <= 50 %>
+              <span class="text-[11px] font-medium text-emerald-600 dark:text-emerald-400" style="font-variant-numeric: tabular-nums;"><%= @nw_metric_value %>%</span>
+            <% else %>
+              <span class="text-[11px] font-medium text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;"><%= @nw_metric_value %>%</span>
+            <% end %>
           <% else %>
-            <span class="text-[11px] font-medium text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;"><%= @debt_ratio %>%</span>
+            <%# Cash Coverage mode %>
+            <% if @nw_metric_value >= 100 %>
+              <span class="text-[11px] font-medium text-emerald-600 dark:text-emerald-400" style="font-variant-numeric: tabular-nums;"><%= @nw_metric_value %>%</span>
+            <% elsif @nw_metric_value >= 50 %>
+              <span class="text-[11px] font-medium text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;"><%= @nw_metric_value %>%</span>
+            <% else %>
+              <span class="text-[11px] font-medium text-red-600 dark:text-red-400" style="font-variant-numeric: tabular-nums;"><%= @nw_metric_value %>%</span>
+            <% end %>
           <% end %>
         </div>
       </div>

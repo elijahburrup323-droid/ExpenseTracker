@@ -278,10 +278,31 @@ module Api
 
       assets = nw[:assets].round(2)
       liabilities = nw[:liabilities].abs.round(2)
-      debt_ratio = assets > 0 ? (liabilities / assets * 100).round(1) : nil
+
+      # Metric swap: Debt Ratio (leveraged) vs Cash Coverage (cash-dominant)
+      credit_ids = AccountTypeMaster.where(normal_balance_type: "CREDIT").pluck(:id)
+      cash_assets = current_user.accounts.where.not(account_type_master_id: credit_ids).sum(:balance).to_f.round(2)
+      noncash_total = Asset.where(user_id: current_user.id, include_in_net_worth: true).where(deleted_at: nil).sum(:current_value).to_f +
+        InvestmentHolding.joins(:investment_account)
+          .where(investment_accounts: { user_id: current_user.id, include_in_net_worth: true, active: true })
+          .where(investment_holdings: { deleted_at: nil }).where.not(investment_holdings: { current_price: nil })
+          .sum("investment_holdings.shares_held * investment_holdings.current_price").to_f +
+        FinancingInstrument.where(user_id: current_user.id, instrument_type: "RECEIVABLE", include_in_net_worth: true)
+          .where(deleted_at: nil).sum(:current_principal).to_f
+
+      if noncash_total > 0
+        metric_label = "Debt Ratio"
+        metric_value = assets > 0 ? (liabilities / assets * 100).round(1) : nil
+        metric_mode = "debt_ratio"
+      else
+        metric_label = "Cash Coverage"
+        metric_value = liabilities > 0 ? (cash_assets / liabilities * 100).round(1) : nil
+        metric_mode = "cash_coverage"
+      end
 
       { value: net_worth_val, change: nw_change.round(2), change_pct: nw_pct, snapshots: snapshot_data,
-        assets: assets, liabilities: liabilities, debt_ratio: debt_ratio }
+        assets: assets, liabilities: liabilities, debt_ratio: metric_value,
+        metric_label: metric_label, metric_value: metric_value, metric_mode: metric_mode }
     end
 
     def compute_income_spending(ctx)

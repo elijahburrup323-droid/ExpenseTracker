@@ -108,7 +108,30 @@ class DashboardController < ApplicationController
     @net_worth = asset_total + liability_total
     @net_worth_assets = asset_total.to_f.round(2)
     @net_worth_liabilities = liability_total.abs.to_f.round(2)
-    @debt_ratio = @net_worth_assets > 0 ? (@net_worth_liabilities / @net_worth_assets * 100).round(1) : nil
+
+    # Metric swap: Debt Ratio (leveraged) vs Cash Coverage (cash-dominant)
+    noncash_total = Asset.where(user_id: current_user.id, include_in_net_worth: true).where(deleted_at: nil).sum(:current_value).to_f +
+      InvestmentHolding.joins(:investment_account)
+        .where(investment_accounts: { user_id: current_user.id, include_in_net_worth: true, active: true })
+        .where(investment_holdings: { deleted_at: nil }).where.not(investment_holdings: { current_price: nil })
+        .sum("investment_holdings.shares_held * investment_holdings.current_price").to_f +
+      FinancingInstrument.where(user_id: current_user.id, instrument_type: "RECEIVABLE", include_in_net_worth: true)
+        .where(deleted_at: nil).sum(:current_principal).to_f
+
+    if noncash_total > 0
+      @nw_metric_label = "Debt Ratio"
+      @nw_metric_value = @net_worth_assets > 0 ? (@net_worth_liabilities / @net_worth_assets * 100).round(1) : nil
+      @nw_metric_mode = :debt_ratio
+    else
+      @nw_metric_label = "Cash Coverage"
+      if @net_worth_liabilities > 0
+        cash_assets = asset_total.to_f.round(2)
+        @nw_metric_value = (cash_assets / @net_worth_liabilities * 100).round(1)
+      else
+        @nw_metric_value = nil
+      end
+      @nw_metric_mode = :cash_coverage
+    end
     backfill_net_worth_snapshots_if_needed
     @net_worth_snapshots = current_user.net_worth_snapshots.eligible_for_user(current_user).recent(6).to_a.sort_by(&:snapshot_date)
     if @net_worth_snapshots.size >= 2
