@@ -5,7 +5,8 @@ export default class extends Controller {
   static targets = [
     "monthLabel", "prevBtn", "nextBtn",
     "cardsGrid", "slotWrapper",
-    "tagFilterWrapper", "tagFilterBtn", "tagFilterLabel", "tagFilterDropdown", "tagCheckboxList"
+    "tagFilterWrapper", "tagFilterBtn", "tagFilterLabel", "tagFilterDropdown", "tagCheckboxList",
+    "pulseStrip"
   ]
   static values = { apiUrl: String, recentActivityUrl: String, reorderUrl: String, openMonthUrl: String, tagsUrl: String, month: Number, year: Number, earliestMonth: Number, earliestYear: Number }
 
@@ -198,6 +199,9 @@ export default class extends Controller {
         const renderer = this._renderers[slotData.card_type]
         if (renderer) renderer.call(this, wrapper, slotData.data)
       }
+
+      // Update Financial Pulse strip
+      if (data.pulse && this.hasPulseStripTarget) this._updatePulseStrip(data.pulse)
     } catch (e) { /* silently fail */ }
   }
 
@@ -1041,6 +1045,27 @@ export default class extends Controller {
 
   _currency(val) {
     return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(val || 0)
+  }
+
+  _updatePulseStrip(pulse) {
+    const warn = `<svg class="inline w-3 h-3 -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>`
+    const parts = [`<span class="font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider" style="font-size: 10px;">Financial Pulse</span>`]
+    if (pulse.liquidity != null) {
+      const cls = pulse.liquidity < 1.0 ? "text-amber-600 dark:text-amber-400 font-medium" : ""
+      parts.push(`<span class="${cls}">Cash ${pulse.liquidity} mo${pulse.liquidity < 1.0 ? " " + warn : ""}</span>`)
+    }
+    if (pulse.debt_ratio != null) {
+      const cls = pulse.debt_ratio > 100 ? "text-red-600 dark:text-red-400 font-medium" : ""
+      parts.push(`<span class="${cls}">Debt ${pulse.debt_ratio}%${pulse.debt_ratio > 100 ? " " + warn : ""}</span>`)
+    } else {
+      parts.push(`<span>Debt &mdash;</span>`)
+    }
+    if (pulse.savings_rate != null) {
+      parts.push(`<span>Savings ${pulse.savings_rate}%</span>`)
+    } else {
+      parts.push(`<span>Savings &mdash;</span>`)
+    }
+    this.pulseStripTarget.innerHTML = parts.join("")
   }
 
   _esc(str) {

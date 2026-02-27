@@ -235,6 +235,11 @@ class DashboardController < ApplicationController
       }
     end
 
+    # Financial Pulse strip metrics
+    @pulse_liquidity = @three_month_avg && @three_month_avg > 0 ? (@cash_balance / @three_month_avg).round(1) : nil
+    @pulse_debt_ratio = @net_worth_assets > 0 ? (@net_worth_liabilities / @net_worth_assets * 100).round(1) : nil
+    @pulse_savings_rate = @current_month_income.to_f > 0 ? ((@current_month_income.to_f - @current_month_payments.to_f) / @current_month_income.to_f * 100).round(1) : nil
+
     # Smart Suggestions — evaluate and get top suggestion for banner
     evaluator = SmartSuggestionEvaluator.new(current_user)
     evaluator.evaluate

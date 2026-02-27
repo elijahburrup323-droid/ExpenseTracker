@@ -77,20 +77,40 @@ module Api
       }
 
       # Backward-compat flat keys from slot data
+      spending_data = nil
+      nw_data = nil
+      is_data = nil
       slots_data.each do |s|
         case s[:card_type]
         when "spending_overview"
           response[:spending_overview] = s[:data]
+          spending_data = s[:data]
         when "accounts_overview"
           response[:accounts_overview] = s[:data]
         when "net_worth"
           response[:net_worth_overview] = s[:data]
+          nw_data = s[:data]
         when "income_spending"
           response[:income_spending] = s[:data]
+          is_data = s[:data]
         when "recent_activity"
           response[:recent_activity] = s[:data][:recent]
         end
       end
+
+      # Financial Pulse strip metrics
+      cash_balance = (spending_data&.dig(:available_to_spend) || 0).to_f + (spending_data&.dig(:scheduled_remaining) || 0).to_f
+      avg3 = spending_data&.dig(:three_month_avg)
+      assets = nw_data&.dig(:assets)
+      liabilities = nw_data&.dig(:liabilities)
+      income = is_data&.dig(:income)
+      expenses = is_data&.dig(:expenses)
+
+      response[:pulse] = {
+        liquidity: avg3 && avg3 > 0 ? (cash_balance / avg3).round(1) : nil,
+        debt_ratio: assets && assets > 0 ? (liabilities.to_f / assets * 100).round(1) : nil,
+        savings_rate: income && income > 0 ? ((income - (expenses || 0).to_f) / income * 100).round(1) : nil
+      }
 
       render json: response
     end

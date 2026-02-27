@@ -21,6 +21,28 @@
     </div>
   <% end %>
 
+  <%# Financial Pulse strip %>
+  <div class="flex items-center flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400 mb-3 px-1" data-dashboard-target="pulseStrip">
+    <span class="font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider" style="font-size: 10px;">Financial Pulse</span>
+    <% if @pulse_liquidity %>
+      <span class="<%= @pulse_liquidity < 1.0 ? 'text-amber-600 dark:text-amber-400 font-medium' : '' %>">
+        Cash <%= @pulse_liquidity %> mo<% if @pulse_liquidity < 1.0 %> <svg class="inline w-3 h-3 -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg><% end %>
+      </span>
+    <% end %>
+    <% if @pulse_debt_ratio %>
+      <span class="<%= @pulse_debt_ratio > 100 ? 'text-red-600 dark:text-red-400 font-medium' : '' %>">
+        Debt <%= @pulse_debt_ratio %>%<% if @pulse_debt_ratio > 100 %> <svg class="inline w-3 h-3 -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg><% end %>
+      </span>
+    <% elsif @net_worth_assets == 0 %>
+      <span>Debt &mdash;</span>
+    <% end %>
+    <% if @pulse_savings_rate %>
+      <span>Savings <%= @pulse_savings_rate %>%</span>
+    <% else %>
+      <span>Savings &mdash;</span>
+    <% end %>
+  </div>
+
   <%# ===== 6-CARD GRID (3 x 2, equal size) ===== %>
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 md:dash-grid gap-4 md:gap-6" data-dashboard-target="cardsGrid" data-tutorial="dashboard-cards">
 
