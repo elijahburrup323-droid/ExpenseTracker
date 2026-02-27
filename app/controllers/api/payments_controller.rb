@@ -47,33 +47,37 @@ module Api
     end
 
     def update
-      # Server-side month control: payment must be in current open month to edit
       open_month = OpenMonthMaster.for_user(current_user)
-      if @payment.payment_date.year != open_month.current_year || @payment.payment_date.month != open_month.current_month
-        return render json: { errors: ["This payment cannot be edited because it is not in the current open month."] }, status: :conflict
-      end
+      in_open_month = @payment.payment_date.year == open_month.current_year &&
+                      @payment.payment_date.month == open_month.current_month
 
-      ActiveRecord::Base.transaction do
-        old_amount = @payment.amount
-        old_account = @payment.account
-        old_bucket_id = @payment.bucket_id
-        old_was_bucket_execution = @payment.is_bucket_execution
+      if in_open_month
+        # Full edit — all fields allowed
+        ActiveRecord::Base.transaction do
+          old_amount = @payment.amount
+          old_account = @payment.account
+          old_bucket_id = @payment.bucket_id
+          old_was_bucket_execution = @payment.is_bucket_execution
 
-        if @payment.update(payment_params)
-          sync_tags!(@payment)
-          learn_category_defaults!(@payment)
-          old_account.reverse_payment!(old_amount)
+          if @payment.update(payment_params)
+            sync_tags!(@payment)
+            learn_category_defaults!(@payment)
+            old_account.reverse_payment!(old_amount)
 
-          new_account = @payment.reload.account
-          new_account.apply_payment!(@payment.amount)
+            new_account = @payment.reload.account
+            new_account.apply_payment!(@payment.amount)
 
-          handle_bucket_execution_update(@payment, old_bucket_id, old_was_bucket_execution, old_amount)
+            handle_bucket_execution_update(@payment, old_bucket_id, old_was_bucket_execution, old_amount)
 
-          render json: payment_json(@payment)
-        else
-          render_errors(@payment)
-          raise ActiveRecord::Rollback
+            render json: payment_json(@payment)
+          else
+            render_errors(@payment)
+            raise ActiveRecord::Rollback
+          end
         end
+      else
+        # Closed month — classification-only edit (no balance/snapshot impact)
+        classification_update_closed_month!
       end
     end
 
@@ -142,6 +146,28 @@ module Api
 
     def payment_params
       params.require(:payment).permit(:account_id, :spending_category_id, :payment_date, :description, :notes, :amount, :spending_type_override_id, :bucket_id, :is_bucket_execution)
+    end
+
+    # Closed-month edit: only classification fields, no balance impact
+    CLASSIFICATION_FIELDS = %i[spending_category_id spending_type_override_id description notes reconciled].freeze
+
+    def classification_update_closed_month!
+      permitted = params.require(:payment).permit(*CLASSIFICATION_FIELDS)
+
+      # Guard: reject any attempt to change financial fields
+      financial_keys = %w[amount account_id payment_date bucket_id is_bucket_execution]
+      attempted = params[:payment]&.keys&.select { |k| financial_keys.include?(k) } || []
+      changed = attempted.select { |k| params[:payment][k].to_s != @payment.send(k).to_s }
+      if changed.any?
+        return render json: { errors: ["Cannot change #{changed.join(', ')} in a closed month."] }, status: :conflict
+      end
+
+      if @payment.update(permitted)
+        sync_tags!(@payment)
+        render json: payment_json(@payment)
+      else
+        render_errors(@payment)
+      end
     end
 
     def flag_open_month_has_data(record_date, source)

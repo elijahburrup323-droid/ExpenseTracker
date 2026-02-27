@@ -416,7 +416,19 @@ export default class extends Controller {
   cancelModal() {
     this.state = "idle"
     this.editingId = null
+    this._classificationOnlyMode = false
     this._hideSuggestions()
+    // Re-enable any disabled fields from classification-only mode
+    this.modalDateTarget.disabled = false
+    this.modalAccountTarget.disabled = false
+    this.modalAmountTarget.disabled = false
+    this.modalDateTarget.classList.remove("opacity-50", "cursor-not-allowed")
+    this.modalAccountTarget.classList.remove("opacity-50", "cursor-not-allowed")
+    this.modalAmountTarget.classList.remove("opacity-50", "cursor-not-allowed")
+    if (this.hasModalBucketToggleTarget) {
+      this.modalBucketToggleTarget.disabled = false
+      this.modalBucketToggleTarget.classList.remove("opacity-50", "cursor-not-allowed")
+    }
     this.addModalTarget.classList.add("hidden")
     if (this._modalEscapeHandler) {
       document.removeEventListener("keydown", this._modalEscapeHandler)
@@ -497,6 +509,7 @@ export default class extends Controller {
     if (!payment) return
 
     // Check if payment is in the current open month
+    this._classificationOnlyMode = false
     if (this.openMonthUrlValue && payment.payment_date) {
       try {
         const res = await fetch(this.openMonthUrlValue, { headers: { "Accept": "application/json" } })
@@ -504,9 +517,8 @@ export default class extends Controller {
           const openMonth = await res.json()
           const [year, month] = payment.payment_date.split("-").map(Number)
           if (year !== openMonth.current_year || month !== openMonth.current_month) {
-            this.editBlockedMessageTarget.textContent = "This payment can\u2019t be edited because it is not in the current open month. Change your open month or reopen the month (if allowed) before editing historical transactions."
-            this.editBlockedModalTarget.classList.remove("hidden")
-            return
+            // Closed month — allow classification-only edit
+            this._classificationOnlyMode = true
           }
         }
       } catch (e) {}
@@ -1218,7 +1230,8 @@ export default class extends Controller {
   }
 
   async _openEditModal(payment) {
-    this.modalTitleTarget.textContent = "Edit Payment"
+    const classOnly = this._classificationOnlyMode
+    this.modalTitleTarget.textContent = classOnly ? "Edit Payment (Classification Only)" : "Edit Payment"
 
     // Populate dropdowns with existing values selected
     this.modalAccountTarget.innerHTML = `<option value="">Select account...</option><option value="new">— New Account —</option>` + this._buildAccountOptions(payment.account_id)
@@ -1240,6 +1253,28 @@ export default class extends Controller {
     this._resetBucketFields()
     this.modalErrorTarget.classList.add("hidden")
     this.modalErrorTarget.textContent = ""
+
+    // Classification-only mode: disable financial fields
+    this.modalDateTarget.disabled = classOnly
+    this.modalAccountTarget.disabled = classOnly
+    this.modalAmountTarget.disabled = classOnly
+    if (classOnly) {
+      this.modalDateTarget.classList.add("opacity-50", "cursor-not-allowed")
+      this.modalAccountTarget.classList.add("opacity-50", "cursor-not-allowed")
+      this.modalAmountTarget.classList.add("opacity-50", "cursor-not-allowed")
+      if (this.hasModalBucketToggleTarget) {
+        this.modalBucketToggleTarget.disabled = true
+        this.modalBucketToggleTarget.classList.add("opacity-50", "cursor-not-allowed")
+      }
+    } else {
+      this.modalDateTarget.classList.remove("opacity-50", "cursor-not-allowed")
+      this.modalAccountTarget.classList.remove("opacity-50", "cursor-not-allowed")
+      this.modalAmountTarget.classList.remove("opacity-50", "cursor-not-allowed")
+      if (this.hasModalBucketToggleTarget) {
+        this.modalBucketToggleTarget.disabled = false
+        this.modalBucketToggleTarget.classList.remove("opacity-50", "cursor-not-allowed")
+      }
+    }
 
     // Show modal
     this.addModalTarget.classList.remove("hidden")

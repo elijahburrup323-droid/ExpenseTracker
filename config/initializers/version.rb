@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.33"
+APP_VERSION = "1.3.34"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,12 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.34",
+    changes: [
+      "Payments: Closed-month payments now allow classification-only edits (Category, Spending Type, Tags, Description). Amount, Account, and Date fields are disabled and read-only. No balance or snapshot impact."
+    ]
+  },
   {
     version: "1.3.33",
     changes: [
