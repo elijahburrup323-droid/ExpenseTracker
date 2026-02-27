@@ -1329,23 +1329,35 @@ export default class extends Controller {
         this.modalTypeTarget.value = String(cat.spending_type_id)
       }
 
+      let tagsChanged = false
+
       // Auto-attach default tags
       const defaultTagIds = cat?.default_tag_ids || []
       if (defaultTagIds.length > 0) {
         if (this.state === "adding") {
-          // In Add mode: auto-populate default tags (merge, no duplicates)
           for (const tid of defaultTagIds) {
             if (!this.selectedTagIds.includes(tid)) {
               this.selectedTagIds.push(tid)
+              tagsChanged = true
             }
           }
-          this._renderTagPills()
         } else if (this.state === "editing") {
-          // In Edit mode: show prompt, don't silently overwrite
           this._pendingDefaultTagIds = defaultTagIds
           this._showCategoryTagPrompt()
         }
       }
+
+      // Auto-tag by category name: if a tag with the same name exists, assign it
+      if (cat?.name) {
+        const catNameLower = cat.name.toLowerCase()
+        const matchingTag = this.allTags.find(t => t.name.toLowerCase() === catNameLower)
+        if (matchingTag && !this.selectedTagIds.includes(matchingTag.id)) {
+          this.selectedTagIds.push(matchingTag.id)
+          tagsChanged = true
+        }
+      }
+
+      if (tagsChanged) this._renderTagPills()
 
       setTimeout(() => this.modalDescriptionTarget.focus(), 50)
     }
