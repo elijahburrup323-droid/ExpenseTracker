@@ -316,7 +316,7 @@ module Api
       end
       nw = Account.net_worth_for(current_user.accounts, user: current_user)
 
-      { accounts: accounts_list, total: nw[:net_worth].round(2) }
+      { accounts: accounts_list, total: nw[:accounts_total].round(2) }
     end
 
     def compute_net_worth(ctx)

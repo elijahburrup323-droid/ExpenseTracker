@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.36"
+APP_VERSION = "1.3.37"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,12 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.37",
+    changes: [
+      "Dashboard Accounts Card (Slot 2): Header now shows 'Accounts Total' instead of 'Net Worth' to prevent visual contradiction with Slot 3 (Net Worth). Total reflects account balances only — excludes Assets, Investments, and Financing modules. Derived from canonical Account.net_worth_for[:accounts_total]."
+    ]
+  },
   {
     version: "1.3.36",
     changes: [

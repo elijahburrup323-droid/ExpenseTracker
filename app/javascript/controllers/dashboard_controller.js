@@ -650,7 +650,7 @@ export default class extends Controller {
       let html = `
         <div class="flex items-center justify-between mb-3">
           <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Accounts</h2>
-          <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">Net Worth: ${this._currency(total)}</span>
+          <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">Accounts Total: ${this._currency(total)}</span>
         </div>`
 
       if (accounts.length === 0) {
@@ -711,7 +711,7 @@ export default class extends Controller {
       let html = `
         <div class="flex items-center justify-between mb-3">
           <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Assets vs Liabilities</h2>
-          <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">Net Worth: ${this._currency(total)}</span>
+          <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">Accounts Total: ${this._currency(total)}</span>
         </div>`
 
       if (barTotal > 0) {

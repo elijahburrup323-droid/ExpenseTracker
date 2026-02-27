@@ -109,7 +109,8 @@ class Account < ApplicationRecord
     {
       assets: total_assets.to_f,
       liabilities: total_liabilities.to_f,
-      net_worth: (total_assets + total_liabilities).to_f
+      net_worth: (total_assets + total_liabilities).to_f,
+      accounts_total: (account_asset_total + account_liability_total).to_f
     }
   end
 

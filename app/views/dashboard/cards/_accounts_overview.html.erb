@@ -2,7 +2,7 @@
   color_cycle = %w[blue green purple amber sky red]
   credit_master_ids = AccountTypeMaster.where(normal_balance_type: "CREDIT").pluck(:id).to_set
   nw_data = Account.net_worth_for(@accounts, user: current_user)
-  card2_total = nw_data[:net_worth]
+  card2_total = nw_data[:accounts_total]
 
   # Split into assets (DEBIT) and liabilities (CREDIT)
   asset_accounts = @accounts.select { |a| !credit_master_ids.include?(a.account_type_master_id) }
@@ -21,7 +21,7 @@
     <div data-role="front-content" class="dash-card-scroll">
       <div class="flex items-center justify-between mb-3">
         <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200"><%= card.title %></h2>
-        <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">Net Worth: <%= number_to_currency(card2_total) %></span>
+        <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">Accounts Total: <%= number_to_currency(card2_total) %></span>
       </div>
       <% if @accounts.empty? %>
         <p class="text-sm text-gray-400 dark:text-gray-500">No accounts yet.</p>
@@ -113,7 +113,7 @@
     <div data-role="back-content" class="dash-card-scroll">
       <div class="flex items-center justify-between mb-3">
         <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Assets vs Liabilities</h2>
-        <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">Net Worth: <%= number_to_currency(card2_total) %></span>
+        <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">Accounts Total: <%= number_to_currency(card2_total) %></span>
       </div>
       <% if bar_total > 0 %>
         <%# --- Horizontal Bar --- %>
