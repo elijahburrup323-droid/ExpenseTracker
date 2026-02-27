@@ -1,7 +1,7 @@
 <% if @top_suggestion&.feature_block %>
   <div class="mb-6 bg-brand-50 dark:bg-brand-900/20 border-l-4 border-brand-600 rounded-r-lg p-4 flex items-start space-x-3"
        data-controller="suggestion-banner"
-       data-suggestion-banner-dismiss-url-value="<%= api_smart_suggestion_dismiss_path(@top_suggestion.id) %>"
+       data-suggestion-banner-dismiss-url-value="<%= dismiss_api_smart_suggestion_path(@top_suggestion.id) %>"
        data-suggestion-banner-csrf-token-value="<%= form_authenticity_token %>"
        data-suggestion-banner-target="banner">
     <%# Lightbulb icon %>
