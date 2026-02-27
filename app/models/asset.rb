@@ -79,6 +79,12 @@ class Asset < ApplicationRecord
     asset_type&.normalized_key.in?(UNIT_BASED_KEYS)
   end
 
+  # Unrealized gain/loss for unit-based assets
+  def unrealized_gain
+    return nil unless unit_based? && total_cost_basis.to_d > 0
+    current_value.to_d - total_cost_basis.to_d
+  end
+
   # Recalculate rollup fields from lots. Call after any lot create/update/delete.
   def recalculate_from_lots!
     lots = asset_lots.where(deleted_at: nil)

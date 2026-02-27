@@ -23,5 +23,16 @@ class AddUnitBasedFieldsToAssets < ActiveRecord::Migration[7.1]
     add_index :asset_lots, [:asset_id, :acquired_date], name: "idx_asset_lots_asset_acquired"
     add_index :asset_lots, [:asset_id, :deleted_at],    name: "idx_asset_lots_asset_deleted"
     add_index :asset_lots, [:user_id, :deleted_at],     name: "idx_asset_lots_user_deleted"
+
+    # Register in DBU catalog
+    reversible do |dir|
+      dir.up do
+        execute <<~SQL.squish
+          INSERT INTO dbu_table_catalogs (table_name, table_description, is_active, created_at, updated_at)
+          VALUES ('asset_lots', 'Asset Purchase Lots (Precious Metals / Crypto)', true, NOW(), NOW())
+          ON CONFLICT (table_name) DO NOTHING
+        SQL
+      end
+    end
   end
 end
