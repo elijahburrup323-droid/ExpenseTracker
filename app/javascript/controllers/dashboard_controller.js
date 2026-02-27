@@ -482,6 +482,20 @@ export default class extends Controller {
     const spent = this._currency(data.spent)
     const content = wrapper.querySelector("[data-role='card-content']")
     if (content) {
+      const avail = data.available_to_spend || 0
+      const availColor = avail >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+      const scheduled = this._currency(data.scheduled_remaining || 0)
+      const safeDailySpend = this._currency(data.safe_daily_spend || 0)
+      const daysRemaining = data.days_remaining || 0
+
+      let pressureHtml = ''
+      if (data.category_pressure && data.category_pressure.length > 0) {
+        for (const cp of data.category_pressure) {
+          const cpClass = cp.pct_used >= 90 ? 'text-red-500 font-medium' : 'text-amber-500'
+          pressureHtml += `<p class="text-[11px] mt-0.5 ${cpClass}"><svg class="w-3 h-3 inline -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg> ${this._esc(cp.name)} ${cp.pct_used}%</p>`
+        }
+      }
+
       content.innerHTML = `
         <div class="flex items-center space-x-4 flex-1">
           <div class="relative w-24 h-24 lg:w-32 lg:h-32 flex-shrink-0">
@@ -495,10 +509,18 @@ export default class extends Controller {
               <span class="text-sm font-bold text-gray-900 dark:text-white tabular-nums">${spent}</span>
             </div>
           </div>
-          <div>
-            <p class="text-lg font-semibold text-gray-800 dark:text-gray-200 tabular-nums">${spent}</p>
-            <p class="text-sm text-gray-500 dark:text-gray-400">spent this month</p>
-            ${this._renderSpendingContext(data)}
+          <div class="flex-1 min-w-0">
+            <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Available to Spend</p>
+            <p class="text-xl font-bold ${availColor}" style="font-variant-numeric: tabular-nums;">${this._currency(avail)}</p>
+            <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-1">Scheduled: ${scheduled}</p>
+            ${pressureHtml}
+            <div class="mt-1.5 pt-1.5 border-t border-gray-100 dark:border-gray-700">
+              <div class="flex items-baseline space-x-2">
+                <p class="text-sm font-semibold text-gray-800 dark:text-gray-200" style="font-variant-numeric: tabular-nums;">${safeDailySpend}</p>
+                <p class="text-[11px] text-gray-500 dark:text-gray-400">safe / day</p>
+                <p class="text-[11px] text-gray-400 dark:text-gray-500">${daysRemaining} days left</p>
+              </div>
+            </div>
           </div>
         </div>`
     }

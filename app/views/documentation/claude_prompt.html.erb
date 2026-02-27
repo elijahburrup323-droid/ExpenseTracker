@@ -146,6 +146,7 @@ Any modification to Net Worth aggregation, Cost basis method, Amortization math,
 - **Financing Detail View** (`app/views/financing/show.html.erb`): Instrument detail page with 3 tabs — Amortization Schedule (paginated, color-coded actual vs projected), Payment History (CRUD via modals), Payoff Simulation (extra monthly + lump sum comparison). Stimulus controller: `financing-detail`.
 - **Financing Payments API** (`app/controllers/api/financing_payments_controller.rb`): CRUD for payments nested under instruments. Uses PaymentAllocationService.
 - **Amortization Schedules API** (`app/controllers/api/amortization_schedules_controller.rb`): Schedule show/generate, payoff simulation, and reconciliation endpoints.
+- **Dashboard Slot 1 (Spending Overview)**: Front side shows donut chart (left) + Available to Spend (primary metric), Scheduled Remaining, Category Pressure Indicator (top 2 near-limit categories with warning icons), Safe Daily Spend with days remaining. Tracking Mode formula: Cash Balance - Scheduled Remaining. Cash = budget DEBIT accounts. Scheduled = RecurringObligations + PaymentRecurrings due in month.
 - **Database indexes**: All required indexes present — investment_transactions(holding_id, trade_date), financing_payments(financing_id, payment_date), audit_logs(entity_type, entity_id), amortization_schedule_entries(financing_instrument_id, period_number).
 - **Final directive**: No recalculation or aggregation logic may scale linearly across entire datasets. All logic must be bounded and indexed.
 

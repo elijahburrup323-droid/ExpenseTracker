@@ -73,6 +73,11 @@ class DashboardController < ApplicationController
       end
     end
 
+    @category_pressure = @spending_by_category
+      .select { |c| c[:limit_pct_used].present? && c[:limit_pct_used] >= 80 }
+      .sort_by { |c| -(c[:limit_pct_used] || 0) }
+      .first(2)
+
     type_limits = SpendingLimitHistory.limits_for_month(current_user, SpendingLimitHistory::SCOPE_SPENDING_TYPE, yyyymm)
     @spending_by_type.each do |tp|
       lim = type_limits[tp[:id]]
@@ -81,6 +86,25 @@ class DashboardController < ApplicationController
         tp[:over_under] = (tp[:pct] - lim.limit_value.to_f).round(1)
       end
     end
+
+    # Card 1: Available to Spend + Safe Daily Spend (Tracking Mode)
+    @cash_balance = budget_accounts.sum(:balance).to_f
+    scheduled_remaining = 0.0
+    current_user.recurring_obligations.active.each do |ob|
+      if ob.falls_in_month?(@month_start.year, @month_start.month)
+        due = ob.due_date_in_month(@month_start.year, @month_start.month)
+        scheduled_remaining += ob.amount.to_f if due && due >= Date.today
+      end
+    end
+    current_user.payment_recurrings.where(use_flag: true).each do |pr|
+      if pr.next_date && pr.next_date >= @month_start && pr.next_date < @month_end
+        scheduled_remaining += pr.amount.to_f
+      end
+    end
+    @scheduled_remaining = scheduled_remaining.round(2)
+    @available_to_spend = (@cash_balance - @scheduled_remaining).round(2)
+    @days_remaining = is_current ? (@month_start.end_of_month - Date.today).to_i : 0
+    @safe_daily_spend = @days_remaining > 0 ? (@available_to_spend / @days_remaining).round(2) : 0.0
 
     # Card 1 back: Spending by Tag (split amount evenly across a payment's tags)
     month_payments = current_user.payments

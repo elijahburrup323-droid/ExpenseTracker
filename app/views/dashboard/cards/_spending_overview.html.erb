@@ -29,17 +29,25 @@
             <span class="text-sm font-bold text-gray-900 dark:text-white"><%= number_to_currency(spent_val, precision: 2) %></span>
           </div>
         </div>
-        <div>
-          <p class="text-lg font-semibold text-gray-800 dark:text-gray-200"><%= number_to_currency(spent_val, precision: 2) %></p>
-          <p class="text-sm text-gray-500 dark:text-gray-400">spent this month</p>
-          <% if @comparison_pct.present? %>
-            <% is_over = @comparison_pct > 0 %>
-            <p class="text-[11px] mt-0.5 <%= is_over ? 'text-red-500' : 'text-green-500' %>">
-              <%= is_over ? '+' : '' %><%= @comparison_pct.abs %>% <%= is_over ? 'above' : 'below' %> <%= @comparison_label %>
-            </p>
+        <div class="flex-1 min-w-0">
+          <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Available to Spend</p>
+          <p class="text-xl font-bold <%= @available_to_spend.to_f >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' %>" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(@available_to_spend || 0, precision: 2) %></p>
+          <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-1">Scheduled: <%= number_to_currency(@scheduled_remaining || 0, precision: 2) %></p>
+          <% if @category_pressure.present? && @category_pressure.any? %>
+            <% @category_pressure.each do |cat| %>
+              <p class="text-[11px] mt-0.5 <%= cat[:limit_pct_used] >= 90 ? 'text-red-500 font-medium' : 'text-amber-500' %>">
+                <svg class="w-3 h-3 inline -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                <%= cat[:name] %> <%= cat[:limit_pct_used] %>%
+              </p>
+            <% end %>
           <% end %>
-          <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">Daily Avg: <%= number_to_currency(@daily_avg || 0, precision: 2) %></p>
-          <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">Projected: <%= number_to_currency(@projected_month_end || 0, precision: 2) %></p>
+          <div class="mt-1.5 pt-1.5 border-t border-gray-100 dark:border-gray-700">
+            <div class="flex items-baseline space-x-2">
+              <p class="text-sm font-semibold text-gray-800 dark:text-gray-200" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(@safe_daily_spend || 0, precision: 2) %></p>
+              <p class="text-[11px] text-gray-500 dark:text-gray-400">safe / day</p>
+              <p class="text-[11px] text-gray-400 dark:text-gray-500"><%= @days_remaining || 0 %> days left</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
