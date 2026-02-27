@@ -1,10 +1,16 @@
-APP_VERSION = "1.3.29"
+APP_VERSION = "1.3.30"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.30",
+    changes: [
+      "Financing: Loans & Notes list screen with full CRUD at /financing/loans-notes. Sortable 9-column table (Name, Type, Direction, Original Principal, Current Principal, Interest Rate, Payment, Net Worth, Actions). Modal-based Add/Edit with all instrument fields. Subtype filter dropdown. Payable/Receivable direction badges. Net Worth toggle. Soft delete with payment dependency guard. Excludes Contracts for Deed (separate screen). (CM-11)"
+    ]
+  },
   {
     version: "1.3.29",
     changes: [

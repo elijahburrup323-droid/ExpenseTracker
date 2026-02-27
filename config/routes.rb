@@ -256,6 +256,9 @@ Rails.application.routes.draw do
     # Investment Transactions API
     resources :investment_transactions, only: [:index, :create, :update, :destroy]
 
+    # Financing Instruments API
+    resources :financing_instruments, only: [:index, :create, :update, :destroy]
+
     resources :net_worth_snapshots, only: [:index] do
       collection do
         post :populate
