@@ -410,7 +410,20 @@ module Api
                  .limit(per_page)
                  .map { |p| { date: p.payment_date.strftime("%-m/%-d"), description: p.description, amount: p.amount.to_f } }
 
-      { recent: recent, total_count: total_count, page: page, per_page: per_page, has_more: (page * per_page) < total_count }
+      # Net activity summary: deposits minus payments for the month
+      income_base = tag_filtered_scope(
+        current_user.income_entries
+          .where(received_flag: true)
+          .where(entry_date: ctx[:month_start]...ctx[:month_end]),
+        ctx[:tag_ids], "IncomeEntry"
+      )
+      total_payments = base.sum(:amount).to_f
+      total_income = income_base.sum(:amount).to_f
+      net_activity = (total_income - total_payments).round(2)
+      transaction_count = total_count + income_base.count
+
+      { recent: recent, total_count: total_count, page: page, per_page: per_page, has_more: (page * per_page) < total_count,
+        net_activity: net_activity, transaction_count: transaction_count }
     end
 
     def compute_buckets(_ctx)

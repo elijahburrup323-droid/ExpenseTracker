@@ -949,6 +949,17 @@ export default class extends Controller {
     const perPage = data.per_page || 10
     const colors = ["blue", "green", "purple", "amber", "sky"]
 
+    // Update activity summary strip
+    const summary = wrapper.querySelector("[data-role='activity-summary']")
+    if (summary && data.net_activity != null) {
+      const net = data.net_activity
+      const count = data.transaction_count || 0
+      const colorCls = net >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
+      const sign = net >= 0 ? "+" : "-"
+      summary.innerHTML = `<span class="text-xs font-medium tabular-nums ${colorCls}">Net: ${sign}${this._currency(Math.abs(net))}</span>` +
+        `<span class="text-xs text-gray-400 dark:text-gray-500">${count} transaction${count === 1 ? "" : "s"}</span>`
+    }
+
     // Reset pagination state
     content.dataset.currentPage = "1"
     content.dataset.hasMore = String(hasMore)

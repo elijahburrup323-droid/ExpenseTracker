@@ -203,6 +203,16 @@ class DashboardController < ApplicationController
                          .includes(:account, spending_category: :spending_type)
                          .limit(10)
 
+    # Card 5: Net activity summary
+    total_payments = payments_base.sum(:amount).to_f
+    income_base = current_user.income_entries
+                              .where(received_flag: true)
+                              .where(entry_date: @month_start...@month_end)
+    total_income = income_base.sum(:amount).to_f
+    income_count = income_base.count
+    @net_activity = (total_income - total_payments).round(2)
+    @activity_transaction_count = @recent_payments_total + income_count
+
     # Card 4 back & Card 5 back: All income entries for the month (scrollable)
     @recent_income_entries = current_user.income_entries
                                          .where(received_flag: true)
