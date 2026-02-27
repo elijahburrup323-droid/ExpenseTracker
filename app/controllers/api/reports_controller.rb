@@ -821,14 +821,11 @@ module Api
           net_worth = (total_assets + total_liabilities).round(2)
           { label: label, year: y_val, month: m_val, total_assets: total_assets, total_liabilities: total_liabilities, net_worth: net_worth, source: "snapshot" }
         elsif is_open
-          balances = AccountBalanceService.balances_as_of(current_user, Date.today)
-          filtered = balances.select { |aid, _| account_ids.include?(aid) }
-          # Type-based classification
-          credit_ids = AccountTypeMaster.where(normal_balance_type: "CREDIT").pluck(:id)
-          credit_acct_ids = current_user.accounts.where(account_type_master_id: credit_ids).pluck(:id).to_set
-          total_assets = filtered.reject { |aid, _| credit_acct_ids.include?(aid) }.values.sum.to_f.round(2)
-          total_liabilities = filtered.select { |aid, _| credit_acct_ids.include?(aid) }.values.sum.to_f.round(2)
-          net_worth = (total_assets + total_liabilities).round(2)
+          # Canonical aggregator: Accounts + Assets + Investments + Financing
+          nw = Account.net_worth_for(account_scope)
+          total_assets = nw[:assets].round(2)
+          total_liabilities = nw[:liabilities].round(2)
+          net_worth = nw[:net_worth].round(2)
           { label: label, year: y_val, month: m_val, total_assets: total_assets, total_liabilities: total_liabilities, net_worth: net_worth, source: "live" }
         end
       end.compact

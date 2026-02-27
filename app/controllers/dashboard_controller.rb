@@ -126,12 +126,11 @@ class DashboardController < ApplicationController
 
     # Card 2: Accounts — all accounts (passed as @accounts)
 
-    # Card 3: Net Worth — assets plus liabilities (liabilities stored as negative)
-    asset_total = @accounts.where.not(account_type_master_id: credit_master_ids).sum(:balance)
-    liability_total = @accounts.where(account_type_master_id: credit_master_ids).sum(:balance)
-    @net_worth = asset_total + liability_total
-    @net_worth_assets = asset_total.to_f.round(2)
-    @net_worth_liabilities = liability_total.abs.to_f.round(2)
+    # Card 3: Net Worth — canonical aggregator (Accounts + Assets + Investments + Financing)
+    nw = Account.net_worth_for(@accounts)
+    @net_worth = nw[:net_worth]
+    @net_worth_assets = nw[:assets].round(2)
+    @net_worth_liabilities = nw[:liabilities].abs.round(2)
 
     # Metric swap: Debt Ratio (leveraged) vs Cash Coverage (cash-dominant)
     noncash_total = Asset.where(user_id: current_user.id, include_in_net_worth: true).where(deleted_at: nil).sum(:current_value).to_f +
@@ -149,7 +148,7 @@ class DashboardController < ApplicationController
     else
       @nw_metric_label = "Cash Coverage"
       if @net_worth_liabilities > 0
-        cash_assets = asset_total.to_f.round(2)
+        cash_assets = @accounts.where.not(account_type_master_id: credit_master_ids).sum(:balance).to_f.round(2)
         @nw_metric_value = (cash_assets / @net_worth_liabilities * 100).round(1)
       else
         @nw_metric_value = nil
@@ -279,11 +278,9 @@ class DashboardController < ApplicationController
       snap.update!(amount: dms.net_worth) if snap.new_record? || snap.amount != dms.net_worth
     end
 
-    # Add/update current month snapshot with live net worth (assets + liabilities, liabilities stored negative)
+    # Add/update current month snapshot with live net worth (canonical aggregator)
     current_month_end = Date.new(@open_month.current_year, @open_month.current_month, -1)
-    credit_ids = AccountTypeMaster.where(normal_balance_type: "CREDIT").pluck(:id)
-    live_nw = current_user.accounts.where.not(account_type_master_id: credit_ids).sum(:balance) +
-              current_user.accounts.where(account_type_master_id: credit_ids).sum(:balance)
+    live_nw = Account.net_worth_for(current_user.accounts)[:net_worth]
     snap = current_user.net_worth_snapshots.find_or_initialize_by(snapshot_date: current_month_end)
     snap.update!(amount: live_nw)
   rescue ActiveRecord::RecordNotUnique
