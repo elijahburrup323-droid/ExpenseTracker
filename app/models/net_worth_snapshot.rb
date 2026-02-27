@@ -22,39 +22,25 @@ class NetWorthSnapshot < ApplicationRecord
   #
   # Only creates snapshots for months with non-zero net worth to avoid
   # cluttering the chart with empty $0 months from before the user had data.
-  # Returns debug hash for troubleshooting (temporary).
   def self.backfill_for_user!(user)
-    debug = { user_id: user.id, created_at: user.created_at.to_s }
     om = OpenMonthMaster.for_user(user)
-    debug[:open_month] = "#{om.current_year}-#{om.current_month}"
 
     # --- Closed-month backfill from AccountMonthSnapshot ---
     credit_acct_ids = user.accounts.unscoped
                          .where(account_type_master_id: AccountTypeMaster.where(normal_balance_type: "CREDIT").select(:id))
                          .pluck(:id).to_set
-    debug[:credit_acct_ids] = credit_acct_ids.to_a
 
     existing_dates = user.net_worth_snapshots.pluck(:snapshot_date).to_set
-    debug[:existing_nw_dates] = existing_dates.map(&:to_s).sort
 
     closed_ams = user.account_month_snapshots.active
                      .where("year < :oy OR (year = :oy AND month < :om)",
                             oy: om.current_year, om: om.current_month)
-    debug[:closed_ams_count] = closed_ams.count
 
     snaps_by_period = closed_ams.group_by { |s| [s.year, s.month] }
-    debug[:periods_found] = snaps_by_period.keys.sort.map { |y, m| "#{y}-#{m}" }
-
-    created = []
-    skipped_existing = []
-    skipped_zero = []
 
     snaps_by_period.each do |(y, m), period_snaps|
       month_end = Date.new(y, m, -1)
-      if existing_dates.include?(month_end)
-        skipped_existing << "#{y}-#{m}"
-        next
-      end
+      next if existing_dates.include?(month_end)
 
       asset_total = period_snaps.reject { |s| credit_acct_ids.include?(s.account_id) }
                                 .sum { |s| s.ending_balance.to_f }
@@ -62,20 +48,13 @@ class NetWorthSnapshot < ApplicationRecord
                                 .sum { |s| s.ending_balance.to_f }
       nw = asset_total + liab_total
 
-      if nw == 0
-        skipped_zero << "#{y}-#{m}"
-        next
-      end
+      # Skip $0 months — they add no value to the chart
+      next if nw == 0
 
       user.net_worth_snapshots
           .find_or_initialize_by(snapshot_date: month_end)
           .update!(amount: nw)
-      created << { period: "#{y}-#{m}", amount: nw.round(2) }
     end
-
-    debug[:created] = created
-    debug[:skipped_existing] = skipped_existing
-    debug[:skipped_zero] = skipped_zero
 
     # --- Live current-month snapshot ---
     current_month_end = Date.new(om.current_year, om.current_month, -1)
@@ -83,9 +62,6 @@ class NetWorthSnapshot < ApplicationRecord
     user.net_worth_snapshots
         .find_or_initialize_by(snapshot_date: current_month_end)
         .update!(amount: live_nw)
-    debug[:live_month] = { date: current_month_end.to_s, amount: live_nw.round(2) }
-
-    debug
   rescue ActiveRecord::RecordNotUnique
     retry
   end
