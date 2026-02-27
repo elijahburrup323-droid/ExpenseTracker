@@ -20,18 +20,13 @@
         <p class="text-sm text-gray-500 dark:text-gray-400 ml-8" data-holding-detail-target="headerName"><%= @holding.security_name %></p>
       </div>
       <div class="flex items-center space-x-2">
-        <div class="relative group">
-          <button type="button" disabled
-                  class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-green-600 opacity-50 cursor-not-allowed">
-            <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-            </svg>
-            Add Transaction
-          </button>
-          <div class="hidden group-hover:block absolute right-0 top-full mt-1 z-30">
-            <p class="text-xs text-white bg-gray-900 dark:bg-gray-700 rounded px-2 py-1 whitespace-nowrap shadow-lg">Coming in CM-10</p>
-          </div>
-        </div>
+        <a href="<%= investment_transactions_path(@holding.investment_account_id) %>"
+           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 transition">
+          <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+          </svg>
+          Add Transaction
+        </a>
       </div>
     </div>
   </div>

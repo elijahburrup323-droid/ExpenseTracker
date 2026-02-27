@@ -1,10 +1,16 @@
-APP_VERSION = "1.3.27"
+APP_VERSION = "1.3.28"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.28",
+    changes: [
+      "Investments: Transaction entry screen at /investments/transactions/:account_id — full CRUD for BUY, SELL, DIVIDEND, REINVEST, and FEE transactions. Dynamic form fields (Quantity/Price for share types, Amount for dividends/fees). SELL displays estimated realized gain preview. Sortable transaction history table with holding filter. Integrates with FIFO cost basis engine: edits and deletes trigger forward recalculation. Accessible from Holdings and Holding Detail via Add Transaction button. (CM-10)"
+    ]
+  },
   {
     version: "1.3.27",
     changes: [

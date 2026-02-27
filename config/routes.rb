@@ -81,6 +81,7 @@ Rails.application.routes.draw do
   get "investments/accounts", to: "investments#accounts", as: :investment_accounts
   get "investments/accounts/:id", to: "investments#holdings", as: :investment_holdings
   get "investments/holding/:id", to: "investments#holding_detail", as: :investment_holding_detail
+  get "investments/transactions/:account_id", to: "investments#transactions", as: :investment_transactions
 
   # Financing (HTML pages)
   get "financing/loans-notes", to: "financing#loans_notes", as: :financing_loans_notes
@@ -251,6 +252,9 @@ Rails.application.routes.draw do
 
     # Investment Holdings API
     resources :investment_holdings, only: [:index, :show, :update]
+
+    # Investment Transactions API
+    resources :investment_transactions, only: [:index, :create, :update, :destroy]
 
     resources :net_worth_snapshots, only: [:index] do
       collection do
