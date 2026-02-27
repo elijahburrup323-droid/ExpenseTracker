@@ -1,5 +1,7 @@
 module Api
   class InvestmentAccountsController < BaseController
+    include FeatureGate
+    before_action -> { require_feature!("investments") }
     before_action :set_investment_account, only: [:show, :update, :destroy]
 
     def index

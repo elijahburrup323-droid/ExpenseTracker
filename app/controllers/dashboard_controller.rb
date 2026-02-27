@@ -127,7 +127,7 @@ class DashboardController < ApplicationController
     # Card 2: Accounts — all accounts (passed as @accounts)
 
     # Card 3: Net Worth — canonical aggregator (Accounts + Assets + Investments + Financing)
-    nw = Account.net_worth_for(@accounts)
+    nw = Account.net_worth_for(@accounts, user: current_user)
     @net_worth = nw[:net_worth]
     @net_worth_assets = nw[:assets].round(2)
     @net_worth_liabilities = nw[:liabilities].abs.round(2)
@@ -280,7 +280,7 @@ class DashboardController < ApplicationController
 
     # Add/update current month snapshot with live net worth (canonical aggregator)
     current_month_end = Date.new(@open_month.current_year, @open_month.current_month, -1)
-    live_nw = Account.net_worth_for(current_user.accounts)[:net_worth]
+    live_nw = Account.net_worth_for(current_user.accounts, user: current_user)[:net_worth]
     snap = current_user.net_worth_snapshots.find_or_initialize_by(snapshot_date: current_month_end)
     snap.update!(amount: live_nw)
   rescue ActiveRecord::RecordNotUnique

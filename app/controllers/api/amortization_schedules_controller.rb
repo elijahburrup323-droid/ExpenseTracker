@@ -1,5 +1,7 @@
 module Api
   class AmortizationSchedulesController < BaseController
+    include FeatureGate
+    before_action -> { require_feature!("financing") }
     before_action :set_instrument
 
     # GET /api/financing_instruments/:financing_instrument_id/amortization_schedule

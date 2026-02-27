@@ -314,13 +314,13 @@ module Api
         display_bal = bal
         { name: a.name, balance: bal.round(2), display_balance: display_bal.round(2), normal_balance_type: is_liability ? "CREDIT" : "DEBIT" }
       end
-      nw = Account.net_worth_for(current_user.accounts)
+      nw = Account.net_worth_for(current_user.accounts, user: current_user)
 
       { accounts: accounts_list, total: nw[:net_worth].round(2) }
     end
 
     def compute_net_worth(ctx)
-      nw = Account.net_worth_for(current_user.accounts)
+      nw = Account.net_worth_for(current_user.accounts, user: current_user)
       net_worth_val = nw[:net_worth].round(2)
       snapshots = current_user.net_worth_snapshots.eligible_for_user(current_user).recent(6).to_a.sort_by(&:snapshot_date)
       if snapshots.size >= 2

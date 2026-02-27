@@ -1,5 +1,7 @@
 module Api
   class AssetsController < BaseController
+    include FeatureGate
+    before_action -> { require_feature!("assets") }
     before_action :set_asset, only: [:show, :update, :destroy]
 
     def index

@@ -1,5 +1,7 @@
 module Api
   class FinancingPaymentsController < BaseController
+    include FeatureGate
+    before_action -> { require_feature!("financing") }
     before_action :set_instrument
     before_action :set_payment, only: [:update, :destroy]
 

@@ -1,5 +1,7 @@
 module Api
   class InvestmentHoldingsController < BaseController
+    include FeatureGate
+    before_action -> { require_feature!("investments") }
     before_action :set_holding, only: [:show, :update]
 
     # GET /api/investment_holdings?investment_account_id=X

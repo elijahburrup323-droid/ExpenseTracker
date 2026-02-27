@@ -35,7 +35,9 @@ class Account < ApplicationRecord
   # investment_values + financing_values.
   #
   # Single source of truth for net worth math — all net worth goes through this method.
-  def self.net_worth_for(accounts_scope)
+  # Optional `user:` param enables feature-flag gating (global killswitch + per-user activation).
+  # Without a user, all modules are included unconditionally.
+  def self.net_worth_for(accounts_scope, user: nil)
     credit_ids = AccountTypeMaster.where(normal_balance_type: "CREDIT").pluck(:id)
 
     # 1. Account balances (existing behavior)
@@ -49,42 +51,53 @@ class Account < ApplicationRecord
     financing_total = BigDecimal("0")
 
     if user_id.present?
+      # Determine which modules are enabled (global killswitch + per-user feature activation)
+      include_assets = module_enabled?("assets", user)
+      include_investments = module_enabled?("investments", user)
+      include_financing = module_enabled?("financing", user)
+
       # Assets: always positive (DEBIT-normal)
-      asset_total = Asset.where(user_id: user_id, include_in_net_worth: true)
-                         .where(deleted_at: nil)
-                         .sum(:current_value)
+      if include_assets
+        asset_total = Asset.where(user_id: user_id, include_in_net_worth: true)
+                           .where(deleted_at: nil)
+                           .sum(:current_value)
+      end
 
       # Investment holdings: market value (shares_held * current_price)
       # Filters through investment_accounts (include_in_net_worth + active).
       # Falls back to holding-level include_in_net_worth for orphan holdings
       # not yet assigned to an investment account.
-      investment_total = BigDecimal("0")
+      if include_investments
+        investment_total = BigDecimal("0")
 
-      # Holdings linked to investment accounts — use account-level filter
-      investment_total += InvestmentHolding
-                            .joins(:investment_account)
-                            .where(investment_accounts: { user_id: user_id, include_in_net_worth: true, active: true })
-                            .where(investment_holdings: { deleted_at: nil })
-                            .where.not(investment_holdings: { current_price: nil })
-                            .sum("investment_holdings.shares_held * investment_holdings.current_price")
+        # Holdings linked to investment accounts — use account-level filter
+        investment_total += InvestmentHolding
+                              .joins(:investment_account)
+                              .where(investment_accounts: { user_id: user_id, include_in_net_worth: true, active: true })
+                              .where(investment_holdings: { deleted_at: nil })
+                              .where.not(investment_holdings: { current_price: nil })
+                              .sum("investment_holdings.shares_held * investment_holdings.current_price")
 
-      # Holdings without an investment account — use holding-level filter (backward compat)
-      investment_total += InvestmentHolding
-                            .where(user_id: user_id, investment_account_id: nil, include_in_net_worth: true)
-                            .where(deleted_at: nil)
-                            .where.not(current_price: nil)
-                            .sum("shares_held * current_price")
+        # Holdings without an investment account — use holding-level filter (backward compat)
+        investment_total += InvestmentHolding
+                              .where(user_id: user_id, investment_account_id: nil, include_in_net_worth: true)
+                              .where(deleted_at: nil)
+                              .where.not(current_price: nil)
+                              .sum("shares_held * current_price")
+      end
 
       # Financing instruments: PAYABLE = negative, RECEIVABLE = positive
-      payable_total = FinancingInstrument
-                        .where(user_id: user_id, instrument_type: "PAYABLE", include_in_net_worth: true)
-                        .where(deleted_at: nil)
-                        .sum(:current_principal)
-      receivable_total = FinancingInstrument
-                           .where(user_id: user_id, instrument_type: "RECEIVABLE", include_in_net_worth: true)
-                           .where(deleted_at: nil)
-                           .sum(:current_principal)
-      financing_total = receivable_total - payable_total
+      if include_financing
+        payable_total = FinancingInstrument
+                          .where(user_id: user_id, instrument_type: "PAYABLE", include_in_net_worth: true)
+                          .where(deleted_at: nil)
+                          .sum(:current_principal)
+        receivable_total = FinancingInstrument
+                             .where(user_id: user_id, instrument_type: "RECEIVABLE", include_in_net_worth: true)
+                             .where(deleted_at: nil)
+                             .sum(:current_principal)
+        financing_total = receivable_total - payable_total
+      end
     end
 
     # Combine all components
@@ -99,6 +112,17 @@ class Account < ApplicationRecord
       net_worth: (total_assets + total_liabilities).to_f
     }
   end
+
+  # Check global killswitch + per-user feature activation for a module.
+  # Without a user, module is included if global flag is on (backward compat).
+  GLOBAL_FLAGS = { "assets" => :FEATURE_ASSETS_ENABLED, "investments" => :FEATURE_INVESTMENTS_ENABLED, "financing" => :FEATURE_FINANCING_ENABLED }.freeze
+  def self.module_enabled?(key, user)
+    global_const = GLOBAL_FLAGS[key]
+    return false if global_const && Object.const_defined?(global_const) && !Object.const_get(global_const)
+    return true if user.nil? # no user context → include unconditionally
+    user.feature_active?(key)
+  end
+  private_class_method :module_enabled?
 
   # --- Centralized balance operations ---
   # All account types use the same arithmetic: payments subtract, deposits add,

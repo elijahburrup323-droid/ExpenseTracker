@@ -111,19 +111,23 @@
         },
       ]
 
-      # Progressive Feature Disclosure: filter sidebar by active feature blocks
+      # Progressive Feature Disclosure: filter sidebar by global killswitch + user feature blocks
       active_keys = current_user.active_feature_block_keys
+      global_flags = { "assets" => (defined?(FEATURE_ASSETS_ENABLED) ? FEATURE_ASSETS_ENABLED : true),
+                       "investments" => (defined?(FEATURE_INVESTMENTS_ENABLED) ? FEATURE_INVESTMENTS_ENABLED : true),
+                       "financing" => (defined?(FEATURE_FINANCING_ENABLED) ? FEATURE_FINANCING_ENABLED : true) }
 
       nav_groups = nav_groups.map do |group|
-        # If the group itself requires a feature block the user doesn't have, hide the whole group
-        if group[:feature_block].present? && !active_keys.include?(group[:feature_block])
+        fb = group[:feature_block]
+        # Hide if global killswitch is off or user doesn't have the feature
+        if fb.present? && (global_flags[fb] == false || !active_keys.include?(fb))
           next nil
         end
-        # Filter children by feature_block key
+        # Filter children by the same rules
         filtered_children = group[:children].select do |child|
-          child[:feature_block].nil? || active_keys.include?(child[:feature_block])
+          cfb = child[:feature_block]
+          cfb.nil? || (global_flags.fetch(cfb, true) != false && active_keys.include?(cfb))
         end
-        # Show group with only the visible children
         group.merge(children: filtered_children)
       end.compact
 

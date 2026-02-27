@@ -57,7 +57,7 @@ class OpenMonthMaster < ApplicationRecord
       debit_budget = budget_accounts.where.not(account_type_master_id: credit_ids)
       beg_bal = debit_budget.sum(:beginning_balance)
       end_bal = debit_budget.sum(:balance)
-      nw = Account.net_worth_for(user.accounts)[:net_worth]
+      nw = Account.net_worth_for(user.accounts, user: user)[:net_worth]
 
       DashboardMonthSnapshot.find_or_initialize_by(
         user_id: user_id, year: year, month: month

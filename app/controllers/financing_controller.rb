@@ -1,5 +1,7 @@
 class FinancingController < ApplicationController
+  include FeatureGate
   before_action :authenticate_user!
+  before_action -> { require_feature!("financing") }
 
   def loans_notes
   end

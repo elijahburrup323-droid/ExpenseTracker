@@ -1,5 +1,7 @@
 class AssetsController < ApplicationController
+  include FeatureGate
   before_action :authenticate_user!
+  before_action -> { require_feature!("assets") }
 
   def index
     assets = current_user.assets.includes(:asset_type)

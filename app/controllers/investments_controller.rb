@@ -1,5 +1,7 @@
 class InvestmentsController < ApplicationController
+  include FeatureGate
   before_action :authenticate_user!
+  before_action -> { require_feature!("investments") }
 
   def index
     nw_accounts = current_user.investment_accounts.active.included_in_net_worth

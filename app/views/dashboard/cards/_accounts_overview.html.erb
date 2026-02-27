@@ -1,7 +1,7 @@
 <%
   color_cycle = %w[blue green purple amber sky red]
   credit_master_ids = AccountTypeMaster.where(normal_balance_type: "CREDIT").pluck(:id).to_set
-  nw_data = Account.net_worth_for(@accounts)
+  nw_data = Account.net_worth_for(@accounts, user: current_user)
   card2_total = nw_data[:net_worth]
 
   # Split into assets (DEBIT) and liabilities (CREDIT)

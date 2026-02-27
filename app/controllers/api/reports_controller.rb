@@ -822,7 +822,7 @@ module Api
           { label: label, year: y_val, month: m_val, total_assets: total_assets, total_liabilities: total_liabilities, net_worth: net_worth, source: "snapshot" }
         elsif is_open
           # Canonical aggregator: Accounts + Assets + Investments + Financing
-          nw = Account.net_worth_for(account_scope)
+          nw = Account.net_worth_for(account_scope, user: current_user)
           total_assets = nw[:assets].round(2)
           total_liabilities = nw[:liabilities].round(2)
           net_worth = nw[:net_worth].round(2)

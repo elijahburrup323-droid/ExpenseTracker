@@ -1,10 +1,23 @@
-APP_VERSION = "1.3.32"
+APP_VERSION = "1.3.33"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
+# Module killswitches — set to false to instantly disable a module for ALL users.
+# When disabled: sidebar nav hidden, controllers return 404/redirect, Net Worth excludes module.
+# Data is preserved. Re-enable by setting back to true and redeploying.
+FEATURE_ASSETS_ENABLED = true
+FEATURE_INVESTMENTS_ENABLED = true
+FEATURE_FINANCING_ENABLED = true
+
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.33",
+    changes: [
+      "Feature Flags: Global killswitch constants (FEATURE_ASSETS_ENABLED, FEATURE_INVESTMENTS_ENABLED, FEATURE_FINANCING_ENABLED) and server-side FeatureGate concern. Controllers return 403/redirect when module disabled. Net Worth aggregator respects both global and per-user flags. Sidebar hides disabled modules."
+    ]
+  },
   {
     version: "1.3.32",
     changes: [
