@@ -361,7 +361,11 @@ module Api
 
       { value: net_worth_val, change: nw_change.round(2), change_pct: nw_pct, snapshots: snapshot_data,
         assets: assets, liabilities: liabilities, debt_ratio: metric_value,
-        metric_label: metric_label, metric_value: metric_value, metric_mode: metric_mode }
+        metric_label: metric_label, metric_value: metric_value, metric_mode: metric_mode,
+        accounts_subtotal: nw[:accounts_subtotal].round(2),
+        asset_module_total: (nw[:asset_module_total] || 0).round(2),
+        investment_module_total: (nw[:investment_module_total] || 0).round(2),
+        liabilities_subtotal: (nw[:liabilities_subtotal] || 0).round(2) }
     end
 
     def compute_income_spending(ctx)

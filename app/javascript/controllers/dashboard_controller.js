@@ -834,15 +834,46 @@ export default class extends Controller {
     html += `<div class="mt-2 space-y-1">`
     html += `<div class="flex items-center justify-between"><span class="text-[11px] text-gray-500 dark:text-gray-400">Assets</span><span class="text-[11px] font-medium text-gray-900 dark:text-white tabular-nums">${this._currency(data.assets || 0)}</span></div>`
     html += `<div class="flex items-center justify-between"><span class="text-[11px] text-gray-500 dark:text-gray-400">Liabilities</span><span class="text-[11px] font-medium text-gray-900 dark:text-white tabular-nums">${this._currency(data.liabilities || 0)}</span></div>`
-    const dr = data.debt_ratio
-    if (dr == null) {
-      html += `<div class="flex items-center justify-between"><span class="text-[11px] text-gray-500 dark:text-gray-400">Debt Ratio</span><span class="text-[11px] text-gray-400 dark:text-gray-500">\u2014</span></div>`
+
+    // Metric swap: Debt Ratio vs Cash Coverage
+    const metricLabel = data.metric_label || "Debt Ratio"
+    const metricValue = data.metric_value
+    const metricMode = data.metric_mode || "debt_ratio"
+    if (metricValue == null) {
+      if (metricMode === "cash_coverage") {
+        html += `<div class="flex items-center justify-between"><span class="text-[11px] text-gray-500 dark:text-gray-400">${this._esc(metricLabel)}</span><span class="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">No Debt</span></div>`
+      } else {
+        html += `<div class="flex items-center justify-between"><span class="text-[11px] text-gray-500 dark:text-gray-400">${this._esc(metricLabel)}</span><span class="text-[11px] text-gray-400 dark:text-gray-500">\u2014</span></div>`
+      }
+    } else if (metricMode === "debt_ratio") {
+      const drColor = metricValue > 100 ? 'text-red-600 dark:text-red-400' : metricValue <= 50 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-900 dark:text-white'
+      html += `<div class="flex items-center justify-between"><span class="text-[11px] text-gray-500 dark:text-gray-400">${this._esc(metricLabel)}</span><span class="text-[11px] font-medium ${drColor} tabular-nums">${metricValue.toFixed(1)}%</span></div>`
     } else {
-      const drColor = dr > 100 ? 'text-red-600 dark:text-red-400' : dr <= 50 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-900 dark:text-white'
-      html += `<div class="flex items-center justify-between"><span class="text-[11px] text-gray-500 dark:text-gray-400">Debt Ratio</span><span class="text-[11px] font-medium ${drColor} tabular-nums">${dr.toFixed(1)}%</span></div>`
+      const ccColor = metricValue >= 100 ? 'text-emerald-600 dark:text-emerald-400' : metricValue >= 50 ? 'text-gray-900 dark:text-white' : 'text-red-600 dark:text-red-400'
+      html += `<div class="flex items-center justify-between"><span class="text-[11px] text-gray-500 dark:text-gray-400">${this._esc(metricLabel)}</span><span class="text-[11px] font-medium ${ccColor} tabular-nums">${metricValue.toFixed(1)}%</span></div>`
     }
     html += `</div>`
     content.innerHTML = html
+
+    // Back-of-card: Net Worth breakdown
+    const backContent = wrapper.querySelector("[data-role='back-content']")
+    if (backContent) {
+      const accts = data.accounts_subtotal || 0
+      const assetMod = data.asset_module_total || 0
+      const investMod = data.investment_module_total || 0
+      const liabSub = data.liabilities_subtotal || 0
+      let bhtml = `<div class="space-y-2">`
+      bhtml += `<div class="flex items-center justify-between"><span class="text-xs text-gray-600 dark:text-gray-400">Accounts Total</span><span class="text-xs font-semibold text-gray-900 dark:text-white tabular-nums">${this._currency(accts)}</span></div>`
+      bhtml += `<div class="flex items-center justify-between"><span class="text-xs text-gray-600 dark:text-gray-400">Assets Total</span><span class="text-xs font-semibold text-gray-900 dark:text-white tabular-nums">${this._currency(assetMod)}</span></div>`
+      bhtml += `<div class="flex items-center justify-between"><span class="text-xs text-gray-600 dark:text-gray-400">Investments Total</span><span class="text-xs font-semibold text-gray-900 dark:text-white tabular-nums">${this._currency(investMod)}</span></div>`
+      bhtml += `<div class="border-t border-gray-200 dark:border-gray-600 my-1"></div>`
+      bhtml += `<div class="flex items-center justify-between"><span class="text-xs text-gray-600 dark:text-gray-400">Liabilities Total</span><span class="text-xs font-semibold text-red-600 dark:text-red-400 tabular-nums">\u2212${this._currency(liabSub)}</span></div>`
+      bhtml += `<div class="border-t border-gray-200 dark:border-gray-600 my-1"></div>`
+      const nwColor = value >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
+      bhtml += `<div class="flex items-center justify-between"><span class="text-xs font-semibold text-gray-800 dark:text-gray-200">Net Worth</span><span class="text-xs font-bold ${nwColor} tabular-nums">${this._currency(value)}</span></div>`
+      bhtml += `</div>`
+      backContent.innerHTML = bhtml
+    }
   }
 
   _renderIncomeSpending(wrapper, data) {

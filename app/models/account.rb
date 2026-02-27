@@ -110,7 +110,12 @@ class Account < ApplicationRecord
       assets: total_assets.to_f,
       liabilities: total_liabilities.to_f,
       net_worth: (total_assets + total_liabilities).to_f,
-      accounts_total: (account_asset_total + account_liability_total).to_f
+      accounts_total: (account_asset_total + account_liability_total).to_f,
+      # Component breakdown for Net Worth card back-of-card display
+      accounts_subtotal: account_asset_total.to_f,
+      asset_module_total: (asset_total + (financing_total > 0 ? financing_total : BigDecimal("0"))).to_f,
+      investment_module_total: investment_total.to_f,
+      liabilities_subtotal: (account_liability_total.abs + (financing_total < 0 ? financing_total.abs : BigDecimal("0"))).to_f
     }
   end
 

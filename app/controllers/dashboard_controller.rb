@@ -131,6 +131,11 @@ class DashboardController < ApplicationController
     @net_worth = nw[:net_worth]
     @net_worth_assets = nw[:assets].round(2)
     @net_worth_liabilities = nw[:liabilities].abs.round(2)
+    # Component breakdown for back-of-card
+    @nw_accounts_subtotal = nw[:accounts_subtotal].round(2)
+    @nw_asset_module_total = nw[:asset_module_total].round(2)
+    @nw_investment_module_total = nw[:investment_module_total].round(2)
+    @nw_liabilities_subtotal = nw[:liabilities_subtotal].round(2)
 
     # Metric swap: Debt Ratio (leveraged) vs Cash Coverage (cash-dominant)
     noncash_total = Asset.where(user_id: current_user.id, include_in_net_worth: true).where(deleted_at: nil).sum(:current_value).to_f +
