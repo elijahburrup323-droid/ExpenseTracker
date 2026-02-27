@@ -2,13 +2,6 @@ class DashboardController < ApplicationController
   before_action :authenticate_user!
 
   def index
-    _dashboard_index
-  rescue => e
-    Rails.logger.error("[Dashboard 500] #{e.class}: #{e.message}\n#{e.backtrace.first(10).join("\n")}")
-    render plain: "Dashboard error: #{e.class}: #{e.message}\n\n#{e.backtrace.first(15).join("\n")}", status: 200
-  end
-
-  def _dashboard_index
     DashboardCard.seed_defaults_for(current_user)
 
     @open_month = OpenMonthMaster.for_user(current_user)
