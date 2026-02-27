@@ -6,22 +6,23 @@ class NetWorthSnapshot < ApplicationRecord
 
   scope :recent, ->(count = 6) { order(snapshot_date: :desc).limit(count) }
 
-  # Only return snapshots from the user's first eligible month onward.
-  # Earliest eligible = beginning of user's creation month.
+  # Only return snapshots from the user's first meaningful data onward.
+  # "Meaningful" = first month with a non-zero net worth, so the chart
+  # doesn't start with a run of empty $0 months.  Falls back to the
+  # user's creation month if no non-zero snapshot exists yet.
   scope :eligible_for_user, ->(user) {
-    earliest = user.created_at.beginning_of_month.to_date
-    where("snapshot_date >= ?", earliest)
+    first_nonzero = user.net_worth_snapshots.where("amount != 0").minimum(:snapshot_date)
+    cutoff = first_nonzero || user.created_at.beginning_of_month.to_date
+    where("snapshot_date >= ?", cutoff)
   }
 
   # Backfill missing NetWorthSnapshot records from AccountMonthSnapshot (the
   # reliable source that exists for every closed month) and upsert a live
   # current-month snapshot.  Idempotent — safe to call on every dashboard load.
+  #
+  # Only creates snapshots for months with non-zero net worth to avoid
+  # cluttering the chart with empty $0 months from before the user had data.
   def self.backfill_for_user!(user)
-    earliest = user.created_at.beginning_of_month.to_date
-
-    # Prune any snapshots that predate the user's first eligible month
-    user.net_worth_snapshots.where("snapshot_date < ?", earliest).delete_all
-
     om = OpenMonthMaster.for_user(user)
 
     # --- Closed-month backfill from AccountMonthSnapshot ---
@@ -39,17 +40,20 @@ class NetWorthSnapshot < ApplicationRecord
 
     snaps_by_period.each do |(y, m), period_snaps|
       month_end = Date.new(y, m, -1)
-      next if month_end < earliest
       next if existing_dates.include?(month_end)
 
       asset_total = period_snaps.reject { |s| credit_acct_ids.include?(s.account_id) }
                                 .sum { |s| s.ending_balance.to_f }
       liab_total  = period_snaps.select { |s| credit_acct_ids.include?(s.account_id) }
                                 .sum { |s| s.ending_balance.to_f }
+      nw = asset_total + liab_total
+
+      # Skip $0 months — they add no value to the chart
+      next if nw == 0
 
       user.net_worth_snapshots
           .find_or_initialize_by(snapshot_date: month_end)
-          .update!(amount: asset_total + liab_total)
+          .update!(amount: nw)
     end
 
     # --- Live current-month snapshot ---
