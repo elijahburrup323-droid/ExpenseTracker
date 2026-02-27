@@ -21,11 +21,13 @@
       <%# Net Worth chart - driven by real snapshot data %>
       <% snapshots = @net_worth_snapshots %>
       <% if snapshots.size == 0 %>
-        <div class="w-full h-20 flex-1 flex items-center justify-center">
+        <div class="w-full h-20 flex-1 flex items-center justify-center group relative cursor-help"
+             title="Net worth history builds automatically as months are closed. Your first data point will appear once you close a month.">
           <p class="text-xs text-gray-400 dark:text-gray-500">No history yet</p>
         </div>
       <% elsif snapshots.size == 1 %>
-        <div class="w-full h-20 flex-1">
+        <div class="w-full h-20 flex-1 group relative cursor-help"
+             title="Only one month of data so far. The chart will show trends once additional months are closed.">
           <svg viewBox="0 0 200 60" class="w-full h-full" preserveAspectRatio="xMidYMid meet">
             <circle cx="100" cy="30" r="5" fill="#a855f7"/>
           </svg>

@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.35"
+APP_VERSION = "1.3.36"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,12 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.36",
+    changes: [
+      "Net Worth Chart Fix: Backfill now uses AccountMonthSnapshot (the reliable source for all closed months) instead of DashboardMonthSnapshot. Fixes missing historical months on the Net Worth chart for users whose months were closed before DashboardMonthSnapshot was introduced. Both SSR and API dashboard now trigger backfill. Tooltip added for single-data-point charts."
+    ]
+  },
   {
     version: "1.3.35",
     changes: [
