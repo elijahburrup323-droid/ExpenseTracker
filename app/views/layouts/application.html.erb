@@ -80,13 +80,8 @@
         --brand-600: #b8571c; --brand-700: #964318; --brand-800: #79371a;
         --brand-900: #652f19;
       }
-      /* Global text scale — scales rem-based typography without affecting px layouts */
-      html { font-size: calc(16px * var(--text-scale, 1)); }
-      /* Sidebar text exclusion — keep sidebar at design-system base size regardless of text scale */
-      aside { font-size: calc(1rem / var(--text-scale, 1)); }
-      aside .text-xs { font-size: calc(0.75rem / var(--text-scale, 1)) !important; line-height: calc(1rem / var(--text-scale, 1)) !important; }
-      aside .text-sm { font-size: calc(0.875rem / var(--text-scale, 1)) !important; line-height: calc(1.25rem / var(--text-scale, 1)) !important; }
-      aside .text-lg { font-size: calc(1.125rem / var(--text-scale, 1)) !important; line-height: calc(1.75rem / var(--text-scale, 1)) !important; }
+      /* Global text scale — applied to main content only; sidebar excluded */
+      main[data-sidebar-target="mainContent"] { zoom: var(--text-scale, 1); }
     </style>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
