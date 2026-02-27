@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.38"
+APP_VERSION = "1.3.39"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,12 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.39",
+    changes: [
+      "Text Scale: Sidebar Exclusion. The global text size control (A-/A/A+) now scales only the main content area. The left sidebar navigation menu text remains at the design-system base size regardless of the user's text scale preference, preventing sidebar overflow and preserving navigation readability at all scale levels."
+    ]
+  },
   {
     version: "1.3.38",
     changes: [
