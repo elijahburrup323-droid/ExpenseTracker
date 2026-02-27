@@ -1,10 +1,16 @@
-APP_VERSION = "1.3.28"
+APP_VERSION = "1.3.29"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.29",
+    changes: [
+      "Dashboard: Buckets card now shows completion % next to each bucket balance, Remaining amount below progress bar, and Next Recommended Allocation line at bottom of card identifying which bucket needs the most funding."
+    ]
+  },
   {
     version: "1.3.28",
     changes: [

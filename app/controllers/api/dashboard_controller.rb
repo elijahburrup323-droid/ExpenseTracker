@@ -336,28 +336,40 @@ module Api
 
     def compute_buckets(_ctx)
       buckets = current_user.buckets.active.includes(:account).ordered
-      return { empty: true, count: 0, total_balance: 0, buckets: [] } if buckets.empty?
+      return { empty: true, count: 0, total_balance: 0, buckets: [], next_recommended: nil } if buckets.empty?
 
       total_balance = buckets.sum(&:current_balance).to_f.round(2)
 
       top_buckets = buckets.sort_by { |b| -b.current_balance.to_f }.first(5).map do |b|
-        pct = b.target_amount.present? && b.target_amount > 0 ?
-          [(b.current_balance.to_f / b.target_amount.to_f * 100).round(1), 100].min : nil
+        has_target = b.target_amount.present? && b.target_amount > 0
+        pct = has_target ? [(b.current_balance.to_f / b.target_amount.to_f * 100).round(1), 100].min : nil
+        remaining = has_target ? [(b.target_amount.to_f - b.current_balance.to_f).round(2), 0].max : nil
         {
           name: b.name,
           balance: b.current_balance.to_f.round(2),
           target: b.target_amount&.to_f&.round(2),
           progress_pct: pct,
+          remaining: remaining,
           account_name: b.account&.name || "[Deleted]",
           is_default: b.is_default
         }
       end
 
+      # Next recommended allocation: bucket with highest remaining among all active buckets with targets
+      next_rec = buckets
+        .select { |b| b.target_amount.present? && b.target_amount > 0 && b.current_balance < b.target_amount }
+        .max_by { |b| b.target_amount.to_f - b.current_balance.to_f }
+      next_recommended = next_rec ? {
+        name: next_rec.name,
+        remaining: (next_rec.target_amount.to_f - next_rec.current_balance.to_f).round(2)
+      } : nil
+
       {
         empty: false,
         count: buckets.size,
         total_balance: total_balance,
-        buckets: top_buckets
+        buckets: top_buckets,
+        next_recommended: next_recommended
       }
     end
   end

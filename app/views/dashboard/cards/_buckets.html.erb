@@ -22,6 +22,12 @@
                 </div>
                 <div class="space-y-2">
                   <% group[:buckets].each do |b| %>
+                    <%
+                      has_target = b.target_amount.present? && b.target_amount > 0
+                      pct = has_target ? [(b.current_balance.to_f / b.target_amount.to_f * 100).round(1), 100].min : nil
+                      remaining = has_target ? [(b.target_amount.to_f - b.current_balance.to_f).round(2), 0].max : nil
+                      bar_color = pct && pct >= 100 ? "bg-green-500" : pct && pct >= 50 ? "bg-brand-500" : "bg-yellow-500"
+                    %>
                     <div class="text-center py-1">
                       <div class="text-sm font-semibold text-gray-900 dark:text-white">
                         <%= b.name %>
@@ -29,13 +35,19 @@
                           <span class="text-[10px] font-medium text-brand-600 dark:text-brand-400">(Default)</span>
                         <% end %>
                       </div>
-                      <div class="text-xs text-gray-500 dark:text-gray-400" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(b.current_balance) %></div>
-                      <% if b.target_amount.present? && b.target_amount > 0 %>
-                        <% pct = [(b.current_balance.to_f / b.target_amount.to_f * 100).round(1), 100].min %>
-                        <% bar_color = pct >= 100 ? "bg-green-500" : pct >= 50 ? "bg-brand-500" : "bg-yellow-500" %>
+                      <div class="text-xs text-gray-500 dark:text-gray-400" style="font-variant-numeric: tabular-nums;">
+                        <%= number_to_currency(b.current_balance) %>
+                        <% if pct %>
+                          <span class="text-[10px] font-medium text-gray-400 dark:text-gray-500 ml-1"><%= pct %>%</span>
+                        <% end %>
+                      </div>
+                      <% if has_target %>
                         <div class="mx-auto mt-1 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden" style="max-width: 65%;">
                           <div class="<%= bar_color %> h-full rounded-full" style="width: <%= pct %>%"></div>
                         </div>
+                        <% if remaining && remaining > 0 %>
+                          <div class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5" style="font-variant-numeric: tabular-nums;">Remaining: <%= number_to_currency(remaining) %></div>
+                        <% end %>
                       <% end %>
                     </div>
                   <% end %>
@@ -43,6 +55,12 @@
               </div>
             <% end %>
           </div>
+          <% if @buckets_summary[:next_recommended] %>
+            <% nr = @buckets_summary[:next_recommended] %>
+            <div class="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700 text-center">
+              <div class="text-[10px] text-gray-500 dark:text-gray-400" style="font-variant-numeric: tabular-nums;">Next Recommended Allocation: <span class="font-semibold text-gray-700 dark:text-gray-300"><%= nr.name %></span> (<%= number_to_currency(nr.target_amount.to_f - nr.current_balance.to_f) %> remaining)</div>
+            </div>
+          <% end %>
         </div>
 
         <%# === EXPANDED LAYOUT (full detail with financial columns) === %>

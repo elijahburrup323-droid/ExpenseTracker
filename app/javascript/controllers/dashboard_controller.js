@@ -985,13 +985,33 @@ export default class extends Controller {
         </div>`
       }
 
+      // Completion % display (right of balance)
+      const pctHtml = b.progress_pct != null
+        ? ` <span class="text-[10px] font-medium text-gray-400 dark:text-gray-500 ml-1">${b.progress_pct}%</span>`
+        : ""
+
+      // Remaining display (below progress bar)
+      let remainingHtml = ""
+      if (b.remaining != null && b.remaining > 0) {
+        remainingHtml = `<div class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5" style="font-variant-numeric: tabular-nums;">Remaining: ${this._currency(b.remaining)}</div>`
+      }
+
       html += `<div class="text-center py-1">
         <div class="text-sm font-semibold text-gray-900 dark:text-white">${this._esc(b.name)}${defaultBadge}</div>
-        <div class="text-xs text-gray-500 dark:text-gray-400" style="font-variant-numeric: tabular-nums;">${this._currency(b.balance)}</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400" style="font-variant-numeric: tabular-nums;">${this._currency(b.balance)}${pctHtml}</div>
         ${progressHtml}
+        ${remainingHtml}
       </div>`
     }
     html += `</div>`
+
+    // Next Recommended Allocation line
+    if (data.next_recommended) {
+      html += `<div class="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700 text-center">
+        <div class="text-[10px] text-gray-500 dark:text-gray-400" style="font-variant-numeric: tabular-nums;">Next Recommended Allocation: <span class="font-semibold text-gray-700 dark:text-gray-300">${this._esc(data.next_recommended.name)}</span> (${this._currency(data.next_recommended.remaining)} remaining)</div>
+      </div>`
+    }
+
     content.innerHTML = html
   }
 
