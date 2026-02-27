@@ -322,7 +322,7 @@ module Api
     def compute_net_worth(ctx)
       nw = Account.net_worth_for(current_user.accounts, user: current_user)
       net_worth_val = nw[:net_worth].round(2)
-      NetWorthSnapshot.backfill_for_user!(current_user)
+      backfill_debug = NetWorthSnapshot.backfill_for_user!(current_user)
       snapshots = current_user.net_worth_snapshots.eligible_for_user(current_user).recent(6).to_a.sort_by(&:snapshot_date)
       if snapshots.size >= 2
         prev_amount = snapshots[-2].amount.to_f
@@ -361,7 +361,8 @@ module Api
 
       { value: net_worth_val, change: nw_change.round(2), change_pct: nw_pct, snapshots: snapshot_data,
         assets: assets, liabilities: liabilities, debt_ratio: metric_value,
-        metric_label: metric_label, metric_value: metric_value, metric_mode: metric_mode }
+        metric_label: metric_label, metric_value: metric_value, metric_mode: metric_mode,
+        _backfill_debug: backfill_debug }
     end
 
     def compute_income_spending(ctx)
