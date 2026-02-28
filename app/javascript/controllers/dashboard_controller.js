@@ -1155,6 +1155,9 @@ export default class extends Controller {
         flippedCardTypes: this._getFlippedCardTypes(),
         expandedCardType: this.expandedCardType || null,
         selectedTagIds: [...this._selectedTagIds],
+        month: this.currentMonth,
+        year: this.currentYear,
+        scrollPositions: this._getScrollPositions(),
         savedAt: Date.now()
       }
       sessionStorage.setItem(this._storageKey, JSON.stringify(state))
@@ -1172,6 +1175,38 @@ export default class extends Controller {
     return flipped
   }
 
+  _getScrollPositions() {
+    const positions = {}
+    this.slotWrapperTargets.forEach(wrapper => {
+      const cardType = wrapper.dataset.cardType
+      const scrollables = wrapper.querySelectorAll(
+        "[data-role='card-content'], [data-role='front-content'], [data-role='back-content']"
+      )
+      const cardScrolls = []
+      scrollables.forEach(el => {
+        if (el.scrollTop > 0) {
+          cardScrolls.push({ role: el.dataset.role, scrollTop: el.scrollTop })
+        }
+      })
+      if (cardScrolls.length > 0) positions[cardType] = cardScrolls
+    })
+    return positions
+  }
+
+  _restoreScrollPositions(positions) {
+    if (!positions || typeof positions !== 'object') return
+    requestAnimationFrame(() => {
+      for (const [cardType, scrolls] of Object.entries(positions)) {
+        const wrapper = this.slotWrapperTargets.find(w => w.dataset.cardType === cardType)
+        if (!wrapper) continue
+        for (const entry of scrolls) {
+          const el = wrapper.querySelector(`[data-role='${entry.role}']`)
+          if (el) el.scrollTop = entry.scrollTop
+        }
+      }
+    })
+  }
+
   _restoreState() {
     try {
       const raw = sessionStorage.getItem(this._storageKey)
@@ -1179,10 +1214,21 @@ export default class extends Controller {
 
       const state = JSON.parse(raw)
 
-      // Ignore state older than 30 minutes
-      if (state.savedAt && Date.now() - state.savedAt > 30 * 60 * 1000) {
+      // Ignore state older than 2 hours
+      if (state.savedAt && Date.now() - state.savedAt > 120 * 60 * 1000) {
         sessionStorage.removeItem(this._storageKey)
         return false
+      }
+
+      // 0. Restore month/year if saved and different from server-rendered values
+      let needsFetch = false
+      if (state.month && state.year) {
+        if (state.month !== this.currentMonth || state.year !== this.currentYear) {
+          this.currentMonth = state.month
+          this.currentYear = state.year
+          this._updateArrowState()
+          needsFetch = true
+        }
       }
 
       // 1. Restore flipped cards (suppress transition to prevent visible flip animation)
@@ -1221,12 +1267,19 @@ export default class extends Controller {
       if (Array.isArray(state.selectedTagIds) && state.selectedTagIds.length > 0) {
         this._selectedTagIds = [...state.selectedTagIds]
         this._updateTagFilterLabel()
-        this._fetchAndRender()
+        needsFetch = true
+      }
+
+      // 4. Fetch data if month or tags changed, then restore scroll positions
+      const scrollPos = state.scrollPositions
+      if (needsFetch) {
+        this._fetchAndRender().then(() => this._restoreScrollPositions(scrollPos))
       } else {
-        // No tags to restore — still need month-mismatch check
         const now = new Date()
         if (this.currentMonth !== now.getMonth() + 1 || this.currentYear !== now.getFullYear()) {
-          this._fetchAndRender()
+          this._fetchAndRender().then(() => this._restoreScrollPositions(scrollPos))
+        } else {
+          this._restoreScrollPositions(scrollPos)
         }
       }
 
