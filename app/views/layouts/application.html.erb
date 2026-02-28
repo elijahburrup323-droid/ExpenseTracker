@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>MyBudgetHQ</title>
     <%= csrf_meta_tags %>
+    <%= tag.meta name: "user-id", content: current_user.id if user_signed_in? %>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tailwindcss/typography@0.5.10/dist/typography.min.css">
     <%# Accent theme CSS variables — each palette has 10 stops keyed by data-accent-theme on <html> %>
     <style>

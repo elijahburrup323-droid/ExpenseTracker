@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.40"
+APP_VERSION = "1.3.41"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,12 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.41",
+    changes: [
+      "Dashboard: State Persistence. The Dashboard now remembers your current UI state — flipped cards, expanded cards, selected tag filters, and month selection — when you navigate away and return. Clicking the MyBudgetHQ logo while already on the Dashboard resets to the default landing state (6 cards, all front sides). State is user-scoped via sessionStorage and automatically cleared on sign out to prevent cross-user leakage."
+    ]
+  },
   {
     version: "1.3.40",
     changes: [

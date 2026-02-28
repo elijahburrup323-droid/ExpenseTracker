@@ -22,6 +22,28 @@ export default class extends Controller {
     this._initSortable()
     this._loadTags()
 
+    // --- State persistence: check reset flag vs restore ---
+    const shouldReset = sessionStorage.getItem('bhDashReset') === '1'
+    if (shouldReset) {
+      sessionStorage.removeItem('bhDashReset')
+      sessionStorage.removeItem(this._storageKey)
+    }
+
+    if (!shouldReset) {
+      const restored = this._restoreState()
+      if (!restored) {
+        const now = new Date()
+        if (this.currentMonth !== now.getMonth() + 1 || this.currentYear !== now.getFullYear()) {
+          this._fetchAndRender()
+        }
+      }
+    } else {
+      const now = new Date()
+      if (this.currentMonth !== now.getMonth() + 1 || this.currentYear !== now.getFullYear()) {
+        this._fetchAndRender()
+      }
+    }
+
     // ESC key to collapse expanded card
     this._escHandler = (e) => {
       if (e.key === "Escape" && this.expandedCardType) this._collapseCard()
@@ -39,16 +61,21 @@ export default class extends Controller {
     }
     document.addEventListener("click", this._outsideClickHandler)
 
-    // If the persisted month differs from current real month, fetch the correct data
-    const now = new Date()
-    if (this.currentMonth !== now.getMonth() + 1 || this.currentYear !== now.getFullYear()) {
-      this._fetchAndRender()
-    }
+    // Save state BEFORE Turbo navigates away (DOM still intact at this point)
+    this._turboBeforeCacheHandler = () => { this._saveState() }
+    document.addEventListener("turbo:before-cache", this._turboBeforeCacheHandler)
+
+    // Fallback for non-Turbo navigations (full page reload, manual URL entry)
+    this._beforeUnloadHandler = () => { this._saveState() }
+    window.addEventListener("beforeunload", this._beforeUnloadHandler)
   }
 
   disconnect() {
+    this._saveState()
     if (this._escHandler) document.removeEventListener("keydown", this._escHandler)
     if (this._outsideClickHandler) document.removeEventListener("click", this._outsideClickHandler)
+    if (this._turboBeforeCacheHandler) document.removeEventListener("turbo:before-cache", this._turboBeforeCacheHandler)
+    if (this._beforeUnloadHandler) window.removeEventListener("beforeunload", this._beforeUnloadHandler)
     if (this.sortable) this.sortable.destroy()
   }
 
@@ -1113,5 +1140,99 @@ export default class extends Controller {
   _esc(str) {
     if (!str) return ""
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+  }
+
+  // --- Dashboard State Persistence ---
+
+  get _storageKey() {
+    const userId = document.querySelector('meta[name="user-id"]')?.content
+    return userId ? `bhDash_${userId}` : 'bhDash'
+  }
+
+  _saveState() {
+    try {
+      const state = {
+        flippedCardTypes: this._getFlippedCardTypes(),
+        expandedCardType: this.expandedCardType || null,
+        selectedTagIds: [...this._selectedTagIds],
+        savedAt: Date.now()
+      }
+      sessionStorage.setItem(this._storageKey, JSON.stringify(state))
+    } catch (e) { /* sessionStorage may be full or disabled */ }
+  }
+
+  _getFlippedCardTypes() {
+    const flipped = []
+    this.slotWrapperTargets.forEach(wrapper => {
+      const flipper = wrapper.querySelector("[data-role='flipper']")
+      if (flipper && flipper.style.transform === "rotateY(180deg)") {
+        flipped.push(wrapper.dataset.cardType)
+      }
+    })
+    return flipped
+  }
+
+  _restoreState() {
+    try {
+      const raw = sessionStorage.getItem(this._storageKey)
+      if (!raw) return false
+
+      const state = JSON.parse(raw)
+
+      // Ignore state older than 30 minutes
+      if (state.savedAt && Date.now() - state.savedAt > 30 * 60 * 1000) {
+        sessionStorage.removeItem(this._storageKey)
+        return false
+      }
+
+      // 1. Restore flipped cards (suppress transition to prevent visible flip animation)
+      if (Array.isArray(state.flippedCardTypes) && state.flippedCardTypes.length > 0) {
+        const flippers = []
+        for (const cardType of state.flippedCardTypes) {
+          const wrapper = this.slotWrapperTargets.find(w => w.dataset.cardType === cardType)
+          if (!wrapper) continue
+          const flipper = wrapper.querySelector("[data-role='flipper']")
+          if (!flipper) continue
+          flipper.style.transition = "none"
+          flipper.style.transform = "rotateY(180deg)"
+          flippers.push(flipper)
+          const front = wrapper.querySelector("[data-role='front']")
+          const back = wrapper.querySelector("[data-role='back']")
+          if (front) front.style.pointerEvents = "none"
+          if (back) back.style.pointerEvents = "auto"
+        }
+        // Re-enable transition after browser paints the restored state
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            flippers.forEach(f => { f.style.transition = "" })
+          })
+        })
+      }
+
+      // 2. Restore expanded card
+      if (state.expandedCardType) {
+        const wrapper = this.slotWrapperTargets.find(
+          w => w.dataset.cardType === state.expandedCardType
+        )
+        if (wrapper) this._expandCard(wrapper)
+      }
+
+      // 3. Restore tag filter selections
+      if (Array.isArray(state.selectedTagIds) && state.selectedTagIds.length > 0) {
+        this._selectedTagIds = [...state.selectedTagIds]
+        this._updateTagFilterLabel()
+        this._fetchAndRender()
+      } else {
+        // No tags to restore — still need month-mismatch check
+        const now = new Date()
+        if (this.currentMonth !== now.getMonth() + 1 || this.currentYear !== now.getFullYear()) {
+          this._fetchAndRender()
+        }
+      }
+
+      return true
+    } catch (e) {
+      return false
+    }
   }
 }

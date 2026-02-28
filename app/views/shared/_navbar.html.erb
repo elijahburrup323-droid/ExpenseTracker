@@ -19,7 +19,8 @@
 
   <%# Logo %>
   <div class="flex items-center h-14 px-4 border-b border-white/20">
-    <%= link_to dashboard_path, class: "flex items-center space-x-2 min-w-0" do %>
+    <%= link_to dashboard_path, class: "flex items-center space-x-2 min-w-0",
+        onclick: "if(window.location.pathname==='/dashboard'){sessionStorage.setItem('bhDashReset','1')}" do %>
       <div class="relative flex-shrink-0">
         <svg class="h-7 w-7 text-white" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z"/>
@@ -326,8 +327,9 @@
         </svg>
         <span data-sidebar-label>Upgrade</span>
       <% end %>
-      <%# Sign out %>
-      <%= button_to destroy_user_session_path, method: :delete, class: "w-full flex items-center space-x-3 px-3 py-1.5 rounded-lg text-sm text-white/70 hover:bg-white/10 hover:text-white transition" do %>
+      <%# Sign out — clear dashboard sessionStorage to prevent cross-user leakage %>
+      <%= button_to destroy_user_session_path, method: :delete, class: "w-full flex items-center space-x-3 px-3 py-1.5 rounded-lg text-sm text-white/70 hover:bg-white/10 hover:text-white transition",
+          onclick: "Object.keys(sessionStorage).filter(k=>k.startsWith('bhDash')).forEach(k=>sessionStorage.removeItem(k))" do %>
         <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
         </svg>
