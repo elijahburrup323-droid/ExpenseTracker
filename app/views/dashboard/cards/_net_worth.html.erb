@@ -57,7 +57,7 @@
                       points[1..].map { |x, y| "L#{x},#{y}" }.join(" ") +
                       " L#{points.last[0]},#{padding + chart_h} L#{points.first[0]},#{padding + chart_h} Z"
         %>
-        <div class="w-full h-20 flex-1">
+        <div class="w-full h-20 flex-1 relative" data-controller="chart-tooltip" data-chart-tooltip-target="chart">
           <svg viewBox="0 0 200 60" class="w-full h-full" preserveAspectRatio="none">
             <defs>
               <linearGradient id="netWorthGrad" x1="0" y1="0" x2="0" y2="1">
@@ -68,10 +68,19 @@
             <path d="<%= area_path %>" fill="url(#netWorthGrad)"/>
             <polyline points="<%= polyline_str %>"
                       fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <% points.each do |x, y| %>
-              <circle cx="<%= x %>" cy="<%= y %>" r="3" fill="#a855f7"/>
+            <% snapshots.each_with_index do |s, i| %>
+              <circle cx="<%= points[i][0] %>" cy="<%= points[i][1] %>" r="6" fill="transparent"
+                      data-month="<%= s.snapshot_date.strftime('%b %Y') %>"
+                      data-amount="<%= s.amount.to_f %>"
+                      data-action="pointerdown->chart-tooltip#show"
+                      class="cursor-pointer" style="pointer-events: all;"/>
+              <circle cx="<%= points[i][0] %>" cy="<%= points[i][1] %>" r="3" fill="#a855f7" style="pointer-events: none;"/>
             <% end %>
           </svg>
+          <%# Tooltip (hidden by default, positioned by chart-tooltip controller) %>
+          <div data-chart-tooltip-target="tooltip"
+               class="hidden absolute z-10 px-2.5 py-1.5 text-[11px] text-center rounded-lg shadow-lg bg-gray-900 dark:bg-gray-700 text-white whitespace-nowrap"
+               style="pointer-events: none;"></div>
         </div>
         <div class="flex justify-between text-[10px] text-gray-400 dark:text-gray-500 mt-1">
           <% snapshots.each do |s| %>

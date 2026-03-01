@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.42"
+APP_VERSION = "1.3.43"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,12 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.43",
+    changes: [
+      "Dashboard: Net Worth Chart Tooltips. Clicking or tapping a data point on the Net Worth trend chart now shows a tooltip with the exact month label and net worth value (e.g., 'Jan 2026 — $1,067.18'). Works on desktop (click to pin, click elsewhere to dismiss) and touch devices (tap to show, tap elsewhere to dismiss). Tooltip auto-positions to stay within the card bounds."
+    ]
+  },
   {
     version: "1.3.42",
     changes: [
