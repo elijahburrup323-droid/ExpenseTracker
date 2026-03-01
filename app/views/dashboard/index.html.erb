@@ -9,6 +9,10 @@
      data-dashboard-earliest-month-value="<%= @earliest[:month] %>"
      data-dashboard-earliest-year-value="<%= @earliest[:year] %>">
 
+  <% if @show_first_login_wizard %>
+    <%= render "dashboard/first_login_wizard" %>
+  <% end %>
+
   <%# Smart Suggestion Banner %>
   <div data-tutorial="dashboard-quote"><%= render "dashboard/suggestion_banner" %></div>
 

@@ -7,6 +7,7 @@ class DashboardController < ApplicationController
     @open_month = OpenMonthMaster.for_user(current_user)
     @earliest = current_user.earliest_allowed_month
     @accounts = current_user.accounts.includes(:account_type).ordered
+    @show_first_login_wizard = @accounts.empty?
 
     # Load slot layout
     @slots = current_user.dashboard_slots

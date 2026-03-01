@@ -64,6 +64,7 @@ import HoldingDetailController from "controllers/holding_detail_controller"
 import FinancingLoansNotesController from "controllers/financing_loans_notes_controller"
 import FinancingDetailController from "controllers/financing_detail_controller"
 import ChartTooltipController from "controllers/chart_tooltip_controller"
+import FirstLoginWizardController from "controllers/first_login_wizard_controller"
 
 application.register("flash", FlashController)
 application.register("dropdown", DropdownController)
@@ -129,3 +130,4 @@ application.register("holding-detail", HoldingDetailController)
 application.register("financing-loans-notes", FinancingLoansNotesController)
 application.register("financing-detail", FinancingDetailController)
 application.register("chart-tooltip", ChartTooltipController)
+application.register("first-login-wizard", FirstLoginWizardController)

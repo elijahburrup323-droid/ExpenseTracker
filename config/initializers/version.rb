@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.44"
+APP_VERSION = "1.3.45"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,12 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.45",
+    changes: [
+      "Dashboard: First Login Wizard. When a user has zero accounts, a mandatory onboarding wizard appears as a modal overlay on the Dashboard. Steps: Welcome → Select Account Type (Checking/Savings/Cash) → Enter Name + Balance → Create Account → Add Another or Finish. The wizard cannot be dismissed (ESC and click-outside blocked) until at least one account exists. After the first account is created, the dashboard reloads and the wizard does not reappear."
+    ]
+  },
   {
     version: "1.3.44",
     changes: [

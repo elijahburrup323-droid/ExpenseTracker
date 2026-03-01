@@ -49,6 +49,9 @@ class ApplicationController < ActionController::Base
       return
     end
 
+    # Dashboard handles zero-account users with its own first-login wizard
+    return if controller_name == "dashboard"
+
     redirect_to onboarding_path
   end
 
