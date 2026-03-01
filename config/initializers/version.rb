@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.43"
+APP_VERSION = "1.3.44"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,12 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.44",
+    changes: [
+      "Dashboard: Viewport-Locked Card Height. The 3x2 dashboard grid now uses a deterministic CSS calc (100vh - 13rem) to ensure all 6 cards are fully visible without vertical scrolling on standard desktop viewports (validated at 1440x900 @ 100% zoom). Card heights are perfectly equal (334px each) and locked — content changes cannot cause auto-expanding cards. Replaces the previous fixed 28rem card height."
+    ]
+  },
   {
     version: "1.3.43",
     changes: [

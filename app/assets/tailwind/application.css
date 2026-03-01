@@ -6,21 +6,22 @@
 */
 @layer base {
   :root {
-    --dash-card-h: 28rem;                /* 448px — locked card height (desktop) */
     --dash-card-baseline-offset: 0px;     /* footer flush with bottom padding */
   }
 }
 
 /* Dashboard grid: @utility so md:dash-grid responsive variant works */
+/* 022626_2: viewport-locked height so all 6 cards fit without scroll at 1440×900 */
 @utility dash-grid {
-  grid-auto-rows: var(--dash-card-h);
+  grid-template-rows: repeat(2, 1fr);
+  height: calc(100vh - 13rem);
+  overflow: hidden;
 }
 
 @layer components {
   /* Card wrapper: fills grid row, no content-driven overflow */
   .dash-card {
     height: 100%;
-    max-height: var(--dash-card-h);  /* CM-5: hard ceiling prevents card overflow */
     display: flex;
     flex-direction: column;
     overflow: hidden;
