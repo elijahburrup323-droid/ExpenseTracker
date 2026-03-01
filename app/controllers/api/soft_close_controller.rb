@@ -42,9 +42,10 @@ module Api
       items = build_checklist(month_start, month_end)
       failed = items.select { |i| !i[:passed] }
       if failed.any?
+        details = failed.map { |i| [i[:detail], i[:label]].compact.first }
         return render json: {
-          error: "System checks failed",
-          failed_items: failed.map { |i| i[:label] }
+          error: "#{failed.size} check#{'s' if failed.size != 1} failed: #{details.join('; ')}",
+          failed_items: failed.map { |i| { label: i[:label], detail: i[:detail] } }
         }, status: :conflict
       end
 
@@ -138,13 +139,20 @@ module Api
       }
 
       # 6. All transfers valid
+      # Check for truly invalid transfers: missing required fields.
+      # Same-account transfers with different buckets are valid (bucket reallocations).
       invalid_transfers = current_user.transfer_masters.where(transfer_date: range)
-        .where("from_account_id IS NULL OR to_account_id IS NULL OR amount IS NULL OR transfer_date IS NULL OR from_account_id = to_account_id")
-        .count
+        .where(
+          "from_account_id IS NULL OR to_account_id IS NULL OR amount IS NULL OR transfer_date IS NULL " \
+          "OR (from_account_id = to_account_id AND (from_bucket_id IS NULL OR to_bucket_id IS NULL OR from_bucket_id = to_bucket_id))"
+        )
+      invalid_count = invalid_transfers.count
       item6 = {
         key: "transfers_valid", label: "All transfers are valid",
-        passed: invalid_transfers == 0, auto: true,
-        detail: invalid_transfers > 0 ? "#{invalid_transfers} transfer#{'s' if invalid_transfers != 1} invalid" : nil
+        passed: invalid_count == 0, auto: true,
+        detail: invalid_count > 0 ? "#{invalid_count} transfer#{'s' if invalid_count != 1} invalid" : nil,
+        link: invalid_count > 0 ? "/transfer_masters" : nil,
+        invalid_ids: invalid_count > 0 ? invalid_transfers.pluck(:id) : nil
       }
 
       # 7. No transactions dated outside open month

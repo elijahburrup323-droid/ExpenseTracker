@@ -32,7 +32,7 @@
 - UAT: https://djburrup.com/mybudgethq (relative_url_root = "/mybudgethq", manual deploy only — used when explicitly requested)
 - Email delivery via SendGrid Web API (sendgrid-ruby gem) — Render blocks outbound SMTP ports, so we use the HTTP API instead of SMTP. API key stored in SENDGRID_PASSWORD env var.
 - SMS delivery via Twilio REST API (twilio-ruby gem) — phone number auto-normalized to E.164 format
-- Current Version: 1.3.29 (QA_MODE controlled via config/initializers/version.rb)
+- Current Version: 1.3.41 (QA_MODE controlled via config/initializers/version.rb)
 
 ## Project Location
 - Local path: C:/Projects/MyBudgetHQ/Web (codebase on local SSD; workflow folders remain on G:\My Drive\MyBudgetHQ)
@@ -462,6 +462,10 @@ A: The Soft Close screen loads the user's active month from open_month_master vi
 **Q: I don't see close_month_master (or any data) after soft closing a month. Why?**
 &lt;br&gt;
 A: The close_month_masters table is a durable month-close ledger that records every soft close. Each row represents one closed month per user (user_id + closed_year + closed_month, unique index). Both soft close paths — the dedicated Soft Close page (POST /api/soft_close/confirm) and the dropdown quick close (POST /api/open_month_master/close) — write a row to close_month_masters in the same transaction as the month advance. After a user closes January 2026, DBU should show a close_month_masters record with user_id matching the user, closed_year=2026, closed_month=1, and closed_at timestamp. If the table does not appear in Schema Inspector, the migration (CreateCloseMonthMasters) has not been run.
+&lt;br&gt;&lt;br&gt;
+**Q: Soft Close shows "System checks failed" with "1 transfer invalid" but all transfers look correct. Why?**
+&lt;br&gt;
+A: (Fixed in v1.3.42) The pre-close checklist transfer validation previously rejected ALL same-account transfers (from_account_id = to_account_id), including valid bucket reallocations. The fix allows same-account transfers when both from_bucket_id and to_bucket_id are present and different — matching the TransferMaster model's accounts_must_differ validator. The checklist now also returns a clickable link to the Transfers page when failures occur, and the Close Month button stays disabled until all system checks pass (not just user checkboxes). The confirm endpoint returns specific error details instead of generic "System checks failed".
 27. **Effective date open-month validation (v1.2.0)** — Accounts Add enforces that the effective_date falls within the current open month. The client-side date picker is constrained to the open month's date range. The server returns 409 Conflict if the effective_date is outside the open month, matching the same pattern used by Payments.
 28. **Frequency Masters delete with in-use guard (v1.2.1)** — FrequencyMasters support hard delete ONLY when the frequency is not in use by any user. The /can_delete endpoint checks income_user_frequencies, income_recurrings, and income_entries. If in use, a "Can't Delete Frequency" modal is shown. If not in use, the standard delete-confirm modal proceeds. The server enforces the same check at delete time for race condition safety. Active/Inactive status is controlled solely by the toggle switch (no Deactivate/Reactivate action buttons).
 29. **DBU modal-based CRUD (v1.2.0)** — The DBU Record Browser now uses modal dialogs for all CRUD operations. The record detail panel is read-only with Edit and Delete buttons that open modals. The Add button also opens a modal. The DBU sub-header is sticky below the global header. Schema Inspector and Record Browser both query information_schema for table metadata; the /api/dbu/tables endpoint uses the same information_schema source as /api/dbu/schema.

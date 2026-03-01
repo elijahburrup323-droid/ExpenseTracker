@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.41"
+APP_VERSION = "1.3.42"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,12 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.42",
+    changes: [
+      "Soft Close Month: Fixed false-positive transfer validation that blocked month close for users with bucket reallocations (same-account transfers between different buckets). Improved error UX: failed checklist items now show specific actionable messages with clickable links to review invalid records. Close Month button stays disabled until all system checks pass."
+    ]
+  },
   {
     version: "1.3.41",
     changes: [
