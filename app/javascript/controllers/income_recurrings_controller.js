@@ -17,7 +17,43 @@ export default class extends Controller {
     this.deletingId = null
     this.sortColumn = null
     this.sortDirection = "asc"
+    this._initSoftCloseFix()
     this.fetchAll()
+  }
+
+  _initSoftCloseFix() {
+    const params = new URLSearchParams(window.location.search)
+    this._scFixKey = params.get("sc_fix")
+    if (this._scFixKey) this._injectSoftCloseBanner()
+  }
+
+  _injectSoftCloseBanner() {
+    const messages = {
+      recurrings_processed: "Recurring deposits are due this month but haven't been generated yet. Use the Generate button or create the deposits manually."
+    }
+    const msg = messages[this._scFixKey] || "Please review and fix the highlighted items."
+    const banner = document.createElement("div")
+    banner.id = "sc-fix-banner"
+    banner.className = "mb-4 rounded-lg bg-amber-50 dark:bg-amber-900/30 p-4 ring-1 ring-amber-300 dark:ring-amber-700"
+    banner.innerHTML = `
+      <div class="flex items-start justify-between">
+        <div class="flex items-start space-x-3">
+          <svg class="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+          <div>
+            <p class="text-sm font-medium text-amber-800 dark:text-amber-200">Soft Close Fix</p>
+            <p class="mt-1 text-sm text-amber-700 dark:text-amber-300">${msg}</p>
+            <a href="/soft_close" class="mt-2 inline-flex items-center text-sm font-medium text-amber-700 dark:text-amber-300 hover:text-amber-900 dark:hover:text-amber-100 underline">
+              <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+              Back to Soft Close Month
+            </a>
+          </div>
+        </div>
+        <button onclick="this.closest('#sc-fix-banner').remove()" class="text-amber-400 hover:text-amber-600 dark:hover:text-amber-200 ml-4 flex-shrink-0">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>`
+    const controller = this.element
+    controller.insertBefore(banner, controller.firstChild)
   }
 
   disconnect() {

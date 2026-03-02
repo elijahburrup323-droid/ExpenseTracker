@@ -47,9 +47,9 @@ export default class extends Controller {
         : `<svg class="h-5 w-5 text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>`
 
       let detailHtml = ""
-      if (item.detail && !item.passed && item.link) {
-        detailHtml = ` <a href="${this._esc(item.link)}" class="text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 underline ml-1">(${this._esc(item.detail)} — click to review)</a>`
-      } else if (item.detail) {
+      if (item.detail && !item.passed) {
+        detailHtml = `<span class="text-xs text-red-400 dark:text-red-500 ml-1">\u2014 ${this._esc(item.detail)}</span>`
+      } else if (item.detail && item.passed) {
         detailHtml = `<span class="text-xs text-gray-400 dark:text-gray-500 ml-1">(${this._esc(item.detail)})</span>`
       }
 
@@ -57,11 +57,25 @@ export default class extends Controller {
         ? "text-gray-700 dark:text-gray-300"
         : "text-red-600 dark:text-red-400 font-medium"
 
-      html += `
-        <div class="flex items-start space-x-3">
+      if (!item.passed && item.link) {
+        // Failed + has link: entire row is a clickable anchor
+        const arrowIcon = `<svg class="h-4 w-4 text-red-300 dark:text-red-600 flex-shrink-0 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>`
+        html += `
+        <a href="${this._esc(item.link)}"
+           class="flex items-center space-x-3 rounded-lg px-3 py-2 -mx-3 cursor-pointer hover:bg-red-50 dark:hover:bg-red-900/20 transition group"
+           role="link" tabindex="0" aria-label="Fix: ${this._esc(item.label)}">
+          ${icon}
+          <span class="text-sm ${textColor}">${this._esc(item.label)}${detailHtml}</span>
+          ${arrowIcon}
+        </a>`
+      } else {
+        // Passed or no link: non-clickable row
+        html += `
+        <div class="flex items-start space-x-3 px-3 py-2 -mx-3">
           ${icon}
           <span class="text-sm ${textColor}">${this._esc(item.label)}${detailHtml}</span>
         </div>`
+      }
     }
     this.checklistBodyTarget.innerHTML = html
   }

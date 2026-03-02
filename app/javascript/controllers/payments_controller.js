@@ -110,6 +110,48 @@ export default class extends Controller {
     this._defaultCategoryId = params.get("category_id") || ""
     this._defaultSpendingTypeId = params.get("spending_type_id") || ""
     this._defaultTagId = params.get("tag_id") || ""
+
+    // Soft Close fix params
+    this._scFixKey = params.get("sc_fix") || ""
+    this._scFixIds = new Set((params.get("ids") || "").split(",").filter(Boolean).map(Number))
+    if (this._scFixKey) {
+      // Pre-populate highlight IDs for soft close fixes
+      if (this._scFixIds.size > 0) {
+        this._highlightedPaymentIds = this._highlightedPaymentIds || new Set()
+        this._scFixIds.forEach(id => this._highlightedPaymentIds.add(id))
+      }
+      this._injectSoftCloseBanner()
+    }
+  }
+
+  _injectSoftCloseBanner() {
+    const messages = {
+      payments_accounts: "Every payment must belong to an account so your balances reconcile. Select an account for each highlighted payment.",
+      payments_complete: "Some payments are missing required information. Fill in the highlighted fields so totals calculate correctly."
+    }
+    const msg = messages[this._scFixKey] || "Please review and fix the highlighted items."
+    const banner = document.createElement("div")
+    banner.id = "sc-fix-banner"
+    banner.className = "mb-4 rounded-lg bg-amber-50 dark:bg-amber-900/30 p-4 ring-1 ring-amber-300 dark:ring-amber-700"
+    banner.innerHTML = `
+      <div class="flex items-start justify-between">
+        <div class="flex items-start space-x-3">
+          <svg class="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+          <div>
+            <p class="text-sm font-medium text-amber-800 dark:text-amber-200">Soft Close Fix</p>
+            <p class="mt-1 text-sm text-amber-700 dark:text-amber-300">${msg}</p>
+            <a href="/soft_close" class="mt-2 inline-flex items-center text-sm font-medium text-amber-700 dark:text-amber-300 hover:text-amber-900 dark:hover:text-amber-100 underline">
+              <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+              Back to Soft Close Month
+            </a>
+          </div>
+        </div>
+        <button onclick="this.closest('#sc-fix-banner').remove()" class="text-amber-400 hover:text-amber-600 dark:hover:text-amber-200 ml-4 flex-shrink-0">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>`
+    const controller = this.element
+    controller.insertBefore(banner, controller.firstChild)
   }
 
   _formatDateValue(d) {
@@ -214,6 +256,17 @@ export default class extends Controller {
     this._populateFilterDropdowns()
     this._applyDefaultDates()
     this.renderTable()
+    this._autoOpenSoftCloseFix()
+  }
+
+  _autoOpenSoftCloseFix() {
+    if (!this._scFixKey || this._scFixIds.size === 0 || this._scFixOpened) return
+    this._scFixOpened = true
+    const firstId = [...this._scFixIds][0]
+    const payment = this.payments.find(p => p.id === firstId)
+    if (payment) {
+      setTimeout(() => this.startEditing({ currentTarget: { dataset: { id: String(firstId) } } }), 300)
+    }
   }
 
   _populateFilterDropdowns() {
@@ -1026,7 +1079,11 @@ export default class extends Controller {
 
   _renderDisplayRow(payment) {
     const highlighted = this._highlightedPaymentIds && this._highlightedPaymentIds.has(payment.id)
-    const rowClass = highlighted ? "bg-yellow-50 dark:bg-yellow-900/20 ring-1 ring-yellow-300 dark:ring-yellow-700" : "hover:bg-gray-50 dark:hover:bg-gray-700"
+    const isFixTarget = this._scFixIds && this._scFixIds.has(payment.id)
+    const rowClass = (highlighted || isFixTarget) ? "bg-yellow-50 dark:bg-yellow-900/20 ring-1 ring-yellow-300 dark:ring-yellow-700" : "hover:bg-gray-50 dark:hover:bg-gray-700"
+    const needsFixBadge = isFixTarget
+      ? `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 mr-2">Needs Fix</span>`
+      : ""
 
     return `<tr class="${rowClass} transition-colors">
       <td class="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">${this._formatDate(payment.payment_date)}</td>
@@ -1039,6 +1096,7 @@ export default class extends Controller {
       </td>
       <td class="px-4 py-3 text-sm text-gray-900 dark:text-white text-right tabular-nums font-mono">${this._formatBalance(payment.amount)}</td>
       <td class="px-4 py-3 text-right space-x-2 whitespace-nowrap">
+        ${needsFixBadge}
         <button type="button"
                 class="inline-flex items-center justify-center w-8 h-8 rounded-md text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800 transition"
                 data-id="${payment.id}"

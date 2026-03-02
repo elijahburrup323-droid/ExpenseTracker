@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.45"
+APP_VERSION = "1.3.46"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,12 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.46",
+    changes: [
+      "Soft Close Month: Checklist Drill-Down. Failing (red) checklist items are now fully clickable rows that navigate directly to the screen with the problem. Each destination shows a Soft Close Fix banner with a plain-English explanation of what's wrong and how to fix it, plus a Back to Soft Close link. Failing records are highlighted in yellow with a Needs Fix badge, and the first failing record's edit modal auto-opens. Covers: invalid transfers, payments missing accounts, incomplete payments, incomplete deposits, and ungenerated recurring deposits."
+    ]
+  },
   {
     version: "1.3.45",
     changes: [

@@ -95,6 +95,8 @@ module Api
 
     def build_checklist(month_start, month_end)
       range = month_start...month_end
+      sd = month_start.strftime("%Y-%m-%d")
+      ed = (month_end - 1.day).strftime("%Y-%m-%d")
 
       # 1. No unsaved edits — always passes (server can't detect client state)
       item1 = { key: "no_unsaved_edits", label: "No unsaved edits in progress", passed: true, auto: true, detail: "Auto-verified" }
@@ -107,35 +109,50 @@ module Api
       item2 = {
         key: "recurrings_processed", label: "Recurring deposits generated",
         passed: due_count == 0, auto: true,
-        detail: due_count > 0 ? "#{due_count} recurring deposit#{'s' if due_count != 1} still due" : nil
+        detail: due_count > 0 ? "#{due_count} recurring deposit#{'s' if due_count != 1} still due" : nil,
+        link: due_count > 0 ? "/income_recurrings?sc_fix=recurrings_processed" : nil,
+        user_message: due_count > 0 ? "Recurring deposits are due this month but haven't been generated yet. Use the Generate button or create the deposits manually." : nil
       }
 
       # 3. All payments assigned to an account
-      no_acct = current_user.payments.where(payment_date: range, account_id: nil).where(deleted_at: nil).count
+      no_acct_payments = current_user.payments.where(payment_date: range, account_id: nil).where(deleted_at: nil)
+      no_acct = no_acct_payments.count
+      no_acct_ids = no_acct > 0 ? no_acct_payments.pluck(:id) : nil
       item3 = {
         key: "payments_accounts", label: "All payments assigned to an account",
         passed: no_acct == 0, auto: true,
-        detail: no_acct > 0 ? "#{no_acct} payment#{'s' if no_acct != 1} missing account" : nil
+        detail: no_acct > 0 ? "#{no_acct} payment#{'s' if no_acct != 1} missing account" : nil,
+        link: no_acct > 0 ? "/payments?sc_fix=payments_accounts&ids=#{no_acct_ids.join(',')}&start_date=#{sd}&end_date=#{ed}" : nil,
+        invalid_ids: no_acct_ids,
+        user_message: no_acct > 0 ? "Every payment must belong to an account so your balances reconcile. Select an account for each highlighted payment." : nil
       }
 
       # 4. All payments have required fields
-      incomplete_payments = current_user.payments.where(payment_date: range).where(deleted_at: nil)
+      incomplete_pay_query = current_user.payments.where(payment_date: range).where(deleted_at: nil)
         .where("payment_date IS NULL OR account_id IS NULL OR spending_category_id IS NULL OR amount IS NULL OR description IS NULL OR description = ''")
-        .count
+      incomplete_payments = incomplete_pay_query.count
+      incomplete_pay_ids = incomplete_payments > 0 ? incomplete_pay_query.pluck(:id) : nil
       item4 = {
         key: "payments_complete", label: "All payments have required fields",
         passed: incomplete_payments == 0, auto: true,
-        detail: incomplete_payments > 0 ? "#{incomplete_payments} payment#{'s' if incomplete_payments != 1} incomplete" : nil
+        detail: incomplete_payments > 0 ? "#{incomplete_payments} payment#{'s' if incomplete_payments != 1} incomplete" : nil,
+        link: incomplete_payments > 0 ? "/payments?sc_fix=payments_complete&ids=#{incomplete_pay_ids.join(',')}&start_date=#{sd}&end_date=#{ed}" : nil,
+        invalid_ids: incomplete_pay_ids,
+        user_message: incomplete_payments > 0 ? "Some payments are missing required information. Fill in the highlighted fields so totals calculate correctly." : nil
       }
 
       # 5. All deposits have required fields
-      incomplete_deposits = current_user.income_entries.where(entry_date: range).where(deleted_at: nil)
+      incomplete_dep_query = current_user.income_entries.where(entry_date: range).where(deleted_at: nil)
         .where("entry_date IS NULL OR account_id IS NULL OR amount IS NULL OR source_name IS NULL OR source_name = ''")
-        .count
+      incomplete_deposits = incomplete_dep_query.count
+      incomplete_dep_ids = incomplete_deposits > 0 ? incomplete_dep_query.pluck(:id) : nil
       item5 = {
         key: "deposits_complete", label: "All deposits have required fields",
         passed: incomplete_deposits == 0, auto: true,
-        detail: incomplete_deposits > 0 ? "#{incomplete_deposits} deposit#{'s' if incomplete_deposits != 1} incomplete" : nil
+        detail: incomplete_deposits > 0 ? "#{incomplete_deposits} deposit#{'s' if incomplete_deposits != 1} incomplete" : nil,
+        link: incomplete_deposits > 0 ? "/income_entries?sc_fix=deposits_complete&ids=#{incomplete_dep_ids.join(',')}" : nil,
+        invalid_ids: incomplete_dep_ids,
+        user_message: incomplete_deposits > 0 ? "Some deposits are missing required information. Fill in the highlighted fields so totals calculate correctly." : nil
       }
 
       # 6. All transfers valid
@@ -147,31 +164,18 @@ module Api
           "OR (from_account_id = to_account_id AND (from_bucket_id IS NULL OR to_bucket_id IS NULL OR from_bucket_id = to_bucket_id))"
         )
       invalid_count = invalid_transfers.count
+      invalid_t_ids = invalid_count > 0 ? invalid_transfers.pluck(:id) : nil
       item6 = {
         key: "transfers_valid", label: "All transfers are valid",
         passed: invalid_count == 0, auto: true,
         detail: invalid_count > 0 ? "#{invalid_count} transfer#{'s' if invalid_count != 1} invalid" : nil,
-        link: invalid_count > 0 ? "/transfer_masters" : nil,
-        invalid_ids: invalid_count > 0 ? invalid_transfers.pluck(:id) : nil
+        link: invalid_count > 0 ? "/transfer_masters?sc_fix=transfers_valid&ids=#{invalid_t_ids.join(',')}" : nil,
+        invalid_ids: invalid_t_ids,
+        user_message: invalid_count > 0 ? "A transfer must have both a From and To account, and the amounts must match. Fix the highlighted transfers so your balances stay correct." : nil
       }
 
       # 7. No transactions dated outside open month
-      out_payments = current_user.payments.where(deleted_at: nil)
-        .where.not(payment_date: range)
-        .where("payment_date IS NOT NULL")
-        .count
-      out_deposits = current_user.income_entries.where(deleted_at: nil)
-        .where.not(entry_date: range)
-        .where("entry_date IS NOT NULL")
-        .count
-      out_transfers = current_user.transfer_masters
-        .where.not(transfer_date: range)
-        .where("transfer_date IS NOT NULL")
-        .count
-      # This check is about whether ANY transactions exist outside the month,
-      # but that would include historical data. The spec means: no transactions
-      # that SHOULD be in this month but have wrong dates. Since all transactions
-      # are scoped by date, this auto-passes.
+      # Since all transactions are date-scoped, this auto-passes.
       item7 = {
         key: "dates_in_range", label: "No transactions dated outside month",
         passed: true, auto: true,
