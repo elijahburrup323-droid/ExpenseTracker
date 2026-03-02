@@ -98,99 +98,131 @@
       </div>
     </div>
     <div class="flex-1 overflow-y-auto" data-role="back-content">
-      <% color_map = { "blue" => "#3b82f6", "green" => "#22c55e", "gold" => "#eab308", "red" => "#ef4444", "purple" => "#a855f7", "pink" => "#ec4899", "indigo" => "#6366f1", "teal" => "#14b8a6", "orange" => "#f97316", "gray" => "#6b7280" } %>
-      <% has_tags = @spending_by_tag.present? && @spending_by_tag.any? %>
-      <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;" data-role="breakdown-grid">
-        <%# --- Column 1: By Category --- %>
-        <div class="flex flex-col">
-          <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">By Category</p>
-          <% if @spending_by_category.any? %>
-            <div class="space-y-1 flex-1">
-              <% @spending_by_category.each do |cat| %>
-                <%= link_to payments_path(start_date: @month_start.to_s, end_date: (@month_end - 1.day).to_s, category_id: cat[:id]), class: "flex items-center justify-between rounded px-1 -mx-1 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" do %>
-                  <div class="flex items-center space-x-1.5 min-w-0 flex-1">
-                    <span class="w-2 h-2 rounded-full flex-shrink-0" style="background: <%= color_map[cat[:color_key]] || '#6b7280' %>"></span>
-                    <span class="text-xs text-gray-700 dark:text-gray-300 truncate"><%= cat[:name] %></span>
-                  </div>
-                  <div class="flex items-center space-x-1 flex-shrink-0 ml-1">
-                    <span class="text-xs font-semibold text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(cat[:amount]) %></span>
-                    <span class="text-[10px] text-gray-400 dark:text-gray-500 w-8 text-right" style="font-variant-numeric: tabular-nums;"><%= cat[:pct] %>%</span>
-                  </div>
-                <% end %>
-              <% end %>
-            </div>
-            <div class="flex items-center justify-end mt-2 pt-1.5 border-t border-gray-200 dark:border-gray-600">
-              <div class="flex items-center space-x-1">
-                <span class="text-xs font-semibold text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(@spending_by_category.sum { |c| c[:amount].to_f }) %></span>
-                <span class="text-[10px] text-gray-400 dark:text-gray-500 w-8 text-right">&nbsp;</span>
-              </div>
-            </div>
-          <% else %>
-            <p class="text-xs text-gray-400 dark:text-gray-500 flex-1">No spending yet.</p>
-            <div class="flex items-center justify-end mt-2 pt-1.5 border-t border-gray-200 dark:border-gray-600">
-              <span class="text-xs font-semibold text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(0) %></span>
-            </div>
+      <% has_plan = @three_month_avg.present? && @three_month_avg.to_f > 0 %>
+      <% spent = @spent_mtd.to_f %>
+      <% plan = @three_month_avg.to_f %>
+      <% remaining = has_plan ? (plan - spent) : 0 %>
+      <% days_in_month = @month_start.end_of_month.day %>
+      <% is_current = @month_start == Date.today.beginning_of_month %>
+      <% days_elapsed = is_current ? (Date.today - @month_start).to_i + 1 : days_in_month %>
+      <% spending_pct = has_plan && plan > 0 ? [(spent / plan * 100).round(1), 100].min : 0 %>
+      <% month_pct = days_in_month > 0 ? [(days_elapsed.to_f / days_in_month * 100).round(1), 100].min : 0 %>
+      <% on_track = spending_pct <= month_pct %>
+      <% projected = @projected_month_end.to_f %>
+
+      <div class="space-y-4 py-2" style="max-width: 480px; margin: 0 auto;">
+        <%# --- Section A: Plan vs Spent --- %>
+        <div>
+          <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5">Plan vs Spent</p>
+          <div class="flex items-baseline space-x-3" style="font-variant-numeric: tabular-nums;">
+            <span class="text-sm text-gray-700 dark:text-gray-300">Spent <span class="font-semibold text-slate-800 dark:text-slate-100"><%= number_to_currency(spent, precision: 0) %></span></span>
+            <% if has_plan %>
+              <span class="text-[11px] text-gray-400 dark:text-gray-500">&middot;</span>
+              <span class="text-sm text-gray-700 dark:text-gray-300">Plan <span class="font-semibold text-slate-800 dark:text-slate-100"><%= number_to_currency(plan, precision: 0) %></span></span>
+            <% end %>
+          </div>
+          <% if has_plan %>
+            <p class="text-xs mt-0.5 <%= remaining >= 0 ? 'text-gray-500 dark:text-gray-400' : 'text-amber-600 dark:text-amber-400' %>" style="font-variant-numeric: tabular-nums;">
+              <%= number_to_currency(remaining.abs, precision: 0) %> <%= remaining >= 0 ? 'remaining' : 'over plan' %>
+            </p>
           <% end %>
         </div>
 
-        <%# --- Column 2: By Spending Type --- %>
-        <div class="flex flex-col">
-          <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">By Spending Type</p>
-          <% if @spending_by_type.any? %>
-            <div class="space-y-1 flex-1">
-              <% @spending_by_type.each do |st| %>
-                <%= link_to payments_path(start_date: @month_start.to_s, end_date: (@month_end - 1.day).to_s, spending_type_id: st[:id]), class: "flex items-center justify-between rounded px-1 -mx-1 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" do %>
-                  <div class="flex items-center space-x-1.5 min-w-0 flex-1">
-                    <span class="w-2 h-2 rounded-full flex-shrink-0" style="background: <%= color_map[st[:color_key]] || '#6b7280' %>"></span>
-                    <span class="text-xs text-gray-700 dark:text-gray-300 truncate"><%= st[:name] %></span>
-                  </div>
-                  <div class="flex items-center space-x-1 flex-shrink-0 ml-1">
-                    <span class="text-xs font-semibold text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(st[:amount]) %></span>
-                    <span class="text-[10px] text-gray-400 dark:text-gray-500 w-8 text-right" style="font-variant-numeric: tabular-nums;"><%= st[:pct] %>%</span>
-                  </div>
-                <% end %>
-              <% end %>
-            </div>
-            <div class="flex items-center justify-end mt-2 pt-1.5 border-t border-gray-200 dark:border-gray-600">
-              <div class="flex items-center space-x-1">
-                <span class="text-xs font-semibold text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(@spending_by_type.sum { |t| t[:amount].to_f }) %></span>
-                <span class="text-[10px] text-gray-400 dark:text-gray-500 w-8 text-right">&nbsp;</span>
+        <% if has_plan %>
+          <%# --- Section B: Pacing Bars --- %>
+          <div>
+            <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5">Pacing</p>
+            <div class="space-y-2">
+              <div>
+                <div class="flex items-center justify-between mb-0.5">
+                  <span class="text-[11px] text-gray-500 dark:text-gray-400">Spending Used</span>
+                  <span class="text-[11px] font-medium text-slate-700 dark:text-slate-300" style="font-variant-numeric: tabular-nums;"><%= spending_pct %>%</span>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div class="h-2 rounded-full transition-all" style="width: <%= spending_pct %>%; background: var(--brand-500, #7c3aed);"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex items-center justify-between mb-0.5">
+                  <span class="text-[11px] text-gray-500 dark:text-gray-400">Month Elapsed</span>
+                  <span class="text-[11px] font-medium text-slate-700 dark:text-slate-300" style="font-variant-numeric: tabular-nums;"><%= month_pct %>%</span>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div class="h-2 rounded-full bg-slate-400 dark:bg-slate-500 transition-all" style="width: <%= month_pct %>%;"></div>
+                </div>
               </div>
             </div>
+            <p class="text-[11px] mt-1.5 font-medium <%= on_track ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400' %>">
+              <%= on_track ? '&#10003; On Track' : '&#9888; Ahead of Plan' %>
+              <span class="font-normal text-gray-400 dark:text-gray-500">— spending <%= on_track ? 'behind' : 'ahead of' %> schedule</span>
+            </p>
+          </div>
+        <% end %>
+
+        <%# --- Section C: Projection --- %>
+        <div>
+          <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5">Projection</p>
+          <div class="flex items-baseline space-x-3" style="font-variant-numeric: tabular-nums;">
+            <span class="text-sm text-gray-700 dark:text-gray-300">Projected <span class="font-semibold text-slate-800 dark:text-slate-100"><%= number_to_currency(projected, precision: 0) %></span></span>
+            <% if has_plan %>
+              <span class="text-[11px] text-gray-400 dark:text-gray-500">&middot;</span>
+              <span class="text-sm text-gray-700 dark:text-gray-300">Plan <span class="font-semibold text-slate-800 dark:text-slate-100"><%= number_to_currency(plan, precision: 0) %></span></span>
+            <% end %>
+          </div>
+          <% if has_plan %>
+            <% proj_delta = projected - plan %>
+            <p class="text-[11px] mt-0.5 <%= proj_delta <= 0 ? 'text-gray-500 dark:text-gray-400' : 'text-amber-600 dark:text-amber-400' %>" style="font-variant-numeric: tabular-nums;">
+              ~<%= number_to_currency(proj_delta.abs, precision: 0) %> <%= proj_delta <= 0 ? 'under' : 'over' %> plan at current pace
+            </p>
           <% else %>
-            <p class="text-xs text-gray-400 dark:text-gray-500 flex-1">No spending yet.</p>
-            <div class="flex items-center justify-end mt-2 pt-1.5 border-t border-gray-200 dark:border-gray-600">
-              <span class="text-xs font-semibold text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(0) %></span>
-            </div>
+            <p class="text-[11px] mt-0.5 text-gray-500 dark:text-gray-400">Based on <%= number_to_currency(@daily_avg || 0, precision: 2) %>/day average</p>
           <% end %>
         </div>
 
-        <% if has_tags %>
-          <%# --- Column 3: By Tag --- %>
-          <div class="flex flex-col">
-            <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">By Tag</p>
-            <div class="space-y-1 flex-1">
-              <% @spending_by_tag.each do |tag| %>
-                <%= link_to payments_path(start_date: @month_start.to_s, end_date: (@month_end - 1.day).to_s, tag_id: tag[:id]), class: "flex items-center justify-between rounded px-1 -mx-1 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" do %>
-                  <div class="flex items-center space-x-1.5 min-w-0 flex-1">
-                    <span class="w-2 h-2 rounded-full flex-shrink-0 bg-brand-400"></span>
-                    <span class="text-xs text-gray-700 dark:text-gray-300 truncate"><%= tag[:name] %></span>
+        <%# --- Section D: Top 3 Spending Drivers --- %>
+        <% top_cats = @spending_by_category.first(3) %>
+        <% if top_cats.any? %>
+          <div>
+            <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5">Top Spending Drivers</p>
+            <div class="space-y-1">
+              <% top_cats.each do |cat| %>
+                <div class="flex items-center justify-between">
+                  <span class="text-xs text-gray-700 dark:text-gray-300 truncate"><%= cat[:name] %></span>
+                  <div class="flex items-center space-x-2 flex-shrink-0 ml-2" style="font-variant-numeric: tabular-nums;">
+                    <span class="text-xs font-semibold text-slate-800 dark:text-slate-100"><%= number_to_currency(cat[:amount]) %></span>
+                    <% if cat[:limit].present? && cat[:limit].to_f > 0 %>
+                      <% cat_delta = cat[:amount].to_f - cat[:limit].to_f %>
+                      <span class="text-[10px] <%= cat_delta > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400 dark:text-gray-500' %>">
+                        <%= cat_delta > 0 ? "+#{number_to_currency(cat_delta, precision: 0)} over" : "#{number_to_currency(cat_delta.abs, precision: 0)} under" %>
+                      </span>
+                    <% end %>
                   </div>
-                  <div class="flex items-center space-x-1 flex-shrink-0 ml-1">
-                    <span class="text-xs font-semibold text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(tag[:amount]) %></span>
-                    <span class="text-[10px] text-gray-400 dark:text-gray-500 w-8 text-right" style="font-variant-numeric: tabular-nums;"><%= tag[:pct] %>%</span>
-                  </div>
-                <% end %>
+                </div>
               <% end %>
-            </div>
-            <div class="flex items-center justify-end mt-2 pt-1.5 border-t border-gray-200 dark:border-gray-600">
-              <div class="flex items-center space-x-1">
-                <span class="text-xs font-semibold text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(@spending_by_tag.sum { |t| t[:amount].to_f }) %></span>
-                <span class="text-[10px] text-gray-400 dark:text-gray-500 w-8 text-right">&nbsp;</span>
-              </div>
             </div>
           </div>
         <% end %>
+
+        <%# --- Section E: Pacing Guidance --- %>
+        <div class="pt-2 border-t border-gray-100 dark:border-gray-700">
+          <% if has_plan %>
+            <% if remaining > 0 && @days_remaining.to_i > 0 %>
+              <p class="text-[11px] text-gray-500 dark:text-gray-400" style="font-variant-numeric: tabular-nums;">
+                To stay on plan: ~<%= number_to_currency((remaining / @days_remaining).round(2), precision: 2) %>/day
+              </p>
+            <% elsif remaining == 0 %>
+              <p class="text-[11px] text-gray-500 dark:text-gray-400">Plan reached — review spending drivers</p>
+            <% else %>
+              <p class="text-[11px] text-amber-600 dark:text-amber-400" style="font-variant-numeric: tabular-nums;">
+                Over plan by <%= number_to_currency(remaining.abs, precision: 0) %> — see top drivers
+              </p>
+            <% end %>
+          <% else %>
+            <p class="text-[11px] text-gray-500 dark:text-gray-400" style="font-variant-numeric: tabular-nums;">
+              <%= number_to_currency(@daily_avg || 0, precision: 2) %>/day average spending
+            </p>
+          <% end %>
+        </div>
       </div>
     </div>
     <div class="dash-card-footer border-t border-gray-100 dark:border-gray-700 flex items-center justify-between" data-role="card-footer">

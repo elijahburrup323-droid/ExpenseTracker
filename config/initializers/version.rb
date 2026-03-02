@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.52"
+APP_VERSION = "1.3.53"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,12 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.53",
+    changes: [
+      "Dashboard Slot 1: Spending Control Panel. Redesigned flip/back side into a directional control panel with Plan vs Spent, dual pacing bars (spending used vs month elapsed), On Track indicator, end-of-month projection, top 3 spending drivers, and pacing guidance. Flip now auto-expands the card; flip-back auto-collapses. Removed full category/type/tag breakdown from flip view."
+    ]
+  },
   {
     version: "1.3.52",
     changes: [

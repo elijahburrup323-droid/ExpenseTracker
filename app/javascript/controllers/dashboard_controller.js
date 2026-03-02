@@ -286,11 +286,19 @@ export default class extends Controller {
     const back = wrapper.querySelector("[data-role='back']")
     if (front) front.style.pointerEvents = "none"
     if (back) back.style.pointerEvents = "auto"
+    // Auto-expand for Spending Control panel
+    if (wrapper.dataset.cardType === 'spending_overview') {
+      this._expandCard(wrapper)
+    }
   }
 
   flipCardBack(event) {
     const wrapper = event.target.closest("[data-dashboard-target='slotWrapper']")
     if (!wrapper) return
+    // Auto-collapse for Spending Control panel
+    if (wrapper.dataset.cardType === 'spending_overview' && this.expandedCardType === 'spending_overview') {
+      this._collapseCard()
+    }
     const flipper = wrapper.querySelector("[data-role='flipper']")
     if (!flipper) return
     flipper.style.transform = "rotateY(0deg)"
@@ -558,83 +566,133 @@ export default class extends Controller {
         </div>`
     }
 
-    const backContent = wrapper.querySelector("[data-role='card-back-content']")
+    const backContent = wrapper.querySelector("[data-role='back-content']")
     if (backContent) {
-      const categories = data.categories || []
-      const types = data.types || []
-      const tags = data.tags || []
-      const colorMap = { blue: "#3b82f6", green: "#22c55e", gold: "#eab308", red: "#ef4444", purple: "#a855f7", pink: "#ec4899", indigo: "#6366f1", teal: "#14b8a6", orange: "#f97316", gray: "#6b7280" }
+      const spent = data.spent || 0
+      const avg = data.three_month_avg
+      const hasPlan = avg != null && avg > 0
+      const remaining = hasPlan ? (avg - spent) : 0
+      const daysInMonth = data.days_in_month || 30
+      const daysElapsed = data.days_elapsed || 0
+      const daysRemaining = data.days_remaining || 0
+      const spendingPct = hasPlan && avg > 0 ? Math.min((spent / avg * 100), 100).toFixed(1) : 0
+      const monthPct = daysInMonth > 0 ? Math.min((daysElapsed / daysInMonth * 100), 100).toFixed(1) : 0
+      const onTrack = parseFloat(spendingPct) <= parseFloat(monthPct)
+      const projected = data.projected_month_end || 0
+      const categories = (data.categories || []).slice(0, 3)
 
-      const renderColumn = (items, listType) => {
-        if (items.length === 0) return `<p class="text-xs text-gray-400 dark:text-gray-500 flex-1">No spending yet.</p>`
-        let h = '<div class="space-y-1 flex-1">'
-        for (const item of items) {
-          const dotColor = listType === "tag" ? "var(--brand-400, #a855f7)" : (colorMap[item.color_key] || "#6b7280")
-          let limitHtml = ""
-          if (listType === "category" && item.limit != null) {
-            const pctUsed = item.limit_pct_used || 0
-            const barColor = pctUsed >= 100 ? "#ef4444" : pctUsed >= 80 ? "#f59e0b" : "#22c55e"
-            const barWidth = Math.min(pctUsed, 100)
-            limitHtml = `
-              <div class="flex items-center mt-0.5">
-                <div class="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-1.5 mr-2">
-                  <div class="h-1.5 rounded-full" style="width: ${barWidth}%; background: ${barColor}"></div>
-                </div>
-                <span class="text-[10px] ${pctUsed >= 100 ? 'text-red-500 font-semibold' : 'text-gray-400 dark:text-gray-500'}">${this._currency(item.amount)} / ${this._currency(item.limit)}</span>
-              </div>`
-          } else if (listType === "type" && item.limit_pct != null) {
-            const over = item.over_under || 0
-            const overClass = over > 0 ? "text-red-500" : "text-green-500"
-            const sign = over > 0 ? "+" : ""
-            limitHtml = `<span class="text-[10px] ${overClass} ml-1">(lim ${item.limit_pct}%, ${sign}${over}%)</span>`
-          }
-          h += `<div class="flex items-center justify-between">
-              <div class="flex items-center space-x-1.5 min-w-0 flex-1">
-                <span class="w-2 h-2 rounded-full flex-shrink-0" style="background: ${dotColor}"></span>
-                <span class="text-xs text-gray-700 dark:text-gray-300 truncate">${this._esc(item.name)}</span>
+      // Section A: Plan vs Spent
+      let planVsSpent = `<div>
+        <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5">Plan vs Spent</p>
+        <div class="flex items-baseline space-x-3" style="font-variant-numeric: tabular-nums;">
+          <span class="text-sm text-gray-700 dark:text-gray-300">Spent <span class="font-semibold text-slate-800 dark:text-slate-100">${this._currency0(spent)}</span></span>`
+      if (hasPlan) {
+        planVsSpent += `<span class="text-[11px] text-gray-400 dark:text-gray-500">&middot;</span>
+          <span class="text-sm text-gray-700 dark:text-gray-300">Plan <span class="font-semibold text-slate-800 dark:text-slate-100">${this._currency0(avg)}</span></span>`
+      }
+      planVsSpent += `</div>`
+      if (hasPlan) {
+        const remClass = remaining >= 0 ? 'text-gray-500 dark:text-gray-400' : 'text-amber-600 dark:text-amber-400'
+        planVsSpent += `<p class="text-xs mt-0.5 ${remClass}" style="font-variant-numeric: tabular-nums;">${this._currency0(Math.abs(remaining))} ${remaining >= 0 ? 'remaining' : 'over plan'}</p>`
+      }
+      planVsSpent += `</div>`
+
+      // Section B: Pacing Bars (only with plan)
+      let pacingBars = ''
+      if (hasPlan) {
+        const trackClass = onTrack ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'
+        const trackLabel = onTrack ? '&#10003; On Track' : '&#9888; Ahead of Plan'
+        const trackDesc = onTrack ? 'behind' : 'ahead of'
+        pacingBars = `<div>
+          <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5">Pacing</p>
+          <div class="space-y-2">
+            <div>
+              <div class="flex items-center justify-between mb-0.5">
+                <span class="text-[11px] text-gray-500 dark:text-gray-400">Spending Used</span>
+                <span class="text-[11px] font-medium text-slate-700 dark:text-slate-300" style="font-variant-numeric: tabular-nums;">${spendingPct}%</span>
               </div>
-              <div class="flex items-center space-x-1 flex-shrink-0 ml-1">
-                <span class="text-xs font-semibold text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;">${this._currency(item.amount)}</span>
-                <span class="text-[10px] text-gray-400 dark:text-gray-500 w-8 text-right" style="font-variant-numeric: tabular-nums;">${item.pct}%</span>
+              <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div class="h-2 rounded-full transition-all" style="width: ${spendingPct}%; background: var(--brand-500, #7c3aed);"></div>
               </div>
             </div>
-            ${listType === "type" && item.limit_pct != null ? limitHtml : ""}
-            ${listType === "category" && item.limit != null ? limitHtml : ""}`
-        }
-        h += '</div>'
-        return h
-      }
-
-      const columnTotal = (items) => {
-        const total = items.reduce((sum, i) => sum + (parseFloat(i.amount) || 0), 0)
-        return this._currency(total)
-      }
-
-      const renderColumnTotal = (items) => {
-        return `<div class="flex items-center justify-end mt-2 pt-1.5 border-t border-gray-200 dark:border-gray-600">
-          <div class="flex items-center space-x-1">
-            <span class="text-xs font-semibold text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;">${columnTotal(items)}</span>
-            <span class="text-[10px] text-gray-400 dark:text-gray-500 w-8 text-right">&nbsp;</span>
+            <div>
+              <div class="flex items-center justify-between mb-0.5">
+                <span class="text-[11px] text-gray-500 dark:text-gray-400">Month Elapsed</span>
+                <span class="text-[11px] font-medium text-slate-700 dark:text-slate-300" style="font-variant-numeric: tabular-nums;">${monthPct}%</span>
+              </div>
+              <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div class="h-2 rounded-full bg-slate-400 dark:bg-slate-500 transition-all" style="width: ${monthPct}%;"></div>
+              </div>
+            </div>
           </div>
+          <p class="text-[11px] mt-1.5 font-medium ${trackClass}">${trackLabel} <span class="font-normal text-gray-400 dark:text-gray-500">— spending ${trackDesc} schedule</span></p>
         </div>`
       }
 
-      const renderEmptyTotal = () => {
-        return `<div class="flex items-center justify-end mt-2 pt-1.5 border-t border-gray-200 dark:border-gray-600">
-          <span class="text-xs font-semibold text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;">${this._currency(0)}</span>
-        </div>`
+      // Section C: Projection
+      let projectionHtml = `<div>
+        <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5">Projection</p>
+        <div class="flex items-baseline space-x-3" style="font-variant-numeric: tabular-nums;">
+          <span class="text-sm text-gray-700 dark:text-gray-300">Projected <span class="font-semibold text-slate-800 dark:text-slate-100">${this._currency0(projected)}</span></span>`
+      if (hasPlan) {
+        const projDelta = projected - avg
+        const projClass = projDelta <= 0 ? 'text-gray-500 dark:text-gray-400' : 'text-amber-600 dark:text-amber-400'
+        projectionHtml += `<span class="text-[11px] text-gray-400 dark:text-gray-500">&middot;</span>
+          <span class="text-sm text-gray-700 dark:text-gray-300">Plan <span class="font-semibold text-slate-800 dark:text-slate-100">${this._currency0(avg)}</span></span>
+        </div>
+        <p class="text-[11px] mt-0.5 ${projClass}" style="font-variant-numeric: tabular-nums;">~${this._currency0(Math.abs(projDelta))} ${projDelta <= 0 ? 'under' : 'over'} plan at current pace</p>`
+      } else {
+        projectionHtml += `</div>
+        <p class="text-[11px] mt-0.5 text-gray-500 dark:text-gray-400">Based on ${this._currency(data.daily_avg || 0)}/day average</p>`
+      }
+      projectionHtml += `</div>`
+
+      // Section D: Top 3 Spending Drivers
+      let driversHtml = ''
+      if (categories.length > 0) {
+        driversHtml = `<div>
+          <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5">Top Spending Drivers</p>
+          <div class="space-y-1">`
+        for (const cat of categories) {
+          let limitHtml = ''
+          if (cat.limit != null && cat.limit > 0) {
+            const catDelta = cat.amount - cat.limit
+            const catClass = catDelta > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400 dark:text-gray-500'
+            limitHtml = `<span class="text-[10px] ${catClass}">${catDelta > 0 ? '+' + this._currency0(catDelta) + ' over' : this._currency0(Math.abs(catDelta)) + ' under'}</span>`
+          }
+          driversHtml += `<div class="flex items-center justify-between">
+            <span class="text-xs text-gray-700 dark:text-gray-300 truncate">${this._esc(cat.name)}</span>
+            <div class="flex items-center space-x-2 flex-shrink-0 ml-2" style="font-variant-numeric: tabular-nums;">
+              <span class="text-xs font-semibold text-slate-800 dark:text-slate-100">${this._currency(cat.amount)}</span>
+              ${limitHtml}
+            </div>
+          </div>`
+        }
+        driversHtml += `</div></div>`
       }
 
-      const hasTags = tags.length > 0
-
-      let html = `<div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;" data-role="breakdown-grid">`
-      html += `<div class="flex flex-col"><p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">By Category</p>${renderColumn(categories, "category")}${categories.length > 0 ? renderColumnTotal(categories) : renderEmptyTotal()}</div>`
-      html += `<div class="flex flex-col"><p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">By Spending Type</p>${renderColumn(types, "type")}${types.length > 0 ? renderColumnTotal(types) : renderEmptyTotal()}</div>`
-      if (hasTags) {
-        html += `<div class="flex flex-col"><p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">By Tag</p>${renderColumn(tags, "tag")}${renderColumnTotal(tags)}</div>`
+      // Section E: Pacing Guidance
+      let guidanceHtml = `<div class="pt-2 border-t border-gray-100 dark:border-gray-700">`
+      if (hasPlan) {
+        if (remaining > 0 && daysRemaining > 0) {
+          guidanceHtml += `<p class="text-[11px] text-gray-500 dark:text-gray-400" style="font-variant-numeric: tabular-nums;">To stay on plan: ~${this._currency(remaining / daysRemaining)}/day</p>`
+        } else if (remaining === 0) {
+          guidanceHtml += `<p class="text-[11px] text-gray-500 dark:text-gray-400">Plan reached — review spending drivers</p>`
+        } else {
+          guidanceHtml += `<p class="text-[11px] text-amber-600 dark:text-amber-400" style="font-variant-numeric: tabular-nums;">Over plan by ${this._currency0(Math.abs(remaining))} — see top drivers</p>`
+        }
+      } else {
+        guidanceHtml += `<p class="text-[11px] text-gray-500 dark:text-gray-400" style="font-variant-numeric: tabular-nums;">${this._currency(data.daily_avg || 0)}/day average spending</p>`
       }
-      html += `</div>`
-      backContent.innerHTML = html
+      guidanceHtml += `</div>`
+
+      backContent.innerHTML = `<div class="space-y-4 py-2" style="max-width: 480px; margin: 0 auto;">
+        ${planVsSpent}
+        ${pacingBars}
+        ${projectionHtml}
+        ${driversHtml}
+        ${guidanceHtml}
+      </div>`
     }
   }
 
