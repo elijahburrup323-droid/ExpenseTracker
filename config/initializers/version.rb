@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.53"
+APP_VERSION = "1.3.54"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,12 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.54",
+    changes: [
+      "Dashboard Slot 1: Report Icon. Added a bar-chart icon to the Slot 1 header (both front and back sides) that navigates to the full Spending by Category report page. Also fixed initial pointer-events on the flip card back side for better WebKit compatibility."
+    ]
+  },
   {
     version: "1.3.53",
     changes: [
