@@ -11,12 +11,11 @@
 }
 
 /* Dashboard grid: @utility so md:dash-grid responsive variant works */
-/* 022626_2: viewport-locked height so all 6 cards fit without scroll */
-/* 030126: dvh fallback for iPad Safari address bar */
+/* 030226: flex-based layout — grid fills remaining viewport space */
 @utility dash-grid {
+  flex: 1;
+  min-height: 0;
   grid-template-rows: repeat(2, 1fr);
-  height: calc(100vh - 13rem);
-  height: calc(100dvh - 13rem);
   overflow: hidden;
 }
 
