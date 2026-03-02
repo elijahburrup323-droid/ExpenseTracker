@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.56"
+APP_VERSION = "1.3.57"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,12 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.57",
+    changes: [
+      "Dashboard: Enforce Calm Fronts (Instruction G). Removed SVG trend chart from Net Worth card front and relocated it to the flip (back) side. Removed progress bars from Buckets card front (both simple and expanded layouts) and relocated them to the flip side. All 6 dashboard card fronts are now text-first with no charts or visual bars."
+    ]
+  },
   {
     version: "1.3.56",
     changes: [

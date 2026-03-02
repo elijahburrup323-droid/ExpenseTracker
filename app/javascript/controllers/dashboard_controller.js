@@ -890,42 +890,7 @@ export default class extends Controller {
     }
     html += `</div>`
 
-    if (snapshots.length === 0) {
-      html += `<div class="w-full h-20 flex-1 flex items-center justify-center"><p class="text-xs text-gray-400 dark:text-gray-500">No history yet</p></div>`
-    } else if (snapshots.length === 1) {
-      html += `<div class="w-full h-20 flex-1"><svg viewBox="0 0 200 60" class="w-full h-full" preserveAspectRatio="xMidYMid meet"><circle cx="100" cy="30" r="5" fill="#a855f7"/></svg></div>`
-      html += `<div class="flex justify-center text-[10px] text-gray-400 dark:text-gray-500 mt-1"><span>${this._esc(snapshots[0].label)}</span></div>`
-    } else {
-      const amounts = snapshots.map(s => s.amount)
-      const minVal = Math.min(...amounts)
-      const maxVal = Math.max(...amounts)
-      let range = maxVal - minVal
-      if (range === 0) range = 1
-      const padding = 5, chartH = 50, chartW = 190
-      const points = snapshots.map((s, i) => {
-        const x = padding + (i / (snapshots.length - 1)) * chartW
-        const y = padding + chartH - ((s.amount - minVal) / range * chartH)
-        return [x.toFixed(1), y.toFixed(1)]
-      })
-      const polylineStr = points.map(p => p.join(",")).join(" ")
-      const areaPath = `M${points[0][0]},${points[0][1]} ` +
-        points.slice(1).map(p => `L${p[0]},${p[1]}`).join(" ") +
-        ` L${points[points.length-1][0]},${padding + chartH} L${points[0][0]},${padding + chartH} Z`
-
-      html += `<div class="w-full h-20 flex-1"><svg viewBox="0 0 200 60" class="w-full h-full" preserveAspectRatio="none">`
-      html += `<defs><linearGradient id="netWorthGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#a855f7" stop-opacity="0.3"/><stop offset="100%" stop-color="#a855f7" stop-opacity="0"/></linearGradient></defs>`
-      html += `<path d="${areaPath}" fill="url(#netWorthGrad)"/>`
-      html += `<polyline points="${polylineStr}" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`
-      points.forEach(p => {
-        html += `<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="#a855f7"/>`
-      })
-      html += `</svg></div>`
-      html += `<div class="flex justify-between text-[10px] text-gray-400 dark:text-gray-500 mt-1">`
-      snapshots.forEach(s => { html += `<span>${this._esc(s.label)}</span>` })
-      html += `</div>`
-    }
-
-    // Asset / Liability breakdown
+    // Asset / Liability breakdown (calm front — chart moved to back)
     html += `<div class="mt-2 space-y-1">`
     html += `<div class="flex items-center justify-between"><span class="text-[11px] text-gray-500 dark:text-gray-400">Assets</span><span class="text-[11px] font-medium text-gray-900 dark:text-white tabular-nums">${this._currency(data.assets || 0)}</span></div>`
     html += `<div class="flex items-center justify-between"><span class="text-[11px] text-gray-500 dark:text-gray-400">Liabilities</span><span class="text-[11px] font-medium text-gray-900 dark:text-white tabular-nums">${this._currency(data.liabilities || 0)}</span></div>`
@@ -957,7 +922,43 @@ export default class extends Controller {
       const assetMod = data.asset_module_total || 0
       const investMod = data.investment_module_total || 0
       const liabSub = data.liabilities_subtotal || 0
-      let bhtml = `<div class="space-y-2">`
+      // Net Worth trend chart (moved from front for calm fronts)
+      let bhtml = ""
+      if (snapshots.length === 0) {
+        bhtml += `<div class="w-full h-20 flex items-center justify-center mb-3"><p class="text-xs text-gray-400 dark:text-gray-500">No history yet</p></div>`
+      } else if (snapshots.length === 1) {
+        bhtml += `<div class="w-full h-20 mb-3"><svg viewBox="0 0 200 60" class="w-full h-full" preserveAspectRatio="xMidYMid meet"><circle cx="100" cy="30" r="5" fill="#a855f7"/></svg></div>`
+        bhtml += `<div class="flex justify-center text-[10px] text-gray-400 dark:text-gray-500 mb-3"><span>${this._esc(snapshots[0].label)}</span></div>`
+      } else {
+        const amounts = snapshots.map(s => s.amount)
+        const minVal = Math.min(...amounts)
+        const maxVal = Math.max(...amounts)
+        let range = maxVal - minVal
+        if (range === 0) range = 1
+        const padding = 5, chartH = 50, chartW = 190
+        const points = snapshots.map((s, i) => {
+          const x = padding + (i / (snapshots.length - 1)) * chartW
+          const y = padding + chartH - ((s.amount - minVal) / range * chartH)
+          return [x.toFixed(1), y.toFixed(1)]
+        })
+        const polylineStr = points.map(p => p.join(",")).join(" ")
+        const areaPath = `M${points[0][0]},${points[0][1]} ` +
+          points.slice(1).map(p => `L${p[0]},${p[1]}`).join(" ") +
+          ` L${points[points.length-1][0]},${padding + chartH} L${points[0][0]},${padding + chartH} Z`
+
+        bhtml += `<div class="w-full h-20 relative mb-1"><svg viewBox="0 0 200 60" class="w-full h-full" preserveAspectRatio="none">`
+        bhtml += `<defs><linearGradient id="netWorthGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#a855f7" stop-opacity="0.3"/><stop offset="100%" stop-color="#a855f7" stop-opacity="0"/></linearGradient></defs>`
+        bhtml += `<path d="${areaPath}" fill="url(#netWorthGrad)"/>`
+        bhtml += `<polyline points="${polylineStr}" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`
+        points.forEach(p => {
+          bhtml += `<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="#a855f7"/>`
+        })
+        bhtml += `</svg></div>`
+        bhtml += `<div class="flex justify-between text-[10px] text-gray-400 dark:text-gray-500 mb-3">`
+        snapshots.forEach(s => { bhtml += `<span>${this._esc(s.label)}</span>` })
+        bhtml += `</div>`
+      }
+      bhtml += `<div class="space-y-2">`
       bhtml += `<div class="flex items-center justify-between"><span class="text-xs text-gray-600 dark:text-gray-400">Accounts Total</span><span class="text-xs font-semibold text-gray-900 dark:text-white tabular-nums">${this._currency(accts)}</span></div>`
       bhtml += `<div class="flex items-center justify-between"><span class="text-xs text-gray-600 dark:text-gray-400">Assets Total</span><span class="text-xs font-semibold text-gray-900 dark:text-white tabular-nums">${this._currency(assetMod)}</span></div>`
       bhtml += `<div class="flex items-center justify-between"><span class="text-xs text-gray-600 dark:text-gray-400">Investments Total</span><span class="text-xs font-semibold text-gray-900 dark:text-white tabular-nums">${this._currency(investMod)}</span></div>`
@@ -1140,30 +1141,14 @@ export default class extends Controller {
         ? ` <span class="text-[10px] font-medium text-brand-600 dark:text-brand-400">(Default)</span>`
         : ""
 
-      let progressHtml = ""
-      if (b.progress_pct != null) {
-        const color = b.progress_pct >= 100 ? "bg-green-500" : b.progress_pct >= 50 ? "bg-brand-500" : "bg-yellow-500"
-        progressHtml = `<div class="mx-auto mt-1 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden" style="max-width: 65%;">
-          <div class="${color} h-full rounded-full" style="width: ${b.progress_pct}%"></div>
-        </div>`
-      }
-
-      // Completion % display (right of balance)
+      // Completion % display (right of balance) — calm front, no progress bars
       const pctHtml = b.progress_pct != null
         ? ` <span class="text-[10px] font-medium text-gray-400 dark:text-gray-500 ml-1">${b.progress_pct}%</span>`
         : ""
 
-      // Remaining display (below progress bar)
-      let remainingHtml = ""
-      if (b.remaining != null && b.remaining > 0) {
-        remainingHtml = `<div class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5" style="font-variant-numeric: tabular-nums;">Remaining: ${this._currency(b.remaining)}</div>`
-      }
-
       html += `<div class="text-center py-1">
         <div class="text-sm font-semibold text-gray-900 dark:text-white">${this._esc(b.name)}${defaultBadge}</div>
         <div class="text-xs text-gray-500 dark:text-gray-400" style="font-variant-numeric: tabular-nums;">${this._currency(b.balance)}${pctHtml}</div>
-        ${progressHtml}
-        ${remainingHtml}
       </div>`
     }
     html += `</div>`
