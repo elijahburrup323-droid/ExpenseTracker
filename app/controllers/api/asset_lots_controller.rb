@@ -56,11 +56,11 @@ module Api
     end
 
     def lot_params
-      params.require(:asset_lot).permit(:acquired_date, :quantity, :price_per_unit, :notes)
+      params.require(:asset_lot).permit(:acquired_date, :quantity, :price_per_unit, :notes, :entry_form, :entry_quantity)
     end
 
     def lot_json(l)
-      l.as_json(only: [:id, :acquired_date, :quantity, :price_per_unit, :total_cost, :notes, :created_at])
+      l.as_json(only: [:id, :acquired_date, :quantity, :price_per_unit, :total_cost, :notes, :entry_form, :entry_quantity, :created_at])
         .merge(asset_id: l.asset_id)
     end
   end

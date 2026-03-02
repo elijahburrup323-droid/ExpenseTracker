@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_27_000001) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_01_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_stat_statements"
   enable_extension "plpgsql"
@@ -120,6 +120,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_27_000001) do
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "entry_form", limit: 40
+    t.decimal "entry_quantity", precision: 16, scale: 6
     t.index ["asset_id", "acquired_date"], name: "idx_asset_lots_asset_acquired"
     t.index ["asset_id", "deleted_at"], name: "idx_asset_lots_asset_deleted"
     t.index ["asset_id"], name: "index_asset_lots_on_asset_id"

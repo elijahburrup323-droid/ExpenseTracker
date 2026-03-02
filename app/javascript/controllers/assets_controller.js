@@ -3,6 +3,18 @@ import { escapeHtml } from "controllers/shared/icon_catalog"
 
 const UNIT_BASED_KEYS = ["precious metals", "cryptocurrency"]
 
+// Conversion factors to canonical units (oz for metals, coins for crypto)
+const METAL_ENTRY_FORMS = {
+  "oz":              { factor: 1,        label: "Troy Ounces (oz)" },
+  "grams":           { factor: 1 / 31.1035, label: "Grams (g)" },
+  "$20 gold piece":  { factor: 0.9675,   label: "$20 Gold Piece" },
+  "$10 gold piece":  { factor: 0.48375,  label: "$10 Gold Piece" },
+  "$5 gold piece":   { factor: 0.24187,  label: "$5 Gold Piece" }
+}
+const CRYPTO_ENTRY_FORMS = {
+  "coins":           { factor: 1,        label: "Coins" }
+}
+
 export default class extends Controller {
   static targets = [
     "tableBody", "addButton", "total", "typeFilter",
@@ -12,6 +24,8 @@ export default class extends Controller {
     "modalStandardFields", "modalUnitFields", "modalUnitLabel",
     "modalFirstLot", "modalLotDate", "modalLotQuantity",
     "modalLotPricePerUnit", "modalLotTotalCost",
+    "modalEntryForm", "canonicalPreview", "canonicalQtyDisplay",
+    "duplicatePrompt", "duplicatePromptName",
     "deleteModal", "deleteModalName",
     "blockedDeleteModal"
   ]
@@ -230,15 +244,28 @@ export default class extends Controller {
     if (this.hasModalFirstLotTarget) {
       this.modalFirstLotTarget.classList.toggle("hidden", !isUnit || this.state === "editing")
     }
+    this._rebuildEntryFormDropdown()
   }
 
   computeLotTotal() {
     if (!this.hasModalLotQuantityTarget || !this.hasModalLotPricePerUnitTarget) return
-    const qty = parseFloat(this.modalLotQuantityTarget.value) || 0
+    const rawQty = parseFloat(this.modalLotQuantityTarget.value) || 0
     const ppu = parseFloat(this.modalLotPricePerUnitTarget.value) || 0
-    const total = qty * ppu
+    const entryForm = this.hasModalEntryFormTarget ? this.modalEntryFormTarget.value : ""
+    const canonicalQty = entryForm ? this._convertToCanonical(entryForm, rawQty) : rawQty
+    const total = rawQty * ppu
     if (this.hasModalLotTotalCostTarget) {
       this.modalLotTotalCostTarget.textContent = this._fmt(total)
+    }
+    // Show canonical preview when a non-canonical entry form is selected
+    if (this.hasCanonicalPreviewTarget && this.hasCanonicalQtyDisplayTarget) {
+      if (entryForm && entryForm !== "oz" && entryForm !== "coins") {
+        this.canonicalPreviewTarget.classList.remove("hidden")
+        const unit = this.hasModalUnitLabelTarget ? (this.modalUnitLabelTarget.value || "units") : "units"
+        this.canonicalQtyDisplayTarget.textContent = `${canonicalQty.toFixed(6)} ${unit}`
+      } else {
+        this.canonicalPreviewTarget.classList.add("hidden")
+      }
     }
   }
 
@@ -298,6 +325,19 @@ export default class extends Controller {
   async _saveNew() {
     const data = this._getModalData()
     if (!data) return
+
+    // --- Duplicate check for unit-based types ---
+    const isUnit = this._isUnitBasedTypeId(this.modalTypeTarget.value)
+    if (isUnit) {
+      const nameNorm = data.name.toLowerCase().trim()
+      const existing = this.assets.find(a =>
+        a.name.toLowerCase().trim() === nameNorm && a.unit_based === true
+      )
+      if (existing) {
+        this._showDuplicatePrompt(existing, data)
+        return
+      }
+    }
 
     // Extract first_lot from data to send as separate top-level param
     const firstLot = data.first_lot
@@ -372,15 +412,21 @@ export default class extends Controller {
         const lotDate = this.hasModalLotDateTarget ? this.modalLotDateTarget.value : ""
         const lotQty = this.hasModalLotQuantityTarget ? this.modalLotQuantityTarget.value.trim() : ""
         const lotPpu = this.hasModalLotPricePerUnitTarget ? this.modalLotPricePerUnitTarget.value.trim() : ""
+        const entryForm = this.hasModalEntryFormTarget ? this.modalEntryFormTarget.value : ""
 
         if (!lotDate) { this._showModalError("Acquired Date is required"); return null }
         if (!lotQty || parseFloat(lotQty) <= 0) { this._showModalError("Quantity must be > 0"); return null }
         if (!lotPpu || parseFloat(lotPpu) <= 0) { this._showModalError("Price Per Unit must be > 0"); return null }
 
+        const rawQty = parseFloat(lotQty)
+        const canonicalQty = entryForm ? this._convertToCanonical(entryForm, rawQty) : rawQty
+
         data.first_lot = {
           acquired_date: lotDate,
-          quantity: parseFloat(lotQty),
-          price_per_unit: parseFloat(lotPpu)
+          quantity: canonicalQty,
+          price_per_unit: parseFloat(lotPpu),
+          entry_form: entryForm || null,
+          entry_quantity: entryForm ? rawQty : null
         }
         data.current_price_per_unit = parseFloat(lotPpu)
       }
@@ -423,6 +469,97 @@ export default class extends Controller {
     if (this.hasModalStandardFieldsTarget) this.modalStandardFieldsTarget.classList.remove("hidden")
     if (this.hasModalUnitFieldsTarget) this.modalUnitFieldsTarget.classList.add("hidden")
     if (this.hasModalFirstLotTarget) this.modalFirstLotTarget.classList.remove("hidden")
+    if (this.hasModalEntryFormTarget) { this.modalEntryFormTarget.value = ""; this._rebuildEntryFormDropdown() }
+    if (this.hasCanonicalPreviewTarget) this.canonicalPreviewTarget.classList.add("hidden")
+    if (this.hasDuplicatePromptTarget) this.duplicatePromptTarget.classList.add("hidden")
+    this._pendingDuplicateAsset = null
+    this._pendingDuplicateData = null
+  }
+
+  // ─── Duplicate Prompt ──────────────────────────────────
+  _showDuplicatePrompt(existingAsset, formData) {
+    this._pendingDuplicateAsset = existingAsset
+    this._pendingDuplicateData = formData
+    this.duplicatePromptNameTarget.textContent = existingAsset.name
+    this.duplicatePromptTarget.classList.remove("hidden")
+    this.modalErrorTarget.classList.add("hidden")
+  }
+
+  async confirmAddLot() {
+    const asset = this._pendingDuplicateAsset
+    const data = this._pendingDuplicateData
+    if (!asset || !data?.first_lot) return
+
+    this.duplicatePromptTarget.classList.add("hidden")
+
+    const lotPayload = {
+      asset_lot: {
+        acquired_date: data.first_lot.acquired_date,
+        quantity: data.first_lot.quantity,
+        price_per_unit: data.first_lot.price_per_unit,
+        notes: data.first_lot.notes || null,
+        entry_form: data.first_lot.entry_form || null,
+        entry_quantity: data.first_lot.entry_quantity || null
+      }
+    }
+
+    try {
+      const res = await fetch(`${this.apiUrlValue}/${asset.id}/asset_lots`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": this.csrfTokenValue },
+        body: JSON.stringify(lotPayload)
+      })
+      if (res.ok || res.status === 201) {
+        await this.fetchAll()
+        this.cancelModal()
+      } else {
+        const err = await res.json().catch(() => ({}))
+        this._showModalError(err.errors ? err.errors.join(", ") : "Failed to add lot")
+      }
+    } catch (e) {
+      this._showModalError("Network error")
+    }
+    this._pendingDuplicateAsset = null
+    this._pendingDuplicateData = null
+  }
+
+  cancelDuplicatePrompt() {
+    this.duplicatePromptTarget.classList.add("hidden")
+    this._pendingDuplicateAsset = null
+    this._pendingDuplicateData = null
+  }
+
+  // ─── Entry Form / Unit Conversion ─────────────────────
+  _getEntryForms(typeId) {
+    const t = this.assetTypes.find(at => String(at.id) === String(typeId))
+    if (!t) return {}
+    if (t.normalized_key === "precious metals") return METAL_ENTRY_FORMS
+    if (t.normalized_key === "cryptocurrency") return CRYPTO_ENTRY_FORMS
+    return {}
+  }
+
+  _rebuildEntryFormDropdown() {
+    if (!this.hasModalEntryFormTarget) return
+    const typeId = this.modalTypeTarget.value
+    const forms = this._getEntryForms(typeId)
+    const dd = this.modalEntryFormTarget
+    dd.innerHTML = `<option value="">Canonical unit</option>`
+    for (const [key, cfg] of Object.entries(forms)) {
+      dd.innerHTML += `<option value="${key}">${cfg.label}</option>`
+    }
+  }
+
+  onEntryFormChange() {
+    this.computeLotTotal()
+  }
+
+  _convertToCanonical(entryForm, entryQuantity) {
+    if (!entryForm || entryQuantity == null) return entryQuantity
+    const typeId = this.modalTypeTarget.value
+    const forms = this._getEntryForms(typeId)
+    const cfg = forms[entryForm]
+    if (!cfg) return entryQuantity
+    return entryQuantity * cfg.factor
   }
 
   _showModalError(msg) {

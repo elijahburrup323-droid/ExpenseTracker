@@ -22,13 +22,15 @@ module Api
         if asset.save
           # If unit-based and first_lot params provided, create the initial lot
           if asset.unit_based? && params[:first_lot].present?
-            lot_data = params.require(:first_lot).permit(:acquired_date, :quantity, :price_per_unit, :notes)
+            lot_data = params.require(:first_lot).permit(:acquired_date, :quantity, :price_per_unit, :notes, :entry_form, :entry_quantity)
             asset.asset_lots.create!(
               user: current_user,
               acquired_date: lot_data[:acquired_date],
               quantity: lot_data[:quantity],
               price_per_unit: lot_data[:price_per_unit],
-              notes: lot_data[:notes]
+              notes: lot_data[:notes],
+              entry_form: lot_data[:entry_form],
+              entry_quantity: lot_data[:entry_quantity]
             )
             asset.recalculate_from_lots!
           end

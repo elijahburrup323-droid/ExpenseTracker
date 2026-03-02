@@ -852,9 +852,14 @@ export default class extends Controller {
   _renderLotRow(l) {
     const qty = parseFloat(l.quantity).toLocaleString("en-US", {maximumFractionDigits: 6})
     const notes = l.notes ? escapeHtml(l.notes) : ""
+    let entryInfo = ""
+    if (l.entry_form && l.entry_quantity != null) {
+      const eq = parseFloat(l.entry_quantity).toLocaleString("en-US", {maximumFractionDigits: 6})
+      entryInfo = `<br><span class="text-xs text-gray-400">(entered: ${eq} ${escapeHtml(l.entry_form)})</span>`
+    }
     return `<tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
       <td class="px-6 py-3 text-sm text-gray-900 dark:text-white">${escapeHtml(l.acquired_date || "")}</td>
-      <td class="px-6 py-3 text-sm text-gray-900 dark:text-white text-right tabular-nums">${qty}</td>
+      <td class="px-6 py-3 text-sm text-gray-900 dark:text-white text-right tabular-nums">${qty}${entryInfo}</td>
       <td class="px-6 py-3 text-sm text-gray-900 dark:text-white text-right tabular-nums">${this._fmt(l.price_per_unit)}</td>
       <td class="px-6 py-3 text-sm text-gray-900 dark:text-white text-right tabular-nums font-semibold">${this._fmt(l.total_cost)}</td>
       <td class="px-6 py-3 text-sm text-gray-500 dark:text-gray-400 truncate max-w-[150px]" title="${notes}">${notes}</td>
