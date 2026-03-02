@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.46"
+APP_VERSION = "1.3.48"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,19 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.48",
+    changes: [
+      "Assets: Smart Duplicate Handling. When adding a unit-based asset (Precious Metals, Crypto) that already exists, the system now prompts to add the purchase as a new lot instead of showing a 'Name already taken' error. Gold, Silver, BTC, etc. consolidate into a single holding with multiple purchase lots.",
+      "Assets: Unit Conversion Support. Purchase lots can now be entered in non-canonical units (e.g., grams for metals) and are automatically converted to the canonical unit (oz) for aggregation. A canonical quantity preview shows the converted value in real time."
+    ]
+  },
+  {
+    version: "1.3.47",
+    changes: [
+      "Dashboard: Spending Overview now shows Safe to Spend based on operating accounts only (Checking, Cash Card). The donut chart is replaced with a structured breakdown: Current Operating Balance + Scheduled Deposits - Scheduled Payments. Savings and other reserve accounts are shown separately as Reserved in Savings. An info tooltip explains the distinction. Net Worth, Accounts, and other cards remain unchanged."
+    ]
+  },
   {
     version: "1.3.46",
     changes: [

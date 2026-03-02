@@ -254,31 +254,42 @@ module Api
         { id: id, name: tag_names[id], amount: amt.round(2), pct: spent > 0 ? (amt / spent * 100).round(1) : 0.0 }
       end
 
-      # Available to Spend & Safe Daily Spend (Tracking Mode)
+      # Safe to Spend (Operating Cash only)
       credit_master_ids = AccountTypeMaster.where(normal_balance_type: "CREDIT").pluck(:id)
-      cash_balance = current_user.accounts
-        .where(include_in_budget: true)
-        .where.not(account_type_master_id: credit_master_ids)
-        .sum(:balance).to_f
+      spendable_master_ids = AccountTypeMaster.spendable_type_ids
+      budget_accounts = current_user.accounts.where(include_in_budget: true).where.not(account_type_master_id: credit_master_ids)
+      spendable_accounts = budget_accounts.where(account_type_master_id: spendable_master_ids)
+      spendable_ids = spendable_accounts.pluck(:id)
 
-      # Scheduled remaining: recurring obligations + payment recurrings due this month
-      scheduled_remaining = 0.0
-      current_user.recurring_obligations.active.each do |ob|
+      operating_balance = spendable_accounts.sum(:balance).to_f
+      reserved_savings = budget_accounts.where.not(account_type_master_id: spendable_master_ids).sum(:balance).to_f.round(2)
+
+      # Scheduled deposits TO spendable accounts
+      scheduled_deposits = 0.0
+      current_user.income_recurrings.where(use_flag: true, account_id: spendable_ids).each do |ir|
+        if ir.next_date && ir.next_date >= ctx[:month_start] && ir.next_date < ctx[:month_end]
+          scheduled_deposits += ir.amount.to_f
+        end
+      end
+
+      # Scheduled payments FROM spendable accounts (+ account-less obligations)
+      scheduled_payments = 0.0
+      current_user.recurring_obligations.active.where(account_id: [nil] + spendable_ids).each do |ob|
         if ob.falls_in_month?(ctx[:month_start].year, ctx[:month_start].month)
           due = ob.due_date_in_month(ctx[:month_start].year, ctx[:month_start].month)
-          scheduled_remaining += ob.amount.to_f if due && due >= Date.today
+          scheduled_payments += ob.amount.to_f if due && due >= Date.today
         end
       end
-      current_user.payment_recurrings.where(use_flag: true).each do |pr|
+      current_user.payment_recurrings.where(use_flag: true, account_id: spendable_ids).each do |pr|
         if pr.next_date && pr.next_date >= ctx[:month_start] && pr.next_date < ctx[:month_end]
-          scheduled_remaining += pr.amount.to_f
+          scheduled_payments += pr.amount.to_f
         end
       end
 
-      available_to_spend = (cash_balance - scheduled_remaining).round(2)
+      safe_to_spend = (operating_balance + scheduled_deposits - scheduled_payments).round(2)
       is_current_month = ctx[:month_start] == Date.today.beginning_of_month
       days_remaining = is_current_month ? (ctx[:month_start].end_of_month - Date.today).to_i : 0
-      safe_daily_spend = days_remaining > 0 ? (available_to_spend / days_remaining).round(2) : 0.0
+      safe_daily_spend = days_remaining > 0 ? (safe_to_spend / days_remaining).round(2) : 0.0
 
       # Category pressure: top 2 categories closest to (or over) their limits
       category_pressure = by_category
@@ -296,8 +307,12 @@ module Api
         projected_month_end: projected_month_end,
         days_elapsed: days_elapsed,
         days_in_month: days_in_month,
-        available_to_spend: available_to_spend,
-        scheduled_remaining: scheduled_remaining.round(2),
+        safe_to_spend: safe_to_spend,
+        operating_balance: operating_balance.round(2),
+        scheduled_deposits: scheduled_deposits.round(2),
+        scheduled_payments: scheduled_payments.round(2),
+        reserved_savings: reserved_savings,
+        available_to_spend: safe_to_spend,  # backward compat alias
         safe_daily_spend: safe_daily_spend,
         days_remaining: days_remaining,
         category_pressure: category_pressure,

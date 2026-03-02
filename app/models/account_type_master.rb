@@ -58,6 +58,14 @@ class AccountTypeMaster < ApplicationRecord
     { display_name: "Contract for Deed Payable",   description: "Contract for deed — you are the buyer/borrower (liability)", normal_balance_type: "CREDIT" },
   ].freeze
 
+  # Account types considered "spendable" (operating cash) for Safe to Spend calculation.
+  # All other DEBIT types are treated as reserved (savings, investments, etc.).
+  SPENDABLE_TYPE_KEYS = ["checking", "cash card"].freeze
+
+  def self.spendable_type_ids
+    where(normalized_key: SPENDABLE_TYPE_KEYS).pluck(:id)
+  end
+
   def self.ensure_system_types!
     existing_keys = system_types.pluck(:normalized_key).map(&:downcase).to_set
     CANONICAL_TYPES.each_with_index do |type, idx|

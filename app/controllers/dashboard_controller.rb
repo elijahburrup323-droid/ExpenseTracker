@@ -20,11 +20,16 @@ class DashboardController < ApplicationController
 
     # DEBIT-only classification — reused by Card 1 budget filter, Card 3, Card 4
     credit_master_ids = AccountTypeMaster.where(normal_balance_type: "CREDIT").pluck(:id)
+    spendable_master_ids = AccountTypeMaster.spendable_type_ids
 
-    # Card 1: Spending Overview (Tracking-Only mode)
-    # Since bills_master does not exist, all users are in tracking-only mode.
-    # Budget accounts are DEBIT-only (liquid assets, not liabilities)
+    # Card 1: Spending Overview — Safe to Spend (Operating Cash)
+    # Budget accounts = DEBIT + include_in_budget (unchanged for other cards)
     budget_accounts = @accounts.where(include_in_budget: true).where.not(account_type_master_id: credit_master_ids)
+
+    # Spendable = Checking + Cash Card within budget accounts
+    spendable_accounts = budget_accounts.where(account_type_master_id: spendable_master_ids)
+    spendable_ids = spendable_accounts.pluck(:id)
+
     @spent_mtd = current_user.payments
                              .where(payment_date: @month_start...@month_end)
                              .sum(:amount)
@@ -88,24 +93,37 @@ class DashboardController < ApplicationController
       end
     end
 
-    # Card 1: Available to Spend + Safe Daily Spend (Tracking Mode)
-    @cash_balance = budget_accounts.sum(:balance).to_f
-    scheduled_remaining = 0.0
-    current_user.recurring_obligations.active.each do |ob|
+    # Card 1: Safe to Spend (Operating Cash only)
+    @operating_balance = spendable_accounts.sum(:balance).to_f
+    @reserved_savings = budget_accounts.where.not(account_type_master_id: spendable_master_ids).sum(:balance).to_f.round(2)
+
+    # Scheduled deposits TO spendable accounts
+    @scheduled_deposits = 0.0
+    current_user.income_recurrings.where(use_flag: true, account_id: spendable_ids).each do |ir|
+      if ir.next_date && ir.next_date >= @month_start && ir.next_date < @month_end
+        @scheduled_deposits += ir.amount.to_f
+      end
+    end
+    @scheduled_deposits = @scheduled_deposits.round(2)
+
+    # Scheduled payments FROM spendable accounts (+ account-less obligations)
+    @scheduled_payments = 0.0
+    current_user.recurring_obligations.active.where(account_id: [nil] + spendable_ids).each do |ob|
       if ob.falls_in_month?(@month_start.year, @month_start.month)
         due = ob.due_date_in_month(@month_start.year, @month_start.month)
-        scheduled_remaining += ob.amount.to_f if due && due >= Date.today
+        @scheduled_payments += ob.amount.to_f if due && due >= Date.today
       end
     end
-    current_user.payment_recurrings.where(use_flag: true).each do |pr|
+    current_user.payment_recurrings.where(use_flag: true, account_id: spendable_ids).each do |pr|
       if pr.next_date && pr.next_date >= @month_start && pr.next_date < @month_end
-        scheduled_remaining += pr.amount.to_f
+        @scheduled_payments += pr.amount.to_f
       end
     end
-    @scheduled_remaining = scheduled_remaining.round(2)
-    @available_to_spend = (@cash_balance - @scheduled_remaining).round(2)
+    @scheduled_payments = @scheduled_payments.round(2)
+
+    @safe_to_spend = (@operating_balance + @scheduled_deposits - @scheduled_payments).round(2)
     @days_remaining = is_current ? (@month_start.end_of_month - Date.today).to_i : 0
-    @safe_daily_spend = @days_remaining > 0 ? (@available_to_spend / @days_remaining).round(2) : 0.0
+    @safe_daily_spend = @days_remaining > 0 ? (@safe_to_spend / @days_remaining).round(2) : 0.0
 
     # Card 1 back: Spending by Tag (split amount evenly across a payment's tags)
     month_payments = current_user.payments
@@ -251,7 +269,7 @@ class DashboardController < ApplicationController
     end
 
     # Financial Pulse strip metrics
-    @pulse_liquidity = @three_month_avg && @three_month_avg > 0 ? (@cash_balance / @three_month_avg).round(1) : nil
+    @pulse_liquidity = @three_month_avg && @three_month_avg > 0 ? ((@operating_balance + @reserved_savings) / @three_month_avg).round(1) : nil
     @pulse_debt_ratio = @net_worth_assets > 0 ? (@net_worth_liabilities / @net_worth_assets * 100).round(1) : nil
     @pulse_savings_rate = @current_month_income.to_f > 0 ? ((@current_month_income.to_f - @current_month_payments.to_f) / @current_month_income.to_f * 100).round(1) : nil
 
