@@ -1,7 +1,7 @@
 APP_VERSION = "1.3.55"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
-MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 1  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Module killswitches — set to false to instantly disable a module for ALL users.
 # When disabled: sidebar nav hidden, controllers return 404/redirect, Net Worth excludes module.
