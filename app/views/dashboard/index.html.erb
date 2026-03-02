@@ -1,4 +1,4 @@
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4"
      data-controller="dashboard"
      data-dashboard-api-url-value="<%= api_dashboard_card_data_path %>"
      data-dashboard-recent-activity-url-value="<%= api_dashboard_recent_activity_page_path %>"
@@ -26,7 +26,7 @@
   <% end %>
 
   <%# Financial Pulse strip %>
-  <div class="flex items-center flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400 mb-3 px-1" data-dashboard-target="pulseStrip">
+  <div class="flex items-center flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400 mb-2 px-1" data-dashboard-target="pulseStrip">
     <span class="font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider" style="font-size: 10px;">Financial Pulse</span>
     <% if @pulse_liquidity %>
       <span class="<%= @pulse_liquidity < 1.0 ? 'text-amber-600 dark:text-amber-400 font-medium' : '' %>">
@@ -48,12 +48,12 @@
   </div>
 
   <%# ===== 6-CARD GRID (3 x 2, equal size) ===== %>
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 md:dash-grid gap-4 md:gap-6" data-dashboard-target="cardsGrid" data-tutorial="dashboard-cards">
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 md:dash-grid gap-3 md:gap-5" data-dashboard-target="cardsGrid" data-tutorial="dashboard-cards">
 
     <% @slots.each do |slot| %>
       <% card = slot.dashboard_card %>
       <% next unless card&.is_active %>
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 lg:p-6 dash-card min-w-0"
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-3 lg:p-5 dash-card min-w-0"
            style="perspective: 1000px;"
            data-dashboard-target="slotWrapper"
            data-slot-number="<%= slot.slot_number %>"

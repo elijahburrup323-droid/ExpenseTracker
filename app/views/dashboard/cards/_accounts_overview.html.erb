@@ -19,7 +19,7 @@
   <%# === FRONT SIDE (Assets & Liabilities grouped) === %>
   <div class="flex flex-col flex-1" data-role="front" style="backface-visibility: hidden;">
     <div data-role="front-content" class="dash-card-scroll">
-      <div class="flex items-center justify-between mb-3">
+      <div class="flex items-center justify-between mb-2">
         <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200"><%= card.title %></h2>
         <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">Accounts Total: <%= number_to_currency(card2_total) %></span>
       </div>
@@ -27,10 +27,10 @@
         <p class="text-sm text-gray-400 dark:text-gray-500">No accounts yet.</p>
       <% else %>
         <%# --- Assets Section --- %>
-        <div class="mb-3">
+        <div class="mb-2">
           <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">Assets</p>
           <% if asset_accounts_sorted.any? %>
-            <ul class="space-y-2">
+            <ul class="space-y-1.5">
               <% asset_accounts_sorted.each_with_index do |account, i| %>
                 <% c = color_cycle[i % color_cycle.length] %>
                 <li class="flex items-center justify-between">
@@ -58,7 +58,7 @@
         <div>
           <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">Liabilities</p>
           <% if liability_accounts_sorted.any? %>
-            <ul class="space-y-2">
+            <ul class="space-y-1.5">
               <% liability_accounts_sorted.each_with_index do |account, i| %>
                 <% c = color_cycle[(asset_accounts_sorted.length + i) % color_cycle.length] %>
                 <li class="flex items-center justify-between">
@@ -111,7 +111,7 @@
   <%# === BACK SIDE (Assets vs Liabilities Comparison) === %>
   <div class="absolute inset-0 flex flex-col" data-role="back" style="backface-visibility: hidden; transform: rotateY(180deg);">
     <div data-role="back-content" class="dash-card-scroll">
-      <div class="flex items-center justify-between mb-3">
+      <div class="flex items-center justify-between mb-2">
         <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Assets vs Liabilities</h2>
         <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">Accounts Total: <%= number_to_currency(card2_total) %></span>
       </div>

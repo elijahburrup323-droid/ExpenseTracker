@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.50"
+APP_VERSION = "1.3.51"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,12 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.51",
+    changes: [
+      "Dashboard: Reduce Vertical Dead Space. Compressed internal card padding (p-4/p-6 → p-3/p-5), tightened header-to-body gaps (mb-4 → mb-2), reduced content row spacing, and narrowed grid gaps. Footer top padding reduced from 8px to 4px. All six cards fit more content in the same viewport with no typography or layout structure changes."
+    ]
+  },
   {
     version: "1.3.50",
     changes: [

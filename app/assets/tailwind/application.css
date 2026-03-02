@@ -40,7 +40,7 @@
   .dash-card-footer {
     margin-top: auto;
     flex-shrink: 0;
-    padding-top: 0.5rem;   /* 8px — minimal consistent spacing above footer */
+    padding-top: 0.25rem;  /* 4px — minimal consistent spacing above footer */
     padding-bottom: 0.25rem; /* 4px — minimal bottom breathing room */
   }
 }
