@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.51"
+APP_VERSION = "1.3.52"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,12 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.52",
+    changes: [
+      "Dashboard Slot 1: Calm Snapshot Redesign. Replaced Safe to Spend breakdown with a calm spending summary. Dynamic headline shows remaining budget or total spent based on 3-month average plan. Secondary line shows spent vs planned. Per-day pacing text shows daily available, plan reached, or plan exceeded. Muted slate/gray tones replace aggressive green/red coloring."
+    ]
+  },
   {
     version: "1.3.51",
     changes: [

@@ -512,69 +512,49 @@ export default class extends Controller {
   _renderSpendingOverview(wrapper, data) {
     const content = wrapper.querySelector("[data-role='card-content']")
     if (content) {
-      const safeToSpend = data.safe_to_spend || 0
-      const safeColor = safeToSpend >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-      const operatingBalance = this._currency(data.operating_balance || 0)
-      const scheduledDeposits = this._currency(data.scheduled_deposits || 0)
-      const scheduledPayments = this._currency(data.scheduled_payments || 0)
-      const reservedSavings = data.reserved_savings || 0
-      const safeDailySpend = this._currency(data.safe_daily_spend || 0)
+      const spent = data.spent || 0
+      const avg = data.three_month_avg
+      const hasPlan = avg != null && avg > 0
+      const remaining = hasPlan ? (avg - spent) : 0
       const daysRemaining = data.days_remaining || 0
 
-      let pressureHtml = ''
-      if (data.category_pressure && data.category_pressure.length > 0) {
-        pressureHtml = '<div class="mt-1.5">'
-        for (const cp of data.category_pressure) {
-          const cpClass = cp.pct_used >= 90 ? 'text-red-500 font-medium' : 'text-amber-500'
-          pressureHtml += `<p class="text-[11px] mt-0.5 ${cpClass}"><svg class="w-3 h-3 inline -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg> ${this._esc(cp.name)} ${cp.pct_used}%</p>`
-        }
-        pressureHtml += '</div>'
+      let headlineText
+      if (hasPlan) {
+        headlineText = `${this._currency0(Math.abs(remaining))} ${remaining >= 0 ? 'remaining' : 'over plan'}`
+      } else {
+        headlineText = `${this._currency0(spent)} spent this month`
       }
 
-      let reservedHtml = ''
-      if (reservedSavings > 0) {
-        reservedHtml = `
-          <div class="mt-2 pt-1.5 border-t border-gray-100 dark:border-gray-700">
-            <div class="flex items-center space-x-1.5">
-              <svg class="w-3 h-3 text-gray-400 dark:text-gray-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
-              <p class="text-[11px] text-gray-400 dark:text-gray-500">Reserved in Savings: <span class="font-medium" style="font-variant-numeric: tabular-nums;">${this._currency(reservedSavings)}</span></p>
-            </div>
-          </div>`
+      let secondaryHtml = ''
+      if (hasPlan) {
+        secondaryHtml = `<p class="text-sm text-gray-500 dark:text-gray-400 mb-2" style="font-variant-numeric: tabular-nums;">${this._currency0(spent)} of ${this._currency0(avg)} planned</p>`
+      }
+
+      let pacingHtml = ''
+      if (hasPlan) {
+        if (daysRemaining > 0) {
+          if (remaining > 0) {
+            pacingHtml = `<p class="text-[11px] text-gray-400 dark:text-gray-500" style="font-variant-numeric: tabular-nums;">${this._currency(remaining / daysRemaining)} per day available</p>`
+          } else if (remaining === 0) {
+            pacingHtml = `<p class="text-[11px] text-gray-400 dark:text-gray-500">Plan reached</p>`
+          } else {
+            pacingHtml = `<p class="text-[11px] text-amber-600 dark:text-amber-400" style="font-variant-numeric: tabular-nums;">Plan exceeded by ${this._currency0(Math.abs(remaining))}</p>`
+          }
+        } else {
+          if (remaining >= 0) {
+            pacingHtml = `<p class="text-[11px] text-gray-400 dark:text-gray-500">Finished under plan</p>`
+          } else {
+            pacingHtml = `<p class="text-[11px] text-amber-600 dark:text-amber-400" style="font-variant-numeric: tabular-nums;">Plan exceeded by ${this._currency0(Math.abs(remaining))}</p>`
+          }
+        }
       }
 
       content.innerHTML = `
-        <div class="flex flex-col flex-1">
-          <div class="flex items-center space-x-1.5 mb-1">
-            <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Safe to Spend</p>
-            <span class="relative group cursor-help">
-              <svg class="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg>
-              <span class="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 px-2 py-1 text-[10px] text-white bg-gray-800 dark:bg-gray-600 rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition z-50">Safe to Spend includes only operating accounts (Checking, Cash Card). Savings are reserved and excluded.</span>
-            </span>
-          </div>
-          <p class="text-2xl font-bold ${safeColor} mb-3" style="font-variant-numeric: tabular-nums;">${this._currency(safeToSpend)}</p>
-          <div class="space-y-1 text-[12px]">
-            <div class="flex items-center justify-between">
-              <span class="text-gray-500 dark:text-gray-400">Current Operating Balance</span>
-              <span class="font-medium text-gray-800 dark:text-gray-200" style="font-variant-numeric: tabular-nums;">${operatingBalance}</span>
-            </div>
-            <div class="flex items-center justify-between">
-              <span class="text-green-600 dark:text-green-400">+ Scheduled Deposits</span>
-              <span class="font-medium text-green-600 dark:text-green-400" style="font-variant-numeric: tabular-nums;">${scheduledDeposits}</span>
-            </div>
-            <div class="flex items-center justify-between">
-              <span class="text-red-500 dark:text-red-400">- Scheduled Payments</span>
-              <span class="font-medium text-red-500 dark:text-red-400" style="font-variant-numeric: tabular-nums;">${scheduledPayments}</span>
-            </div>
-          </div>
-          ${pressureHtml}
-          <div class="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
-            <div class="flex items-baseline space-x-2">
-              <p class="text-sm font-semibold text-gray-800 dark:text-gray-200" style="font-variant-numeric: tabular-nums;">${safeDailySpend}</p>
-              <p class="text-[11px] text-gray-500 dark:text-gray-400">safe / day</p>
-              <p class="text-[11px] text-gray-400 dark:text-gray-500">${daysRemaining} days left</p>
-            </div>
-          </div>
-          ${reservedHtml}
+        <div class="flex flex-col justify-center flex-1 py-2">
+          <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">This Month</p>
+          <p class="text-2xl font-bold text-slate-700 dark:text-slate-200 mb-1" style="font-variant-numeric: tabular-nums;">${headlineText}</p>
+          ${secondaryHtml}
+          ${pacingHtml}
         </div>`
     }
 
@@ -1136,6 +1116,10 @@ export default class extends Controller {
 
   _currency(val) {
     return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(val || 0)
+  }
+
+  _currency0(val) {
+    return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(val || 0)
   }
 
   _updatePulseStrip(pulse) {
