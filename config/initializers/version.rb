@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.48"
+APP_VERSION = "1.3.49"
 QA_MODE = true  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,12 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.49",
+    changes: [
+      "Dashboard: iPad Grid Lock. Fixed 3x2 dashboard grid on iPad landscape so all six cards are fully visible without vertical scrolling. Uses dynamic viewport height (dvh) to properly account for Safari's address bar. Tighter height calculation at tablet breakpoints ensures cards fit within the visible area."
+    ]
+  },
   {
     version: "1.3.48",
     changes: [

@@ -154,15 +154,23 @@
       }
 
       /* Dashboard card design tokens — matches application.css for CDN fallback */
-      /* CM-5 + 022626_2: lock grid height so all 6 cards fit viewport at 1440×900 */
+      /* CM-5 + 022626_2: lock grid height so all 6 cards fit viewport */
       @media (min-width: 768px) {
         .md\:dash-grid {
           grid-template-rows: repeat(2, 1fr);
           height: calc(100vh - 13rem);
+          height: calc(100dvh - 13rem); /* iPad Safari: accounts for address bar */
           overflow: hidden;
         }
       }
-      .dash-card { height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+      /* iPad landscape lock: force 3-col at 1024px+ with tighter height */
+      @media (min-width: 1024px) and (max-height: 1050px) {
+        .md\:dash-grid {
+          height: calc(100vh - 11rem);
+          height: calc(100dvh - 11rem);
+        }
+      }
+      .dash-card { height: 100%; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
       .dash-card-scroll { flex: 1 1 0%; min-height: 0; overflow-y: auto; }
       .dash-card-footer { margin-top: auto; flex-shrink: 0; padding-top: 0.5rem; padding-bottom: 0.25rem; }
 
