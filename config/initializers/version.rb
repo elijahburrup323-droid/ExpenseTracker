@@ -1,7 +1,7 @@
-APP_VERSION = "1.3.55"
+APP_VERSION = "1.3.56"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
-MANUAL_CHANGE_SEQ = 1  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
+MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
 
 # Module killswitches — set to false to instantly disable a module for ALL users.
 # When disabled: sidebar nav hidden, controllers return 404/redirect, Net Worth excludes module.
@@ -12,6 +12,12 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.56",
+    changes: [
+      "Dashboard: Fixed Accounts card report icon disappearing after JS re-render. The client-side _renderAccountsOverview now includes the bar-chart report icon in both front and back headers, matching the server-rendered ERB template."
+    ]
+  },
   {
     version: "1.3.55",
     changes: [

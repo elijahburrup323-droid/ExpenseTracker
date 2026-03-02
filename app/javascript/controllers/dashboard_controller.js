@@ -734,19 +734,24 @@ export default class extends Controller {
 
     const frontContent = wrapper.querySelector("[data-role='front-content']")
     if (frontContent) {
+      const reportIcon = `<a class="ml-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition" aria-label="Open accounts report" href="/reports/account_balance_history"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V9m4 7V5m4 11v-4m4 4V8"/></svg></a>`
+
       let html = `
-        <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center justify-between mb-2">
           <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Accounts</h2>
-          <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">Accounts Total: ${this._currency(total)}</span>
+          <div class="flex items-center">
+            <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">Accounts Total: ${this._currency(total)}</span>
+            ${reportIcon}
+          </div>
         </div>`
 
       if (accounts.length === 0) {
         html += `<p class="text-sm text-gray-400 dark:text-gray-500">No accounts yet.</p>`
       } else {
         // Assets section
-        html += `<div class="mb-3"><p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">Assets</p>`
+        html += `<div class="mb-2"><p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">Assets</p>`
         if (assetAccounts.length > 0) {
-          html += `<ul class="space-y-2">`
+          html += `<ul class="space-y-1.5">`
           assetAccounts.forEach((a, i) => {
             const c = colors[i % colors.length]
             html += `<li class="flex items-center justify-between">
@@ -770,7 +775,7 @@ export default class extends Controller {
         // Liabilities section
         html += `<div><p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">Liabilities</p>`
         if (liabilityAccounts.length > 0) {
-          html += `<ul class="space-y-2">`
+          html += `<ul class="space-y-1.5">`
           liabilityAccounts.forEach((a) => {
             html += `<li class="flex items-center justify-between">
               <div class="flex items-center space-x-2">
@@ -796,9 +801,12 @@ export default class extends Controller {
     const backContent = wrapper.querySelector("[data-role='back-content']")
     if (backContent) {
       let html = `
-        <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center justify-between mb-2">
           <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Assets vs Liabilities</h2>
-          <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">Accounts Total: ${this._currency(total)}</span>
+          <div class="flex items-center">
+            <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">Accounts Total: ${this._currency(total)}</span>
+            ${reportIcon}
+          </div>
         </div>`
 
       if (barTotal > 0) {
