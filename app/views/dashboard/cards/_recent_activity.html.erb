@@ -13,6 +13,9 @@
         <button type="button" data-action="click->dashboard#nextMonth" data-dashboard-target="nextBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
         </button>
+        <%= link_to report_monthly_cash_flow_path, class: "ml-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition", aria: { label: "Open cash flow report" } do %>
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V9m4 7V5m4 11v-4m4 4V8"/></svg>
+        <% end %>
       </div>
     </div>
     <div class="flex items-center justify-between px-1 mb-2" data-role="activity-summary">
@@ -87,6 +90,9 @@
         <button type="button" data-action="click->dashboard#nextMonth" data-dashboard-target="nextBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
         </button>
+        <%= link_to report_monthly_cash_flow_path, class: "ml-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition", aria: { label: "Open cash flow report" } do %>
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V9m4 7V5m4 11v-4m4 4V8"/></svg>
+        <% end %>
       </div>
     </div>
     <div class="flex-1 overflow-y-auto">
