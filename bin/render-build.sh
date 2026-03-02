@@ -7,6 +7,9 @@ echo "DEPLOY_ENV=${DEPLOY_ENV:-uat}"
 
 bundle install
 
+echo "=== Clear template and bootsnap caches ==="
+bundle exec rake tmp:clear
+
 echo "=== Assets precompile ==="
 bundle exec rake assets:precompile
 bundle exec rake assets:clean
