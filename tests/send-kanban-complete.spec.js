@@ -1,53 +1,56 @@
-// @ts-check
 const { test, expect } = require('@playwright/test');
 
-const BASE = 'https://djburrup.com/mybudgethq';
+const BASE = 'https://mybudgethq.com';
 
-test('send kanban completion email', async ({ page }) => {
-  // Sign in as admin
-  await page.goto(`${BASE}/users/sign_in`);
+test('Send kanban completion email', async ({ page }) => {
+  test.setTimeout(30000);
+
+  // Login first to get auth cookies
+  await page.goto(BASE + '/users/sign_in');
   await page.fill('input[name="user[email]"]', 'elijahburrup323@gmail.com');
   await page.fill('input[name="user[password]"]', 'Eli624462!');
   await page.click('input[type="submit"], button[type="submit"]');
-  await page.waitForURL(/\/mybudgethq\/dashboard/, { timeout: 15000 });
-
-  // Dismiss What's New overlay
-  const gotIt = page.locator('#whatsNewOverlay button:has-text("Got it")');
-  if (await gotIt.isVisible({ timeout: 3000 }).catch(() => false)) {
+  await page.waitForURL(/dashboard/, { timeout: 15000 });
+  try {
+    const gotIt = page.getByRole('button', { name: 'Got it' });
+    await gotIt.waitFor({ state: 'visible', timeout: 5000 });
     await gotIt.click();
-  }
+  } catch (e) {}
 
-  const subject = 'BudgetHQ Kanban Complete — All Open Items Processed (v1.3.10-v1.3.12)';
+  const subject = 'Kanban Complete — All Open Items Done (v1.3.41)';
   const body = [
-    'All Open Items have been processed and moved to Ready for QA.',
+    'All Open Items for MyBudgetHQ have been completed and moved to Ready for QA.',
     '',
-    'Versions deployed this session:',
-    '- v1.3.10: Spending Limits — history-aware monthly limits with dashboard integration (CM-13)',
-    '- v1.3.11: Acct Type Masters toggle + description, Quotes sorting, Dashboard drag-drop (CM-16, CM-20, CM-2, CM-3)',
-    '- v1.3.12: Reports Menu screen + User Menu cleanup (CM-21, CM-22)',
+    'Completed item:',
     '',
-    'All post-deploy tests passed on Chrome and Safari/WebKit.',
+    '1. Dashboard: State Persistence Enhancements (MyBudgetHQ_Modifications_022726_1) — v1.3.41',
+    '   - Extended sessionStorage state to include month/year and scroll positions',
+    '   - Increased state expiry from 30 min to 2 hours for realistic sessions',
+    '   - Re-clicking Dashboard while on it resets to canonical 6-card landing state',
+    '   - Month restored client-side as safety net for server PUT race conditions',
+    '   - Scroll positions saved per card container and restored after data fetch',
     '',
-    'v1.3.12 is live at https://djburrup.com/mybudgethq',
+    'All items deployed to production (mybudgethq.com) and verified with:',
+    '  - elijahburrup323@gmail.com (Eli)',
+    '  - djburrup@gmail.com (DJ)',
+    '',
+    'Post-deploy checks passed: login, dashboard data presence, navigation,',
+    'state persistence (AC1 flip + AC3 reset), no JS console errors,',
+    'regression check on Accounts + Payments pages.',
     '',
     '— Claude Code',
-  ].join('\\n');
+  ].join('\n');
 
-  // Send to djburrup@gmail.com
-  const url1 = `${BASE}/api/diagnose_send?email=djburrup@gmail.com&notify=${encodeURIComponent(subject)}&notify_body=${encodeURIComponent(body)}`;
-  const res1 = await page.evaluate(async (url) => {
-    const r = await fetch(url);
+  const result = await page.evaluate(async ({ base, emails, notify, notifyBody }) => {
+    const params = new URLSearchParams({ email: emails, notify, notify_body: notifyBody });
+    const r = await fetch(base + '/api/diagnose_send?' + params.toString(), {
+      credentials: 'same-origin',
+      headers: { 'Accept': 'application/json' }
+    });
     return { status: r.status, body: await r.text() };
-  }, url1);
-  console.log('Email 1 (djburrup):', res1.status, res1.body.substring(0, 200));
-  expect(res1.status).toBe(200);
+  }, { base: BASE, emails: 'djburrup@gmail.com,elijahdburrup@gmail.com', notify: subject, notifyBody: body });
 
-  // Send to elijahdburrup@gmail.com
-  const url2 = `${BASE}/api/diagnose_send?email=elijahdburrup@gmail.com&notify=${encodeURIComponent(subject)}&notify_body=${encodeURIComponent(body)}`;
-  const res2 = await page.evaluate(async (url) => {
-    const r = await fetch(url);
-    return { status: r.status, body: await r.text() };
-  }, url2);
-  console.log('Email 2 (elijahdburrup):', res2.status, res2.body.substring(0, 200));
-  expect(res2.status).toBe(200);
+  console.log('Email send result:', result.status, result.body);
+  expect(result.status).toBe(200);
+  expect(result.body).toContain('SUCCESS');
 });
