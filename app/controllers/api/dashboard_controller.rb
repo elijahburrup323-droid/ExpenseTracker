@@ -494,7 +494,7 @@ module Api
 
       total_balance = buckets.sum(&:current_balance).to_f.round(2)
 
-      top_buckets = buckets.sort_by { |b| -b.current_balance.to_f }.first(5).map do |b|
+      top_buckets = buckets.sort_by { |b| [b.priority.to_i, b.name.to_s] }.map do |b|
         has_target = b.target_amount.present? && b.target_amount > 0
         pct = has_target ? [(b.current_balance.to_f / b.target_amount.to_f * 100).round(1), 100].min : nil
         remaining = has_target ? [(b.target_amount.to_f - b.current_balance.to_f).round(2), 0].max : nil
@@ -505,7 +505,8 @@ module Api
           progress_pct: pct,
           remaining: remaining,
           account_name: b.account&.name || "[Deleted]",
-          is_default: b.is_default
+          is_default: b.is_default,
+          priority: b.priority.to_i
         }
       end
 

@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.65"
+APP_VERSION = "1.3.66"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,12 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.66",
+    changes: [
+      "Dashboard: Buckets card flip redesign — Structured Goal Progress Model (Instruction Q). Back side now shows 'Goal Progress' with total saved pinned at top, priority-sorted bucket list with name, current amount, target, remaining, and subtle progress bars. Removed account group headers, max spend, and available-to-spend from flip. Flip auto-expands and auto-collapses the card."
+    ]
+  },
   {
     version: "1.3.65",
     changes: [

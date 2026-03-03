@@ -286,8 +286,8 @@ export default class extends Controller {
     const back = wrapper.querySelector("[data-role='back']")
     if (front) front.style.pointerEvents = "none"
     if (back) back.style.pointerEvents = "auto"
-    // Auto-expand for Spending Control panel, Net Worth History, and Income & Spending Details
-    if (wrapper.dataset.cardType === 'spending_overview' || wrapper.dataset.cardType === 'net_worth' || wrapper.dataset.cardType === 'income_spending') {
+    // Auto-expand for Spending Control panel, Net Worth History, Income & Spending Details, and Goal Progress
+    if (wrapper.dataset.cardType === 'spending_overview' || wrapper.dataset.cardType === 'net_worth' || wrapper.dataset.cardType === 'income_spending' || wrapper.dataset.cardType === 'buckets') {
       this._expandCard(wrapper)
     }
   }
@@ -295,10 +295,11 @@ export default class extends Controller {
   flipCardBack(event) {
     const wrapper = event.target.closest("[data-dashboard-target='slotWrapper']")
     if (!wrapper) return
-    // Auto-collapse for Spending Control panel, Net Worth History, and Income & Spending Details
+    // Auto-collapse for Spending Control panel, Net Worth History, Income & Spending Details, and Goal Progress
     if ((wrapper.dataset.cardType === 'spending_overview' && this.expandedCardType === 'spending_overview') ||
         (wrapper.dataset.cardType === 'net_worth' && this.expandedCardType === 'net_worth') ||
-        (wrapper.dataset.cardType === 'income_spending' && this.expandedCardType === 'income_spending')) {
+        (wrapper.dataset.cardType === 'income_spending' && this.expandedCardType === 'income_spending') ||
+        (wrapper.dataset.cardType === 'buckets' && this.expandedCardType === 'buckets')) {
       this._collapseCard()
     }
     const flipper = wrapper.querySelector("[data-role='flipper']")
@@ -1055,6 +1056,32 @@ export default class extends Controller {
     }
 
     content.innerHTML = html
+
+    // Back-of-card: Structured Goal Progress (Instruction Q)
+    const backContent = wrapper.querySelector("[data-role='back-content']")
+    if (backContent) {
+      let bhtml = `<div class="text-center mb-3"><span class="text-lg font-bold text-gray-900 dark:text-white tabular-nums">${this._currency(data.total_balance)} saved in goals</span></div>`
+      bhtml += `<div class="space-y-3">`
+      for (const b of buckets) {
+        const hasTarget = b.target != null && b.target > 0
+        bhtml += `<div>`
+        bhtml += `<div class="flex items-center justify-between"><span class="text-xs font-semibold text-gray-900 dark:text-white">${this._esc(b.name)}</span><span class="text-xs text-gray-600 dark:text-gray-300 tabular-nums">${this._currency(b.balance)}</span></div>`
+        if (hasTarget) {
+          const pct = Math.min((b.balance / b.target * 100), 100).toFixed(1)
+          const remaining = Math.max(b.target - b.balance, 0)
+          const barColor = pct >= 100 ? "bg-green-500" : pct >= 50 ? "bg-gray-400" : "bg-gray-300"
+          bhtml += `<div class="flex items-center justify-between mt-0.5"><span class="text-[10px] text-gray-400 dark:text-gray-500 tabular-nums">Target: ${this._currency(b.target)}</span>`
+          if (remaining > 0) {
+            bhtml += `<span class="text-[10px] text-gray-400 dark:text-gray-500 tabular-nums">${this._currency(remaining)} remaining</span>`
+          }
+          bhtml += `</div>`
+          bhtml += `<div class="mt-1 h-1 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden"><div class="${barColor} h-full rounded-full" style="width: ${pct}%"></div></div>`
+        }
+        bhtml += `</div>`
+      }
+      bhtml += `</div>`
+      backContent.innerHTML = bhtml
+    }
   }
 
   // --- Helpers ---
