@@ -65,6 +65,9 @@ class AccountTypeMaster < ApplicationRecord
   # Account types considered "liquid" for Total Cash on the dashboard Accounts card.
   LIQUID_TYPE_KEYS = ["checking", "savings", "high yield savings", "money market", "cash card"].freeze
 
+  # Revolving credit accounts (dashboard flip: Credit section).
+  CREDIT_TYPE_KEYS = ["credit card", "line of credit", "heloc"].freeze
+
   def self.spendable_type_ids
     where(normalized_key: SPENDABLE_TYPE_KEYS).pluck(:id)
   end

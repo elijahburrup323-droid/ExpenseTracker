@@ -1,24 +1,14 @@
 <%
   credit_master_ids = AccountTypeMaster.where(normal_balance_type: "CREDIT").pluck(:id).to_set
   liquid_master_ids = AccountTypeMaster.liquid_type_ids.to_set
-  nw_data = Account.net_worth_for(@accounts, user: current_user)
-  card2_total = nw_data[:accounts_total]
 
   # Compute liquid (cash) totals for front side
   liquid_accounts = @accounts.select { |a| liquid_master_ids.include?(a.account_type_master_id) }
   liquid_total = liquid_accounts.sum { |a| a.balance.to_f }
   liquid_count = liquid_accounts.size
 
-  # Split for back side (assets vs liabilities)
-  asset_accounts = @accounts.select { |a| !credit_master_ids.include?(a.account_type_master_id) }
+  # Liability accounts needed for back-side grouping
   liability_accounts = @accounts.select { |a| credit_master_ids.include?(a.account_type_master_id) }
-  asset_accounts_sorted = asset_accounts.sort_by { |a| -a.balance.to_f }
-  liability_accounts_sorted = liability_accounts.sort_by { |a| -a.balance.to_f.abs }
-  assets_sum = asset_accounts.sum { |a| a.balance.to_f }
-  liabilities_sum = liability_accounts.sum { |a| a.balance.to_f.abs }
-  bar_total = assets_sum + liabilities_sum
-  assets_pct = bar_total > 0 ? (assets_sum / bar_total * 100).round(0) : 0
-  liabilities_pct = bar_total > 0 ? (liabilities_sum / bar_total * 100).round(0) : 0
 %>
 <div class="relative flex-1 flex flex-col" data-role="flipper" style="transform-style: preserve-3d; transition: transform 0.6s;">
   <%# === FRONT SIDE (Calm Cash — Total Cash only) === %>
@@ -63,73 +53,115 @@
       </div>
     </div>
   </div>
-  <%# === BACK SIDE (Assets vs Liabilities Comparison) === %>
+  <%#
+    === BACK SIDE (Grouped Structure — Instruction K) ===
+    3 sections: Liquid (expanded), Credit (collapsed), Loans (collapsed)
+  %>
+  <%
+    revolving_credit_ids = AccountTypeMaster.where(normalized_key: AccountTypeMaster::CREDIT_TYPE_KEYS).pluck(:id).to_set
+    liquid_accounts_sorted = liquid_accounts.sort_by { |a| -a.balance.to_f }
+    credit_accounts = @accounts.select { |a| revolving_credit_ids.include?(a.account_type_master_id) }
+    credit_accounts_sorted = credit_accounts.sort_by { |a| -a.balance.to_f.abs }
+    credit_sum = credit_accounts.sum { |a| a.balance.to_f.abs }
+    loan_accounts = liability_accounts.reject { |a| revolving_credit_ids.include?(a.account_type_master_id) }
+    loan_accounts_sorted = loan_accounts.sort_by { |a| -a.balance.to_f.abs }
+    loan_sum = loan_accounts.sum { |a| a.balance.to_f.abs }
+  %>
   <div class="absolute inset-0 flex flex-col" data-role="back" style="backface-visibility: hidden; transform: rotateY(180deg); pointer-events: none;">
     <div data-role="back-content" class="dash-card-scroll">
       <div class="flex items-center justify-between mb-2">
-        <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Assets vs Liabilities</h2>
-        <div class="flex items-center">
-          <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">Accounts Total: <%= number_to_currency(card2_total) %></span>
-          <%= link_to report_account_balance_history_path, class: "ml-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition", aria: { label: "Open accounts report" } do %>
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V9m4 7V5m4 11v-4m4 4V8"/></svg>
-          <% end %>
-        </div>
+        <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Account Groups</h2>
+        <%= link_to report_account_balance_history_path, class: "text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition", aria: { label: "Open accounts report" } do %>
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V9m4 7V5m4 11v-4m4 4V8"/></svg>
+        <% end %>
       </div>
-      <% if bar_total > 0 %>
-        <%# --- Horizontal Bar --- %>
-        <div class="mb-4">
-          <div class="flex h-8 rounded-lg overflow-hidden">
-            <% if assets_pct > 0 %>
-              <div class="bg-green-500 dark:bg-green-600 flex items-center justify-center" style="width: <%= [assets_pct, 8].max %>%">
-                <span class="text-xs font-bold text-white"><%= assets_pct %>%</span>
-              </div>
-            <% end %>
-            <% if liabilities_pct > 0 %>
-              <div class="bg-red-500 dark:bg-red-600 flex items-center justify-center" style="width: <%= [liabilities_pct, 8].max %>%">
-                <span class="text-xs font-bold text-white"><%= liabilities_pct %>%</span>
-              </div>
-            <% end %>
-          </div>
-          <div class="flex items-center justify-between mt-2">
-            <span class="text-xs font-semibold text-green-600 dark:text-green-400 tabular-nums">Assets: <%= number_to_currency(assets_sum) %></span>
-            <span class="text-xs font-semibold text-red-600 dark:text-red-400 tabular-nums">Liabilities: <%= number_to_currency(liabilities_sum) %></span>
-          </div>
-        </div>
-        <%# --- Top Accounts Breakdown --- %>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Top Assets</p>
-            <% if asset_accounts_sorted.any? %>
+      <% if @accounts.empty? %>
+        <p class="text-sm text-gray-400 dark:text-gray-500 text-center py-8">No account data available.</p>
+      <% else %>
+        <%# --- 1) Liquid Accounts (Expanded by Default) --- %>
+        <div class="mb-3" data-acct-section="liquid">
+          <button type="button" onclick="this.closest('[data-acct-section]').querySelector('[data-section-body]').classList.toggle('hidden'); this.querySelector('[data-chevron]').classList.toggle('rotate-90')" class="flex items-center justify-between w-full text-left">
+            <div class="flex items-center space-x-1.5">
+              <svg data-chevron class="w-3.5 h-3.5 text-gray-400 dark:text-gray-500 rotate-90 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Liquid Accounts</span>
+            </div>
+            <span class="text-xs font-semibold text-gray-900 dark:text-white tabular-nums"><%= number_to_currency(liquid_total) %></span>
+          </button>
+          <div data-section-body class="mt-1.5">
+            <% if liquid_accounts_sorted.any? %>
               <ul class="space-y-1">
-                <% asset_accounts_sorted.first(3).each do |account| %>
-                  <li class="flex items-center justify-between">
+                <% liquid_accounts_sorted.each do |account| %>
+                  <li class="flex items-center justify-between pl-5">
                     <span class="text-xs text-gray-700 dark:text-gray-300 truncate mr-1"><%= account.name %></span>
                     <span class="text-xs font-semibold text-gray-900 dark:text-white tabular-nums flex-shrink-0"><%= number_to_currency(account.balance.to_f) %></span>
                   </li>
                 <% end %>
               </ul>
+              <div class="flex items-center justify-between pl-5 mt-1.5 pt-1.5 border-t border-gray-100 dark:border-gray-700">
+                <span class="text-xs font-semibold text-gray-600 dark:text-gray-400">Total Liquid</span>
+                <span class="text-xs font-semibold text-gray-900 dark:text-white tabular-nums"><%= number_to_currency(liquid_total) %></span>
+              </div>
             <% else %>
-              <p class="text-xs text-gray-400 dark:text-gray-500">None</p>
-            <% end %>
-          </div>
-          <div>
-            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Top Liabilities</p>
-            <% if liability_accounts_sorted.any? %>
-              <ul class="space-y-1">
-                <% liability_accounts_sorted.first(3).each do |account| %>
-                  <li class="flex items-center justify-between">
-                    <span class="text-xs text-gray-700 dark:text-gray-300 truncate mr-1"><%= account.name %></span>
-                    <span class="text-xs font-semibold text-red-600 dark:text-red-400 tabular-nums flex-shrink-0"><%= number_to_currency(account.balance.to_f.abs) %></span>
-                  </li>
-                <% end %>
-              </ul>
-            <% else %>
-              <p class="text-xs text-gray-400 dark:text-gray-500">None</p>
+              <p class="text-xs text-gray-400 dark:text-gray-500 pl-5">No liquid accounts.</p>
             <% end %>
           </div>
         </div>
-      <% else %>
-        <p class="text-sm text-gray-400 dark:text-gray-500 text-center py-8">No account data available.</p>
+        <%# --- 2) Credit Accounts (Collapsed by Default) --- %>
+        <div class="mb-3" data-acct-section="credit">
+          <button type="button" onclick="this.closest('[data-acct-section]').querySelector('[data-section-body]').classList.toggle('hidden'); this.querySelector('[data-chevron]').classList.toggle('rotate-90')" class="flex items-center justify-between w-full text-left">
+            <div class="flex items-center space-x-1.5">
+              <svg data-chevron class="w-3.5 h-3.5 text-gray-400 dark:text-gray-500 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Credit Accounts</span>
+            </div>
+            <span class="text-xs font-semibold text-red-500 dark:text-red-400 tabular-nums"><%= credit_sum > 0 ? "-" : "" %><%= number_to_currency(credit_sum) %></span>
+          </button>
+          <div data-section-body class="mt-1.5 hidden">
+            <% if credit_accounts_sorted.any? %>
+              <ul class="space-y-1">
+                <% credit_accounts_sorted.each do |account| %>
+                  <li class="flex items-center justify-between pl-5">
+                    <span class="text-xs text-gray-700 dark:text-gray-300 truncate mr-1"><%= account.name %></span>
+                    <span class="text-xs font-semibold text-red-500 dark:text-red-400 tabular-nums flex-shrink-0"><%= number_to_currency(-account.balance.to_f.abs) %></span>
+                  </li>
+                <% end %>
+              </ul>
+              <div class="flex items-center justify-between pl-5 mt-1.5 pt-1.5 border-t border-gray-100 dark:border-gray-700">
+                <span class="text-xs font-semibold text-gray-600 dark:text-gray-400">Total Credit</span>
+                <span class="text-xs font-semibold text-red-500 dark:text-red-400 tabular-nums"><%= credit_sum > 0 ? "-" : "" %><%= number_to_currency(credit_sum) %></span>
+              </div>
+            <% else %>
+              <p class="text-xs text-gray-400 dark:text-gray-500 pl-5">No credit accounts.</p>
+            <% end %>
+          </div>
+        </div>
+        <%# --- 3) Loans / Financing (Collapsed by Default) --- %>
+        <div data-acct-section="loans">
+          <button type="button" onclick="this.closest('[data-acct-section]').querySelector('[data-section-body]').classList.toggle('hidden'); this.querySelector('[data-chevron]').classList.toggle('rotate-90')" class="flex items-center justify-between w-full text-left">
+            <div class="flex items-center space-x-1.5">
+              <svg data-chevron class="w-3.5 h-3.5 text-gray-400 dark:text-gray-500 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+              <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Loans / Financing</span>
+            </div>
+            <span class="text-xs font-semibold text-red-500 dark:text-red-400 tabular-nums"><%= loan_sum > 0 ? "-" : "" %><%= number_to_currency(loan_sum) %></span>
+          </button>
+          <div data-section-body class="mt-1.5 hidden">
+            <% if loan_accounts_sorted.any? %>
+              <ul class="space-y-1">
+                <% loan_accounts_sorted.each do |account| %>
+                  <li class="flex items-center justify-between pl-5">
+                    <span class="text-xs text-gray-700 dark:text-gray-300 truncate mr-1"><%= account.name %></span>
+                    <span class="text-xs font-semibold text-red-500 dark:text-red-400 tabular-nums flex-shrink-0"><%= number_to_currency(-account.balance.to_f.abs) %></span>
+                  </li>
+                <% end %>
+              </ul>
+              <div class="flex items-center justify-between pl-5 mt-1.5 pt-1.5 border-t border-gray-100 dark:border-gray-700">
+                <span class="text-xs font-semibold text-gray-600 dark:text-gray-400">Total Loans</span>
+                <span class="text-xs font-semibold text-red-500 dark:text-red-400 tabular-nums"><%= loan_sum > 0 ? "-" : "" %><%= number_to_currency(loan_sum) %></span>
+              </div>
+            <% else %>
+              <p class="text-xs text-gray-400 dark:text-gray-500 pl-5">No loan accounts.</p>
+            <% end %>
+          </div>
+        </div>
       <% end %>
     </div>
     <div class="dash-card-footer border-t border-gray-100 dark:border-gray-700 flex items-center justify-between" data-role="card-footer">

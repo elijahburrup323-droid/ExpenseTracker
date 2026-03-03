@@ -722,19 +722,10 @@ export default class extends Controller {
     const liquidTotal = data.liquid_total || 0
     const liquidCount = data.liquid_count || 0
 
-    // Split into assets (DEBIT) and liabilities (CREDIT) for back side
-    const assetAccounts = accounts.filter(a => a.normal_balance_type !== "CREDIT").sort((a, b) => b.balance - a.balance)
-    const liabilityAccounts = accounts.filter(a => a.normal_balance_type === "CREDIT").sort((a, b) => Math.abs(b.balance) - Math.abs(a.balance))
-    const assetsSum = assetAccounts.reduce((s, a) => s + a.balance, 0)
-    const liabilitiesSum = liabilityAccounts.reduce((s, a) => s + Math.abs(a.balance), 0)
-    const barTotal = assetsSum + liabilitiesSum
-    const assetsPct = barTotal > 0 ? Math.round(assetsSum / barTotal * 100) : 0
-    const liabilitiesPct = barTotal > 0 ? Math.round(liabilitiesSum / barTotal * 100) : 0
+    const reportIcon = `<a class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition" aria-label="Open accounts report" href="/reports/account_balance_history"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V9m4 7V5m4 11v-4m4 4V8"/></svg></a>`
 
     const frontContent = wrapper.querySelector("[data-role='front-content']")
     if (frontContent) {
-      const reportIcon = `<a class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition" aria-label="Open accounts report" href="/reports/account_balance_history"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V9m4 7V5m4 11v-4m4 4V8"/></svg></a>`
-
       let html = `
         <div class="flex items-center justify-between mb-2">
           <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Accounts</h2>
@@ -755,74 +746,76 @@ export default class extends Controller {
 
     const backContent = wrapper.querySelector("[data-role='back-content']")
     if (backContent) {
+      // Group accounts by account_group from API
+      const liquidAccts = accounts.filter(a => a.account_group === "liquid").sort((a, b) => b.balance - a.balance)
+      const creditAccts = accounts.filter(a => a.account_group === "credit").sort((a, b) => Math.abs(b.balance) - Math.abs(a.balance))
+      const loanAccts = accounts.filter(a => a.account_group === "loan").sort((a, b) => Math.abs(b.balance) - Math.abs(a.balance))
+      const liquidSum = liquidAccts.reduce((s, a) => s + a.balance, 0)
+      const creditSum = creditAccts.reduce((s, a) => s + Math.abs(a.balance), 0)
+      const loanSum = loanAccts.reduce((s, a) => s + Math.abs(a.balance), 0)
+
       let html = `
         <div class="flex items-center justify-between mb-2">
-          <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Assets vs Liabilities</h2>
-          <div class="flex items-center">
-            <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">Accounts Total: ${this._currency(total)}</span>
-            ${reportIcon}
-          </div>
+          <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Account Groups</h2>
+          ${reportIcon}
         </div>`
 
-      if (barTotal > 0) {
-        // Horizontal bar comparison
-        const aW = Math.max(assetsPct, 8)
-        const lW = Math.max(liabilitiesPct, 8)
-        html += `<div class="mb-4">
-          <div class="flex h-8 rounded-lg overflow-hidden">`
-        if (assetsPct > 0) {
-          html += `<div class="bg-green-500 dark:bg-green-600 flex items-center justify-center" style="width:${aW}%">
-            <span class="text-xs font-bold text-white">${assetsPct}%</span>
-          </div>`
-        }
-        if (liabilitiesPct > 0) {
-          html += `<div class="bg-red-500 dark:bg-red-600 flex items-center justify-center" style="width:${lW}%">
-            <span class="text-xs font-bold text-white">${liabilitiesPct}%</span>
-          </div>`
-        }
-        html += `</div>
-          <div class="flex items-center justify-between mt-2">
-            <span class="text-xs font-semibold text-green-600 dark:text-green-400 tabular-nums">Assets: ${this._currency(assetsSum)}</span>
-            <span class="text-xs font-semibold text-red-600 dark:text-red-400 tabular-nums">Liabilities: ${this._currency(liabilitiesSum)}</span>
-          </div>
-        </div>`
-
-        // Top 3 breakdown
-        html += `<div class="grid grid-cols-2 gap-3">`
-        html += `<div><p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Top Assets</p>`
-        if (assetAccounts.length > 0) {
-          html += `<ul class="space-y-1">`
-          assetAccounts.slice(0, 3).forEach(a => {
-            html += `<li class="flex items-center justify-between">
-              <span class="text-xs text-gray-700 dark:text-gray-300 truncate mr-1">${this._esc(a.name)}</span>
-              <span class="text-xs font-semibold text-gray-900 dark:text-white tabular-nums flex-shrink-0">${this._currency(a.balance)}</span>
-            </li>`
-          })
-          html += `</ul>`
-        } else {
-          html += `<p class="text-xs text-gray-400 dark:text-gray-500">None</p>`
-        }
-        html += `</div>`
-
-        html += `<div><p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Top Liabilities</p>`
-        if (liabilityAccounts.length > 0) {
-          html += `<ul class="space-y-1">`
-          liabilityAccounts.slice(0, 3).forEach(a => {
-            html += `<li class="flex items-center justify-between">
-              <span class="text-xs text-gray-700 dark:text-gray-300 truncate mr-1">${this._esc(a.name)}</span>
-              <span class="text-xs font-semibold text-red-600 dark:text-red-400 tabular-nums flex-shrink-0">${this._currency(Math.abs(a.balance))}</span>
-            </li>`
-          })
-          html += `</ul>`
-        } else {
-          html += `<p class="text-xs text-gray-400 dark:text-gray-500">None</p>`
-        }
-        html += `</div></div>`
-      } else {
+      if (accounts.length === 0) {
         html += `<p class="text-sm text-gray-400 dark:text-gray-500 text-center py-8">No account data available.</p>`
+      } else {
+        const chevron = `<svg data-chevron class="w-3.5 h-3.5 text-gray-400 dark:text-gray-500 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>`
+        const sectionToggle = `onclick="this.closest('[data-acct-section]').querySelector('[data-section-body]').classList.toggle('hidden'); this.querySelector('[data-chevron]').classList.toggle('rotate-90')"`
+
+        // 1) Liquid Accounts (expanded by default)
+        html += this._acctGroupSection("liquid", "Liquid Accounts", liquidAccts, liquidSum, false, chevron, sectionToggle)
+        // 2) Credit Accounts (collapsed by default)
+        html += this._acctGroupSection("credit", "Credit Accounts", creditAccts, creditSum, true, chevron, sectionToggle)
+        // 3) Loans / Financing (collapsed by default)
+        html += this._acctGroupSection("loans", "Loans / Financing", loanAccts, loanSum, true, chevron, sectionToggle)
       }
       backContent.innerHTML = html
     }
+  }
+
+  _acctGroupSection(key, label, accts, total, collapsed, chevron, toggleAttr) {
+    const isLiability = key !== "liquid"
+    const totalColor = isLiability ? "text-red-500 dark:text-red-400" : "text-gray-900 dark:text-white"
+    const balColor = isLiability ? "text-red-500 dark:text-red-400" : "text-gray-900 dark:text-white"
+    const displayTotal = isLiability && total > 0 ? `-${this._currency(total)}` : this._currency(total)
+    const chevronClass = collapsed ? "" : " rotate-90"
+    const bodyClass = collapsed ? " hidden" : ""
+    const emptyLabel = key === "liquid" ? "No liquid accounts." : key === "credit" ? "No credit accounts." : "No loan accounts."
+    const subtotalLabel = key === "liquid" ? "Total Liquid" : key === "credit" ? "Total Credit" : "Total Loans"
+
+    let html = `<div class="mb-3" data-acct-section="${key}">
+      <button type="button" ${toggleAttr} class="flex items-center justify-between w-full text-left">
+        <div class="flex items-center space-x-1.5">
+          ${chevron.replace('class="', `class="${chevronClass} `)}
+          <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">${label}</span>
+        </div>
+        <span class="text-xs font-semibold ${totalColor} tabular-nums">${displayTotal}</span>
+      </button>
+      <div data-section-body class="mt-1.5${bodyClass}">`
+
+    if (accts.length > 0) {
+      html += `<ul class="space-y-1">`
+      accts.forEach(a => {
+        const displayBal = isLiability ? this._currency(-Math.abs(a.balance)) : this._currency(a.balance)
+        html += `<li class="flex items-center justify-between pl-5">
+          <span class="text-xs text-gray-700 dark:text-gray-300 truncate mr-1">${this._esc(a.name)}</span>
+          <span class="text-xs font-semibold ${balColor} tabular-nums flex-shrink-0">${displayBal}</span>
+        </li>`
+      })
+      html += `</ul>
+        <div class="flex items-center justify-between pl-5 mt-1.5 pt-1.5 border-t border-gray-100 dark:border-gray-700">
+          <span class="text-xs font-semibold text-gray-600 dark:text-gray-400">${subtotalLabel}</span>
+          <span class="text-xs font-semibold ${totalColor} tabular-nums">${displayTotal}</span>
+        </div>`
+    } else {
+      html += `<p class="text-xs text-gray-400 dark:text-gray-500 pl-5">${emptyLabel}</p>`
+    }
+    html += `</div></div>`
+    return html
   }
 
   _renderNetWorth(wrapper, data) {

@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.59"
+APP_VERSION = "1.3.60"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,12 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.60",
+    changes: [
+      "Dashboard: Accounts card flip redesign — Grouped Structure Model (Instruction K). Back side now shows 3 collapsible sections: Liquid Accounts (expanded by default), Credit Accounts (collapsed), and Loans/Financing (collapsed). Each section lists accounts with balances and subtotals. Replaces previous Assets vs Liabilities horizontal bar comparison. Added CREDIT_TYPE_KEYS constant to AccountTypeMaster for revolving credit types. API includes account_group per account (liquid/credit/loan/other_asset)."
+    ]
+  },
   {
     version: "1.3.59",
     changes: [

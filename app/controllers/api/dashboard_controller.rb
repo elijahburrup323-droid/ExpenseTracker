@@ -323,6 +323,7 @@ module Api
     def compute_accounts_overview(ctx)
       credit_ids = AccountTypeMaster.where(normal_balance_type: "CREDIT").pluck(:id).to_set
       liquid_ids = AccountTypeMaster.liquid_type_ids.to_set
+      revolving_credit_ids = AccountTypeMaster.where(normalized_key: AccountTypeMaster::CREDIT_TYPE_KEYS).pluck(:id).to_set
       all_accounts = current_user.accounts.includes(:account_type, :account_type_master).ordered
       liquid_total = 0.0
       liquid_count = 0
@@ -333,8 +334,18 @@ module Api
           liquid_total += bal
           liquid_count += 1
         end
+        # Determine group for flip-side rendering
+        group = if liquid_ids.include?(a.account_type_master_id)
+                  "liquid"
+                elsif revolving_credit_ids.include?(a.account_type_master_id)
+                  "credit"
+                elsif is_liability
+                  "loan"
+                else
+                  "other_asset"
+                end
         display_bal = bal
-        { name: a.name, balance: bal.round(2), display_balance: display_bal.round(2), normal_balance_type: is_liability ? "CREDIT" : "DEBIT" }
+        { name: a.name, balance: bal.round(2), display_balance: display_bal.round(2), normal_balance_type: is_liability ? "CREDIT" : "DEBIT", account_group: group }
       end
       nw = Account.net_worth_for(current_user.accounts, user: current_user)
 
