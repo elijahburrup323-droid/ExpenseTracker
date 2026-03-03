@@ -286,8 +286,8 @@ export default class extends Controller {
     const back = wrapper.querySelector("[data-role='back']")
     if (front) front.style.pointerEvents = "none"
     if (back) back.style.pointerEvents = "auto"
-    // Auto-expand for Spending Control panel
-    if (wrapper.dataset.cardType === 'spending_overview') {
+    // Auto-expand for Spending Control panel and Net Worth History
+    if (wrapper.dataset.cardType === 'spending_overview' || wrapper.dataset.cardType === 'net_worth') {
       this._expandCard(wrapper)
     }
   }
@@ -295,8 +295,9 @@ export default class extends Controller {
   flipCardBack(event) {
     const wrapper = event.target.closest("[data-dashboard-target='slotWrapper']")
     if (!wrapper) return
-    // Auto-collapse for Spending Control panel
-    if (wrapper.dataset.cardType === 'spending_overview' && this.expandedCardType === 'spending_overview') {
+    // Auto-collapse for Spending Control panel and Net Worth History
+    if ((wrapper.dataset.cardType === 'spending_overview' && this.expandedCardType === 'spending_overview') ||
+        (wrapper.dataset.cardType === 'net_worth' && this.expandedCardType === 'net_worth')) {
       this._collapseCard()
     }
     const flipper = wrapper.querySelector("[data-role='flipper']")
@@ -838,19 +839,18 @@ export default class extends Controller {
     html += `</div>`
     content.innerHTML = html
 
-    // Back-of-card: Net Worth breakdown
+    // Back-of-card: Net Worth History (Expanded Insight — Instruction M)
     const backContent = wrapper.querySelector("[data-role='back-content']")
     if (backContent) {
-      const accts = data.accounts_subtotal || 0
-      const assetMod = data.asset_module_total || 0
-      const investMod = data.investment_module_total || 0
-      const liabSub = data.liabilities_subtotal || 0
-      // Net Worth trend chart (moved from front for calm fronts)
       let bhtml = ""
+      // Net Worth value pinned at top
+      bhtml += `<div class="text-center mb-3"><span class="text-lg font-bold text-gray-900 dark:text-white tabular-nums">Net Worth: ${this._currency(value)}</span></div>`
+
       if (snapshots.length < 2) {
-        const msg = snapshots.length === 0 ? "No history yet" : "Chart available after 2+ months"
-        bhtml += `<div class="w-full h-20 flex items-center justify-center mb-3"><p class="text-xs text-gray-400 dark:text-gray-500">${msg}</p></div>`
+        const msg = snapshots.length === 0 ? "No history yet" : "Not enough historical data for trend view."
+        bhtml += `<div class="w-full py-6 flex items-center justify-center"><p class="text-xs text-gray-400 dark:text-gray-500">${msg}</p></div>`
       } else {
+        // Conditional line graph (Instruction H)
         const amounts = snapshots.map(s => s.amount)
         const minVal = Math.min(...amounts)
         const maxVal = Math.max(...amounts)
@@ -878,17 +878,28 @@ export default class extends Controller {
         bhtml += `<div class="flex justify-between text-[10px] text-gray-400 dark:text-gray-500 mb-3">`
         snapshots.forEach(s => { bhtml += `<span>${this._esc(s.label)}</span>` })
         bhtml += `</div>`
+
+        // Monthly snapshot list with MoM changes (newest first)
+        bhtml += `<div class="space-y-1.5">`
+        const reversed = [...snapshots].reverse()
+        reversed.forEach((s, i) => {
+          const prev = reversed[i + 1]
+          let changeHtml = ""
+          if (prev) {
+            const mom = s.amount - prev.amount
+            const momStr = mom >= 0 ? `+${this._currency(mom)}` : this._currency(mom)
+            changeHtml = `<span class="text-[10px] tabular-nums text-gray-500 dark:text-gray-400">${momStr}</span>`
+          }
+          bhtml += `<div class="flex items-center justify-between">
+            <span class="text-xs text-gray-600 dark:text-gray-400">${this._esc(s.label)}</span>
+            <div class="flex items-center space-x-2">
+              <span class="text-xs font-semibold text-gray-900 dark:text-white tabular-nums">${this._currency(s.amount)}</span>
+              ${changeHtml}
+            </div>
+          </div>`
+        })
+        bhtml += `</div>`
       }
-      bhtml += `<div class="space-y-2">`
-      bhtml += `<div class="flex items-center justify-between"><span class="text-xs text-gray-600 dark:text-gray-400">Accounts Total</span><span class="text-xs font-semibold text-gray-900 dark:text-white tabular-nums">${this._currency(accts)}</span></div>`
-      bhtml += `<div class="flex items-center justify-between"><span class="text-xs text-gray-600 dark:text-gray-400">Assets Total</span><span class="text-xs font-semibold text-gray-900 dark:text-white tabular-nums">${this._currency(assetMod)}</span></div>`
-      bhtml += `<div class="flex items-center justify-between"><span class="text-xs text-gray-600 dark:text-gray-400">Investments Total</span><span class="text-xs font-semibold text-gray-900 dark:text-white tabular-nums">${this._currency(investMod)}</span></div>`
-      bhtml += `<div class="border-t border-gray-200 dark:border-gray-600 my-1"></div>`
-      bhtml += `<div class="flex items-center justify-between"><span class="text-xs text-gray-600 dark:text-gray-400">Liabilities Total</span><span class="text-xs font-semibold text-red-600 dark:text-red-400 tabular-nums">\u2212${this._currency(liabSub)}</span></div>`
-      bhtml += `<div class="border-t border-gray-200 dark:border-gray-600 my-1"></div>`
-      const nwColor = value >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
-      bhtml += `<div class="flex items-center justify-between"><span class="text-xs font-semibold text-gray-800 dark:text-gray-200">Net Worth</span><span class="text-xs font-bold ${nwColor} tabular-nums">${this._currency(value)}</span></div>`
-      bhtml += `</div>`
       backContent.innerHTML = bhtml
     }
   }
