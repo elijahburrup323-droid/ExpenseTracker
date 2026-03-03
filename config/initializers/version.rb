@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.58"
+APP_VERSION = "1.3.59"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,12 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.59",
+    changes: [
+      "Dashboard: Accounts card front redesign — Calm Cash Model (Instruction J). Front now displays only 'Total Cash: $X' (large, dominant) and 'Across N liquid accounts' (smaller). Liquid accounts defined as Checking, Savings, High Yield Savings, Money Market, and Cash Card. Removed individual account listing, pie chart, and credit/loan balances from front. Back side retains Assets vs Liabilities comparison unchanged. Added LIQUID_TYPE_KEYS constant and liquid_type_ids class method to AccountTypeMaster. API includes liquid_total and liquid_count in accounts_overview response."
+    ]
+  },
   {
     version: "1.3.58",
     changes: [

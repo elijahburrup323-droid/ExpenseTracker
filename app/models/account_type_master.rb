@@ -62,8 +62,15 @@ class AccountTypeMaster < ApplicationRecord
   # All other DEBIT types are treated as reserved (savings, investments, etc.).
   SPENDABLE_TYPE_KEYS = ["checking", "cash card"].freeze
 
+  # Account types considered "liquid" for Total Cash on the dashboard Accounts card.
+  LIQUID_TYPE_KEYS = ["checking", "savings", "high yield savings", "money market", "cash card"].freeze
+
   def self.spendable_type_ids
     where(normalized_key: SPENDABLE_TYPE_KEYS).pluck(:id)
+  end
+
+  def self.liquid_type_ids
+    where(normalized_key: LIQUID_TYPE_KEYS).pluck(:id)
   end
 
   def self.ensure_system_types!

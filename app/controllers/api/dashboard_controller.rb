@@ -322,16 +322,23 @@ module Api
 
     def compute_accounts_overview(ctx)
       credit_ids = AccountTypeMaster.where(normal_balance_type: "CREDIT").pluck(:id).to_set
+      liquid_ids = AccountTypeMaster.liquid_type_ids.to_set
       all_accounts = current_user.accounts.includes(:account_type, :account_type_master).ordered
+      liquid_total = 0.0
+      liquid_count = 0
       accounts_list = all_accounts.map do |a|
         bal = (ctx[:all_balances][a.id] || a.balance).to_f
         is_liability = credit_ids.include?(a.account_type_master_id)
+        if liquid_ids.include?(a.account_type_master_id)
+          liquid_total += bal
+          liquid_count += 1
+        end
         display_bal = bal
         { name: a.name, balance: bal.round(2), display_balance: display_bal.round(2), normal_balance_type: is_liability ? "CREDIT" : "DEBIT" }
       end
       nw = Account.net_worth_for(current_user.accounts, user: current_user)
 
-      { accounts: accounts_list, total: nw[:accounts_total].round(2) }
+      { accounts: accounts_list, total: nw[:accounts_total].round(2), liquid_total: liquid_total.round(2), liquid_count: liquid_count }
     end
 
     def compute_net_worth(ctx)
