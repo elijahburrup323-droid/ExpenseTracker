@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.57"
+APP_VERSION = "1.3.58"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,12 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.58",
+    changes: [
+      "Dashboard: Net Worth conditional graph logic (Instruction H). Graph only renders when >= 2 months of historical data exist. Removed single-dot placeholder SVG for 1-month users. Shows contextual message instead: 'No history yet' (0 months) or 'Chart available after 2+ months' (1 month). Applied to both server-rendered ERB and client-side JS re-render paths."
+    ]
+  },
   {
     version: "1.3.57",
     changes: [

@@ -924,11 +924,9 @@ export default class extends Controller {
       const liabSub = data.liabilities_subtotal || 0
       // Net Worth trend chart (moved from front for calm fronts)
       let bhtml = ""
-      if (snapshots.length === 0) {
-        bhtml += `<div class="w-full h-20 flex items-center justify-center mb-3"><p class="text-xs text-gray-400 dark:text-gray-500">No history yet</p></div>`
-      } else if (snapshots.length === 1) {
-        bhtml += `<div class="w-full h-20 mb-3"><svg viewBox="0 0 200 60" class="w-full h-full" preserveAspectRatio="xMidYMid meet"><circle cx="100" cy="30" r="5" fill="#a855f7"/></svg></div>`
-        bhtml += `<div class="flex justify-center text-[10px] text-gray-400 dark:text-gray-500 mb-3"><span>${this._esc(snapshots[0].label)}</span></div>`
+      if (snapshots.length < 2) {
+        const msg = snapshots.length === 0 ? "No history yet" : "Chart available after 2+ months"
+        bhtml += `<div class="w-full h-20 flex items-center justify-center mb-3"><p class="text-xs text-gray-400 dark:text-gray-500">${msg}</p></div>`
       } else {
         const amounts = snapshots.map(s => s.amount)
         const minVal = Math.min(...amounts)
