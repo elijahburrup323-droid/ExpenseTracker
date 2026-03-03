@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.62"
+APP_VERSION = "1.3.63"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,12 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.63",
+    changes: [
+      "Dashboard: Income & Spending card front redesign — Calm Snapshot Model (Instruction N). Front now shows clean 4-line equation stack: Beginning Balance, + Deposits, − Payments, = Current Balance (visually dominant). Removed Net Change, Savings Rate, New Account Added sections, and colored icon badges from front. Muted gray tones throughout. Back side unchanged."
+    ]
+  },
   {
     version: "1.3.62",
     changes: [
