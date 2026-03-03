@@ -427,7 +427,30 @@ module Api
       net_change = (income - expenses).round(2)
       savings_rate = income > 0 ? ((net_change / income) * 100).round(1) : nil
 
-      { beginning_balance: beginning_balance, income: income, expenses: expenses, net_change: net_change, savings_rate: savings_rate, new_accounts: new_accounts, current_balance: current_balance }
+      # Top 3 payments and deposits for flip view (Instruction O)
+      top_payments = tag_filtered_scope(
+        current_user.payments
+          .where(account_id: ctx[:budget_accounts].select(:id))
+          .where(payment_date: ctx[:month_start]...ctx[:month_end]),
+        ctx[:tag_ids]
+      ).joins(:spending_category)
+       .order(amount: :desc)
+       .limit(3)
+       .pluck("spending_categories.name", "payments.amount")
+       .map { |name, amt| { category: name, amount: amt.to_f } }
+
+      top_deposits = tag_filtered_scope(
+        current_user.income_entries
+          .where(account_id: ctx[:budget_accounts].select(:id))
+          .where(received_flag: true)
+          .where(entry_date: ctx[:month_start]...ctx[:month_end]),
+        ctx[:tag_ids], "IncomeEntry"
+      ).order(amount: :desc)
+       .limit(3)
+       .pluck(:description, :amount)
+       .map { |desc, amt| { source: desc, amount: amt.to_f } }
+
+      { beginning_balance: beginning_balance, income: income, expenses: expenses, net_change: net_change, savings_rate: savings_rate, new_accounts: new_accounts, current_balance: current_balance, top_payments: top_payments, top_deposits: top_deposits }
     end
 
     RECENT_ACTIVITY_PAGE_SIZE = 10

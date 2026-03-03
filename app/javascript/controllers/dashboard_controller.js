@@ -286,8 +286,8 @@ export default class extends Controller {
     const back = wrapper.querySelector("[data-role='back']")
     if (front) front.style.pointerEvents = "none"
     if (back) back.style.pointerEvents = "auto"
-    // Auto-expand for Spending Control panel and Net Worth History
-    if (wrapper.dataset.cardType === 'spending_overview' || wrapper.dataset.cardType === 'net_worth') {
+    // Auto-expand for Spending Control panel, Net Worth History, and Income & Spending Details
+    if (wrapper.dataset.cardType === 'spending_overview' || wrapper.dataset.cardType === 'net_worth' || wrapper.dataset.cardType === 'income_spending') {
       this._expandCard(wrapper)
     }
   }
@@ -295,9 +295,10 @@ export default class extends Controller {
   flipCardBack(event) {
     const wrapper = event.target.closest("[data-dashboard-target='slotWrapper']")
     if (!wrapper) return
-    // Auto-collapse for Spending Control panel and Net Worth History
+    // Auto-collapse for Spending Control panel, Net Worth History, and Income & Spending Details
     if ((wrapper.dataset.cardType === 'spending_overview' && this.expandedCardType === 'spending_overview') ||
-        (wrapper.dataset.cardType === 'net_worth' && this.expandedCardType === 'net_worth')) {
+        (wrapper.dataset.cardType === 'net_worth' && this.expandedCardType === 'net_worth') ||
+        (wrapper.dataset.cardType === 'income_spending' && this.expandedCardType === 'income_spending')) {
       this._collapseCard()
     }
     const flipper = wrapper.querySelector("[data-role='flipper']")
@@ -929,6 +930,51 @@ export default class extends Controller {
           <span class="text-base font-bold text-gray-900 dark:text-white tabular-nums">${this._currency(data.current_balance)}</span>
         </div>
       </div>`
+
+    // Back-of-card: Expanded Clarity (Instruction O)
+    const backContent = wrapper.querySelector("[data-role='back-content']")
+    if (backContent) {
+      const nc = data.net_change != null ? data.net_change : (data.income - data.expenses)
+      const ncStr = nc >= 0 ? `+${this._currency(nc)}` : this._currency(nc)
+      let bhtml = ""
+      // Equation stack at top
+      bhtml += `<div class="space-y-1 mb-3">`
+      bhtml += `<div class="flex items-center justify-between"><span class="text-xs text-gray-500 dark:text-gray-400">Beginning Balance</span><span class="text-xs text-gray-600 dark:text-gray-300 tabular-nums">${this._currency(data.beginning_balance)}</span></div>`
+      bhtml += `<div class="flex items-center justify-between"><span class="text-xs text-gray-500 dark:text-gray-400">+ Deposits</span><span class="text-xs text-gray-600 dark:text-gray-300 tabular-nums">${this._currency(data.income)}</span></div>`
+      bhtml += `<div class="flex items-center justify-between"><span class="text-xs text-gray-500 dark:text-gray-400">\u2212 Payments</span><span class="text-xs text-gray-600 dark:text-gray-300 tabular-nums">${this._currency(data.expenses)}</span></div>`
+      bhtml += `<div class="border-t border-gray-200 dark:border-gray-600 my-0.5"></div>`
+      bhtml += `<div class="flex items-center justify-between"><span class="text-sm font-bold text-gray-900 dark:text-white">= Current Balance</span><span class="text-sm font-bold text-gray-900 dark:text-white tabular-nums">${this._currency(data.current_balance)}</span></div>`
+      bhtml += `</div>`
+      // Net Change
+      bhtml += `<div class="flex items-center justify-between mb-3"><span class="text-xs text-gray-500 dark:text-gray-400">Net Change</span><span class="text-xs font-semibold text-gray-600 dark:text-gray-300 tabular-nums">${ncStr}</span></div>`
+      // Top 3 Payments
+      bhtml += `<div class="mb-3"><span class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Top Payments</span>`
+      const topPay = data.top_payments || []
+      if (topPay.length > 0) {
+        bhtml += `<div class="mt-1 space-y-1">`
+        topPay.forEach(p => {
+          bhtml += `<div class="flex items-center justify-between"><span class="text-xs text-gray-600 dark:text-gray-400 truncate mr-2">${this._esc(p.category)}</span><span class="text-xs text-gray-700 dark:text-gray-300 tabular-nums">${this._currency(p.amount)}</span></div>`
+        })
+        bhtml += `</div>`
+      } else {
+        bhtml += `<p class="text-xs text-gray-400 dark:text-gray-500 mt-1">No payments this month.</p>`
+      }
+      bhtml += `</div>`
+      // Top 3 Deposits
+      bhtml += `<div><span class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Top Deposits</span>`
+      const topDep = data.top_deposits || []
+      if (topDep.length > 0) {
+        bhtml += `<div class="mt-1 space-y-1">`
+        topDep.forEach(d => {
+          bhtml += `<div class="flex items-center justify-between"><span class="text-xs text-gray-600 dark:text-gray-400 truncate mr-2">${this._esc(d.source)}</span><span class="text-xs text-gray-700 dark:text-gray-300 tabular-nums">${this._currency(d.amount)}</span></div>`
+        })
+        bhtml += `</div>`
+      } else {
+        bhtml += `<p class="text-xs text-gray-400 dark:text-gray-500 mt-1">No deposits this month.</p>`
+      }
+      bhtml += `</div>`
+      backContent.innerHTML = bhtml
+    }
   }
 
   _renderRecentActivity(wrapper, data) {

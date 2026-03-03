@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.63"
+APP_VERSION = "1.3.64"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,12 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.64",
+    changes: [
+      "Dashboard: Income & Spending card flip redesign — Expanded Clarity Model (Instruction O). Back side now shows 'Monthly Details' with equation stack at top, Net Change, Top 3 Payments (by category), and Top 3 Deposits (by source). Recent Deposits list removed from flip. Flip auto-expands and auto-collapses the card. API now returns top_payments and top_deposits for JS month navigation."
+    ]
+  },
   {
     version: "1.3.63",
     changes: [
