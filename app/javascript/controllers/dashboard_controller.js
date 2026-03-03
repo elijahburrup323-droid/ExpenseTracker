@@ -1037,37 +1037,21 @@ export default class extends Controller {
     if (!content) return
 
     if (!data || data.empty) {
-      content.innerHTML = `<p class="text-sm text-gray-400 dark:text-gray-500 text-center py-4">No buckets yet. Create one to start allocating money.</p>`
+      content.innerHTML = `<p class="text-sm text-gray-400 dark:text-gray-500 text-center">No buckets yet. Create one to start allocating money.</p>`
       return
     }
 
-    let html = `<div class="text-center mb-3">
-      <span class="text-xs text-gray-500 dark:text-gray-400">${data.count} bucket${data.count !== 1 ? "s" : ""}</span>
-      <div class="text-sm font-semibold text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;">${this._currency(data.total_balance)}</div>
-    </div><div class="space-y-2">`
+    // Calm Goals Snapshot (Instruction P)
+    let html = `<span class="text-2xl font-bold text-gray-900 dark:text-white tabular-nums">${this._currency(data.total_balance)} saved in goals</span>`
+    html += `<span class="text-sm text-gray-500 dark:text-gray-400 mt-1">Across ${data.count} active bucket${data.count !== 1 ? "s" : ""}</span>`
 
-    for (const b of (data.buckets || [])) {
-      const defaultBadge = b.is_default
-        ? ` <span class="text-[10px] font-medium text-brand-600 dark:text-brand-400">(Default)</span>`
-        : ""
-
-      // Completion % display (right of balance) — calm front, no progress bars
-      const pctHtml = b.progress_pct != null
-        ? ` <span class="text-[10px] font-medium text-gray-400 dark:text-gray-500 ml-1">${b.progress_pct}%</span>`
-        : ""
-
-      html += `<div class="text-center py-1">
-        <div class="text-sm font-semibold text-gray-900 dark:text-white">${this._esc(b.name)}${defaultBadge}</div>
-        <div class="text-xs text-gray-500 dark:text-gray-400" style="font-variant-numeric: tabular-nums;">${this._currency(b.balance)}${pctHtml}</div>
-      </div>`
-    }
-    html += `</div>`
-
-    // Next Recommended Allocation line
-    if (data.next_recommended) {
-      html += `<div class="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700 text-center">
-        <div class="text-[10px] text-gray-500 dark:text-gray-400" style="font-variant-numeric: tabular-nums;">Next Recommended Allocation: <span class="font-semibold text-gray-700 dark:text-gray-300">${this._esc(data.next_recommended.name)}</span> (${this._currency(data.next_recommended.remaining)} remaining)</div>
-      </div>`
+    // Optional largest bucket line
+    const buckets = data.buckets || []
+    if (buckets.length > 1) {
+      const largest = buckets.reduce((a, b) => (b.balance || 0) > (a.balance || 0) ? b : a, buckets[0])
+      if (largest) {
+        html += `<span class="text-xs text-gray-400 dark:text-gray-500 mt-2 tabular-nums">Largest: ${this._esc(largest.name)} (${this._currency(largest.balance)})</span>`
+      }
     }
 
     content.innerHTML = html

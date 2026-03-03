@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.64"
+APP_VERSION = "1.3.65"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,12 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.65",
+    changes: [
+      "Dashboard: Buckets card front redesign — Calm Goals Snapshot Model (Instruction P). Front now shows centered '$X saved in goals' with 'Across X active buckets' and optional 'Largest: Bucket Name ($X)'. Removed individual bucket listings, progress bars, and percentage displays from front. Back side unchanged."
+    ]
+  },
   {
     version: "1.3.64",
     changes: [

@@ -259,12 +259,14 @@ class DashboardController < ApplicationController
       next_rec = user_buckets
         .select { |b| b.target_amount.present? && b.target_amount > 0 && b.current_balance < b.target_amount }
         .max_by { |b| b.target_amount.to_f - b.current_balance.to_f }
+      largest = user_buckets.max_by { |b| b.current_balance.to_f }
       @buckets_summary = {
         empty: false,
         count: user_buckets.size,
         total_balance: user_buckets.sum(&:current_balance).to_f.round(2),
         account_groups: account_groups,
-        next_recommended: next_rec
+        next_recommended: next_rec,
+        largest_bucket: largest
       }
     end
 
