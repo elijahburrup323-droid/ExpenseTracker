@@ -7,58 +7,14 @@
         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V9m4 7V5m4 11v-4m4 4V8"/></svg>
       <% end %>
     </div>
-    <div class="flex-1 min-h-0 overflow-y-auto" data-role="card-content">
-      <div class="flex items-baseline space-x-2 mb-3">
-        <span class="text-2xl font-bold text-gray-900 dark:text-white"><%= number_to_currency(@net_worth) %></span>
-        <% if @net_worth_change >= 0 %>
-          <span class="text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded">
-            +<%= number_to_currency(@net_worth_change) %> (<%= @net_worth_pct %>%)
-          </span>
-        <% else %>
-          <span class="text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 px-1.5 py-0.5 rounded">
-            <%= number_to_currency(@net_worth_change) %> (<%= @net_worth_pct %>%)
-          </span>
-        <% end %>
-      </div>
-
-      <%# Asset / Liability breakdown %>
-      <div class="mt-2 space-y-1">
-        <div class="flex items-center justify-between">
-          <span class="text-[11px] text-gray-500 dark:text-gray-400">Assets</span>
-          <span class="text-[11px] font-medium text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(@net_worth_assets) %></span>
-        </div>
-        <div class="flex items-center justify-between">
-          <span class="text-[11px] text-gray-500 dark:text-gray-400">Liabilities</span>
-          <span class="text-[11px] font-medium text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;"><%= number_to_currency(@net_worth_liabilities) %></span>
-        </div>
-        <div class="flex items-center justify-between">
-          <span class="text-[11px] text-gray-500 dark:text-gray-400"><%= @nw_metric_label %></span>
-          <% if @nw_metric_value.nil? %>
-            <% if @nw_metric_mode == :cash_coverage %>
-              <span class="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">No Debt</span>
-            <% else %>
-              <span class="text-[11px] text-gray-400 dark:text-gray-500">&mdash;</span>
-            <% end %>
-          <% elsif @nw_metric_mode == :debt_ratio %>
-            <% if @nw_metric_value > 100 %>
-              <span class="text-[11px] font-medium text-red-600 dark:text-red-400" style="font-variant-numeric: tabular-nums;"><%= @nw_metric_value %>%</span>
-            <% elsif @nw_metric_value <= 50 %>
-              <span class="text-[11px] font-medium text-emerald-600 dark:text-emerald-400" style="font-variant-numeric: tabular-nums;"><%= @nw_metric_value %>%</span>
-            <% else %>
-              <span class="text-[11px] font-medium text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;"><%= @nw_metric_value %>%</span>
-            <% end %>
-          <% else %>
-            <%# Cash Coverage mode %>
-            <% if @nw_metric_value >= 100 %>
-              <span class="text-[11px] font-medium text-emerald-600 dark:text-emerald-400" style="font-variant-numeric: tabular-nums;"><%= @nw_metric_value %>%</span>
-            <% elsif @nw_metric_value >= 50 %>
-              <span class="text-[11px] font-medium text-gray-900 dark:text-white" style="font-variant-numeric: tabular-nums;"><%= @nw_metric_value %>%</span>
-            <% else %>
-              <span class="text-[11px] font-medium text-red-600 dark:text-red-400" style="font-variant-numeric: tabular-nums;"><%= @nw_metric_value %>%</span>
-            <% end %>
-          <% end %>
-        </div>
-      </div>
+    <%# === Calm Snapshot: Net Worth value + optional monthly change === %>
+    <div class="flex-1 min-h-0 overflow-y-auto flex flex-col items-center justify-center py-4" data-role="card-content">
+      <span class="text-2xl font-bold text-gray-900 dark:text-white tabular-nums">Net Worth: <%= number_to_currency(@net_worth) %></span>
+      <% if @net_worth_snapshots.size >= 2 %>
+        <span class="text-sm text-gray-500 dark:text-gray-400 mt-1 tabular-nums">
+          Change this month: <%= @net_worth_change >= 0 ? "+#{number_to_currency(@net_worth_change)}" : number_to_currency(@net_worth_change) %>
+        </span>
+      <% end %>
     </div>
 
     <% if current_user.budgethq_agent? %>

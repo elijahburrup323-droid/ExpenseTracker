@@ -392,7 +392,8 @@ module Api
         metric_mode = "cash_coverage"
       end
 
-      { value: net_worth_val, change: nw_change.round(2), change_pct: nw_pct, snapshots: snapshot_data,
+      { value: net_worth_val, change: nw_change.round(2), change_pct: nw_pct,
+        snapshot_count: snapshots.size, snapshots: snapshot_data,
         assets: assets, liabilities: liabilities, debt_ratio: metric_value,
         metric_label: metric_label, metric_value: metric_value, metric_mode: metric_mode,
         accounts_subtotal: nw[:accounts_subtotal].round(2),

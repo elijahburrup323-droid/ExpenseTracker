@@ -828,37 +828,12 @@ export default class extends Controller {
     const changePct = data.change_pct || 0
     const snapshots = data.snapshots || []
 
-    let html = ""
-    html += `<div class="flex items-baseline space-x-2 mb-3">`
-    html += `<span class="text-2xl font-bold text-gray-900 dark:text-white tabular-nums">${this._currency(value)}</span>`
-    if (change >= 0) {
-      html += `<span class="text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded tabular-nums">+${this._currency(change)} (${changePct}%)</span>`
-    } else {
-      html += `<span class="text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 px-1.5 py-0.5 rounded tabular-nums">${this._currency(change)} (${changePct}%)</span>`
-    }
-    html += `</div>`
-
-    // Asset / Liability breakdown (calm front — chart moved to back)
-    html += `<div class="mt-2 space-y-1">`
-    html += `<div class="flex items-center justify-between"><span class="text-[11px] text-gray-500 dark:text-gray-400">Assets</span><span class="text-[11px] font-medium text-gray-900 dark:text-white tabular-nums">${this._currency(data.assets || 0)}</span></div>`
-    html += `<div class="flex items-center justify-between"><span class="text-[11px] text-gray-500 dark:text-gray-400">Liabilities</span><span class="text-[11px] font-medium text-gray-900 dark:text-white tabular-nums">${this._currency(data.liabilities || 0)}</span></div>`
-
-    // Metric swap: Debt Ratio vs Cash Coverage
-    const metricLabel = data.metric_label || "Debt Ratio"
-    const metricValue = data.metric_value
-    const metricMode = data.metric_mode || "debt_ratio"
-    if (metricValue == null) {
-      if (metricMode === "cash_coverage") {
-        html += `<div class="flex items-center justify-between"><span class="text-[11px] text-gray-500 dark:text-gray-400">${this._esc(metricLabel)}</span><span class="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">No Debt</span></div>`
-      } else {
-        html += `<div class="flex items-center justify-between"><span class="text-[11px] text-gray-500 dark:text-gray-400">${this._esc(metricLabel)}</span><span class="text-[11px] text-gray-400 dark:text-gray-500">\u2014</span></div>`
-      }
-    } else if (metricMode === "debt_ratio") {
-      const drColor = metricValue > 100 ? 'text-red-600 dark:text-red-400' : metricValue <= 50 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-900 dark:text-white'
-      html += `<div class="flex items-center justify-between"><span class="text-[11px] text-gray-500 dark:text-gray-400">${this._esc(metricLabel)}</span><span class="text-[11px] font-medium ${drColor} tabular-nums">${metricValue.toFixed(1)}%</span></div>`
-    } else {
-      const ccColor = metricValue >= 100 ? 'text-emerald-600 dark:text-emerald-400' : metricValue >= 50 ? 'text-gray-900 dark:text-white' : 'text-red-600 dark:text-red-400'
-      html += `<div class="flex items-center justify-between"><span class="text-[11px] text-gray-500 dark:text-gray-400">${this._esc(metricLabel)}</span><span class="text-[11px] font-medium ${ccColor} tabular-nums">${metricValue.toFixed(1)}%</span></div>`
+    // Calm Snapshot: Net Worth value + optional monthly change
+    let html = `<div class="flex flex-col items-center justify-center py-4">`
+    html += `<span class="text-2xl font-bold text-gray-900 dark:text-white tabular-nums">Net Worth: ${this._currency(value)}</span>`
+    if (snapshots.length >= 2) {
+      const changeStr = change >= 0 ? `+${this._currency(change)}` : this._currency(change)
+      html += `<span class="text-sm text-gray-500 dark:text-gray-400 mt-1 tabular-nums">Change this month: ${changeStr}</span>`
     }
     html += `</div>`
     content.innerHTML = html
