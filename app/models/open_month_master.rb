@@ -45,13 +45,10 @@ class OpenMonthMaster < ApplicationRecord
 
       # Dashboard aggregated snapshot
       budget_accounts = user.accounts.where(include_in_budget: true)
-      total_spent = user.payments
-                        .where(payment_date: month_start..month_end)
-                        .sum(:amount)
-      total_income = user.income_entries
-                         .where(received_flag: true)
-                         .where(entry_date: month_start..month_end)
-                         .sum(:amount)
+      # Read from canonical transactions table (Transaction Engine)
+      month_txns = user.transactions.where(txn_date: month_start..month_end)
+      total_spent = month_txns.payments.sum(:amount)
+      total_income = month_txns.deposits.sum(:amount)
       # Budget totals: DEBIT-only for cash position
       credit_ids = AccountTypeMaster.where(normal_balance_type: "CREDIT").pluck(:id)
       debit_budget = budget_accounts.where.not(account_type_master_id: credit_ids)

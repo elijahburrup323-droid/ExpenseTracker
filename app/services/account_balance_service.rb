@@ -7,32 +7,30 @@ class AccountBalanceService
     accounts = user.accounts.where("accounts.created_at <= ?", as_of_date.end_of_day)
     balances = accounts.pluck(:id, :beginning_balance).to_h { |id, bb| [id, bb.to_f] }
 
-    # Deposits (received only, with an account)
-    user.income_entries
-        .where("entry_date <= ?", as_of_date)
-        .where(received_flag: true)
+    # Read from canonical transactions table (Transaction Engine)
+    txn_scope = user.transactions.where("txn_date <= ?", as_of_date)
+
+    # Deposits (inflows to account)
+    txn_scope.deposits
         .where.not(account_id: nil)
         .group(:account_id)
         .sum(:amount)
         .each { |aid, amt| balances[aid] = (balances[aid] || 0) + amt.to_f }
 
-    # Payments
-    user.payments
-        .where("payment_date <= ?", as_of_date)
+    # Payments (outflows from account)
+    txn_scope.payments
         .group(:account_id)
         .sum(:amount)
         .each { |aid, amt| balances[aid] = (balances[aid] || 0) - amt.to_f }
 
     # Transfers in (to_account_id)
-    user.transfer_masters
-        .where("transfer_date <= ?", as_of_date)
+    txn_scope.transfers
         .group(:to_account_id)
         .sum(:amount)
         .each { |aid, amt| balances[aid] = (balances[aid] || 0) + amt.to_f }
 
     # Transfers out (from_account_id)
-    user.transfer_masters
-        .where("transfer_date <= ?", as_of_date)
+    txn_scope.transfers
         .group(:from_account_id)
         .sum(:amount)
         .each { |aid, amt| balances[aid] = (balances[aid] || 0) - amt.to_f }
