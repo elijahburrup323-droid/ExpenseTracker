@@ -237,8 +237,15 @@ Any modification to Net Worth aggregation, Cost basis method, Amortization math,
 - **financing_payments** — Payment history: id, user_id (FK users), financing_instrument_id (FK financing_instruments), payment_date, total_amount, principal_amount, interest_amount, extra_principal_amount, escrow_amount, fees_amount, principal_balance_after, payment_number, notes, deleted_at, timestamps.
 - **amortization_schedule_entries** — Projected amortization rows: id, user_id (FK users), financing_instrument_id (FK financing_instruments), period_number, due_date, payment_amount, principal_amount, interest_amount, extra_principal_amount, beginning_balance, ending_balance, is_actual, financing_payment_id (FK financing_payments, optional), timestamps. No deleted_at.
 
+### Transaction Engine
+- **transactions** — Canonical unified transaction model. Single table replaces the eventual need for separate payment/deposit/transfer tables. Fields: id, user_id (FK users), txn_date (date), txn_type (payment/deposit/transfer), amount (decimal 12,2, always positive — direction by txn_type), description, memo, account_id (FK accounts, nullable — required for payment/deposit), from_account_id (FK accounts, nullable — required for transfer), to_account_id (FK accounts, nullable — required for transfer), spending_category_id (FK spending_categories, nullable), spending_type_id (FK spending_types, nullable), cleared (boolean), reconciled (boolean), imported_source, import_batch_id, external_id (unique per user — dedup key), deleted_at, timestamps.
+- **LedgerMath concern** — Codifies balance derivation, spending/income totals, and transfer neutrality. All ledger math flows through this concern rather than ad-hoc queries.
+- **Design rules**: Amounts always positive; txn_type determines direction. Transfers are balance-neutral at the portfolio level (one account debited, another credited). Buckets are virtual allocations that do not affect the ledger.
+- **CHECK constraints**: chk_txn_type_values (payment/deposit/transfer), chk_payment_rules (requires account_id, forbids from/to), chk_deposit_rules (requires account_id, forbids from/to), chk_transfer_rules (requires from/to_account_id, forbids account_id), chk_positive_amount (amount &gt; 0).
+- **Indexes**: idx_txns_user_date, idx_txns_user_type_date, idx_txns_user_account_date, idx_txns_user_from_account_date, idx_txns_user_to_account_date, idx_txns_user_deleted, idx_txns_user_external_id (unique).
+
 ### Key Relationships
-- User has_many: spending_types, spending_categories, spending_limit_histories, account_types, accounts, payments, income_user_frequencies, income_recurrings, income_entries, transfer_masters, account_month_snapshots, dashboard_month_snapshots, balance_adjustments, reconciliation_records, import_templates, import_sessions, asset_types, assets, investment_accounts, investment_holdings, investment_transactions, investment_lots, financing_instruments, financing_payments, amortization_schedule_entries; has_one: open_month_master
+- User has_many: spending_types, spending_categories, spending_limit_histories, account_types, accounts, payments, income_user_frequencies, income_recurrings, income_entries, transfer_masters, transactions, account_month_snapshots, dashboard_month_snapshots, balance_adjustments, reconciliation_records, import_templates, import_sessions, asset_types, assets, investment_accounts, investment_holdings, investment_transactions, investment_lots, financing_instruments, financing_payments, amortization_schedule_entries; has_one: open_month_master
 - Asset has_many: asset_valuations (latest valuation auto-syncs current_value), asset_lots (unit-based types only; restrict_with_error on delete)
 - SpendingType has_many spending_categories; SpendingCategory has_many payments
 - AccountType has_many accounts; Account has_many payments, transfers_from, transfers_to, account_month_snapshots, investment_holdings
@@ -248,6 +255,7 @@ Any modification to Net Worth aggregation, Cost basis method, Amortization math,
 - InvestmentHolding has_many investment_transactions, investment_lots; belongs_to account (optional), investment_account (optional)
 - InvestmentTransaction has_many investment_lots (as buy_transaction); optional sell_transaction link
 - FinancingInstrument has_many financing_payments, amortization_schedule_entries; optional belongs_to account
+- Transaction belongs_to user, optional belongs_to account (payment/deposit), from_account/to_account (transfer), spending_category, spending_type
 - All user-owned models use soft delete (deleted_at) with default_scope (except investment_lots and amortization_schedule_entries)
 
 ## Routes Structure

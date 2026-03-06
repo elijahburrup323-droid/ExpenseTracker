@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_06_000002) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_06_000003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_stat_statements"
   enable_extension "plpgsql"
@@ -1018,16 +1018,16 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_06_000002) do
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["account_id", "txn_date"], name: "idx_txns_account_date", where: "(account_id IS NOT NULL)"
     t.index ["account_id"], name: "index_transactions_on_account_id"
-    t.index ["from_account_id", "txn_date"], name: "idx_txns_from_account_date", where: "(from_account_id IS NOT NULL)"
     t.index ["from_account_id"], name: "index_transactions_on_from_account_id"
     t.index ["spending_category_id"], name: "index_transactions_on_spending_category_id"
     t.index ["spending_type_id"], name: "index_transactions_on_spending_type_id"
-    t.index ["to_account_id", "txn_date"], name: "idx_txns_to_account_date", where: "(to_account_id IS NOT NULL)"
     t.index ["to_account_id"], name: "index_transactions_on_to_account_id"
+    t.index ["user_id", "account_id", "txn_date"], name: "idx_txns_user_account_date", where: "(account_id IS NOT NULL)"
     t.index ["user_id", "deleted_at"], name: "idx_txns_user_deleted"
     t.index ["user_id", "external_id"], name: "idx_txns_user_external_id", unique: true, where: "((external_id IS NOT NULL) AND (deleted_at IS NULL))"
+    t.index ["user_id", "from_account_id", "txn_date"], name: "idx_txns_user_from_account_date", where: "(from_account_id IS NOT NULL)"
+    t.index ["user_id", "to_account_id", "txn_date"], name: "idx_txns_user_to_account_date", where: "(to_account_id IS NOT NULL)"
     t.index ["user_id", "txn_date"], name: "idx_txns_user_date"
     t.index ["user_id", "txn_type", "txn_date"], name: "idx_txns_user_type_date"
     t.index ["user_id"], name: "index_transactions_on_user_id"

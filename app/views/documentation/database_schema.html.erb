@@ -50,7 +50,16 @@
  ├── has_many :amortization_schedule_entries (amortization_schedule_entries.user_id → users.id)
  ├── has_many :asset_lots              (asset_lots.user_id → users.id)
  ├── has_many :audit_logs                  (audit_logs.user_id → users.id)
+ ├── has_many :transactions              (transactions.user_id → users.id)
  └── (admin) dbu_table_catalogs (standalone, no FK)
+
+transactions
+ ├── belongs_to :user                  (user_id FK → users.id)
+ ├── belongs_to :account (optional)    (account_id FK → accounts.id, payments/deposits)
+ ├── belongs_to :from_account (optional) (from_account_id FK → accounts.id, transfers)
+ ├── belongs_to :to_account (optional) (to_account_id FK → accounts.id, transfers)
+ ├── belongs_to :spending_category (optional) (spending_category_id FK → spending_categories.id)
+ └── belongs_to :spending_type (optional) (spending_type_id FK → spending_types.id)
 
 asset_types
  ├── belongs_to :user (optional)       (user_id FK → users.id, NULL = system type)
@@ -2179,6 +2188,61 @@ phone_verifications
     </div>
   </div>
 
+  <%# ── transactions ── %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 overflow-hidden mb-6">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">transactions</h2>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Canonical unified transaction model (Transaction Engine). Replaces separate payment/deposit/transfer tables with a single ledger. Amounts always positive; direction determined by txn_type. CHECK constraints enforce type-specific field rules.</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead><tr class="border-b border-gray-100 dark:border-gray-700"><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Column</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Type</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Constraints</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Description</th></tr></thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr><td class="px-6 py-2 font-mono font-medium text-gray-900 dark:text-white">id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">PK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Primary key</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">user_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; users</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">IDX</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Owning user</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">txn_date</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">date</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">IDX</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Transaction date</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">txn_type</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 px-1.5 py-0.5 rounded">CHECK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">payment, deposit, or transfer (chk_txn_type_values)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">amount</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">decimal(12,2)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 px-1.5 py-0.5 rounded">CHECK &gt; 0</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Always positive (chk_positive_amount)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">description</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Optional description</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">memo</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Optional memo/notes</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">account_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; accounts</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">IDX</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Nullable. Required for payment/deposit (chk_payment_rules, chk_deposit_rules)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">from_account_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; accounts</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">IDX</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Nullable. Required for transfer (chk_transfer_rules)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">to_account_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; accounts</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">IDX</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Nullable. Required for transfer (chk_transfer_rules)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">spending_category_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; spending_categories</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Nullable. Used for payments</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">spending_type_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; spending_types</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Nullable. Optional override for payments</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">cleared</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">boolean</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">default: false</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Bank cleared status</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">reconciled</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">boolean</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">default: false</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Reconciliation status</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">imported_source</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Nullable. Origin system for imported rows</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">import_batch_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Nullable. Batch identifier for bulk imports</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">external_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar</td><td class="px-6 py-2"><span class="text-xs bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 px-1.5 py-0.5 rounded">UNIQUE per user</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Nullable. Dedup key for imports (idx_txns_user_external_id)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">deleted_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">IDX</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Nullable. Soft-delete timestamp</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">created_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Record created</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">updated_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Record updated</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">CHECK Constraints</p>
+      <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5">
+        <li>chk_txn_type_values — txn_type IN ('payment','deposit','transfer')</li>
+        <li>chk_payment_rules — payment requires account_id, forbids from/to_account_id</li>
+        <li>chk_deposit_rules — deposit requires account_id, forbids from/to_account_id</li>
+        <li>chk_transfer_rules — transfer requires from_account_id + to_account_id, forbids account_id</li>
+        <li>chk_positive_amount — amount &gt; 0</li>
+      </ul>
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-3 mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5">
+        <li>idx_txns_user_date (user_id, txn_date)</li>
+        <li>idx_txns_user_type_date (user_id, txn_type, txn_date)</li>
+        <li>idx_txns_user_account_date (user_id, account_id, txn_date)</li>
+        <li>idx_txns_user_from_account_date (user_id, from_account_id, txn_date)</li>
+        <li>idx_txns_user_to_account_date (user_id, to_account_id, txn_date)</li>
+        <li>idx_txns_user_deleted (user_id, deleted_at)</li>
+        <li>idx_txns_user_external_id (user_id, external_id) UNIQUE</li>
+      </ul>
+    </div>
+  </div>
+
   <%# ── Foreign Keys Summary ── %>
   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 overflow-hidden">
     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
@@ -2271,6 +2335,12 @@ phone_verifications
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">amortization_schedule_entries</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">financing_instrument_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">financing_instruments.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (DB-level foreign key)</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">amortization_schedule_entries</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">financing_payment_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">financing_payments.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">nullify (optional, set NULL on delete)</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">audit_logs</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">cascade (via Rails dependent: :destroy)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">transactions</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">cascade (via Rails dependent: :destroy)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">transactions</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">account_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">accounts.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (optional, payment/deposit only)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">transactions</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">from_account_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">accounts.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (optional, transfer only)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">transactions</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">to_account_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">accounts.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (optional, transfer only)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">transactions</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">spending_category_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">spending_categories.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (optional)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">transactions</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">spending_type_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">spending_types.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (optional)</td></tr>
         </tbody>
       </table>
     </div>
