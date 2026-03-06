@@ -1,4 +1,6 @@
 class IncomeEntry < ApplicationRecord
+  include LegacyFreezeGuard
+
   belongs_to :user
   belongs_to :income_recurring, optional: true
   belongs_to :account, optional: true

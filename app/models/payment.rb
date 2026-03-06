@@ -1,4 +1,6 @@
 class Payment < ApplicationRecord
+  include LegacyFreezeGuard
+
   belongs_to :user
   belongs_to :account
   belongs_to :spending_category
