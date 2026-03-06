@@ -2243,6 +2243,23 @@ phone_verifications
     </div>
   </div>
 
+  <%# ── Transaction Engine — Legacy Freeze Infrastructure ── %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 overflow-hidden mb-6">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Transaction Engine — Legacy Freeze Infrastructure</h2>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Model concern and initializer that enforce write protection on legacy tables (payments, income_entries, transfer_masters) once the Transaction Engine is fully active. Legacy tables remain readable for rollback/audit.</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead><tr class="border-b border-gray-100 dark:border-gray-700"><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">File</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Type</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Description</th></tr></thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">app/models/concerns/legacy_freeze_guard.rb</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">Model Concern</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">LegacyFreezeGuard — included in legacy models. Blocks <code>before_create</code> unconditionally and blocks <code>before_update</code> unless only <code>deleted_at</code>, <code>reconciled</code>, or <code>updated_at</code> changed. Uses <code>throw(:abort)</code> and logs warnings. Guard activates only when <code>legacy_frozen?</code> returns true.</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">config/initializers/legacy_freeze.rb</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">Initializer</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Sets <code>Rails.application.config.legacy_tables_frozen</code> from <code>ENV["LEGACY_TABLES_FROZEN"]</code> (default "false"). When set to "true", LegacyFreezeGuard activates and all new writes route through the canonical transactions table.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <%# ── Foreign Keys Summary ── %>
   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 overflow-hidden">
     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">

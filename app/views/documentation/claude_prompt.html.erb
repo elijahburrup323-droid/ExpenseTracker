@@ -243,6 +243,14 @@ Any modification to Net Worth aggregation, Cost basis method, Amortization math,
 - **Design rules**: Amounts always positive; txn_type determines direction. Transfers are balance-neutral at the portfolio level (one account debited, another credited). Buckets are virtual allocations that do not affect the ledger.
 - **CHECK constraints**: chk_txn_type_values (payment/deposit/transfer), chk_payment_rules (requires account_id, forbids from/to), chk_deposit_rules (requires account_id, forbids from/to), chk_transfer_rules (requires from/to_account_id, forbids account_id), chk_positive_amount (amount &gt; 0).
 - **Indexes**: idx_txns_user_date, idx_txns_user_type_date, idx_txns_user_account_date, idx_txns_user_from_account_date, idx_txns_user_to_account_date, idx_txns_user_deleted, idx_txns_user_external_id (unique).
+- **transaction_migration_maps** — Bridges legacy records to canonical transactions: id, transaction_id (FK transactions), legacy_type (Payment/IncomeEntry/TransferMaster), legacy_id, timestamps. Used for tag filtering in reports.
+
+#### Transaction Engine Phase 2 (v1.3.70)
+- **Dual-write pattern**: PaymentsController, IncomeEntriesController, and TransferMastersController now sync all CRUD operations to the canonical transactions table. Every create/update/destroy on a legacy record writes the corresponding transaction record via TransactionMigrationMap.
+- **Recurring generation dual-write**: Payment.generate_due_payments_for and IncomeEntry.generate_due_entries_for create canonical transaction records alongside legacy records during scheduled generation.
+- **Reports refactored**: All report queries now read from the transactions table instead of the legacy payments/income_entries/transfer_masters tables.
+- **Tag filtering bridge**: Report tag filters query TransactionMigrationMap to resolve legacy record tags back to transaction IDs when filtering the transactions table.
+- **LegacyFreezeGuard concern**: Model-level freeze protection that raises on write attempts to legacy tables when the LEGACY_TABLES_FROZEN env var is set. Prepares for eventual legacy table retirement.
 
 ### Key Relationships
 - User has_many: spending_types, spending_categories, spending_limit_histories, account_types, accounts, payments, income_user_frequencies, income_recurrings, income_entries, transfer_masters, transactions, account_month_snapshots, dashboard_month_snapshots, balance_adjustments, reconciliation_records, import_templates, import_sessions, asset_types, assets, investment_accounts, investment_holdings, investment_transactions, investment_lots, financing_instruments, financing_payments, amortization_schedule_entries; has_one: open_month_master

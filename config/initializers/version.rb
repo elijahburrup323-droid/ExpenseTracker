@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.69"
+APP_VERSION = "1.3.70"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,16 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.70",
+    changes: [
+      "Transaction Engine: Full dual-write — Payments, Deposits, and Transfers screens now sync all CRUD operations to the canonical transactions table via migration map.",
+      "Transaction Engine: Recurring payment and deposit generation now creates canonical transaction records alongside legacy records.",
+      "Transaction Engine: Reports module refactored to read from transactions table — cash flow, spending by category/type, income by source, and reconciliation reports now use unified data source.",
+      "Transaction Engine: Legacy freeze guard — model-level write protection for legacy tables, activated via LEGACY_TABLES_FROZEN env var.",
+      "Transaction Engine: Preparation for legacy table removal after rollback window — compatibility views and migration map preserved for audit."
+    ]
+  },
   {
     version: "1.3.69",
     changes: [
