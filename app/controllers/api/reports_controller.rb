@@ -271,12 +271,24 @@ module Api
 
     def tag_filtered_payments(scope)
       return scope if active_tag_ids.empty?
-      scope.where(id: TagAssignment.where(taggable_type: "Payment", tag_id: active_tag_ids).select(:taggable_id))
+      if scope.klass == Transaction
+        legacy_ids = TagAssignment.where(taggable_type: "Payment", tag_id: active_tag_ids).pluck(:taggable_id)
+        txn_ids = TransactionMigrationMap.where(user_id: current_user.id, legacy_table: "payments", legacy_id: legacy_ids).pluck(:transaction_id)
+        scope.where(id: txn_ids)
+      else
+        scope.where(id: TagAssignment.where(taggable_type: "Payment", tag_id: active_tag_ids).select(:taggable_id))
+      end
     end
 
     def tag_filtered_income(scope)
       return scope if active_tag_ids.empty?
-      scope.where(id: TagAssignment.where(taggable_type: "IncomeEntry", tag_id: active_tag_ids).select(:taggable_id))
+      if scope.klass == Transaction
+        legacy_ids = TagAssignment.where(taggable_type: "IncomeEntry", tag_id: active_tag_ids).pluck(:taggable_id)
+        txn_ids = TransactionMigrationMap.where(user_id: current_user.id, legacy_table: "income_entries", legacy_id: legacy_ids).pluck(:transaction_id)
+        scope.where(id: txn_ids)
+      else
+        scope.where(id: TagAssignment.where(taggable_type: "IncomeEntry", tag_id: active_tag_ids).select(:taggable_id))
+      end
     end
 
     def tag_names_for_response
@@ -294,8 +306,8 @@ module Api
       beg_balances = AccountBalanceService.balances_as_of(current_user, month_start - 1.day)
       beginning_balance = beg_balances.values.sum.to_f.round(2)
 
-      income_base = tag_filtered_income(current_user.income_entries.where(entry_date: range, deleted_at: nil))
-      payment_base = tag_filtered_payments(current_user.payments.where(payment_date: range, deleted_at: nil))
+      income_base = tag_filtered_income(current_user.transactions.deposits.where(txn_date: range))
+      payment_base = tag_filtered_payments(current_user.transactions.payments.where(txn_date: range))
 
       deposits_total = income_base.sum(:amount).to_f.round(2)
       payments_total = payment_base.sum(:amount).to_f.round(2)
@@ -311,14 +323,14 @@ module Api
       ending_balance = (beginning_balance + net_cash_flow).round(2)
 
       deposits_by_account = income_base
-        .joins("LEFT JOIN accounts ON accounts.id = income_entries.account_id")
+        .joins("LEFT JOIN accounts ON accounts.id = transactions.account_id")
         .group("COALESCE(accounts.name, 'Unassigned')")
         .sum(:amount)
         .transform_values { |v| v.to_f.round(2) }
         .sort_by { |_, v| -v }
 
       payments_by_category = payment_base
-        .joins("LEFT JOIN spending_categories ON spending_categories.id = payments.spending_category_id")
+        .joins("LEFT JOIN spending_categories ON spending_categories.id = transactions.spending_category_id")
         .group("COALESCE(spending_categories.name, 'Uncategorized')")
         .sum(:amount)
         .transform_values { |v| v.to_f.round(2) }
@@ -362,12 +374,12 @@ module Api
       beg_balances = AccountBalanceService.balances_as_of(current_user, ytd_start - 1.day)
       beginning_balance = beg_balances.values.sum.to_f.round(2)
 
-      deposits_total = tag_filtered_income(current_user.income_entries
-        .where(entry_date: range, deleted_at: nil))
+      deposits_total = tag_filtered_income(current_user.transactions.deposits
+        .where(txn_date: range))
         .sum(:amount).to_f.round(2)
 
-      payments_total = tag_filtered_payments(current_user.payments
-        .where(payment_date: range, deleted_at: nil))
+      payments_total = tag_filtered_payments(current_user.transactions.payments
+        .where(txn_date: range))
         .sum(:amount).to_f.round(2)
 
       new_accounts_total = current_user.accounts
@@ -396,13 +408,13 @@ module Api
       month_end   = month_start.next_month
       range       = month_start...month_end
 
-      base = tag_filtered_payments(current_user.payments.where(payment_date: range, deleted_at: nil))
+      base = tag_filtered_payments(current_user.transactions.payments.where(txn_date: range))
 
       total_spent = base.sum(:amount).to_f.round(2)
       transaction_count = base.count
 
       categories = base
-        .joins("LEFT JOIN spending_categories ON spending_categories.id = payments.spending_category_id AND spending_categories.deleted_at IS NULL")
+        .joins("LEFT JOIN spending_categories ON spending_categories.id = transactions.spending_category_id AND spending_categories.deleted_at IS NULL")
         .joins("LEFT JOIN spending_types ON spending_types.id = spending_categories.spending_type_id AND spending_types.deleted_at IS NULL")
         .group(
           "spending_categories.id",
@@ -411,15 +423,15 @@ module Api
           "spending_categories.color_key",
           "spending_types.name"
         )
-        .order(Arel.sql("SUM(payments.amount) DESC"))
+        .order(Arel.sql("SUM(transactions.amount) DESC"))
         .pluck(
           Arel.sql("spending_categories.id"),
           Arel.sql("COALESCE(spending_categories.name, 'Uncategorized')"),
           Arel.sql("spending_categories.icon_key"),
           Arel.sql("spending_categories.color_key"),
           Arel.sql("COALESCE(spending_types.name, 'None')"),
-          Arel.sql("SUM(payments.amount)"),
-          Arel.sql("COUNT(payments.id)")
+          Arel.sql("SUM(transactions.amount)"),
+          Arel.sql("COUNT(transactions.id)")
         )
         .map do |id, name, icon_key, color_key, spending_type, amount, count|
           amt = amount.to_f.round(2)
@@ -476,13 +488,13 @@ module Api
       ytd_end   = Date.new(year, month, 1).next_month
       range     = ytd_start...ytd_end
 
-      base = tag_filtered_payments(current_user.payments.where(payment_date: range, deleted_at: nil))
+      base = tag_filtered_payments(current_user.transactions.payments.where(txn_date: range))
 
       total_spent = base.sum(:amount).to_f.round(2)
       transaction_count = base.count
 
       categories = base
-        .joins("LEFT JOIN spending_categories ON spending_categories.id = payments.spending_category_id AND spending_categories.deleted_at IS NULL")
+        .joins("LEFT JOIN spending_categories ON spending_categories.id = transactions.spending_category_id AND spending_categories.deleted_at IS NULL")
         .joins("LEFT JOIN spending_types ON spending_types.id = spending_categories.spending_type_id AND spending_types.deleted_at IS NULL")
         .group(
           "spending_categories.id",
@@ -491,15 +503,15 @@ module Api
           "spending_categories.color_key",
           "spending_types.name"
         )
-        .order(Arel.sql("SUM(payments.amount) DESC"))
+        .order(Arel.sql("SUM(transactions.amount) DESC"))
         .pluck(
           Arel.sql("spending_categories.id"),
           Arel.sql("COALESCE(spending_categories.name, 'Uncategorized')"),
           Arel.sql("spending_categories.icon_key"),
           Arel.sql("spending_categories.color_key"),
           Arel.sql("COALESCE(spending_types.name, 'None')"),
-          Arel.sql("SUM(payments.amount)"),
-          Arel.sql("COUNT(payments.id)")
+          Arel.sql("SUM(transactions.amount)"),
+          Arel.sql("COUNT(transactions.id)")
         )
         .map do |id, name, icon_key, color_key, spending_type, amount, count|
           amt = amount.to_f.round(2)
@@ -526,13 +538,13 @@ module Api
       month_end   = month_start.next_month
       range       = month_start...month_end
 
-      base = tag_filtered_payments(current_user.payments.where(payment_date: range, deleted_at: nil))
+      base = tag_filtered_payments(current_user.transactions.payments.where(txn_date: range))
 
       total_spent = base.sum(:amount).to_f.round(2)
       transaction_count = base.count
 
       types = base
-        .joins("LEFT JOIN spending_categories ON spending_categories.id = payments.spending_category_id AND spending_categories.deleted_at IS NULL")
+        .joins("LEFT JOIN spending_categories ON spending_categories.id = transactions.spending_category_id AND spending_categories.deleted_at IS NULL")
         .joins("LEFT JOIN spending_types ON spending_types.id = spending_categories.spending_type_id AND spending_types.deleted_at IS NULL")
         .group(
           "spending_types.id",
@@ -540,14 +552,14 @@ module Api
           "spending_types.icon_key",
           "spending_types.color_key"
         )
-        .order(Arel.sql("SUM(payments.amount) DESC"))
+        .order(Arel.sql("SUM(transactions.amount) DESC"))
         .pluck(
           Arel.sql("spending_types.id"),
           Arel.sql("COALESCE(spending_types.name, 'None')"),
           Arel.sql("spending_types.icon_key"),
           Arel.sql("spending_types.color_key"),
-          Arel.sql("SUM(payments.amount)"),
-          Arel.sql("COUNT(payments.id)")
+          Arel.sql("SUM(transactions.amount)"),
+          Arel.sql("COUNT(transactions.id)")
         )
         .map do |id, name, icon_key, color_key, amount, count|
           amt = amount.to_f.round(2)
@@ -603,13 +615,13 @@ module Api
       ytd_end   = Date.new(year, month, 1).next_month
       range     = ytd_start...ytd_end
 
-      base = tag_filtered_payments(current_user.payments.where(payment_date: range, deleted_at: nil))
+      base = tag_filtered_payments(current_user.transactions.payments.where(txn_date: range))
 
       total_spent = base.sum(:amount).to_f.round(2)
       transaction_count = base.count
 
       types = base
-        .joins("LEFT JOIN spending_categories ON spending_categories.id = payments.spending_category_id AND spending_categories.deleted_at IS NULL")
+        .joins("LEFT JOIN spending_categories ON spending_categories.id = transactions.spending_category_id AND spending_categories.deleted_at IS NULL")
         .joins("LEFT JOIN spending_types ON spending_types.id = spending_categories.spending_type_id AND spending_types.deleted_at IS NULL")
         .group(
           "spending_types.id",
@@ -617,14 +629,14 @@ module Api
           "spending_types.icon_key",
           "spending_types.color_key"
         )
-        .order(Arel.sql("SUM(payments.amount) DESC"))
+        .order(Arel.sql("SUM(transactions.amount) DESC"))
         .pluck(
           Arel.sql("spending_types.id"),
           Arel.sql("COALESCE(spending_types.name, 'None')"),
           Arel.sql("spending_types.icon_key"),
           Arel.sql("spending_types.color_key"),
-          Arel.sql("SUM(payments.amount)"),
-          Arel.sql("COUNT(payments.id)")
+          Arel.sql("SUM(transactions.amount)"),
+          Arel.sql("COUNT(transactions.id)")
         )
         .map do |id, name, icon_key, color_key, amount, count|
           amt = amount.to_f.round(2)
@@ -731,19 +743,18 @@ module Api
       range_end   = Date.new(end_year, end_month, 1).next_month
       range       = range_start...range_end
 
-      scope = current_user.income_entries.where(entry_date: range, deleted_at: nil)
+      scope = current_user.transactions.deposits.where(txn_date: range)
       scope = scope.where(account_id: account_id) if account_id
-      scope = scope.where(income_recurring_id: nil) unless include_recurring
       scope = tag_filtered_income(scope)
 
       total_income = scope.sum(:amount).to_f.round(2)
       total_count = scope.count
 
       sources = scope
-        .group(:source_name)
+        .group(:description)
         .order(Arel.sql("SUM(amount) DESC"))
         .pluck(
-          Arel.sql("source_name"),
+          Arel.sql("description"),
           Arel.sql("SUM(amount)"),
           Arel.sql("COUNT(*)")
         )
@@ -895,25 +906,25 @@ module Api
       month_end = month_start.next_month
       range = month_start...month_end
 
-      payments = current_user.payments
-        .where(account_id: account.id, payment_date: range)
-        .order(payment_date: :asc, id: :asc)
-        .map { |p| { date: p.payment_date.to_s, description: p.description, amount: -p.amount.to_f.round(2), type: "Payment", reconciled: p.reconciled } }
+      payments = current_user.transactions.payments
+        .where(account_id: account.id, txn_date: range)
+        .order(txn_date: :asc, id: :asc)
+        .map { |p| { date: p.txn_date.to_s, description: p.description, amount: -p.amount.to_f.round(2), type: "Payment", reconciled: p.reconciled } }
 
-      deposits = current_user.income_entries
-        .where(account_id: account.id, entry_date: range)
-        .order(entry_date: :asc, id: :asc)
-        .map { |d| { date: d.entry_date.to_s, description: d.source_name, amount: d.amount.to_f.round(2), type: "Deposit", reconciled: d.reconciled } }
+      deposits = current_user.transactions.deposits
+        .where(account_id: account.id, txn_date: range)
+        .order(txn_date: :asc, id: :asc)
+        .map { |d| { date: d.txn_date.to_s, description: d.description, amount: d.amount.to_f.round(2), type: "Deposit", reconciled: d.reconciled } }
 
-      transfers_out = current_user.transfer_masters
-        .where(from_account_id: account.id, transfer_date: range)
-        .order(transfer_date: :asc, id: :asc)
-        .map { |t| to_acct = current_user.accounts.unscoped.find_by(id: t.to_account_id); { date: t.transfer_date.to_s, description: "Transfer to #{to_acct&.name || '[Deleted]'}", amount: -t.amount.to_f.round(2), type: "Transfer", reconciled: t.reconciled } }
+      transfers_out = current_user.transactions.transfers
+        .where(from_account_id: account.id, txn_date: range)
+        .order(txn_date: :asc, id: :asc)
+        .map { |t| to_acct = Account.unscoped.find_by(id: t.to_account_id); { date: t.txn_date.to_s, description: "Transfer to #{to_acct&.name || '[Deleted]'}", amount: -t.amount.to_f.round(2), type: "Transfer", reconciled: t.reconciled } }
 
-      transfers_in = current_user.transfer_masters
-        .where(to_account_id: account.id, transfer_date: range)
-        .order(transfer_date: :asc, id: :asc)
-        .map { |t| from_acct = current_user.accounts.unscoped.find_by(id: t.from_account_id); { date: t.transfer_date.to_s, description: "Transfer from #{from_acct&.name || '[Deleted]'}", amount: t.amount.to_f.round(2), type: "Transfer", reconciled: t.reconciled } }
+      transfers_in = current_user.transactions.transfers
+        .where(to_account_id: account.id, txn_date: range)
+        .order(txn_date: :asc, id: :asc)
+        .map { |t| from_acct = Account.unscoped.find_by(id: t.from_account_id); { date: t.txn_date.to_s, description: "Transfer from #{from_acct&.name || '[Deleted]'}", amount: t.amount.to_f.round(2), type: "Transfer", reconciled: t.reconciled } }
 
       adjustments = current_user.balance_adjustments
         .where(account_id: account.id, adjustment_date: range)
