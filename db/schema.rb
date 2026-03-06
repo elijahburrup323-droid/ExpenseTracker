@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_06_000001) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_06_000002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_stat_statements"
   enable_extension "plpgsql"
@@ -1031,6 +1031,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_06_000001) do
     t.index ["user_id", "txn_date"], name: "idx_txns_user_date"
     t.index ["user_id", "txn_type", "txn_date"], name: "idx_txns_user_type_date"
     t.index ["user_id"], name: "index_transactions_on_user_id"
+    t.check_constraint "amount > 0::numeric", name: "chk_positive_amount"
     t.check_constraint "txn_type::text <> 'deposit'::text OR account_id IS NOT NULL AND from_account_id IS NULL AND to_account_id IS NULL", name: "chk_deposit_rules"
     t.check_constraint "txn_type::text <> 'payment'::text OR account_id IS NOT NULL AND spending_category_id IS NOT NULL AND from_account_id IS NULL AND to_account_id IS NULL", name: "chk_payment_rules"
     t.check_constraint "txn_type::text <> 'transfer'::text OR from_account_id IS NOT NULL AND to_account_id IS NOT NULL AND account_id IS NULL AND spending_category_id IS NULL", name: "chk_transfer_rules"

@@ -1,4 +1,6 @@
 class Transaction < ApplicationRecord
+  include LedgerMath
+
   belongs_to :user
   belongs_to :account, optional: true
   belongs_to :from_account, class_name: "Account", optional: true
@@ -17,7 +19,7 @@ class Transaction < ApplicationRecord
 
   validates :txn_date, presence: true
   validates :txn_type, presence: true, inclusion: { in: TXN_TYPES }
-  validates :amount, presence: true, numericality: true
+  validates :amount, presence: true, numericality: { greater_than: 0 }
   validates :description, length: { maximum: 255 }
   validates :memo, length: { maximum: 500 }
 
