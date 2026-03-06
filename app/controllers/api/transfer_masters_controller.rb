@@ -37,6 +37,7 @@ module Api
 
           apply_transfer_bucket_transactions(transfer)
           flag_open_month_has_data(transfer.transfer_date, "transfer")
+          sync_to_transaction_engine!(transfer, :create)
           render json: transfer_json(transfer), status: :created
         else
           render_errors(transfer)
@@ -75,7 +76,7 @@ module Api
           # Reverse old bucket transactions and apply new ones
           reverse_transfer_bucket_transactions(old_from_bucket_id, old_to_bucket_id, old_amount, @transfer)
           apply_transfer_bucket_transactions(@transfer)
-
+          sync_to_transaction_engine!(@transfer, :update)
           render json: transfer_json(@transfer)
         else
           render_errors(@transfer)
@@ -93,6 +94,7 @@ module Api
         end
 
         reverse_transfer_bucket_transactions(@transfer.from_bucket_id, @transfer.to_bucket_id, @transfer.amount, @transfer)
+        sync_to_transaction_engine!(@transfer, :destroy)
         @transfer.destroy!
       end
       head :no_content
@@ -224,6 +226,44 @@ module Api
       TransferMaster.generate_due_transfers_for(current_user)
     rescue => e
       Rails.logger.warn("generate_due_transfers error: #{e.message}")
+    end
+
+    def sync_to_transaction_engine!(transfer, action)
+      mapping = TransactionMigrationMap.find_by(
+        user_id: current_user.id, legacy_table: "transfer_masters", legacy_id: transfer.id
+      )
+
+      case action
+      when :create
+        txn = current_user.transactions.create!(
+          txn_date: transfer.transfer_date,
+          txn_type: "transfer",
+          amount: transfer.amount.abs,
+          memo: transfer.memo,
+          from_account_id: transfer.from_account_id,
+          to_account_id: transfer.to_account_id,
+          reconciled: transfer.reconciled
+        )
+        TransactionMigrationMap.create!(
+          user_id: current_user.id, legacy_table: "transfer_masters",
+          legacy_id: transfer.id, transaction_id: txn.id
+        )
+      when :update
+        if mapping
+          mapping.canonical_transaction.update!(
+            txn_date: transfer.transfer_date,
+            amount: transfer.amount.abs,
+            memo: transfer.memo,
+            from_account_id: transfer.from_account_id,
+            to_account_id: transfer.to_account_id,
+            reconciled: transfer.reconciled
+          )
+        end
+      when :destroy
+        mapping&.canonical_transaction&.soft_delete!
+      end
+    rescue => e
+      Rails.logger.warn("sync_to_transaction_engine! (transfer #{transfer.id}, #{action}): #{e.message}")
     end
   end
 end
