@@ -38,6 +38,7 @@ module Api
           payment.account.apply_payment!(payment.amount)
           handle_bucket_execution_create(payment) if payment.is_bucket_execution && payment.bucket_id.present?
           flag_open_month_has_data(payment.payment_date, "payment")
+          sync_to_transaction_engine!(payment, :create)
           render json: payment_json(payment), status: :created
         else
           render_errors(payment)
@@ -68,7 +69,7 @@ module Api
             new_account.apply_payment!(@payment.amount)
 
             handle_bucket_execution_update(@payment, old_bucket_id, old_was_bucket_execution, old_amount)
-
+            sync_to_transaction_engine!(@payment, :update)
             render json: payment_json(@payment)
           else
             render_errors(@payment)
@@ -85,6 +86,7 @@ module Api
       ActiveRecord::Base.transaction do
         @payment.account.reverse_payment!(@payment.amount)
         reverse_bucket_execution(@payment) if @payment.is_bucket_execution && @payment.bucket_id.present?
+        sync_to_transaction_engine!(@payment, :destroy)
         @payment.soft_delete!
       end
       head :no_content
@@ -164,6 +166,7 @@ module Api
 
       if @payment.update(permitted)
         sync_tags!(@payment)
+        sync_to_transaction_engine!(@payment, :update)
         render json: payment_json(@payment)
       else
         render_errors(@payment)
@@ -371,6 +374,48 @@ module Api
       to_account.apply_transfer_out!(transfer.amount)    # reverse the transfer-in
 
       transfer.soft_delete!
+    end
+
+    def sync_to_transaction_engine!(payment, action)
+      mapping = TransactionMigrationMap.find_by(
+        user_id: current_user.id, legacy_table: "payments", legacy_id: payment.id
+      )
+
+      case action
+      when :create
+        txn = current_user.transactions.create!(
+          txn_date: payment.payment_date,
+          txn_type: "payment",
+          amount: payment.amount.abs,
+          description: payment.description,
+          memo: payment.notes,
+          account_id: payment.account_id,
+          spending_category_id: payment.spending_category_id,
+          spending_type_id: payment.spending_type_override_id || payment.spending_category&.spending_type_id,
+          reconciled: payment.reconciled
+        )
+        TransactionMigrationMap.create!(
+          user_id: current_user.id, legacy_table: "payments",
+          legacy_id: payment.id, transaction_id: txn.id
+        )
+      when :update
+        if mapping
+          mapping.canonical_transaction.update!(
+            txn_date: payment.payment_date,
+            amount: payment.amount.abs,
+            description: payment.description,
+            memo: payment.notes,
+            account_id: payment.account_id,
+            spending_category_id: payment.spending_category_id,
+            spending_type_id: payment.spending_type_override_id || payment.spending_category&.spending_type_id,
+            reconciled: payment.reconciled
+          )
+        end
+      when :destroy
+        mapping&.canonical_transaction&.soft_delete!
+      end
+    rescue => e
+      Rails.logger.warn("sync_to_transaction_engine! (payment #{payment.id}, #{action}): #{e.message}")
     end
   end
 end
