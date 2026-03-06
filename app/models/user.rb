@@ -38,6 +38,7 @@ class User < ApplicationRecord
   has_many :recurring_transfers, dependent: :destroy
   has_many :import_templates, dependent: :destroy
   has_many :import_sessions, dependent: :destroy
+  has_many :transactions, dependent: :destroy
 
   # Assets, Investments & Financing
   has_many :asset_types, dependent: :destroy

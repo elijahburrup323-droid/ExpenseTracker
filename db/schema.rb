@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_01_000001) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_06_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_stat_statements"
   enable_extension "plpgsql"
@@ -998,6 +998,45 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_01_000001) do
     t.index ["user_id"], name: "index_tags_on_user_id"
   end
 
+  create_table "transactions", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.date "txn_date", null: false
+    t.string "txn_type", limit: 10, null: false
+    t.decimal "amount", precision: 12, scale: 2, null: false
+    t.string "description", limit: 255
+    t.string "memo", limit: 500
+    t.bigint "account_id"
+    t.bigint "from_account_id"
+    t.bigint "to_account_id"
+    t.bigint "spending_category_id"
+    t.bigint "spending_type_id"
+    t.boolean "cleared", default: false, null: false
+    t.boolean "reconciled", default: false, null: false
+    t.string "imported_source", limit: 100
+    t.string "import_batch_id", limit: 100
+    t.string "external_id", limit: 255
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "txn_date"], name: "idx_txns_account_date", where: "(account_id IS NOT NULL)"
+    t.index ["account_id"], name: "index_transactions_on_account_id"
+    t.index ["from_account_id", "txn_date"], name: "idx_txns_from_account_date", where: "(from_account_id IS NOT NULL)"
+    t.index ["from_account_id"], name: "index_transactions_on_from_account_id"
+    t.index ["spending_category_id"], name: "index_transactions_on_spending_category_id"
+    t.index ["spending_type_id"], name: "index_transactions_on_spending_type_id"
+    t.index ["to_account_id", "txn_date"], name: "idx_txns_to_account_date", where: "(to_account_id IS NOT NULL)"
+    t.index ["to_account_id"], name: "index_transactions_on_to_account_id"
+    t.index ["user_id", "deleted_at"], name: "idx_txns_user_deleted"
+    t.index ["user_id", "external_id"], name: "idx_txns_user_external_id", unique: true, where: "((external_id IS NOT NULL) AND (deleted_at IS NULL))"
+    t.index ["user_id", "txn_date"], name: "idx_txns_user_date"
+    t.index ["user_id", "txn_type", "txn_date"], name: "idx_txns_user_type_date"
+    t.index ["user_id"], name: "index_transactions_on_user_id"
+    t.check_constraint "txn_type::text <> 'deposit'::text OR account_id IS NOT NULL AND from_account_id IS NULL AND to_account_id IS NULL", name: "chk_deposit_rules"
+    t.check_constraint "txn_type::text <> 'payment'::text OR account_id IS NOT NULL AND spending_category_id IS NOT NULL AND from_account_id IS NULL AND to_account_id IS NULL", name: "chk_payment_rules"
+    t.check_constraint "txn_type::text <> 'transfer'::text OR from_account_id IS NOT NULL AND to_account_id IS NOT NULL AND account_id IS NULL AND spending_category_id IS NULL", name: "chk_transfer_rules"
+    t.check_constraint "txn_type::text = ANY (ARRAY['payment'::character varying, 'deposit'::character varying, 'transfer'::character varying]::text[])", name: "chk_txn_type_values"
+  end
+
   create_table "transfer_masters", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.date "transfer_date", null: false
@@ -1290,6 +1329,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_01_000001) do
   add_foreign_key "tag_assignments", "tags"
   add_foreign_key "tag_assignments", "users"
   add_foreign_key "tags", "users"
+  add_foreign_key "transactions", "accounts"
+  add_foreign_key "transactions", "accounts", column: "from_account_id"
+  add_foreign_key "transactions", "accounts", column: "to_account_id"
+  add_foreign_key "transactions", "spending_categories"
+  add_foreign_key "transactions", "spending_types"
+  add_foreign_key "transactions", "users"
   add_foreign_key "transfer_masters", "accounts", column: "from_account_id"
   add_foreign_key "transfer_masters", "accounts", column: "to_account_id"
   add_foreign_key "transfer_masters", "buckets", column: "from_bucket_id"
