@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.66"
+APP_VERSION = "1.3.68"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,19 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.68",
+    changes: [
+      "Dashboard: Recent Activity flip redesign — Expanded Visibility Model (Instruction S). Flip now auto-expands the card and shows full Monthly Activity with all payments and deposits, category labels on payments, muted color tones. Flip-back auto-collapses. No filters, sorting, or chart controls on flip side.",
+      "Dashboard: Recent Activity front refinement — Calm Scroll Model (Instruction R). Muted color tones for payment amounts (red-400/80) and deposit amounts (emerald-500/80). Net activity summary uses same muted palette. Colors persist across month navigation via JS renderer."
+    ]
+  },
+  {
+    version: "1.3.67",
+    changes: [
+      "Dashboard: Recent Activity front refinement — Calm Scroll Model (Instruction R). Front now shows merged payments + deposits in one chronological list. Payments in muted red (−), deposits in muted green (+). Removed colored icon badges. Fixed-height card with internal scroll. No transfers displayed. Back side unchanged."
+    ]
+  },
   {
     version: "1.3.66",
     changes: [

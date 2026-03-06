@@ -18,41 +18,34 @@
         <% end %>
       </div>
     </div>
+    <%# === Calm Scroll: merged payments + deposits (Instruction R) === %>
     <div class="flex items-center justify-between px-1 mb-2" data-role="activity-summary">
-      <span class="text-xs font-medium tabular-nums <%= @net_activity >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' %>">
+      <span class="text-xs font-medium tabular-nums <%= @net_activity >= 0 ? 'text-emerald-500/80 dark:text-emerald-400/70' : 'text-red-400/80 dark:text-red-400/60' %>">
         Net: <%= @net_activity >= 0 ? '+' : '' %><%= number_to_currency(@net_activity) %>
       </span>
       <span class="text-xs text-gray-400 dark:text-gray-500"><%= @activity_transaction_count %> transaction<%= @activity_transaction_count == 1 ? '' : 's' %></span>
     </div>
-    <ul class="space-y-2 flex-1 min-h-0 overflow-y-auto" data-role="card-content" data-current-page="1" data-has-more="<%= @recent_payments_has_more %>" data-total-count="<%= @recent_payments_total %>">
-      <% activity_colors = %w[blue green purple amber sky] %>
-      <% @recent_payments.each_with_index do |payment, i| %>
-        <% c = activity_colors[i % activity_colors.length] %>
-        <li class="flex items-center justify-between">
-          <div class="flex items-center space-x-2 min-w-0">
-            <span class="w-7 h-7 rounded-lg bg-<%= c %>-100 dark:bg-<%= c %>-900/30 flex items-center justify-center flex-shrink-0">
-              <svg class="w-4 h-4 text-<%= c %>-500 dark:text-<%= c %>-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a5 5 0 00-10 0v2M12 12v3m-3-3h6m-9 7h12a2 2 0 002-2v-4a2 2 0 00-2-2H6a2 2 0 00-2 2v4a2 2 0 002 2z"/>
-              </svg>
-            </span>
-            <span class="text-sm text-gray-700 dark:text-gray-300 truncate"><span class="text-gray-400 dark:text-gray-500"><%= payment.payment_date.strftime("%-m/%-d") %></span> <%= payment.description %></span>
-          </div>
-          <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums flex-shrink-0 ml-2"><%= number_to_currency(payment.amount) %></span>
-        </li>
+    <div class="flex-1 min-h-0 overflow-y-auto" data-role="card-content">
+      <% if @recent_activity_items.any? %>
+        <div class="space-y-1.5">
+          <% @recent_activity_items.each do |item| %>
+            <div class="flex items-center justify-between">
+              <div class="min-w-0 flex-1 mr-2">
+                <span class="text-[11px] text-gray-400 dark:text-gray-500"><%= item[:date].strftime("%-m/%-d") %></span>
+                <span class="text-xs text-gray-700 dark:text-gray-300 truncate"><%= item[:description] %></span>
+              </div>
+              <% if item[:type] == :deposit %>
+                <span class="text-xs font-medium text-emerald-500/80 dark:text-emerald-400/70 tabular-nums flex-shrink-0">+<%= number_to_currency(item[:amount]) %></span>
+              <% else %>
+                <span class="text-xs font-medium text-red-400/80 dark:text-red-400/60 tabular-nums flex-shrink-0">&minus;<%= number_to_currency(item[:amount]) %></span>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="text-sm text-gray-400 dark:text-gray-500 text-center py-4">No activity this month.</p>
       <% end %>
-      <% if @recent_payments.empty? %>
-        <li class="text-sm text-gray-400 dark:text-gray-500">No recent payments.</li>
-      <% end %>
-      <% if @recent_payments_has_more %>
-        <li class="text-center py-2" data-role="load-more-sentinel">
-          <button type="button"
-                  class="text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium"
-                  data-action="click->dashboard#loadMorePayments">
-            Load more (<%= @recent_payments_total - 10 %> remaining)
-          </button>
-        </li>
-      <% end %>
-    </ul>
+    </div>
     <div class="dash-card-footer border-t border-gray-100 dark:border-gray-700 flex items-center justify-between" data-role="card-footer">
       <button type="button" class="inline-flex items-center justify-center text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300" style="min-width:44px; min-height:44px;" data-action="click->dashboard#flipCard" aria-label="View recent deposits">
         <svg class="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -78,10 +71,10 @@
     </div>
   </div>
 
-  <%# === BACK SIDE: Recent Deposits === %>
+  <%# === BACK SIDE: Monthly Activity (Expanded Visibility — Instruction S) === %>
   <div class="absolute inset-0 flex flex-col" data-role="back" style="backface-visibility: hidden; transform: rotateY(180deg); pointer-events: none;">
     <div class="flex items-center justify-between mb-2">
-      <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Recent Deposits</h2>
+      <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Monthly Activity</h2>
       <div class="flex items-center space-x-2">
         <button type="button" data-action="click->dashboard#prevMonth" data-dashboard-target="prevBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
@@ -90,48 +83,46 @@
         <button type="button" data-action="click->dashboard#nextMonth" data-dashboard-target="nextBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
         </button>
-        <%= link_to report_monthly_cash_flow_path, class: "ml-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition", aria: { label: "Open cash flow report" } do %>
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V9m4 7V5m4 11v-4m4 4V8"/></svg>
-        <% end %>
       </div>
     </div>
-    <div class="flex-1 overflow-y-auto">
-      <% deposit_colors = %w[emerald blue purple amber sky] %>
-      <% if @recent_income_entries.any? %>
-        <ul class="space-y-3">
-          <% @recent_income_entries.each_with_index do |entry, i| %>
-            <% c = deposit_colors[i % deposit_colors.length] %>
-            <li class="flex items-center justify-between">
-              <div class="flex items-center space-x-2">
-                <span class="w-7 h-7 rounded-lg bg-<%= c %>-100 dark:bg-<%= c %>-900/30 flex items-center justify-center">
-                  <svg class="w-4 h-4 text-<%= c %>-500 dark:text-<%= c %>-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
-                  </svg>
-                </span>
-                <span class="text-sm text-gray-700 dark:text-gray-300"><span class="text-gray-400 dark:text-gray-500"><%= entry.entry_date.strftime("%-m/%-d") %></span> <%= entry.description %></span>
+    <div class="flex-1 min-h-0 overflow-y-auto" data-role="back-content">
+      <% if @recent_activity_items.any? %>
+        <div class="space-y-1.5">
+          <% @recent_activity_items.each do |item| %>
+            <div class="flex items-center justify-between">
+              <div class="min-w-0 flex-1 mr-2">
+                <span class="text-[11px] text-gray-400 dark:text-gray-500"><%= item[:date].strftime("%-m/%-d") %></span>
+                <span class="text-xs text-gray-700 dark:text-gray-300 truncate"><%= item[:description] %></span>
+                <% if item[:category].present? %>
+                  <span class="text-[10px] text-gray-400/70 dark:text-gray-500/60 ml-1"><%= item[:category] %></span>
+                <% end %>
               </div>
-              <span class="text-sm font-semibold text-emerald-600 dark:text-emerald-400">+<%= number_to_currency(entry.amount) %></span>
-            </li>
+              <% if item[:type] == :deposit %>
+                <span class="text-xs font-medium text-emerald-500/80 dark:text-emerald-400/70 tabular-nums flex-shrink-0">+<%= number_to_currency(item[:amount]) %></span>
+              <% else %>
+                <span class="text-xs font-medium text-red-400/80 dark:text-red-400/60 tabular-nums flex-shrink-0">&minus;<%= number_to_currency(item[:amount]) %></span>
+              <% end %>
+            </div>
           <% end %>
-        </ul>
+        </div>
       <% else %>
-        <p class="text-sm text-gray-400 dark:text-gray-500 text-center py-4">No deposits this month.</p>
+        <p class="text-sm text-gray-400 dark:text-gray-500 text-center py-4">No activity this month.</p>
       <% end %>
     </div>
     <div class="dash-card-footer border-t border-gray-100 dark:border-gray-700 flex items-center justify-between" data-role="card-footer">
-      <button type="button" class="inline-flex items-center justify-center text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300" style="min-width:44px; min-height:44px;" data-action="click->dashboard#flipCardBack" aria-label="Back to recent payments">
+      <button type="button" class="inline-flex items-center justify-center text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300" style="min-width:44px; min-height:44px;" data-action="click->dashboard#flipCardBack" aria-label="Back to recent view">
         <svg class="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.992 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182M20.015 4.652v4.992"/>
         </svg>
       </button>
       <div class="flex items-center space-x-3">
-        <%= link_to income_entries_path, class: "text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium" do %>
-          View All Deposits &rsaquo;
+        <%= link_to payments_path, class: "text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium" do %>
+          View All &rsaquo;
         <% end %>
         <button type="button" data-action="click->dashboard#toggleCardExpand"
                 data-role="expand-btn"
                 class="inline-flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition cursor-pointer" style="min-width:44px; min-height:44px;"
-                aria-label="Expand Recent Activity Card">
+                aria-label="Collapse Recent Activity Card">
           <svg class="w-[18px] h-[18px]" data-icon="expand" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/>
           </svg>

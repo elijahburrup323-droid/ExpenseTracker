@@ -217,8 +217,24 @@ class DashboardController < ApplicationController
                                           .order(:created_at)
     @new_account_balance_total = @new_budget_accounts.sum(:beginning_balance)
 
-    # Card 5: Recent Activity — first page of open-month payments (load more via AJAX)
+    # Card 5: Recent Activity — merged payments + deposits (Calm Scroll, Instruction R)
     payments_base = current_user.payments.where(payment_date: @month_start...@month_end)
+    income_base = current_user.income_entries
+                              .where(received_flag: true)
+                              .where(entry_date: @month_start...@month_end)
+
+    # Merge payments and deposits into one list sorted by date DESC
+    payment_items = payments_base
+                      .order(payment_date: :desc, sort_order: :desc)
+                      .includes(:account, spending_category: :spending_type)
+                      .map { |p| { type: :payment, date: p.payment_date, description: p.description, amount: p.amount.to_f, category: p.spending_category&.name } }
+    deposit_items = income_base
+                      .order(entry_date: :desc)
+                      .includes(:account)
+                      .map { |d| { type: :deposit, date: d.entry_date, description: d.description, amount: d.amount.to_f, category: nil } }
+    @recent_activity_items = (payment_items + deposit_items).sort_by { |i| -i[:date].to_time.to_i }
+
+    # Keep legacy variables for backward compat (pagination, back side)
     @recent_payments_total = payments_base.count
     @recent_payments_has_more = @recent_payments_total > 10
     @recent_payments = payments_base
@@ -228,9 +244,6 @@ class DashboardController < ApplicationController
 
     # Card 5: Net activity summary
     total_payments = payments_base.sum(:amount).to_f
-    income_base = current_user.income_entries
-                              .where(received_flag: true)
-                              .where(entry_date: @month_start...@month_end)
     total_income = income_base.sum(:amount).to_f
     income_count = income_base.count
     @net_activity = (total_income - total_payments).round(2)

@@ -286,8 +286,8 @@ export default class extends Controller {
     const back = wrapper.querySelector("[data-role='back']")
     if (front) front.style.pointerEvents = "none"
     if (back) back.style.pointerEvents = "auto"
-    // Auto-expand for Spending Control panel, Net Worth History, Income & Spending Details, and Goal Progress
-    if (wrapper.dataset.cardType === 'spending_overview' || wrapper.dataset.cardType === 'net_worth' || wrapper.dataset.cardType === 'income_spending' || wrapper.dataset.cardType === 'buckets') {
+    // Auto-expand for Spending Control panel, Net Worth History, Income & Spending Details, Goal Progress, and Recent Activity
+    if (wrapper.dataset.cardType === 'spending_overview' || wrapper.dataset.cardType === 'net_worth' || wrapper.dataset.cardType === 'income_spending' || wrapper.dataset.cardType === 'buckets' || wrapper.dataset.cardType === 'recent_activity') {
       this._expandCard(wrapper)
     }
   }
@@ -295,11 +295,12 @@ export default class extends Controller {
   flipCardBack(event) {
     const wrapper = event.target.closest("[data-dashboard-target='slotWrapper']")
     if (!wrapper) return
-    // Auto-collapse for Spending Control panel, Net Worth History, Income & Spending Details, and Goal Progress
+    // Auto-collapse for Spending Control panel, Net Worth History, Income & Spending Details, Goal Progress, and Recent Activity
     if ((wrapper.dataset.cardType === 'spending_overview' && this.expandedCardType === 'spending_overview') ||
         (wrapper.dataset.cardType === 'net_worth' && this.expandedCardType === 'net_worth') ||
         (wrapper.dataset.cardType === 'income_spending' && this.expandedCardType === 'income_spending') ||
-        (wrapper.dataset.cardType === 'buckets' && this.expandedCardType === 'buckets')) {
+        (wrapper.dataset.cardType === 'buckets' && this.expandedCardType === 'buckets') ||
+        (wrapper.dataset.cardType === 'recent_activity' && this.expandedCardType === 'recent_activity')) {
       this._collapseCard()
     }
     const flipper = wrapper.querySelector("[data-role='flipper']")
@@ -981,56 +982,65 @@ export default class extends Controller {
   _renderRecentActivity(wrapper, data) {
     const content = wrapper.querySelector("[data-role='card-content']")
     if (!content) return
-    const payments = data.recent || []
-    const totalCount = data.total_count || payments.length
-    const hasMore = data.has_more || false
-    const perPage = data.per_page || 10
-    const colors = ["blue", "green", "purple", "amber", "sky"]
 
     // Update activity summary strip
     const summary = wrapper.querySelector("[data-role='activity-summary']")
     if (summary && data.net_activity != null) {
       const net = data.net_activity
       const count = data.transaction_count || 0
-      const colorCls = net >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
+      const colorCls = net >= 0 ? "text-emerald-500/80 dark:text-emerald-400/70" : "text-red-400/80 dark:text-red-400/60"
       const sign = net >= 0 ? "+" : "-"
       summary.innerHTML = `<span class="text-xs font-medium tabular-nums ${colorCls}">Net: ${sign}${this._currency(Math.abs(net))}</span>` +
         `<span class="text-xs text-gray-400 dark:text-gray-500">${count} transaction${count === 1 ? "" : "s"}</span>`
     }
 
-    // Reset pagination state
-    content.dataset.currentPage = "1"
-    content.dataset.hasMore = String(hasMore)
-    content.dataset.totalCount = String(totalCount)
-
-    if (payments.length === 0) {
-      content.innerHTML = `<li class="text-sm text-gray-400 dark:text-gray-500">No payments this month.</li>`
+    // Calm Scroll: merged payments + deposits (Instruction R)
+    const items = data.merged || data.recent || []
+    if (items.length === 0) {
+      content.innerHTML = `<p class="text-sm text-gray-400 dark:text-gray-500 text-center py-4">No activity this month.</p>`
       return
     }
-    let html = ""
-    payments.forEach((p, i) => {
-      const c = colors[i % colors.length]
-      html += `
-        <li class="flex items-center justify-between">
-          <div class="flex items-center space-x-2 min-w-0">
-            <span class="w-7 h-7 rounded-lg bg-${c}-100 dark:bg-${c}-900/30 flex items-center justify-center flex-shrink-0">
-              <svg class="w-4 h-4 text-${c}-500 dark:text-${c}-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a5 5 0 00-10 0v2M12 12v3m-3-3h6m-9 7h12a2 2 0 002-2v-4a2 2 0 00-2-2H6a2 2 0 00-2 2v4a2 2 0 002 2z"/>
-              </svg>
-            </span>
-            <span class="text-sm text-gray-700 dark:text-gray-300 truncate"><span class="text-gray-400 dark:text-gray-500">${this._esc(p.date)}</span> ${this._esc(p.description)}</span>
-          </div>
-          <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums flex-shrink-0 ml-2">${this._currency(p.amount)}</span>
-        </li>`
+
+    let html = `<div class="space-y-1.5">`
+    items.forEach(item => {
+      const isDeposit = item.type === "deposit"
+      const amtClass = isDeposit ? "text-emerald-500/80 dark:text-emerald-400/70" : "text-red-400/80 dark:text-red-400/60"
+      const prefix = isDeposit ? "+" : "\u2212"
+      html += `<div class="flex items-center justify-between">
+        <div class="min-w-0 flex-1 mr-2">
+          <span class="text-[11px] text-gray-400 dark:text-gray-500">${this._esc(item.date)}</span>
+          <span class="text-xs text-gray-700 dark:text-gray-300 truncate">${this._esc(item.description)}</span>
+        </div>
+        <span class="text-xs font-medium ${amtClass} tabular-nums flex-shrink-0">${prefix}${this._currency(item.amount)}</span>
+      </div>`
     })
-    if (hasMore) {
-      const remaining = totalCount - perPage
-      html += `<li class="text-center py-2" data-role="load-more-sentinel">
-        <button type="button" class="text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium"
-                data-action="click->dashboard#loadMorePayments">Load more (${remaining} remaining)</button>
-      </li>`
-    }
+    html += `</div>`
     content.innerHTML = html
+
+    // Back side: Expanded Monthly Activity (Instruction S)
+    const backContent = wrapper.querySelector("[data-role='back-content']")
+    if (backContent) {
+      if (items.length === 0) {
+        backContent.innerHTML = `<p class="text-sm text-gray-400 dark:text-gray-500 text-center py-4">No activity this month.</p>`
+      } else {
+        let bhtml = `<div class="space-y-1.5">`
+        items.forEach(item => {
+          const isDeposit = item.type === "deposit"
+          const amtClass = isDeposit ? "text-emerald-500/80 dark:text-emerald-400/70" : "text-red-400/80 dark:text-red-400/60"
+          const prefix = isDeposit ? "+" : "\u2212"
+          const catHtml = item.category ? `<span class="text-[10px] text-gray-400/70 dark:text-gray-500/60 ml-1">${this._esc(item.category)}</span>` : ""
+          bhtml += `<div class="flex items-center justify-between">
+            <div class="min-w-0 flex-1 mr-2">
+              <span class="text-[11px] text-gray-400 dark:text-gray-500">${this._esc(item.date)}</span>
+              <span class="text-xs text-gray-700 dark:text-gray-300 truncate">${this._esc(item.description)}</span>${catHtml}
+            </div>
+            <span class="text-xs font-medium ${amtClass} tabular-nums flex-shrink-0">${prefix}${this._currency(item.amount)}</span>
+          </div>`
+        })
+        bhtml += `</div>`
+        backContent.innerHTML = bhtml
+      }
+    }
   }
 
   _renderBuckets(wrapper, data) {

@@ -456,35 +456,38 @@ module Api
     RECENT_ACTIVITY_PAGE_SIZE = 10
 
     def compute_recent_activity(ctx)
-      page = (ctx[:page] || 1).to_i.clamp(1, 1000)
-      per_page = RECENT_ACTIVITY_PAGE_SIZE
-
-      base = tag_filtered_scope(
+      payments_base = tag_filtered_scope(
         current_user.payments.where(payment_date: ctx[:month_start]...ctx[:month_end]),
         ctx[:tag_ids]
       )
-
-      total_count = base.count
-      recent = base
-                 .order(payment_date: :desc, sort_order: :desc)
-                 .includes(:account, spending_category: :spending_type)
-                 .offset((page - 1) * per_page)
-                 .limit(per_page)
-                 .map { |p| { date: p.payment_date.strftime("%-m/%-d"), description: p.description, amount: p.amount.to_f } }
-
-      # Net activity summary: deposits minus payments for the month
       income_base = tag_filtered_scope(
         current_user.income_entries
           .where(received_flag: true)
           .where(entry_date: ctx[:month_start]...ctx[:month_end]),
         ctx[:tag_ids], "IncomeEntry"
       )
-      total_payments = base.sum(:amount).to_f
+
+      # Merged payments + deposits (Instruction R: Calm Scroll)
+      payment_items = payments_base
+                        .order(payment_date: :desc, sort_order: :desc)
+                        .includes(:account, spending_category: :spending_type)
+                        .map { |p| { type: "payment", date: p.payment_date.strftime("%-m/%-d"), sort_date: p.payment_date.to_s, description: p.description, amount: p.amount.to_f, category: p.spending_category&.name } }
+      deposit_items = income_base
+                        .order(entry_date: :desc)
+                        .includes(:account)
+                        .map { |d| { type: "deposit", date: d.entry_date.strftime("%-m/%-d"), sort_date: d.entry_date.to_s, description: d.description, amount: d.amount.to_f, category: nil } }
+      merged = (payment_items + deposit_items).sort_by { |i| i[:sort_date] }.reverse
+
+      total_payments = payments_base.sum(:amount).to_f
       total_income = income_base.sum(:amount).to_f
       net_activity = (total_income - total_payments).round(2)
-      transaction_count = total_count + income_base.count
+      transaction_count = payments_base.count + income_base.count
 
-      { recent: recent, total_count: total_count, page: page, per_page: per_page, has_more: (page * per_page) < total_count,
+      # Keep legacy recent array for backward compat (pagination endpoint)
+      recent = payment_items
+
+      { recent: recent, merged: merged, total_count: payments_base.count, page: 1, per_page: RECENT_ACTIVITY_PAGE_SIZE,
+        has_more: payments_base.count > RECENT_ACTIVITY_PAGE_SIZE,
         net_activity: net_activity, transaction_count: transaction_count }
     end
 
