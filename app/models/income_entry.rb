@@ -36,9 +36,28 @@ class IncomeEntry < ApplicationRecord
         received_flag: false,
         sort_order: recurring.sort_order
       )
+      sync_recurring_to_transaction_engine!(user, entry, "income_entries")
       generated << entry
       recurring.advance_next_date!
     end
     generated
+  end
+
+  def self.sync_recurring_to_transaction_engine!(user, entry, legacy_table)
+    txn = user.transactions.create!(
+      txn_date: entry.entry_date,
+      txn_type: "deposit",
+      amount: entry.amount.abs,
+      description: entry.source_name,
+      memo: entry.description,
+      account_id: entry.account_id,
+      reconciled: false
+    )
+    TransactionMigrationMap.create!(
+      user_id: user.id, legacy_table: legacy_table,
+      legacy_id: entry.id, transaction_id: txn.id
+    )
+  rescue => e
+    Rails.logger.warn("IncomeEntry sync_recurring_to_transaction_engine!: #{e.message}")
   end
 end

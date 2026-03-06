@@ -46,9 +46,30 @@ class Payment < ApplicationRecord
       account = payment.account
       account.balance -= payment.amount
       account.save!
+      sync_recurring_to_transaction_engine!(user, payment, "payments")
       generated << payment
       recurring.advance_next_date!
     end
     generated
+  end
+
+  def self.sync_recurring_to_transaction_engine!(user, payment, legacy_table)
+    txn = user.transactions.create!(
+      txn_date: payment.payment_date,
+      txn_type: "payment",
+      amount: payment.amount.abs,
+      description: payment.description,
+      memo: payment.notes,
+      account_id: payment.account_id,
+      spending_category_id: payment.spending_category_id,
+      spending_type_id: payment.spending_type_override_id || payment.spending_category&.spending_type_id,
+      reconciled: false
+    )
+    TransactionMigrationMap.create!(
+      user_id: user.id, legacy_table: legacy_table,
+      legacy_id: payment.id, transaction_id: txn.id
+    )
+  rescue => e
+    Rails.logger.warn("Payment sync_recurring_to_transaction_engine!: #{e.message}")
   end
 end
