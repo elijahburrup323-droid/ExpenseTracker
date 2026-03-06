@@ -18,6 +18,7 @@ module Api
         if entry.save
           adjust_account_balance(entry.account_id, entry.amount) if entry.received_flag && entry.account_id
           flag_open_month_has_data(entry.entry_date, "deposit")
+          sync_to_transaction_engine!(entry, :create)
           render json: entry_json(entry), status: :created
         else
           render_errors(entry)
@@ -37,6 +38,7 @@ module Api
           adjust_account_balance(old_account_id, -old_amount) if old_received && old_account_id
           # Apply new balance adjustment
           adjust_account_balance(@entry.account_id, @entry.amount) if @entry.received_flag && @entry.account_id
+          sync_to_transaction_engine!(@entry, :update)
           render json: entry_json(@entry)
         else
           render_errors(@entry)
@@ -48,6 +50,7 @@ module Api
     def destroy
       ActiveRecord::Base.transaction do
         adjust_account_balance(@entry.account_id, -@entry.amount) if @entry.received_flag && @entry.account_id
+        sync_to_transaction_engine!(@entry, :destroy)
         @entry.soft_delete!
       end
       head :no_content
@@ -152,6 +155,44 @@ module Api
       end
     rescue => e
       Rails.logger.warn("flag_open_month_has_data error: #{e.message}")
+    end
+
+    def sync_to_transaction_engine!(entry, action)
+      mapping = TransactionMigrationMap.find_by(
+        user_id: current_user.id, legacy_table: "income_entries", legacy_id: entry.id
+      )
+
+      case action
+      when :create
+        txn = current_user.transactions.create!(
+          txn_date: entry.entry_date,
+          txn_type: "deposit",
+          amount: entry.amount.abs,
+          description: entry.source_name,
+          memo: entry.description,
+          account_id: entry.account_id,
+          reconciled: entry.reconciled
+        )
+        TransactionMigrationMap.create!(
+          user_id: current_user.id, legacy_table: "income_entries",
+          legacy_id: entry.id, transaction_id: txn.id
+        )
+      when :update
+        if mapping
+          mapping.canonical_transaction.update!(
+            txn_date: entry.entry_date,
+            amount: entry.amount.abs,
+            description: entry.source_name,
+            memo: entry.description,
+            account_id: entry.account_id,
+            reconciled: entry.reconciled
+          )
+        end
+      when :destroy
+        mapping&.canonical_transaction&.soft_delete!
+      end
+    rescue => e
+      Rails.logger.warn("sync_to_transaction_engine! (income_entry #{entry.id}, #{action}): #{e.message}")
     end
 
     def entry_json(e, accounts_lookup = nil)
