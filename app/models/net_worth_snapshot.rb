@@ -38,9 +38,12 @@ class NetWorthSnapshot < ApplicationRecord
 
     snaps_by_period = closed_ams.group_by { |s| [s.year, s.month] }
 
+    user_first_month = user.created_at.beginning_of_month.to_date
+
     snaps_by_period.each do |(y, m), period_snaps|
       month_end = Date.new(y, m, -1)
       next if existing_dates.include?(month_end)
+      next if Date.new(y, m, 1) < user_first_month
 
       asset_total = period_snaps.reject { |s| credit_acct_ids.include?(s.account_id) }
                                 .sum { |s| s.ending_balance.to_f }
