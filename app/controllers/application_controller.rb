@@ -42,17 +42,8 @@ class ApplicationController < ActionController::Base
     return if request.path.start_with?("/api/")
     return if current_user.onboarding_complete?
 
-    # Existing users (pre-feature-store) who already have accounts should NOT
-    # be forced through the wizard — auto-complete their onboarding with all features
-    if current_user.accounts.exists?
-      auto_complete_onboarding(current_user)
-      return
-    end
-
-    # Dashboard handles zero-account users with its own first-login wizard
-    return if controller_name == "dashboard"
-
-    redirect_to onboarding_path
+    # Skip wizard entirely — auto-complete onboarding with all features for all users
+    auto_complete_onboarding(current_user)
   end
 
   def load_tutorial_data

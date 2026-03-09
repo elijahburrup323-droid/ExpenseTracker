@@ -17,7 +17,7 @@ blocks_data = [
   {
     key: "accounts_basic", display_name: "Accounts", tagline: "Track your bank accounts and balances",
     description: "Add your checking, savings, credit cards, and other accounts. Track balances and see where your money lives.",
-    icon: "credit-card", category: "Core", tier: "free", sort_order: 2, is_core: true, estimated_setup: "2 minutes",
+    icon: "credit-card", category: "Core", tier: "free", sort_order: 2, is_core: true, estimated_setup: "Already set up",
     activate_path: "/accounts",
     tutorial_data: {
       "steps" => [
@@ -29,8 +29,8 @@ blocks_data = [
   },
   {
     key: "payments_basic", display_name: "Payments", tagline: "Record and categorize your expenses",
-    description: "Log payments, assign categories and spending types, and see where your money goes each month.",
-    icon: "lock-closed", category: "Spending", tier: "free", sort_order: 3, is_core: false, estimated_setup: "3 minutes",
+    description: "Log payments, assign categories and spending types, and see where your money goes each month. Includes recurring payment scheduling.",
+    icon: "lock-closed", category: "Core", tier: "free", sort_order: 3, is_core: true, estimated_setup: "Already set up",
     activate_path: "/payments",
     tutorial_data: {
       "steps" => [
@@ -41,9 +41,9 @@ blocks_data = [
     }
   },
   {
-    key: "income_tracking", display_name: "Income", tagline: "Track money coming in",
-    description: "Record income deposits from paychecks, side gigs, or other sources. See how much you earn each month.",
-    icon: "currency-dollar", category: "Income", tier: "free", sort_order: 4, is_core: false, estimated_setup: "2 minutes",
+    key: "income_tracking", display_name: "Income / Deposits", tagline: "Track money coming in",
+    description: "Record income deposits from paychecks, side gigs, or other sources. Includes recurring deposit scheduling. See how much you earn each month.",
+    icon: "currency-dollar", category: "Core", tier: "free", sort_order: 4, is_core: true, estimated_setup: "Already set up",
     activate_path: "/income_entries",
     tutorial_data: {
       "steps" => [
@@ -53,33 +53,9 @@ blocks_data = [
     }
   },
   {
-    key: "recurring_income", display_name: "Recurring Deposits", tagline: "Automate your regular income",
-    description: "Set up recurring income sources so deposits auto-generate on schedule. Never miss tracking a paycheck.",
-    icon: "arrow-path", category: "Income", tier: "free", sort_order: 5, is_core: false, estimated_setup: "3 minutes",
-    activate_path: "/income_recurrings",
-    tutorial_data: {
-      "steps" => [
-        { "step" => 1, "selector" => "[data-tutorial='recurring-income-table']", "title" => "Deposit Sources", "body" => "These are your recurring income sources. They automatically create deposit entries on their schedule.", "position" => "bottom" },
-        { "step" => 2, "selector" => "[data-tutorial='add-recurring-income-btn']", "title" => "Add a Source", "body" => "Set up a new recurring deposit — like a paycheck, pension, or regular transfer. Choose the frequency and amount.", "position" => "left" },
-      ]
-    }
-  },
-  {
-    key: "recurring_payments", display_name: "Recurring Payments", tagline: "Automate your regular bills",
-    description: "Set up recurring payments for rent, utilities, subscriptions, and more. Bills auto-generate when due.",
-    icon: "arrow-path", category: "Spending", tier: "free", sort_order: 6, is_core: false, estimated_setup: "3 minutes",
-    activate_path: "/payment_recurrings",
-    tutorial_data: {
-      "steps" => [
-        { "step" => 1, "selector" => "[data-tutorial='recurring-payments-table']", "title" => "Recurring Payments", "body" => "These are your recurring bills and subscriptions. They automatically create payment entries when due.", "position" => "bottom" },
-        { "step" => 2, "selector" => "[data-tutorial='add-recurring-payment-btn']", "title" => "Add a Recurring Bill", "body" => "Set up a new recurring payment — like rent, utilities, or subscriptions. Choose how often and how much.", "position" => "left" },
-      ]
-    }
-  },
-  {
     key: "transfers", display_name: "Transfers", tagline: "Move money between accounts",
     description: "Record transfers between your accounts — checking to savings, credit card payments, and more.",
-    icon: "arrows-right-left", category: "Accounts", tier: "free", sort_order: 7, is_core: false, estimated_setup: "1 minute",
+    icon: "arrows-right-left", category: "Core", tier: "free", sort_order: 5, is_core: true, estimated_setup: "Already set up",
     activate_path: "/transfer_masters",
     tutorial_data: {
       "steps" => [
@@ -91,7 +67,7 @@ blocks_data = [
   {
     key: "tags", display_name: "Tags", tagline: "Organize payments with custom labels",
     description: "Create custom tags to label and filter your payments. Great for tracking projects, trips, or anything you want to group.",
-    icon: "tag", category: "Spending", tier: "free", sort_order: 8, is_core: false, estimated_setup: "1 minute",
+    icon: "tag", category: "Core", tier: "free", sort_order: 6, is_core: true, estimated_setup: "Already set up",
     activate_path: "/tags",
     tutorial_data: {
       "steps" => [
@@ -103,7 +79,7 @@ blocks_data = [
   {
     key: "buckets", display_name: "Buckets", tagline: "Split accounts into savings goals",
     description: "Divide any account balance into named buckets — each with its own target amount and balance. Perfect for saving toward multiple goals in one account.",
-    icon: "cube-transparent", category: "Accounts", tier: "free", sort_order: 9, is_core: false, estimated_setup: "2 minutes",
+    icon: "cube-transparent", category: "Core", tier: "free", sort_order: 7, is_core: true, estimated_setup: "Already set up",
     activate_path: "/buckets",
     tutorial_data: {
       "steps" => [
@@ -116,7 +92,7 @@ blocks_data = [
   {
     key: "smart_import", display_name: "Smart Import", tagline: "Import bank statements automatically",
     description: "Upload CSV bank statements and let Smart Import classify, categorize, and create payments for you.",
-    icon: "arrow-up-tray", category: "Accounts", tier: "paid", sort_order: 10, is_core: false, estimated_setup: "5 minutes",
+    icon: "arrow-up-tray", category: "Premium", tier: "paid", sort_order: 10, is_core: false, estimated_setup: "5 minutes",
     activate_path: "/smart_import",
     tutorial_data: {
       "steps" => [
@@ -128,7 +104,7 @@ blocks_data = [
   {
     key: "reconciliation", display_name: "Reconciliation", tagline: "Verify your account balances match the bank",
     description: "Compare your tracked balance against your bank statement to catch missed transactions or errors.",
-    icon: "check-circle", category: "Accounts", tier: "paid", sort_order: 11, is_core: false, estimated_setup: "5 minutes",
+    icon: "check-circle", category: "Premium", tier: "paid", sort_order: 11, is_core: false, estimated_setup: "5 minutes",
     activate_path: "/account_reconciliation",
     tutorial_data: {
       "steps" => [
@@ -140,7 +116,7 @@ blocks_data = [
   {
     key: "monthly_close", display_name: "Monthly Close", tagline: "Close out each month and lock it down",
     description: "Soft-close a month to snapshot balances and prevent accidental edits. Opens the next month automatically.",
-    icon: "lock-closed", category: "Monthly", tier: "paid", sort_order: 12, is_core: false, estimated_setup: "1 minute",
+    icon: "lock-closed", category: "Premium", tier: "paid", sort_order: 12, is_core: false, estimated_setup: "1 minute",
     activate_path: "/soft_close",
     tutorial_data: {
       "steps" => [
@@ -152,7 +128,7 @@ blocks_data = [
   {
     key: "reports", display_name: "Reports", tagline: "See trends, breakdowns, and insights",
     description: "Analyze your finances with reports: spending by category, income by source, net worth over time, and more.",
-    icon: "chart-bar", category: "Monthly", tier: "paid", sort_order: 13, is_core: false, estimated_setup: "Already set up",
+    icon: "chart-bar", category: "Premium", tier: "paid", sort_order: 13, is_core: false, estimated_setup: "Already set up",
     activate_path: "/reports",
     tutorial_data: {
       "steps" => [
@@ -164,7 +140,7 @@ blocks_data = [
   {
     key: "ss_planner", display_name: "SS Benefit Planner", tagline: "Plan your Social Security retirement benefits",
     description: "Model different retirement ages and see how they affect your monthly Social Security income.",
-    icon: "calculator", category: "Planning", tier: "advanced", sort_order: 14, is_core: false, estimated_setup: "5 minutes",
+    icon: "calculator", category: "Advanced", tier: "advanced", sort_order: 14, is_core: false, estimated_setup: "5 minutes",
     activate_path: "/social_security_planner",
     tutorial_data: {
       "steps" => [
@@ -181,15 +157,24 @@ blocks_data.each do |attrs|
   fb.save!
 end
 
+# Remove deprecated standalone recurring blocks (now merged into Payments and Income/Deposits)
+%w[recurring_income recurring_payments].each do |deprecated_key|
+  fb = FeatureBlock.find_by(key: deprecated_key)
+  next unless fb
+  # Remove associated records before deleting (use delete to skip callbacks for missing tables)
+  UserFeatureActivation.where(feature_block_id: fb.id).delete_all
+  FeatureBlockDependency.where(feature_block_id: fb.id).or(FeatureBlockDependency.where(depends_on_id: fb.id)).delete_all
+  SmartSuggestion.where(feature_block_id: fb.id).delete_all if defined?(SmartSuggestion) && SmartSuggestion.table_exists?
+  fb.delete
+end
+
 puts "Seeded #{FeatureBlock.count} feature blocks"
 
 # Seed dependencies (DAG from spec Section 2.2)
 dependencies = {
   "payments_basic" => ["accounts_basic"],
-  "recurring_payments" => ["payments_basic"],
   "tags" => ["payments_basic"],
   "income_tracking" => ["accounts_basic"],
-  "recurring_income" => ["income_tracking"],
   "transfers" => ["accounts_basic"],
   "buckets" => ["accounts_basic"],
   "smart_import" => ["accounts_basic"],

@@ -32,7 +32,7 @@
 - UAT: https://djburrup.com/mybudgethq (relative_url_root = "/mybudgethq", manual deploy only — used when explicitly requested)
 - Email delivery via SendGrid Web API (sendgrid-ruby gem) — Render blocks outbound SMTP ports, so we use the HTTP API instead of SMTP. API key stored in SENDGRID_PASSWORD env var.
 - SMS delivery via Twilio REST API (twilio-ruby gem) — phone number auto-normalized to E.164 format
-- Current Version: 1.3.41 (QA_MODE controlled via config/initializers/version.rb)
+- Current Version: 1.3.75 (QA_MODE controlled via config/initializers/version.rb)
 
 ## Project Location
 - Local path: C:/Projects/MyBudgetHQ/Web (codebase on local SSD; workflow folders remain on G:\My Drive\MyBudgetHQ)
@@ -218,7 +218,7 @@ Any modification to Net Worth aggregation, Cost basis method, Amortization math,
 - **smart_suggestions** — feature_block_id (FK), trigger_event (string), suggestion_text (text), priority (int). Contextual suggestions shown after block activation.
 - **Cascade Deactivation** — When a feature block is deactivated, all dependent blocks that were active are also cascade-deactivated. The API at `api/feature_store_controller.rb` handles this recursively using `collect_active_dependents`. The `blocks` endpoint returns `cascade_deactivate_names` per block so the JS can show cascade confirmation dialogs.
 - **Tutorial System** — Each feature block has `tutorial_data` (JSON with steps) and `activate_path` (string). The `load_tutorial_data` before_action in ApplicationController loads tutorial steps based on `activate_path` matching `request.path`. Tutorials ONLY start via `start_tutorial=1` param (Tour button or activation redirect). Never auto-start. The `tutorial_controller.js` Stimulus controller renders an overlay with step-by-step popover navigation.
-- **Existing User Auto-Onboarding** — The `redirect_to_onboarding` before_action detects existing users (who have accounts but no onboarding profile) and auto-completes their onboarding with all features activated and tutorials marked complete. This prevents pre-feature-store users from being forced through the wizard. The `render-build.sh` also runs a post-seed backfill script to catch all users on deploy.
+- **Auto-Onboarding (v1.3.75+)** — The onboarding wizard (use-case selection) is bypassed entirely. The `redirect_to_onboarding` before_action auto-completes onboarding with all features activated for every new user (no redirect to wizard). Sidebar shows all menu items to all users, filtered only by global killswitches. The `render-build.sh` also runs a post-seed backfill script to catch all users on deploy.
 - **Feature Store Views** — Two views: Card View (default) and Tech Tree. Toggle persisted in localStorage. Card view shows feature cards with icons, descriptions, tier badges, green/amber/blue/gray borders, and a recommended section. Tech Tree shows the dependency graph with SVG connectors.
 - **Tour Button** — Every feature page has a "Tour" button (visible when `@tutorial_available` is true) that links to `request.path?start_tutorial=1`. Lets users replay tutorials on demand.
 - **Sidebar Flash Pulse** — When a feature is activated, the user is redirected to `activate_path?flash_sidebar=1&amp;start_tutorial=1`. The navbar adds a `sidebar-flash-pulse` CSS animation class to the matching sidebar link to draw attention.

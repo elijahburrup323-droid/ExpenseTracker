@@ -233,18 +233,34 @@ export default class extends Controller {
       </div>`
     }
 
-    // All features grid
-    html += `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">`
+    // Group features into 4 sections
+    const groups = [
+      { label: "Core Features", description: "Always enabled — foundational to your budget", blocks: [] },
+      { label: "Available Add-Ons", description: "Optional features included with your account", blocks: [] },
+      { label: "Premium Features", description: "Advanced tools for deeper budget control", blocks: [] },
+      { label: "Advanced Tools", description: "Specialized planning and analysis modules", blocks: [] }
+    ]
+    const groupMap = { "Core Features": 0, "Available Add-Ons": 1, "Premium Features": 2, "Advanced Tools": 3 }
     this.blocks.forEach(b => {
-      html += this._featureCardHtml(b)
+      const idx = groupMap[b.group] ?? 1
+      groups[idx].blocks.push(b)
     })
-    html += `</div>`
+
+    groups.forEach(g => {
+      if (g.blocks.length === 0) return
+      html += `<div class="mb-8">
+        <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-1">${g.label}</h2>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">${g.description}</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">`
+      g.blocks.forEach(b => { html += this._featureCardHtml(b) })
+      html += `</div></div>`
+    })
 
     // Legend
     html += `<div class="tech-tree-legend">
-      <span class="legend-item"><span class="legend-dot active"></span> Active</span>
-      <span class="legend-item"><span class="legend-dot inactive"></span> Inactive</span>
       <span class="legend-item"><span class="legend-dot core"></span> Core (always on)</span>
+      <span class="legend-item"><span class="legend-dot active"></span> Active</span>
+      <span class="legend-item"><span class="legend-dot inactive"></span> Available</span>
       <span class="legend-item"><span class="legend-dot locked"></span> Locked</span>
       <span class="legend-item"><span class="legend-dot tier-paid"></span> Premium</span>
       <span class="legend-item"><span class="legend-dot tier-advanced"></span> Advanced</span>
@@ -370,7 +386,7 @@ export default class extends Controller {
         </div>
         <h3 class="font-semibold text-gray-900 dark:text-white text-sm">${this._esc(block.display_name)}</h3>
         <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2">${this._esc(block.description || block.tagline || "")}</p>
-        ${block.estimated_setup ? `<p class="mt-1 text-xs text-gray-400 dark:text-gray-500">${this._esc(block.estimated_setup)} setup</p>` : ""}
+        ${!isCore && block.estimated_setup ? `<p class="mt-1 text-xs text-gray-400 dark:text-gray-500">${this._esc(block.estimated_setup)} setup</p>` : ""}
         <div class="mt-4 flex items-center justify-between">
           ${statusLabel}
           ${actionBtn}

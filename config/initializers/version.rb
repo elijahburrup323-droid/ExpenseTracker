@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.74"
+APP_VERSION = "1.3.76"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,23 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.76",
+    changes: [
+      "Feature Store: Reorganized into 4 groups — Core Features, Premium Features, Advanced Tools, Available Add-Ons.",
+      "Feature Store: Core modules (Dashboard, Accounts, Payments, Income/Deposits, Transfers, Tags, Buckets) are always-on and cannot be deactivated.",
+      "Feature Store: Removed duplicate Recurring Income and Recurring Payments blocks (merged into Income/Deposits and Payments).",
+      "Feature Store: Renamed 'Income' to 'Income / Deposits' for clarity.",
+      "Feature Store: Setup time hidden for core features; descriptions updated to reflect merged recurring functionality."
+    ]
+  },
+  {
+    version: "1.3.75",
+    changes: [
+      "Onboarding: Removed use-case selection wizard — all menu items now visible immediately for new accounts.",
+      "Onboarding: New users auto-complete onboarding with all features activated (no redirect to wizard)."
+    ]
+  },
   {
     version: "1.3.74",
     changes: [

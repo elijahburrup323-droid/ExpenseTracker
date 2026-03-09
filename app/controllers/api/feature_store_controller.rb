@@ -16,6 +16,17 @@ module Api
         deps_met = b.prerequisite_blocks.all? { |dep| active_ids.include?(dep.id) }
         cascade_deps = collect_active_dependents(b, active_ids, block_map)
 
+        # Compute display group for UI grouping
+        group = if b.is_core
+                  "Core Features"
+                elsif b.tier == "paid"
+                  "Premium Features"
+                elsif b.tier == "advanced"
+                  "Advanced Tools"
+                else
+                  "Available Add-Ons"
+                end
+
         {
           id: b.id,
           key: b.key,
@@ -26,6 +37,7 @@ module Api
           category: b.category,
           tier: b.tier,
           is_core: b.is_core,
+          group: group,
           sort_order: b.sort_order,
           estimated_setup: b.estimated_setup,
           active: active_ids.include?(b.id),
