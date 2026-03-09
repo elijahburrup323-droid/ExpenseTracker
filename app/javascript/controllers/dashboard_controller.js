@@ -554,41 +554,38 @@ export default class extends Controller {
         let rows = ''
         if (items.length > 0) {
           for (const item of items) {
-            rows += `<div class="flex items-center justify-between">
-              <span class="text-xs text-gray-700 dark:text-gray-300 truncate mr-2">${this._esc(item.name)}</span>
-              <div class="flex items-center space-x-2 flex-shrink-0">
-                <span class="text-xs font-medium text-gray-800 dark:text-gray-200 tabular-nums">${this._currency(item.amount)}</span>
-                <span class="text-[10px] text-gray-400 dark:text-gray-500 tabular-nums w-10 text-right">${(item.pct || 0).toFixed(1)}%</span>
-              </div>
+            rows += `<div class="flex items-baseline justify-between gap-1">
+              <span class="text-[11px] text-gray-700 dark:text-gray-300 truncate">${this._esc(item.name)}</span>
+              <span class="text-[11px] font-medium text-gray-800 dark:text-gray-200 whitespace-nowrap">${this._currency(item.amount)} <span class="text-[9px] text-gray-400 dark:text-gray-500">${(item.pct || 0).toFixed(1)}%</span></span>
             </div>`
           }
         } else {
-          rows = `<p class="text-xs text-gray-400 dark:text-gray-500">None this month.</p>`
+          rows = `<p class="text-[11px] text-gray-400 dark:text-gray-500">None this month.</p>`
         }
         let totalRow = ''
         if (items.length > 0) {
           totalRow = `<div class="border-t border-gray-200 dark:border-gray-600 mt-2 pt-1">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-gray-800 dark:text-gray-200">Total</span>
-              <span class="text-xs font-bold text-gray-800 dark:text-gray-200 tabular-nums">${this._currency(total)}</span>
+              <span class="text-[11px] font-bold text-gray-800 dark:text-gray-200">Total</span>
+              <span class="text-[11px] font-bold text-gray-800 dark:text-gray-200">${this._currency(total)}</span>
             </div>
           </div>`
         }
-        return `<div>
-          <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 pb-1 border-b border-gray-200 dark:border-gray-600">${title}</p>
-          <div class="space-y-1">${rows}</div>
+        return `<div class="flex flex-col min-w-0">
+          <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 pb-1 border-b border-gray-200 dark:border-gray-600">${title}</p>
+          <div class="flex-1 space-y-0.5">${rows}</div>
           ${totalRow}
         </div>`
       }
 
       const tagTotal = tags.reduce((s, t) => s + (t.amount || 0), 0)
 
-      backContent.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 py-3" style="font-variant-numeric: tabular-nums;">
+      backContent.innerHTML = `<div class="overflow-x-auto py-3"><div class="grid grid-cols-4 gap-4" style="font-variant-numeric: tabular-nums; min-width: 560px;">
         ${buildColumn('By Category', categories, spentTotal)}
         ${buildColumn('By Spending Type', types, spentTotal)}
         ${buildColumn('By Tag', tags, tagTotal)}
-        ${buildColumn('Deposits Breakdown', deposits, incomeTotal)}
-      </div>`
+        ${buildColumn('Deposits', deposits, incomeTotal)}
+      </div></div>`
     }
   }
 
