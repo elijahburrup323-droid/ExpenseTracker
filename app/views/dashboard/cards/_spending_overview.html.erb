@@ -19,46 +19,51 @@
       </div>
     </div>
     <div class="flex-1 min-h-0 overflow-y-auto" data-role="card-content">
-      <div class="flex flex-col justify-center flex-1 py-2">
-        <% has_plan = @three_month_avg.present? && @three_month_avg.to_f > 0 %>
-        <% spent = @spent_mtd.to_f %>
-        <% remaining = has_plan ? (@three_month_avg.to_f - spent) : 0 %>
+      <div class="flex flex-col flex-1 py-2 space-y-2" style="font-variant-numeric: tabular-nums;">
+        <%# === Available Cash === %>
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">Available Cash</span>
+          <span class="text-sm font-semibold text-gray-800 dark:text-gray-200"><%= number_to_currency(@operating_balance, precision: 2) %></span>
+        </div>
 
-        <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">This Month</p>
-
-        <% if has_plan %>
-          <p class="text-2xl font-bold text-slate-700 dark:text-slate-200 mb-1" style="font-variant-numeric: tabular-nums;">
-            <%= number_to_currency(remaining.abs, precision: 0) %> <%= remaining >= 0 ? 'remaining' : 'over plan' %>
-          </p>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mb-2" style="font-variant-numeric: tabular-nums;">
-            <%= number_to_currency(spent, precision: 0) %> of <%= number_to_currency(@three_month_avg, precision: 0) %> planned
-          </p>
-          <% if @days_remaining.to_i > 0 %>
-            <% if remaining > 0 %>
-              <p class="text-[11px] text-gray-400 dark:text-gray-500" style="font-variant-numeric: tabular-nums;">
-                <%= number_to_currency((remaining / @days_remaining).round(2), precision: 2) %> per day available
-              </p>
-            <% elsif remaining == 0 %>
-              <p class="text-[11px] text-gray-400 dark:text-gray-500">Plan reached</p>
-            <% else %>
-              <p class="text-[11px] text-amber-600 dark:text-amber-400" style="font-variant-numeric: tabular-nums;">
-                Plan exceeded by <%= number_to_currency(remaining.abs, precision: 0) %>
-              </p>
-            <% end %>
-          <% else %>
-            <% if remaining >= 0 %>
-              <p class="text-[11px] text-gray-400 dark:text-gray-500">Finished under plan</p>
-            <% else %>
-              <p class="text-[11px] text-amber-600 dark:text-amber-400" style="font-variant-numeric: tabular-nums;">
-                Plan exceeded by <%= number_to_currency(remaining.abs, precision: 0) %>
-              </p>
-            <% end %>
+        <%# === Recurring Bills Remaining === %>
+        <div class="border-t border-gray-100 dark:border-gray-700 pt-2">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Recurring Bills Remaining</span>
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300"><%= number_to_currency(@scheduled_payments, precision: 2) %></span>
+          </div>
+          <% @recurring_bills_items.each do |bill| %>
+            <div class="flex items-center justify-between pl-4 mt-0.5">
+              <span class="text-xs text-gray-500 dark:text-gray-400 truncate"><%= bill[:name] %></span>
+              <span class="text-xs text-gray-500 dark:text-gray-400"><%= number_to_currency(bill[:amount], precision: 2) %></span>
+            </div>
           <% end %>
-        <% else %>
-          <p class="text-2xl font-bold text-slate-700 dark:text-slate-200 mb-1" style="font-variant-numeric: tabular-nums;">
-            <%= number_to_currency(spent, precision: 0) %> spent this month
-          </p>
-        <% end %>
+        </div>
+
+        <%# === Estimated Variable Spending === %>
+        <div class="border-t border-gray-100 dark:border-gray-700 pt-2">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Est. Variable Spending</span>
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300"><%= number_to_currency(@variable_spending_total, precision: 2) %></span>
+          </div>
+          <% @variable_spending_items.first(5).each do |item| %>
+            <div class="flex items-center justify-between pl-4 mt-0.5">
+              <span class="text-xs text-gray-500 dark:text-gray-400 truncate">
+                <%= item[:name] %>
+                <span class="text-[10px] text-gray-400 dark:text-gray-500">(<%= item[:source] %>)</span>
+              </span>
+              <span class="text-xs text-gray-500 dark:text-gray-400"><%= number_to_currency(item[:remaining], precision: 2) %></span>
+            </div>
+          <% end %>
+        </div>
+
+        <%# === Projected Safe To Spend === %>
+        <div class="border-t-2 border-gray-200 dark:border-gray-600 pt-2">
+          <div class="flex items-center justify-between">
+            <span class="text-base font-bold text-slate-800 dark:text-slate-100">Projected Safe To Spend</span>
+            <span class="text-base font-bold <%= @projected_safe_to_spend >= 0 ? 'text-brand-600 dark:text-brand-400' : 'text-red-600 dark:text-red-400' %>"><%= number_to_currency(@projected_safe_to_spend, precision: 2) %></span>
+          </div>
+        </div>
       </div>
     </div>
     <div class="dash-card-footer border-t border-gray-100 dark:border-gray-700 flex items-center justify-between" data-role="card-footer">
@@ -104,9 +109,9 @@
       </div>
     </div>
     <div class="flex-1 overflow-y-auto" data-role="back-content">
-      <% has_plan = @three_month_avg.present? && @three_month_avg.to_f > 0 %>
+      <% has_plan = @planned_spending.present? && @planned_spending.to_f > 0 %>
       <% spent = @spent_mtd.to_f %>
-      <% plan = @three_month_avg.to_f %>
+      <% plan = @planned_spending.to_f %>
       <% remaining = has_plan ? (plan - spent) : 0 %>
       <% days_in_month = @month_start.end_of_month.day %>
       <% is_current = @month_start == Date.today.beginning_of_month %>

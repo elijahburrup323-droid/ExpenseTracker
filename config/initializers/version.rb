@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.70"
+APP_VERSION = "1.3.72"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,23 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.72",
+    changes: [
+      "Spending Overview: New financial flow layout showing Available Cash, Recurring Bills Remaining, Estimated Variable Spending, and Projected Safe To Spend.",
+      "Spending Overview: Estimated Variable Spending uses trimmed historical averages (last 6 months) per category, subtracting amount already spent in current month.",
+      "Spending Overview: Categories with spending limits use the limit value; categories without use historical average.",
+      "Spending Overview: Individual recurring bill and variable spending sub-items now shown with indented detail rows."
+    ]
+  },
+  {
+    version: "1.3.71",
+    changes: [
+      "Spending Overview: Planned amount now uses month-scoped recurring payment occurrences instead of 3-month historical average.",
+      "Spending Overview: Weekly/biweekly recurring payments correctly contribute multiple occurrences when applicable.",
+      "Spending Overview: Recurring payments with next dates outside the open month no longer inflate the planned total."
+    ]
+  },
   {
     version: "1.3.70",
     changes: [

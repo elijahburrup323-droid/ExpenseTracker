@@ -34,21 +34,25 @@ class DashboardController < ApplicationController
                              .where(payment_date: @month_start...@month_end)
                              .sum(:amount)
 
-    # Card 1: Context + projection metrics
-    prior_snapshots = DashboardMonthSnapshot.where(user: current_user)
-      .active
-      .where("(year * 100 + month) < ?", @month_start.year * 100 + @month_start.month)
-      .order(Arel.sql("year DESC, month DESC"))
-      .limit(3)
-    @three_month_avg = prior_snapshots.size >= 1 ? (prior_snapshots.sum(&:total_spent).to_f / prior_snapshots.size).round(2) : nil
+    # Card 1: Planned spending from recurring payment occurrences in open month
+    @planned_spending = 0.0
+    current_user.payment_recurrings.where(use_flag: true).includes(:frequency_master).each do |pr|
+      @planned_spending += pr.planned_amount_in_month(@month_start.year, @month_start.month)
+    end
+    current_user.recurring_obligations.active.includes(:frequency_master).each do |ob|
+      if ob.falls_in_month?(@month_start.year, @month_start.month)
+        @planned_spending += ob.amount.to_f
+      end
+    end
+    @planned_spending = @planned_spending > 0 ? @planned_spending.round(2) : nil
 
     days_in_month = @month_start.end_of_month.day
     is_current = @month_start == Date.today.beginning_of_month
     days_elapsed = is_current ? (Date.today - @month_start).to_i + 1 : days_in_month
     @daily_avg = days_elapsed > 0 ? (@spent_mtd.to_f / days_elapsed).round(2) : 0.0
     @projected_month_end = (@daily_avg * days_in_month).round(2)
-    @comparison_pct = @three_month_avg && @three_month_avg > 0 ? ((@spent_mtd.to_f - @three_month_avg) / @three_month_avg * 100).round(1) : nil
-    @comparison_label = "3-month avg"
+    @comparison_pct = @planned_spending && @planned_spending > 0 ? ((@spent_mtd.to_f - @planned_spending) / @planned_spending * 100).round(1) : nil
+    @comparison_label = "planned"
 
     # Card 1 back: Spending by Category and by Type
     spent_total = @spent_mtd.to_f
@@ -108,19 +112,72 @@ class DashboardController < ApplicationController
 
     # Scheduled payments FROM spendable accounts (+ account-less obligations)
     @scheduled_payments = 0.0
+    @recurring_bills_items = []
     current_user.recurring_obligations.active.where(account_id: [nil] + spendable_ids).each do |ob|
       if ob.falls_in_month?(@month_start.year, @month_start.month)
         due = ob.due_date_in_month(@month_start.year, @month_start.month)
-        @scheduled_payments += ob.amount.to_f if due && due >= Date.today
+        if due && due >= Date.today
+          @scheduled_payments += ob.amount.to_f
+          @recurring_bills_items << { name: ob.name, amount: ob.amount.to_f, due_date: due }
+        end
       end
     end
     current_user.payment_recurrings.where(use_flag: true, account_id: spendable_ids).each do |pr|
       if pr.next_date && pr.next_date >= @month_start && pr.next_date < @month_end
         @scheduled_payments += pr.amount.to_f
+        @recurring_bills_items << { name: pr.name, amount: pr.amount.to_f, due_date: pr.next_date }
       end
     end
     @scheduled_payments = @scheduled_payments.round(2)
+    @recurring_bills_items.sort_by! { |item| item[:due_date] }
 
+    # Estimated Variable Spending: historical average per category minus current month spend
+    six_months_ago = @month_start - 6.months
+    historical_data = current_user.payments
+      .where(payment_date: six_months_ago...@month_start)
+      .group(:spending_category_id)
+      .group(Arel.sql("DATE_TRUNC('month', payment_date)"))
+      .sum(:amount)
+
+    category_months = Hash.new { |h, k| h[k] = [] }
+    historical_data.each do |(cat_id, _month), total|
+      category_months[cat_id] << total.to_f
+    end
+
+    current_spend_by_cat = @spending_by_category.each_with_object({}) { |c, h| h[c[:id]] = c[:amount] }
+    all_cat_ids = (category_months.keys + cat_limits.keys + current_spend_by_cat.keys).uniq
+    cat_name_map = SpendingCategory.where(id: all_cat_ids).pluck(:id, :name).to_h
+
+    @variable_spending_items = []
+    all_cat_ids.each do |cat_id|
+      lim = cat_limits[cat_id]
+      months_data = category_months[cat_id]
+      current_spent = current_spend_by_cat[cat_id] || 0.0
+
+      if lim && lim.limit_value.to_f > 0
+        estimate = lim.limit_value.to_f
+        source = "limit"
+      elsif months_data.present?
+        estimate = trimmed_average(months_data)
+        source = "avg"
+      else
+        next
+      end
+
+      remaining = [estimate - current_spent, 0].max.round(2)
+      @variable_spending_items << {
+        id: cat_id, name: cat_name_map[cat_id] || "Unknown",
+        estimate: estimate.round(2), spent: current_spent.round(2),
+        remaining: remaining, source: source
+      }
+    end
+    @variable_spending_items.sort_by! { |item| -item[:remaining] }
+    @variable_spending_total = @variable_spending_items.sum { |item| item[:remaining] }.round(2)
+
+    # Projected Safe To Spend = Available Cash - Recurring Bills - Estimated Variable Spending
+    @projected_safe_to_spend = (@operating_balance - @scheduled_payments - @variable_spending_total).round(2)
+
+    # Legacy safe_to_spend
     @safe_to_spend = (@operating_balance + @scheduled_deposits - @scheduled_payments).round(2)
     @days_remaining = is_current ? (@month_start.end_of_month - Date.today).to_i : 0
     @safe_daily_spend = @days_remaining > 0 ? (@safe_to_spend / @days_remaining).round(2) : 0.0
@@ -286,7 +343,7 @@ class DashboardController < ApplicationController
     end
 
     # Financial Pulse strip metrics
-    @pulse_liquidity = @three_month_avg && @three_month_avg > 0 ? ((@operating_balance + @reserved_savings) / @three_month_avg).round(1) : nil
+    @pulse_liquidity = @planned_spending && @planned_spending > 0 ? ((@operating_balance + @reserved_savings) / @planned_spending).round(1) : nil
     @pulse_debt_ratio = @net_worth_assets > 0 ? (@net_worth_liabilities / @net_worth_assets * 100).round(1) : nil
     @pulse_savings_rate = @current_month_income.to_f > 0 ? ((@current_month_income.to_f - @current_month_payments.to_f) / @current_month_income.to_f * 100).round(1) : nil
 
@@ -303,4 +360,11 @@ class DashboardController < ApplicationController
 
   private
 
+  def trimmed_average(values)
+    return 0.0 if values.empty?
+    return values.sum / values.size.to_f if values.size < 4
+    sorted = values.sort
+    trimmed = sorted[1..-2]
+    trimmed.sum / trimmed.size.to_f
+  end
 end
