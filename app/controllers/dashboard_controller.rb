@@ -47,8 +47,8 @@ class DashboardController < ApplicationController
     @planned_spending = @planned_spending > 0 ? @planned_spending.round(2) : nil
 
     days_in_month = @month_start.end_of_month.day
-    is_current = @month_start == Date.today.beginning_of_month
-    days_elapsed = is_current ? (Date.today - @month_start).to_i + 1 : days_in_month
+    is_current = @month_start == Date.current.beginning_of_month
+    days_elapsed = is_current ? (Date.current - @month_start).to_i + 1 : days_in_month
     @daily_avg = days_elapsed > 0 ? (@spent_mtd.to_f / days_elapsed).round(2) : 0.0
     @projected_month_end = (@daily_avg * days_in_month).round(2)
     @comparison_pct = @planned_spending && @planned_spending > 0 ? ((@spent_mtd.to_f - @planned_spending) / @planned_spending * 100).round(1) : nil
@@ -105,7 +105,7 @@ class DashboardController < ApplicationController
     @scheduled_deposits = 0.0
     @scheduled_deposit_items = []
     current_user.income_recurrings.where(use_flag: true, account_id: spendable_ids).each do |ir|
-      if ir.next_date && ir.next_date >= @month_start && ir.next_date < @month_end && ir.next_date >= Date.today
+      if ir.next_date && ir.next_date >= @month_start && ir.next_date < @month_end && ir.next_date >= Date.current
         @scheduled_deposits += ir.amount.to_f
         @scheduled_deposit_items << { name: ir.name, amount: ir.amount.to_f, due_date: ir.next_date }
       end
@@ -119,7 +119,7 @@ class DashboardController < ApplicationController
     current_user.recurring_obligations.active.where(account_id: [nil] + spendable_ids).each do |ob|
       if ob.falls_in_month?(@month_start.year, @month_start.month)
         due = ob.due_date_in_month(@month_start.year, @month_start.month)
-        if due && due >= Date.today
+        if due && due >= Date.current
           @scheduled_payments += ob.amount.to_f
           @recurring_bills_items << { name: ob.name, amount: ob.amount.to_f, due_date: due }
         end
@@ -185,7 +185,7 @@ class DashboardController < ApplicationController
 
     # Legacy safe_to_spend
     @safe_to_spend = (@operating_balance + @scheduled_deposits - @scheduled_payments).round(2)
-    @days_remaining = is_current ? (@month_start.end_of_month - Date.today).to_i : 0
+    @days_remaining = is_current ? (@month_start.end_of_month - Date.current).to_i : 0
     @safe_daily_spend = @days_remaining > 0 ? (@safe_to_spend / @days_remaining).round(2) : 0.0
 
     # Card 1 back: Spending by Tag (split amount evenly across a payment's tags)
@@ -318,8 +318,8 @@ class DashboardController < ApplicationController
     end
 
     # Card 4: Income & Spending — computed balances
-    is_current_month = @month_start == Date.today.beginning_of_month
-    as_of_date = is_current_month ? Date.today : (@month_end - 1.day)
+    is_current_month = @month_start == Date.current.beginning_of_month
+    as_of_date = is_current_month ? Date.current : (@month_end - 1.day)
     all_balances = AccountBalanceService.balances_as_of(current_user, as_of_date)
     budget_ids = budget_accounts.pluck(:id)
     beg_balances = AccountBalanceService.balances_as_of(current_user, @month_start - 1.day)

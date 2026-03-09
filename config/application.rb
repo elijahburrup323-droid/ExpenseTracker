@@ -19,7 +19,7 @@ module MyBudgetHQ
     url_root = ENV["RAILS_RELATIVE_URL_ROOT"]
     config.relative_url_root = url_root.present? ? url_root : nil
 
-    config.time_zone = "UTC"
+    config.time_zone = "Mountain Time (US & Canada)"
 
     config.generators do |g|
       g.test_framework :rspec

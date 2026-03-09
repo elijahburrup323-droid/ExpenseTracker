@@ -59,7 +59,7 @@
                 <span class="text-sm font-medium text-gray-900 dark:text-white"><%= resource.subscription_expiration_date.strftime("%b %-d, %Y") %></span>
               </div>
 
-              <% if resource.subscription_expiration_date <= Date.today + 20 %>
+              <% if resource.subscription_expiration_date <= Date.current + 20 %>
                 <%= link_to pricing_path, class: "block w-full py-2.5 px-4 border border-brand-600 rounded-lg text-sm font-medium text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition text-center" do %>
                   Renew Subscription
                 <% end %>

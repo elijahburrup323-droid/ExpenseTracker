@@ -728,6 +728,12 @@ When the user says **"BugStopper"**, execute this automated adversarial testing 
 2. Verify no regressions on existing local tests
 3. Commit all changes with descriptive message
 
+### Timezone Convention
+- Application timezone: `Mountain Time (US & Canada)` (config/application.rb)
+- Always use `Date.current` (not `Date.today`) and `Time.current` (not `Time.now`) for timezone-aware dates
+- Never use raw SQL `NOW()` — use `Time.current` through Rails instead
+- Frontend JavaScript `new Date()` uses browser local time which is correct for display
+
 ### Known High-Risk Patterns to Always Test
 - `Date.new(year, month, 1)` with user-controlled params (month=0, month=13, month=-1 cause ArgumentError)
 - `belongs_to :account` without validating account belongs to current_user (cross-user data leak)

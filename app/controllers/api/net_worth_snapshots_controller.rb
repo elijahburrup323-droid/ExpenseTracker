@@ -16,7 +16,7 @@ module Api
 
       records_created = 0
       months_back.downto(1) do |i|
-        snapshot_date = (Date.today - i.months).end_of_month
+        snapshot_date = (Date.current - i.months).end_of_month
         next if snapshot_date < earliest  # CM-21: skip months before user existed
         # Generate realistic variation: random fluctuation around current net worth
         variation = current_net_worth * rand(-0.15..0.05) * (i.to_f / months_back)
@@ -29,7 +29,7 @@ module Api
       end
 
       # Also snapshot current month
-      current_snapshot = current_user.net_worth_snapshots.find_or_initialize_by(snapshot_date: Date.today.end_of_month)
+      current_snapshot = current_user.net_worth_snapshots.find_or_initialize_by(snapshot_date: Date.current.end_of_month)
       current_snapshot.amount = current_net_worth
       current_snapshot.save!
       records_created += 1

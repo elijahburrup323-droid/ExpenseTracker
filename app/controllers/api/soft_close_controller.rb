@@ -203,8 +203,8 @@ module Api
       beg_balances = AccountBalanceService.balances_as_of(current_user, month_start - 1.day)
       beginning_balance = beg_balances.values.sum.to_f.round(2)
 
-      is_current = month_start == Date.today.beginning_of_month
-      as_of = is_current ? Date.today : (month_end - 1.day)
+      is_current = month_start == Date.current.beginning_of_month
+      as_of = is_current ? Date.current : (month_end - 1.day)
       end_balances = AccountBalanceService.balances_as_of(current_user, as_of)
       ending_balance = end_balances.values.sum.to_f.round(2)
 

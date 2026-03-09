@@ -92,7 +92,7 @@ module Api
           amount: src[:amount],
           frequency_master: src[:frequency],
           account: account,
-          next_date: Date.today - src[:days_ago],
+          next_date: Date.current - src[:days_ago],
           use_flag: true,
           sort_order: (current_user.income_recurrings.maximum(:sort_order) || 0) + 1
         )
@@ -115,7 +115,7 @@ module Api
         current_user.income_entries.create!(
           source_name: s[:name],
           amount: s[:amount],
-          entry_date: Date.today - s[:days_ago],
+          entry_date: Date.current - s[:days_ago],
           account: account,
           frequency_master: frequency,
           received_flag: false,

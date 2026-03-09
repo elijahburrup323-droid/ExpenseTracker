@@ -137,10 +137,10 @@ class ImportExecutorService
   end
 
   def parse_date(raw)
-    return Date.today if raw.blank?
+    return Date.current if raw.blank?
     Date.parse(raw.to_s)
   rescue
-    Date.today
+    Date.current
   end
 
   def flag_open_month(record_date, source)

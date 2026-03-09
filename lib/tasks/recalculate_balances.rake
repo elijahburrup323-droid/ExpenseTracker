@@ -5,7 +5,7 @@ namespace :accounts do
     fixed = 0
 
     User.find_each do |user|
-      computed = AccountBalanceService.balances_as_of(user, Date.today)
+      computed = AccountBalanceService.balances_as_of(user, Date.current)
       user.accounts.find_each do |account|
         expected = computed[account.id] || account.beginning_balance.to_f
         stored = account.balance.to_f

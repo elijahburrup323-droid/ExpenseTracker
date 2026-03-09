@@ -10,7 +10,7 @@ class ApplicationController < ActionController::Base
   def load_daily_quote
     return unless user_signed_in?
     version = Quote.cache_version
-    if session[:daily_quote].blank? || session[:daily_quote_date] != Date.today.to_s || session[:daily_quote_version] != version
+    if session[:daily_quote].blank? || session[:daily_quote_date] != Date.current.to_s || session[:daily_quote_version] != version
       quote = Quote.random_active
       if quote
         text = "\u201C#{quote.quote_text}\u201D"
@@ -19,7 +19,7 @@ class ApplicationController < ActionController::Base
       else
         session[:daily_quote] = "\u201CA budget is telling your money where to go instead of wondering where it went.\u201D"
       end
-      session[:daily_quote_date] = Date.today.to_s
+      session[:daily_quote_date] = Date.current.to_s
       session[:daily_quote_version] = version
     end
     @daily_quote = session[:daily_quote]
@@ -32,7 +32,7 @@ class ApplicationController < ActionController::Base
     om = OpenMonthMaster.for_user(current_user)
     @open_month_display = Date.new(om.current_year, om.current_month, 1).strftime("%B, %Y")
   rescue
-    @open_month_display = Date.today.strftime("%B, %Y")
+    @open_month_display = Date.current.strftime("%B, %Y")
   end
 
   def redirect_to_onboarding

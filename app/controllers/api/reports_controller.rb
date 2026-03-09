@@ -713,7 +713,7 @@ module Api
         elsif is_open
           month_start = Date.new(y, mo, 1)
           beg_balances = AccountBalanceService.balances_as_of(current_user, month_start - 1.day)
-          end_balances = AccountBalanceService.balances_as_of(current_user, Date.today)
+          end_balances = AccountBalanceService.balances_as_of(current_user, Date.current)
 
           if account_id
             beg = (beg_balances[account_id] || 0.0).round(2)
@@ -880,7 +880,7 @@ module Api
       is_open = (year == om.current_year && month == om.current_month)
 
       if is_open
-        all_balances = AccountBalanceService.balances_as_of(current_user, Date.today)
+        all_balances = AccountBalanceService.balances_as_of(current_user, Date.current)
         budget_balance = (all_balances[account.id] || 0.0).round(2)
       else
         snap = current_user.account_month_snapshots.active.find_by(account_id: account.id, year: year, month: month)

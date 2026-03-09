@@ -9,7 +9,7 @@ class RecurringTransfer < ApplicationRecord
   default_scope { where(deleted_at: nil) }
 
   scope :ordered, -> { order(:sort_order, :created_at) }
-  scope :due, -> { where("next_date <= ?", Date.today).where(use_flag: true) }
+  scope :due, -> { where("next_date <= ?", Date.current).where(use_flag: true) }
 
   validates :amount, presence: true, numericality: { greater_than: 0 }
   validates :next_date, presence: true

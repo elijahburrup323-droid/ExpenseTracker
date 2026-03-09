@@ -4,8 +4,8 @@ module Api
     def card_data
       DashboardCard.seed_defaults_for(current_user)
 
-      month = (params[:month] || Date.today.month).to_i
-      year = (params[:year] || Date.today.year).to_i
+      month = (params[:month] || Date.current.month).to_i
+      year = (params[:year] || Date.current.year).to_i
       month = month.clamp(1, 12)
       year = year.clamp(2000, 2100)
 
@@ -20,7 +20,7 @@ module Api
       month_end = month_start.next_month  # half-open: [month_start, month_end)
 
       # Don't allow navigating beyond current month
-      today = Date.today
+      today = Date.current
       can_go_forward = month_start < today.beginning_of_month
       is_current_month = month_start == today.beginning_of_month
       as_of_date = is_current_month ? today : (month_end - 1.day)
@@ -117,8 +117,8 @@ module Api
 
     # GET /api/dashboard/recent_activity_page?month=2&year=2026&page=2
     def recent_activity_page
-      month = (params[:month] || Date.today.month).to_i.clamp(1, 12)
-      year = (params[:year] || Date.today.year).to_i.clamp(2000, 2100)
+      month = (params[:month] || Date.current.month).to_i.clamp(1, 12)
+      year = (params[:year] || Date.current.year).to_i.clamp(2000, 2100)
       month_start = Date.new(year, month, 1)
       month_end = month_start.next_month
       tag_ids = Array(params[:tag_ids]).map(&:to_i).reject(&:zero?)
@@ -196,8 +196,8 @@ module Api
 
       # Daily average + projected month-end
       days_in_month = ctx[:month_start].end_of_month.day
-      days_elapsed = if ctx[:month_start] == Date.today.beginning_of_month
-                       (Date.today - ctx[:month_start]).to_i + 1
+      days_elapsed = if ctx[:month_start] == Date.current.beginning_of_month
+                       (Date.current - ctx[:month_start]).to_i + 1
                      else
                        days_in_month
                      end
@@ -291,7 +291,7 @@ module Api
       scheduled_deposits = 0.0
       scheduled_deposit_items = []
       current_user.income_recurrings.where(use_flag: true, account_id: spendable_ids).each do |ir|
-        if ir.next_date && ir.next_date >= ctx[:month_start] && ir.next_date < ctx[:month_end] && ir.next_date >= Date.today
+        if ir.next_date && ir.next_date >= ctx[:month_start] && ir.next_date < ctx[:month_end] && ir.next_date >= Date.current
           scheduled_deposits += ir.amount.to_f
           scheduled_deposit_items << { name: ir.name, amount: ir.amount.to_f, due_date: ir.next_date.to_s }
         end
@@ -305,7 +305,7 @@ module Api
       current_user.recurring_obligations.active.where(account_id: [nil] + spendable_ids).each do |ob|
         if ob.falls_in_month?(ctx[:month_start].year, ctx[:month_start].month)
           due = ob.due_date_in_month(ctx[:month_start].year, ctx[:month_start].month)
-          if due && due >= Date.today
+          if due && due >= Date.current
             scheduled_payments += ob.amount.to_f
             recurring_bills_items << { name: ob.name, amount: ob.amount.to_f, due_date: due.to_s }
           end
@@ -319,8 +319,8 @@ module Api
       end
       recurring_bills_items.sort_by! { |item| item[:due_date] }
 
-      is_current_month = ctx[:month_start] == Date.today.beginning_of_month
-      days_remaining = is_current_month ? (ctx[:month_start].end_of_month - Date.today).to_i : 0
+      is_current_month = ctx[:month_start] == Date.current.beginning_of_month
+      days_remaining = is_current_month ? (ctx[:month_start].end_of_month - Date.current).to_i : 0
 
       # Estimated Variable Spending: historical average per category minus current month spend
       # Query last 6 completed months of spending grouped by category and month

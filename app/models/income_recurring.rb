@@ -8,7 +8,7 @@ class IncomeRecurring < ApplicationRecord
   default_scope { where(deleted_at: nil) }
 
   scope :ordered, -> { order(:sort_order, :name) }
-  scope :due, -> { where("next_date <= ?", Date.today).where(use_flag: true) }
+  scope :due, -> { where("next_date <= ?", Date.current).where(use_flag: true) }
 
   validates :name, presence: true, length: { maximum: 80 }
   validates :amount, presence: true, numericality: true

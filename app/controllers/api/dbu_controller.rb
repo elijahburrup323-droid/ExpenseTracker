@@ -291,7 +291,7 @@ module Api
       where = "#{conn.quote_column_name(pk_cols.first)} = #{conn.quote(record_id)}"
 
       if has_deleted_at
-        sql = "UPDATE #{table} SET deleted_at = NOW() WHERE #{where}"
+        sql = "UPDATE #{table} SET deleted_at = #{conn.quote(Time.current)} WHERE #{where}"
       else
         sql = "DELETE FROM #{table} WHERE #{where}"
       end
