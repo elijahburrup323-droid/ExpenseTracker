@@ -3,7 +3,7 @@
   <div class="flex flex-col flex-1" data-role="front" style="backface-visibility: hidden;">
     <div class="flex items-center justify-between mb-2">
       <div class="flex items-center">
-        <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200"><%= card.title %></h2>
+        <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Spending Overview</h2>
       </div>
       <div class="flex items-center space-x-2">
         <button type="button" data-action="click->dashboard#prevMonth" data-dashboard-target="prevBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
@@ -13,61 +13,25 @@
         <button type="button" data-action="click->dashboard#nextMonth" data-dashboard-target="nextBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
         </button>
-        <%= link_to report_spending_by_category_path, class: "ml-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition", aria: { label: "Open spending report" } do %>
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V9m4 7V5m4 11v-4m4 4V8"/></svg>
-        <% end %>
       </div>
     </div>
     <div class="flex-1 min-h-0 overflow-y-auto" data-role="card-content">
-      <div class="flex flex-col flex-1 py-2 space-y-2" style="font-variant-numeric: tabular-nums;">
-        <%# === Available Cash === %>
+      <div class="flex flex-col flex-1 justify-center py-4 space-y-6" style="font-variant-numeric: tabular-nums;">
+        <%# === Spent This Month === %>
         <div class="flex items-center justify-between">
-          <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">Available Cash</span>
-          <span class="text-sm font-semibold text-gray-800 dark:text-gray-200"><%= number_to_currency(@operating_balance, precision: 2) %></span>
+          <span class="text-sm text-gray-500 dark:text-gray-400">Spent This Month</span>
+          <span class="text-2xl font-bold text-gray-800 dark:text-gray-100" style="font-size: 2rem;"><%= number_to_currency(@spent_mtd, precision: 2) %></span>
         </div>
 
-        <%# === Recurring Bills Remaining === %>
-        <div class="border-t border-gray-100 dark:border-gray-700 pt-2">
-          <div class="flex items-center justify-between">
-            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Recurring Bills Remaining</span>
-            <span class="text-sm font-medium text-gray-700 dark:text-gray-300"><%= number_to_currency(@scheduled_payments, precision: 2) %></span>
-          </div>
-          <% @recurring_bills_items.each do |bill| %>
-            <div class="flex items-center justify-between pl-4 mt-0.5">
-              <span class="text-xs text-gray-500 dark:text-gray-400 truncate"><%= bill[:name] %></span>
-              <span class="text-xs text-gray-500 dark:text-gray-400"><%= number_to_currency(bill[:amount], precision: 2) %></span>
-            </div>
-          <% end %>
-        </div>
-
-        <%# === Estimated Variable Spending === %>
-        <div class="border-t border-gray-100 dark:border-gray-700 pt-2">
-          <div class="flex items-center justify-between">
-            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Est. Variable Spending</span>
-            <span class="text-sm font-medium text-gray-700 dark:text-gray-300"><%= number_to_currency(@variable_spending_total, precision: 2) %></span>
-          </div>
-          <% @variable_spending_items.first(5).each do |item| %>
-            <div class="flex items-center justify-between pl-4 mt-0.5">
-              <span class="text-xs text-gray-500 dark:text-gray-400 truncate">
-                <%= item[:name] %>
-                <span class="text-[10px] text-gray-400 dark:text-gray-500">(<%= item[:source] %>)</span>
-              </span>
-              <span class="text-xs text-gray-500 dark:text-gray-400"><%= number_to_currency(item[:remaining], precision: 2) %></span>
-            </div>
-          <% end %>
-        </div>
-
-        <%# === Projected Safe To Spend === %>
-        <div class="border-t-2 border-gray-200 dark:border-gray-600 pt-2">
-          <div class="flex items-center justify-between">
-            <span class="text-base font-bold text-slate-800 dark:text-slate-100">Projected Safe To Spend</span>
-            <span class="text-base font-bold <%= @projected_safe_to_spend >= 0 ? 'text-brand-600 dark:text-brand-400' : 'text-red-600 dark:text-red-400' %>"><%= number_to_currency(@projected_safe_to_spend, precision: 2) %></span>
-          </div>
+        <%# === Cash In Spending Accounts === %>
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-gray-500 dark:text-gray-400">Cash In Spending Accounts</span>
+          <span class="text-2xl font-bold text-gray-800 dark:text-gray-100" style="font-size: 2rem;"><%= number_to_currency(@operating_balance, precision: 2) %></span>
         </div>
       </div>
     </div>
     <div class="dash-card-footer border-t border-gray-100 dark:border-gray-700 flex items-center justify-between" data-role="card-footer">
-      <button type="button" class="inline-flex items-center justify-center text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300" style="min-width:44px; min-height:44px;" data-action="click->dashboard#flipCard" aria-label="View spending by category">
+      <button type="button" class="inline-flex items-center justify-center text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300" style="min-width:44px; min-height:44px;" data-action="click->dashboard#flipCard" aria-label="View details">
         <svg class="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.992 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182M20.015 4.652v4.992"/>
         </svg>
@@ -91,10 +55,10 @@
       </div>
     </div>
   </div>
-  <%# === BACK SIDE (Category + Type Breakdowns) === %>
+  <%# === BACK SIDE (Details: Bills, Deposits, Cash Available) === %>
   <div class="absolute inset-0 flex flex-col" data-role="back" style="backface-visibility: hidden; transform: rotateY(180deg); pointer-events: none;">
     <div class="flex items-center justify-between mb-2">
-      <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Spending Breakdown</h2>
+      <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Spending Details</h2>
       <div class="flex items-center space-x-2">
         <button type="button" data-action="click->dashboard#prevMonth" data-dashboard-target="prevBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
@@ -103,136 +67,44 @@
         <button type="button" data-action="click->dashboard#nextMonth" data-dashboard-target="nextBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
         </button>
-        <%= link_to report_spending_by_category_path, class: "ml-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition", aria: { label: "Open spending report" } do %>
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V9m4 7V5m4 11v-4m4 4V8"/></svg>
-        <% end %>
       </div>
     </div>
     <div class="flex-1 overflow-y-auto" data-role="back-content">
-      <% has_plan = @planned_spending.present? && @planned_spending.to_f > 0 %>
-      <% spent = @spent_mtd.to_f %>
-      <% plan = @planned_spending.to_f %>
-      <% remaining = has_plan ? (plan - spent) : 0 %>
-      <% days_in_month = @month_start.end_of_month.day %>
-      <% is_current = @month_start == Date.today.beginning_of_month %>
-      <% days_elapsed = is_current ? (Date.today - @month_start).to_i + 1 : days_in_month %>
-      <% spending_pct = has_plan && plan > 0 ? [(spent / plan * 100).round(1), 100].min : 0 %>
-      <% month_pct = days_in_month > 0 ? [(days_elapsed.to_f / days_in_month * 100).round(1), 100].min : 0 %>
-      <% on_track = spending_pct <= month_pct %>
-      <% projected = @projected_month_end.to_f %>
-
-      <div class="space-y-4 py-2" style="max-width: 480px; margin: 0 auto;">
-        <%# --- Section A: Plan vs Spent --- %>
+      <div class="flex flex-col py-2 space-y-3" style="font-variant-numeric: tabular-nums;">
+        <%# === Section 1: Recurring Bills Remaining === %>
         <div>
-          <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5">Plan vs Spent</p>
-          <div class="flex items-baseline space-x-3" style="font-variant-numeric: tabular-nums;">
-            <span class="text-sm text-gray-700 dark:text-gray-300">Spent <span class="font-semibold text-slate-800 dark:text-slate-100"><%= number_to_currency(spent, precision: 0) %></span></span>
-            <% if has_plan %>
-              <span class="text-[11px] text-gray-400 dark:text-gray-500">&middot;</span>
-              <span class="text-sm text-gray-700 dark:text-gray-300">Plan <span class="font-semibold text-slate-800 dark:text-slate-100"><%= number_to_currency(plan, precision: 0) %></span></span>
-            <% end %>
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-bold text-gray-800 dark:text-gray-200">Recurring Bills Remaining</span>
+            <span class="text-sm font-bold text-gray-800 dark:text-gray-200"><%= number_to_currency(@scheduled_payments, precision: 2) %></span>
           </div>
-          <% if has_plan %>
-            <p class="text-xs mt-0.5 <%= remaining >= 0 ? 'text-gray-500 dark:text-gray-400' : 'text-amber-600 dark:text-amber-400' %>" style="font-variant-numeric: tabular-nums;">
-              <%= number_to_currency(remaining.abs, precision: 0) %> <%= remaining >= 0 ? 'remaining' : 'over plan' %>
-            </p>
+          <% @recurring_bills_items.each do |bill| %>
+            <div class="flex items-center justify-between pl-4 mt-0.5">
+              <span class="text-xs text-gray-500 dark:text-gray-400 truncate"><%= bill[:name] %></span>
+              <span class="text-xs text-gray-500 dark:text-gray-400"><%= number_to_currency(bill[:amount], precision: 2) %></span>
+            </div>
           <% end %>
         </div>
 
-        <% if has_plan %>
-          <%# --- Section B: Pacing Bars --- %>
-          <div>
-            <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5">Pacing</p>
-            <div class="space-y-2">
-              <div>
-                <div class="flex items-center justify-between mb-0.5">
-                  <span class="text-[11px] text-gray-500 dark:text-gray-400">Spending Used</span>
-                  <span class="text-[11px] font-medium text-slate-700 dark:text-slate-300" style="font-variant-numeric: tabular-nums;"><%= spending_pct %>%</span>
-                </div>
-                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                  <div class="h-2 rounded-full transition-all" style="width: <%= spending_pct %>%; background: var(--brand-500, #7c3aed);"></div>
-                </div>
-              </div>
-              <div>
-                <div class="flex items-center justify-between mb-0.5">
-                  <span class="text-[11px] text-gray-500 dark:text-gray-400">Month Elapsed</span>
-                  <span class="text-[11px] font-medium text-slate-700 dark:text-slate-300" style="font-variant-numeric: tabular-nums;"><%= month_pct %>%</span>
-                </div>
-                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                  <div class="h-2 rounded-full bg-slate-400 dark:bg-slate-500 transition-all" style="width: <%= month_pct %>%;"></div>
-                </div>
-              </div>
+        <%# === Section 2: Current Deposits === %>
+        <div class="border-t border-gray-100 dark:border-gray-700 pt-3">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-bold text-gray-800 dark:text-gray-200">Current Deposits</span>
+            <span class="text-sm font-bold text-gray-800 dark:text-gray-200"><%= number_to_currency(@scheduled_deposits, precision: 2) %></span>
+          </div>
+          <% @scheduled_deposit_items.each do |dep| %>
+            <div class="flex items-center justify-between pl-4 mt-0.5">
+              <span class="text-xs text-gray-500 dark:text-gray-400 truncate"><%= dep[:name] %></span>
+              <span class="text-xs text-gray-500 dark:text-gray-400"><%= number_to_currency(dep[:amount], precision: 2) %></span>
             </div>
-            <p class="text-[11px] mt-1.5 font-medium <%= on_track ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400' %>">
-              <%= on_track ? '&#10003; On Track' : '&#9888; Ahead of Plan' %>
-              <span class="font-normal text-gray-400 dark:text-gray-500">— spending <%= on_track ? 'behind' : 'ahead of' %> schedule</span>
-            </p>
-          </div>
-        <% end %>
-
-        <%# --- Section C: Projection --- %>
-        <div>
-          <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5">Projection</p>
-          <div class="flex items-baseline space-x-3" style="font-variant-numeric: tabular-nums;">
-            <span class="text-sm text-gray-700 dark:text-gray-300">Projected <span class="font-semibold text-slate-800 dark:text-slate-100"><%= number_to_currency(projected, precision: 0) %></span></span>
-            <% if has_plan %>
-              <span class="text-[11px] text-gray-400 dark:text-gray-500">&middot;</span>
-              <span class="text-sm text-gray-700 dark:text-gray-300">Plan <span class="font-semibold text-slate-800 dark:text-slate-100"><%= number_to_currency(plan, precision: 0) %></span></span>
-            <% end %>
-          </div>
-          <% if has_plan %>
-            <% proj_delta = projected - plan %>
-            <p class="text-[11px] mt-0.5 <%= proj_delta <= 0 ? 'text-gray-500 dark:text-gray-400' : 'text-amber-600 dark:text-amber-400' %>" style="font-variant-numeric: tabular-nums;">
-              ~<%= number_to_currency(proj_delta.abs, precision: 0) %> <%= proj_delta <= 0 ? 'under' : 'over' %> plan at current pace
-            </p>
-          <% else %>
-            <p class="text-[11px] mt-0.5 text-gray-500 dark:text-gray-400">Based on <%= number_to_currency(@daily_avg || 0, precision: 2) %>/day average</p>
           <% end %>
         </div>
 
-        <%# --- Section D: Top 3 Spending Drivers --- %>
-        <% top_cats = @spending_by_category.first(3) %>
-        <% if top_cats.any? %>
-          <div>
-            <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5">Top Spending Drivers</p>
-            <div class="space-y-1">
-              <% top_cats.each do |cat| %>
-                <div class="flex items-center justify-between">
-                  <span class="text-xs text-gray-700 dark:text-gray-300 truncate"><%= cat[:name] %></span>
-                  <div class="flex items-center space-x-2 flex-shrink-0 ml-2" style="font-variant-numeric: tabular-nums;">
-                    <span class="text-xs font-semibold text-slate-800 dark:text-slate-100"><%= number_to_currency(cat[:amount]) %></span>
-                    <% if cat[:limit].present? && cat[:limit].to_f > 0 %>
-                      <% cat_delta = cat[:amount].to_f - cat[:limit].to_f %>
-                      <span class="text-[10px] <%= cat_delta > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400 dark:text-gray-500' %>">
-                        <%= cat_delta > 0 ? "+#{number_to_currency(cat_delta, precision: 0)} over" : "#{number_to_currency(cat_delta.abs, precision: 0)} under" %>
-                      </span>
-                    <% end %>
-                  </div>
-                </div>
-              <% end %>
-            </div>
+        <%# === Section 3: Cash Available To Spend === %>
+        <div class="border-t-2 border-gray-200 dark:border-gray-600 pt-3">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-bold text-gray-800 dark:text-gray-200">Cash Available To Spend</span>
+            <span class="text-xl font-bold <%= @cash_available_to_spend >= 0 ? 'text-brand-600 dark:text-brand-400' : 'text-red-600 dark:text-red-400' %>" style="font-size: 1.5rem;"><%= number_to_currency(@cash_available_to_spend, precision: 2) %></span>
           </div>
-        <% end %>
-
-        <%# --- Section E: Pacing Guidance --- %>
-        <div class="pt-2 border-t border-gray-100 dark:border-gray-700">
-          <% if has_plan %>
-            <% if remaining > 0 && @days_remaining.to_i > 0 %>
-              <p class="text-[11px] text-gray-500 dark:text-gray-400" style="font-variant-numeric: tabular-nums;">
-                To stay on plan: ~<%= number_to_currency((remaining / @days_remaining).round(2), precision: 2) %>/day
-              </p>
-            <% elsif remaining == 0 %>
-              <p class="text-[11px] text-gray-500 dark:text-gray-400">Plan reached — review spending drivers</p>
-            <% else %>
-              <p class="text-[11px] text-amber-600 dark:text-amber-400" style="font-variant-numeric: tabular-nums;">
-                Over plan by <%= number_to_currency(remaining.abs, precision: 0) %> — see top drivers
-              </p>
-            <% end %>
-          <% else %>
-            <p class="text-[11px] text-gray-500 dark:text-gray-400" style="font-variant-numeric: tabular-nums;">
-              <%= number_to_currency(@daily_avg || 0, precision: 2) %>/day average spending
-            </p>
-          <% end %>
         </div>
       </div>
     </div>
@@ -250,7 +122,7 @@
         <button type="button" data-action="click->dashboard#toggleCardExpand"
                 data-role="expand-btn"
                 class="inline-flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition cursor-pointer" style="min-width:44px; min-height:44px;"
-                aria-label="Expand Spending Breakdown">
+                aria-label="Expand Spending Details">
           <svg class="w-[18px] h-[18px]" data-icon="expand" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/>
           </svg>

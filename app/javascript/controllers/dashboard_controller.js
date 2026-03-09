@@ -524,13 +524,31 @@ export default class extends Controller {
   _renderSpendingOverview(wrapper, data) {
     const content = wrapper.querySelector("[data-role='card-content']")
     if (content) {
+      const spent = data.spent || 0
       const opBal = data.operating_balance || 0
+
+      content.innerHTML = `
+        <div class="flex flex-col flex-1 justify-center py-4 space-y-6" style="font-variant-numeric: tabular-nums;">
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-gray-500 dark:text-gray-400">Spent This Month</span>
+            <span class="text-2xl font-bold text-gray-800 dark:text-gray-100" style="font-size: 2rem;">${this._currency(spent)}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-gray-500 dark:text-gray-400">Cash In Spending Accounts</span>
+            <span class="text-2xl font-bold text-gray-800 dark:text-gray-100" style="font-size: 2rem;">${this._currency(opBal)}</span>
+          </div>
+        </div>`
+    }
+
+    const backContent = wrapper.querySelector("[data-role='back-content']")
+    if (backContent) {
       const billsTotal = data.recurring_bills_total || data.scheduled_payments || 0
       const billsItems = data.recurring_bills_items || []
-      const varTotal = data.variable_spending_total || 0
-      const varItems = data.variable_spending_items || []
-      const projSafe = data.projected_safe_to_spend != null ? data.projected_safe_to_spend : (opBal - billsTotal - varTotal)
-      const safeColor = projSafe >= 0 ? 'text-brand-600 dark:text-brand-400' : 'text-red-600 dark:text-red-400'
+      const depositsTotal = data.scheduled_deposits || 0
+      const depositItems = data.scheduled_deposit_items || []
+      const opBal = data.operating_balance || 0
+      const cashAvailable = data.cash_available_to_spend != null ? data.cash_available_to_spend : (opBal + depositsTotal - billsTotal)
+      const cashColor = cashAvailable >= 0 ? 'text-brand-600 dark:text-brand-400' : 'text-red-600 dark:text-red-400'
 
       // Recurring bills sub-items
       let billsHtml = ''
@@ -541,170 +559,36 @@ export default class extends Controller {
         </div>`
       }
 
-      // Variable spending sub-items (top 5)
-      let varHtml = ''
-      for (const item of varItems.slice(0, 5)) {
-        varHtml += `<div class="flex items-center justify-between pl-4 mt-0.5">
-          <span class="text-xs text-gray-500 dark:text-gray-400 truncate">${this._esc(item.name)} <span class="text-[10px] text-gray-400 dark:text-gray-500">(${item.source})</span></span>
-          <span class="text-xs text-gray-500 dark:text-gray-400">${this._currency(item.remaining)}</span>
+      // Deposit sub-items
+      let depositsHtml = ''
+      for (const dep of depositItems) {
+        depositsHtml += `<div class="flex items-center justify-between pl-4 mt-0.5">
+          <span class="text-xs text-gray-500 dark:text-gray-400 truncate">${this._esc(dep.name)}</span>
+          <span class="text-xs text-gray-500 dark:text-gray-400">${this._currency(dep.amount)}</span>
         </div>`
       }
 
-      content.innerHTML = `
-        <div class="flex flex-col flex-1 py-2 space-y-2" style="font-variant-numeric: tabular-nums;">
+      backContent.innerHTML = `<div class="flex flex-col py-2 space-y-3" style="font-variant-numeric: tabular-nums;">
+        <div>
           <div class="flex items-center justify-between">
-            <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">Available Cash</span>
-            <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">${this._currency(opBal)}</span>
+            <span class="text-sm font-bold text-gray-800 dark:text-gray-200">Recurring Bills Remaining</span>
+            <span class="text-sm font-bold text-gray-800 dark:text-gray-200">${this._currency(billsTotal)}</span>
           </div>
-          <div class="border-t border-gray-100 dark:border-gray-700 pt-2">
-            <div class="flex items-center justify-between">
-              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Recurring Bills Remaining</span>
-              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">${this._currency(billsTotal)}</span>
-            </div>
-            ${billsHtml}
-          </div>
-          <div class="border-t border-gray-100 dark:border-gray-700 pt-2">
-            <div class="flex items-center justify-between">
-              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Est. Variable Spending</span>
-              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">${this._currency(varTotal)}</span>
-            </div>
-            ${varHtml}
-          </div>
-          <div class="border-t-2 border-gray-200 dark:border-gray-600 pt-2">
-            <div class="flex items-center justify-between">
-              <span class="text-base font-bold text-slate-800 dark:text-slate-100">Projected Safe To Spend</span>
-              <span class="text-base font-bold ${safeColor}">${this._currency(projSafe)}</span>
-            </div>
-          </div>
-        </div>`
-    }
-
-    const backContent = wrapper.querySelector("[data-role='back-content']")
-    if (backContent) {
-      const spent = data.spent || 0
-      const avg = data.planned_spending
-      const hasPlan = avg != null && avg > 0
-      const remaining = hasPlan ? (avg - spent) : 0
-      const daysInMonth = data.days_in_month || 30
-      const daysElapsed = data.days_elapsed || 0
-      const daysRemaining = data.days_remaining || 0
-      const spendingPct = hasPlan && avg > 0 ? Math.min((spent / avg * 100), 100).toFixed(1) : 0
-      const monthPct = daysInMonth > 0 ? Math.min((daysElapsed / daysInMonth * 100), 100).toFixed(1) : 0
-      const onTrack = parseFloat(spendingPct) <= parseFloat(monthPct)
-      const projected = data.projected_month_end || 0
-      const categories = (data.categories || []).slice(0, 3)
-
-      // Section A: Plan vs Spent
-      let planVsSpent = `<div>
-        <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5">Plan vs Spent</p>
-        <div class="flex items-baseline space-x-3" style="font-variant-numeric: tabular-nums;">
-          <span class="text-sm text-gray-700 dark:text-gray-300">Spent <span class="font-semibold text-slate-800 dark:text-slate-100">${this._currency0(spent)}</span></span>`
-      if (hasPlan) {
-        planVsSpent += `<span class="text-[11px] text-gray-400 dark:text-gray-500">&middot;</span>
-          <span class="text-sm text-gray-700 dark:text-gray-300">Plan <span class="font-semibold text-slate-800 dark:text-slate-100">${this._currency0(avg)}</span></span>`
-      }
-      planVsSpent += `</div>`
-      if (hasPlan) {
-        const remClass = remaining >= 0 ? 'text-gray-500 dark:text-gray-400' : 'text-amber-600 dark:text-amber-400'
-        planVsSpent += `<p class="text-xs mt-0.5 ${remClass}" style="font-variant-numeric: tabular-nums;">${this._currency0(Math.abs(remaining))} ${remaining >= 0 ? 'remaining' : 'over plan'}</p>`
-      }
-      planVsSpent += `</div>`
-
-      // Section B: Pacing Bars (only with plan)
-      let pacingBars = ''
-      if (hasPlan) {
-        const trackClass = onTrack ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'
-        const trackLabel = onTrack ? '&#10003; On Track' : '&#9888; Ahead of Plan'
-        const trackDesc = onTrack ? 'behind' : 'ahead of'
-        pacingBars = `<div>
-          <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5">Pacing</p>
-          <div class="space-y-2">
-            <div>
-              <div class="flex items-center justify-between mb-0.5">
-                <span class="text-[11px] text-gray-500 dark:text-gray-400">Spending Used</span>
-                <span class="text-[11px] font-medium text-slate-700 dark:text-slate-300" style="font-variant-numeric: tabular-nums;">${spendingPct}%</span>
-              </div>
-              <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                <div class="h-2 rounded-full transition-all" style="width: ${spendingPct}%; background: var(--brand-500, #7c3aed);"></div>
-              </div>
-            </div>
-            <div>
-              <div class="flex items-center justify-between mb-0.5">
-                <span class="text-[11px] text-gray-500 dark:text-gray-400">Month Elapsed</span>
-                <span class="text-[11px] font-medium text-slate-700 dark:text-slate-300" style="font-variant-numeric: tabular-nums;">${monthPct}%</span>
-              </div>
-              <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                <div class="h-2 rounded-full bg-slate-400 dark:bg-slate-500 transition-all" style="width: ${monthPct}%;"></div>
-              </div>
-            </div>
-          </div>
-          <p class="text-[11px] mt-1.5 font-medium ${trackClass}">${trackLabel} <span class="font-normal text-gray-400 dark:text-gray-500">— spending ${trackDesc} schedule</span></p>
-        </div>`
-      }
-
-      // Section C: Projection
-      let projectionHtml = `<div>
-        <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5">Projection</p>
-        <div class="flex items-baseline space-x-3" style="font-variant-numeric: tabular-nums;">
-          <span class="text-sm text-gray-700 dark:text-gray-300">Projected <span class="font-semibold text-slate-800 dark:text-slate-100">${this._currency0(projected)}</span></span>`
-      if (hasPlan) {
-        const projDelta = projected - avg
-        const projClass = projDelta <= 0 ? 'text-gray-500 dark:text-gray-400' : 'text-amber-600 dark:text-amber-400'
-        projectionHtml += `<span class="text-[11px] text-gray-400 dark:text-gray-500">&middot;</span>
-          <span class="text-sm text-gray-700 dark:text-gray-300">Plan <span class="font-semibold text-slate-800 dark:text-slate-100">${this._currency0(avg)}</span></span>
+          ${billsHtml}
         </div>
-        <p class="text-[11px] mt-0.5 ${projClass}" style="font-variant-numeric: tabular-nums;">~${this._currency0(Math.abs(projDelta))} ${projDelta <= 0 ? 'under' : 'over'} plan at current pace</p>`
-      } else {
-        projectionHtml += `</div>
-        <p class="text-[11px] mt-0.5 text-gray-500 dark:text-gray-400">Based on ${this._currency(data.daily_avg || 0)}/day average</p>`
-      }
-      projectionHtml += `</div>`
-
-      // Section D: Top 3 Spending Drivers
-      let driversHtml = ''
-      if (categories.length > 0) {
-        driversHtml = `<div>
-          <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5">Top Spending Drivers</p>
-          <div class="space-y-1">`
-        for (const cat of categories) {
-          let limitHtml = ''
-          if (cat.limit != null && cat.limit > 0) {
-            const catDelta = cat.amount - cat.limit
-            const catClass = catDelta > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400 dark:text-gray-500'
-            limitHtml = `<span class="text-[10px] ${catClass}">${catDelta > 0 ? '+' + this._currency0(catDelta) + ' over' : this._currency0(Math.abs(catDelta)) + ' under'}</span>`
-          }
-          driversHtml += `<div class="flex items-center justify-between">
-            <span class="text-xs text-gray-700 dark:text-gray-300 truncate">${this._esc(cat.name)}</span>
-            <div class="flex items-center space-x-2 flex-shrink-0 ml-2" style="font-variant-numeric: tabular-nums;">
-              <span class="text-xs font-semibold text-slate-800 dark:text-slate-100">${this._currency(cat.amount)}</span>
-              ${limitHtml}
-            </div>
-          </div>`
-        }
-        driversHtml += `</div></div>`
-      }
-
-      // Section E: Pacing Guidance
-      let guidanceHtml = `<div class="pt-2 border-t border-gray-100 dark:border-gray-700">`
-      if (hasPlan) {
-        if (remaining > 0 && daysRemaining > 0) {
-          guidanceHtml += `<p class="text-[11px] text-gray-500 dark:text-gray-400" style="font-variant-numeric: tabular-nums;">To stay on plan: ~${this._currency(remaining / daysRemaining)}/day</p>`
-        } else if (remaining === 0) {
-          guidanceHtml += `<p class="text-[11px] text-gray-500 dark:text-gray-400">Plan reached — review spending drivers</p>`
-        } else {
-          guidanceHtml += `<p class="text-[11px] text-amber-600 dark:text-amber-400" style="font-variant-numeric: tabular-nums;">Over plan by ${this._currency0(Math.abs(remaining))} — see top drivers</p>`
-        }
-      } else {
-        guidanceHtml += `<p class="text-[11px] text-gray-500 dark:text-gray-400" style="font-variant-numeric: tabular-nums;">${this._currency(data.daily_avg || 0)}/day average spending</p>`
-      }
-      guidanceHtml += `</div>`
-
-      backContent.innerHTML = `<div class="space-y-4 py-2" style="max-width: 480px; margin: 0 auto;">
-        ${planVsSpent}
-        ${pacingBars}
-        ${projectionHtml}
-        ${driversHtml}
-        ${guidanceHtml}
+        <div class="border-t border-gray-100 dark:border-gray-700 pt-3">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-bold text-gray-800 dark:text-gray-200">Current Deposits</span>
+            <span class="text-sm font-bold text-gray-800 dark:text-gray-200">${this._currency(depositsTotal)}</span>
+          </div>
+          ${depositsHtml}
+        </div>
+        <div class="border-t-2 border-gray-200 dark:border-gray-600 pt-3">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-bold text-gray-800 dark:text-gray-200">Cash Available To Spend</span>
+            <span class="text-xl font-bold ${cashColor}" style="font-size: 1.5rem;">${this._currency(cashAvailable)}</span>
+          </div>
+        </div>
       </div>`
     }
   }

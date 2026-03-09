@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.72"
+APP_VERSION = "1.3.73"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,15 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.73",
+    changes: [
+      "Spending Overview: Simplified front card showing only Spent This Month and Cash In Spending Accounts with large display fonts.",
+      "Spending Overview: Back card redesigned with Recurring Bills Remaining, Current Deposits (upcoming recurring deposits), and Cash Available To Spend.",
+      "Spending Overview: Cash Available To Spend = Cash In Spending Accounts + Remaining Deposits - Remaining Bills.",
+      "Spending Overview: Individual deposit and bill line items shown beneath section totals."
+    ]
+  },
   {
     version: "1.3.72",
     changes: [

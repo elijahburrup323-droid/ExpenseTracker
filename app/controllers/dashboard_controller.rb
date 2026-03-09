@@ -103,12 +103,15 @@ class DashboardController < ApplicationController
 
     # Scheduled deposits TO spendable accounts
     @scheduled_deposits = 0.0
+    @scheduled_deposit_items = []
     current_user.income_recurrings.where(use_flag: true, account_id: spendable_ids).each do |ir|
-      if ir.next_date && ir.next_date >= @month_start && ir.next_date < @month_end
+      if ir.next_date && ir.next_date >= @month_start && ir.next_date < @month_end && ir.next_date >= Date.today
         @scheduled_deposits += ir.amount.to_f
+        @scheduled_deposit_items << { name: ir.name, amount: ir.amount.to_f, due_date: ir.next_date }
       end
     end
     @scheduled_deposits = @scheduled_deposits.round(2)
+    @scheduled_deposit_items.sort_by! { |item| item[:due_date] }
 
     # Scheduled payments FROM spendable accounts (+ account-less obligations)
     @scheduled_payments = 0.0
@@ -176,6 +179,9 @@ class DashboardController < ApplicationController
 
     # Projected Safe To Spend = Available Cash - Recurring Bills - Estimated Variable Spending
     @projected_safe_to_spend = (@operating_balance - @scheduled_payments - @variable_spending_total).round(2)
+
+    # Cash Available To Spend = Cash In Spending Accounts + Remaining Deposits - Remaining Bills
+    @cash_available_to_spend = (@operating_balance + @scheduled_deposits - @scheduled_payments).round(2)
 
     # Legacy safe_to_spend
     @safe_to_spend = (@operating_balance + @scheduled_deposits - @scheduled_payments).round(2)

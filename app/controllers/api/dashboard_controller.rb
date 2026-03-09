@@ -270,11 +270,14 @@ module Api
 
       # Scheduled deposits TO spendable accounts
       scheduled_deposits = 0.0
+      scheduled_deposit_items = []
       current_user.income_recurrings.where(use_flag: true, account_id: spendable_ids).each do |ir|
-        if ir.next_date && ir.next_date >= ctx[:month_start] && ir.next_date < ctx[:month_end]
+        if ir.next_date && ir.next_date >= ctx[:month_start] && ir.next_date < ctx[:month_end] && ir.next_date >= Date.today
           scheduled_deposits += ir.amount.to_f
+          scheduled_deposit_items << { name: ir.name, amount: ir.amount.to_f, due_date: ir.next_date.to_s }
         end
       end
+      scheduled_deposit_items.sort_by! { |item| item[:due_date] }
 
       # Scheduled payments FROM spendable accounts (+ account-less obligations)
       # Collect individual items for the financial flow card
@@ -355,6 +358,9 @@ module Api
       # Projected Safe To Spend = Available Cash - Recurring Bills - Estimated Variable Spending
       projected_safe_to_spend = (operating_balance - scheduled_payments - variable_spending_total).round(2)
 
+      # Cash Available To Spend = Cash In Spending Accounts + Remaining Deposits - Remaining Bills
+      cash_available_to_spend = (operating_balance + scheduled_deposits - scheduled_payments).round(2)
+
       # Legacy safe_to_spend (kept for backward compat)
       safe_to_spend = (operating_balance + scheduled_deposits - scheduled_payments).round(2)
       safe_daily_spend = days_remaining > 0 ? (safe_to_spend / days_remaining).round(2) : 0.0
@@ -386,9 +392,11 @@ module Api
         days_remaining: days_remaining,
         recurring_bills_total: scheduled_payments.round(2),
         recurring_bills_items: recurring_bills_items,
+        scheduled_deposit_items: scheduled_deposit_items,
         variable_spending_total: variable_spending_total,
         variable_spending_items: variable_spending_items,
         projected_safe_to_spend: projected_safe_to_spend,
+        cash_available_to_spend: cash_available_to_spend,
         category_pressure: category_pressure,
         categories: by_category, types: by_type, tags: by_tag
       }
