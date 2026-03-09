@@ -258,6 +258,25 @@ module Api
         { id: id, name: tag_names[id], amount: amt.round(2), pct: spent > 0 ? (amt / spent * 100).round(1) : 0.0 }
       end
 
+      # Deposits Breakdown by description (for expanded 4-column backside)
+      income_total = tag_filtered_scope(
+        current_user.income_entries
+          .where(account_id: ctx[:budget_accounts].select(:id))
+          .where(received_flag: true)
+          .where(entry_date: ctx[:month_start]...ctx[:month_end]),
+        ctx[:tag_ids], "IncomeEntry"
+      ).sum(:amount).to_f
+      deposits_breakdown = tag_filtered_scope(
+        current_user.income_entries
+          .where(account_id: ctx[:budget_accounts].select(:id))
+          .where(received_flag: true)
+          .where(entry_date: ctx[:month_start]...ctx[:month_end]),
+        ctx[:tag_ids], "IncomeEntry"
+      ).group(:description)
+       .sum(:amount)
+       .sort_by { |_desc, amt| -amt.to_f }
+       .map { |desc, amt| { name: desc, amount: amt.to_f.round(2), pct: income_total > 0 ? (amt.to_f / income_total * 100).round(1) : 0.0 } }
+
       # Safe to Spend (Operating Cash only)
       credit_master_ids = AccountTypeMaster.where(normal_balance_type: "CREDIT").pluck(:id)
       spendable_master_ids = AccountTypeMaster.spendable_type_ids
@@ -398,6 +417,8 @@ module Api
         projected_safe_to_spend: projected_safe_to_spend,
         cash_available_to_spend: cash_available_to_spend,
         category_pressure: category_pressure,
+        deposits_breakdown: deposits_breakdown,
+        income_total: income_total.round(2),
         categories: by_category, types: by_type, tags: by_tag
       }
     end
@@ -513,7 +534,8 @@ module Api
                        .where.not(beginning_balance: 0)
                        .order(:created_at)
                        .map { |a| { name: a.name, beginning_balance: a.beginning_balance.to_f } }
-      current_balance = ctx[:all_balances].select { |id, _| ctx[:budget_ids].include?(id) }.values.sum.to_f.round(2)
+      # Current Balance = Beginning Balance + Deposits − Payments (deterministic formula)
+      current_balance = (beginning_balance + income - expenses).round(2)
 
       net_change = (income - expenses).round(2)
       savings_rate = income > 0 ? ((net_change / income) * 100).round(1) : nil

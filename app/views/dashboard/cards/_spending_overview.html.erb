@@ -70,41 +70,108 @@
       </div>
     </div>
     <div class="flex-1 overflow-y-auto" data-role="back-content">
-      <div class="flex flex-col py-2 space-y-3" style="font-variant-numeric: tabular-nums;">
-        <%# === Section 1: Recurring Bills Remaining === %>
+      <% spent_total = @spent_mtd.to_f %>
+      <% income_total = @current_month_income.to_f %>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 py-3" style="font-variant-numeric: tabular-nums;">
+        <%# === Column 1: By Category === %>
         <div>
-          <div class="flex items-center justify-between">
-            <span class="text-sm font-bold text-gray-800 dark:text-gray-200">Recurring Bills Remaining</span>
-            <span class="text-sm font-bold text-gray-800 dark:text-gray-200"><%= number_to_currency(@scheduled_payments, precision: 2) %></span>
+          <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 pb-1 border-b border-gray-200 dark:border-gray-600">By Category</p>
+          <div class="space-y-1">
+            <% @spending_by_category.each do |cat| %>
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-gray-700 dark:text-gray-300 truncate mr-2"><%= cat[:name] %></span>
+                <div class="flex items-center space-x-2 flex-shrink-0">
+                  <span class="text-xs font-medium text-gray-800 dark:text-gray-200 tabular-nums"><%= number_to_currency(cat[:amount]) %></span>
+                  <span class="text-[10px] text-gray-400 dark:text-gray-500 tabular-nums w-10 text-right"><%= cat[:pct] %>%</span>
+                </div>
+              </div>
+            <% end %>
           </div>
-          <% @recurring_bills_items.each do |bill| %>
-            <div class="flex items-center justify-between pl-4 mt-0.5">
-              <span class="text-xs text-gray-500 dark:text-gray-400 truncate"><%= bill[:name] %></span>
-              <span class="text-xs text-gray-500 dark:text-gray-400"><%= number_to_currency(bill[:amount], precision: 2) %></span>
+          <div class="border-t border-gray-200 dark:border-gray-600 mt-2 pt-1">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-gray-800 dark:text-gray-200">Total</span>
+              <span class="text-xs font-bold text-gray-800 dark:text-gray-200 tabular-nums"><%= number_to_currency(spent_total) %></span>
+            </div>
+          </div>
+        </div>
+
+        <%# === Column 2: By Spending Type === %>
+        <div>
+          <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 pb-1 border-b border-gray-200 dark:border-gray-600">By Spending Type</p>
+          <div class="space-y-1">
+            <% @spending_by_type.each do |tp| %>
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-gray-700 dark:text-gray-300 truncate mr-2"><%= tp[:name] %></span>
+                <div class="flex items-center space-x-2 flex-shrink-0">
+                  <span class="text-xs font-medium text-gray-800 dark:text-gray-200 tabular-nums"><%= number_to_currency(tp[:amount]) %></span>
+                  <span class="text-[10px] text-gray-400 dark:text-gray-500 tabular-nums w-10 text-right"><%= tp[:pct] %>%</span>
+                </div>
+              </div>
+            <% end %>
+          </div>
+          <div class="border-t border-gray-200 dark:border-gray-600 mt-2 pt-1">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-gray-800 dark:text-gray-200">Total</span>
+              <span class="text-xs font-bold text-gray-800 dark:text-gray-200 tabular-nums"><%= number_to_currency(spent_total) %></span>
+            </div>
+          </div>
+        </div>
+
+        <%# === Column 3: By Tag === %>
+        <div>
+          <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 pb-1 border-b border-gray-200 dark:border-gray-600">By Tag</p>
+          <div class="space-y-1">
+            <% if @spending_by_tag.any? %>
+              <% @spending_by_tag.each do |tag| %>
+                <div class="flex items-center justify-between">
+                  <span class="text-xs text-gray-700 dark:text-gray-300 truncate mr-2"><%= tag[:name] %></span>
+                  <div class="flex items-center space-x-2 flex-shrink-0">
+                    <span class="text-xs font-medium text-gray-800 dark:text-gray-200 tabular-nums"><%= number_to_currency(tag[:amount]) %></span>
+                    <span class="text-[10px] text-gray-400 dark:text-gray-500 tabular-nums w-10 text-right"><%= tag[:pct] %>%</span>
+                  </div>
+                </div>
+              <% end %>
+            <% else %>
+              <p class="text-xs text-gray-400 dark:text-gray-500">No tagged payments.</p>
+            <% end %>
+          </div>
+          <% tag_total = @spending_by_tag.sum { |t| t[:amount] } %>
+          <% if @spending_by_tag.any? %>
+            <div class="border-t border-gray-200 dark:border-gray-600 mt-2 pt-1">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-gray-800 dark:text-gray-200">Total</span>
+                <span class="text-xs font-bold text-gray-800 dark:text-gray-200 tabular-nums"><%= number_to_currency(tag_total) %></span>
+              </div>
             </div>
           <% end %>
         </div>
 
-        <%# === Section 2: Current Deposits === %>
-        <div class="border-t border-gray-100 dark:border-gray-700 pt-3">
-          <div class="flex items-center justify-between">
-            <span class="text-sm font-bold text-gray-800 dark:text-gray-200">Current Deposits</span>
-            <span class="text-sm font-bold text-gray-800 dark:text-gray-200"><%= number_to_currency(@scheduled_deposits, precision: 2) %></span>
+        <%# === Column 4: Deposits Breakdown === %>
+        <div>
+          <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 pb-1 border-b border-gray-200 dark:border-gray-600">Deposits Breakdown</p>
+          <div class="space-y-1">
+            <% if @deposits_breakdown.any? %>
+              <% @deposits_breakdown.each do |dep| %>
+                <div class="flex items-center justify-between">
+                  <span class="text-xs text-gray-700 dark:text-gray-300 truncate mr-2"><%= dep[:name] %></span>
+                  <div class="flex items-center space-x-2 flex-shrink-0">
+                    <span class="text-xs font-medium text-gray-800 dark:text-gray-200 tabular-nums"><%= number_to_currency(dep[:amount]) %></span>
+                    <span class="text-[10px] text-gray-400 dark:text-gray-500 tabular-nums w-10 text-right"><%= dep[:pct] %>%</span>
+                  </div>
+                </div>
+              <% end %>
+            <% else %>
+              <p class="text-xs text-gray-400 dark:text-gray-500">No deposits this month.</p>
+            <% end %>
           </div>
-          <% @scheduled_deposit_items.each do |dep| %>
-            <div class="flex items-center justify-between pl-4 mt-0.5">
-              <span class="text-xs text-gray-500 dark:text-gray-400 truncate"><%= dep[:name] %></span>
-              <span class="text-xs text-gray-500 dark:text-gray-400"><%= number_to_currency(dep[:amount], precision: 2) %></span>
+          <% if @deposits_breakdown.any? %>
+            <div class="border-t border-gray-200 dark:border-gray-600 mt-2 pt-1">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-gray-800 dark:text-gray-200">Total</span>
+                <span class="text-xs font-bold text-gray-800 dark:text-gray-200 tabular-nums"><%= number_to_currency(income_total) %></span>
+              </div>
             </div>
           <% end %>
-        </div>
-
-        <%# === Section 3: Cash Available To Spend === %>
-        <div class="border-t-2 border-gray-200 dark:border-gray-600 pt-3">
-          <div class="flex items-center justify-between">
-            <span class="text-sm font-bold text-gray-800 dark:text-gray-200">Cash Available To Spend</span>
-            <span class="text-xl font-bold <%= @cash_available_to_spend >= 0 ? 'text-brand-600 dark:text-brand-400' : 'text-red-600 dark:text-red-400' %>" style="font-size: 1.5rem;"><%= number_to_currency(@cash_available_to_spend, precision: 2) %></span>
-          </div>
         </div>
       </div>
     </div>

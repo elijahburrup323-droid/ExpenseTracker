@@ -405,8 +405,9 @@ export default class extends Controller {
     if (this.sortable) this.sortable.option("disabled", true)
 
     // Center content in expanded mode with bounded width + lift height cap
+    const isWideCard = wrapper.dataset.cardType === 'spending_overview'
     wrapper.querySelectorAll("[data-role='card-content'], [data-role='front-content'], [data-role='back-content']").forEach(el => {
-      el.style.maxWidth = "1000px"
+      el.style.maxWidth = isWideCard ? "100%" : "1000px"
       el.style.marginLeft = "auto"
       el.style.marginRight = "auto"
       el.style.width = "100%"
@@ -542,53 +543,51 @@ export default class extends Controller {
 
     const backContent = wrapper.querySelector("[data-role='back-content']")
     if (backContent) {
-      const billsTotal = data.recurring_bills_total || data.scheduled_payments || 0
-      const billsItems = data.recurring_bills_items || []
-      const depositsTotal = data.scheduled_deposits || 0
-      const depositItems = data.scheduled_deposit_items || []
-      const opBal = data.operating_balance || 0
-      const cashAvailable = data.cash_available_to_spend != null ? data.cash_available_to_spend : (opBal + depositsTotal - billsTotal)
-      const cashColor = cashAvailable >= 0 ? 'text-brand-600 dark:text-brand-400' : 'text-red-600 dark:text-red-400'
+      const categories = data.categories || []
+      const types = data.types || []
+      const tags = data.tags || []
+      const deposits = data.deposits_breakdown || []
+      const spentTotal = data.spent || 0
+      const incomeTotal = data.income_total || 0
 
-      // Recurring bills sub-items
-      let billsHtml = ''
-      for (const bill of billsItems) {
-        billsHtml += `<div class="flex items-center justify-between pl-4 mt-0.5">
-          <span class="text-xs text-gray-500 dark:text-gray-400 truncate">${this._esc(bill.name)}</span>
-          <span class="text-xs text-gray-500 dark:text-gray-400">${this._currency(bill.amount)}</span>
+      const buildColumn = (title, items, total) => {
+        let rows = ''
+        if (items.length > 0) {
+          for (const item of items) {
+            rows += `<div class="flex items-center justify-between">
+              <span class="text-xs text-gray-700 dark:text-gray-300 truncate mr-2">${this._esc(item.name)}</span>
+              <div class="flex items-center space-x-2 flex-shrink-0">
+                <span class="text-xs font-medium text-gray-800 dark:text-gray-200 tabular-nums">${this._currency(item.amount)}</span>
+                <span class="text-[10px] text-gray-400 dark:text-gray-500 tabular-nums w-10 text-right">${(item.pct || 0).toFixed(1)}%</span>
+              </div>
+            </div>`
+          }
+        } else {
+          rows = `<p class="text-xs text-gray-400 dark:text-gray-500">None this month.</p>`
+        }
+        let totalRow = ''
+        if (items.length > 0) {
+          totalRow = `<div class="border-t border-gray-200 dark:border-gray-600 mt-2 pt-1">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-gray-800 dark:text-gray-200">Total</span>
+              <span class="text-xs font-bold text-gray-800 dark:text-gray-200 tabular-nums">${this._currency(total)}</span>
+            </div>
+          </div>`
+        }
+        return `<div>
+          <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 pb-1 border-b border-gray-200 dark:border-gray-600">${title}</p>
+          <div class="space-y-1">${rows}</div>
+          ${totalRow}
         </div>`
       }
 
-      // Deposit sub-items
-      let depositsHtml = ''
-      for (const dep of depositItems) {
-        depositsHtml += `<div class="flex items-center justify-between pl-4 mt-0.5">
-          <span class="text-xs text-gray-500 dark:text-gray-400 truncate">${this._esc(dep.name)}</span>
-          <span class="text-xs text-gray-500 dark:text-gray-400">${this._currency(dep.amount)}</span>
-        </div>`
-      }
+      const tagTotal = tags.reduce((s, t) => s + (t.amount || 0), 0)
 
-      backContent.innerHTML = `<div class="flex flex-col py-2 space-y-3" style="font-variant-numeric: tabular-nums;">
-        <div>
-          <div class="flex items-center justify-between">
-            <span class="text-sm font-bold text-gray-800 dark:text-gray-200">Recurring Bills Remaining</span>
-            <span class="text-sm font-bold text-gray-800 dark:text-gray-200">${this._currency(billsTotal)}</span>
-          </div>
-          ${billsHtml}
-        </div>
-        <div class="border-t border-gray-100 dark:border-gray-700 pt-3">
-          <div class="flex items-center justify-between">
-            <span class="text-sm font-bold text-gray-800 dark:text-gray-200">Current Deposits</span>
-            <span class="text-sm font-bold text-gray-800 dark:text-gray-200">${this._currency(depositsTotal)}</span>
-          </div>
-          ${depositsHtml}
-        </div>
-        <div class="border-t-2 border-gray-200 dark:border-gray-600 pt-3">
-          <div class="flex items-center justify-between">
-            <span class="text-sm font-bold text-gray-800 dark:text-gray-200">Cash Available To Spend</span>
-            <span class="text-xl font-bold ${cashColor}" style="font-size: 1.5rem;">${this._currency(cashAvailable)}</span>
-          </div>
-        </div>
+      backContent.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 py-3" style="font-variant-numeric: tabular-nums;">
+        ${buildColumn('By Category', categories, spentTotal)}
+        ${buildColumn('By Spending Type', types, spentTotal)}
+        ${buildColumn('By Tag', tags, tagTotal)}
+        ${buildColumn('Deposits Breakdown', deposits, incomeTotal)}
       </div>`
     }
   }

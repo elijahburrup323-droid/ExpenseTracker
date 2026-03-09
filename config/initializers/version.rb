@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.73"
+APP_VERSION = "1.3.74"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,16 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.74",
+    changes: [
+      "Income & Spending: Current Balance now derived deterministically from Beginning Balance + Deposits − Payments (no longer from account balance snapshots).",
+      "Income & Spending: Transfers no longer distort the Current Balance display.",
+      "Spending Overview: Expanded backside opens full-size with 4-column Spending Breakdown — By Category, By Spending Type, By Tag, and Deposits Breakdown.",
+      "Spending Overview: Each column shows items with amounts and percentages, with a total at the bottom.",
+      "Spending Overview: Deposits Breakdown groups income entries by description for the selected month."
+    ]
+  },
   {
     version: "1.3.73",
     changes: [

@@ -206,6 +206,17 @@ class DashboardController < ApplicationController
       { id: id, name: tag_names[id], amount: amt.round(2), pct: spent_total > 0 ? (amt / spent_total * 100).round(1) : 0.0 }
     end
 
+    # Card 1 back (expanded): Deposits Breakdown by description
+    income_total = @current_month_income.to_f
+    @deposits_breakdown = current_user.income_entries
+      .where(account_id: budget_accounts.select(:id))
+      .where(received_flag: true)
+      .where(entry_date: @month_start...@month_end)
+      .group(:description)
+      .sum(:amount)
+      .sort_by { |_desc, amt| -amt.to_f }
+      .map { |desc, amt| { name: desc, amount: amt.to_f.round(2), pct: income_total > 0 ? (amt.to_f / income_total * 100).round(1) : 0.0 } }
+
     # Card 2: Accounts — all accounts (passed as @accounts)
 
     # Card 3: Net Worth — canonical aggregator (Accounts + Assets + Investments + Financing)
@@ -261,7 +272,6 @@ class DashboardController < ApplicationController
     budget_ids = budget_accounts.pluck(:id)
     beg_balances = AccountBalanceService.balances_as_of(current_user, @month_start - 1.day)
     @beginning_balance_total = beg_balances.select { |id, _| budget_ids.include?(id) }.values.sum.to_f
-    @budget_total = all_balances.select { |id, _| budget_ids.include?(id) }.values.sum.to_f
     @current_month_payments = current_user.payments
                                           .where(account_id: budget_accounts.select(:id))
                                           .where(payment_date: @month_start...@month_end)
@@ -273,6 +283,9 @@ class DashboardController < ApplicationController
                                         .where(received_flag: true)
                                         .where(entry_date: @month_start...@month_end)
                                         .sum(:amount)
+
+    # Current Balance = Beginning Balance + Deposits − Payments (deterministic formula)
+    @budget_total = (@beginning_balance_total + @current_month_income.to_f - @current_month_payments.to_f).round(2)
 
     # Accounts added to budget in open month (for "New Account Added" line items)
     @new_budget_accounts = budget_accounts.where(created_at: @month_start.beginning_of_day...@month_end.beginning_of_day)
