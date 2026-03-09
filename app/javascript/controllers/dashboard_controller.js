@@ -734,18 +734,17 @@ export default class extends Controller {
     html += `</div>`
     content.innerHTML = html
 
-    // Back-of-card: Net Worth History (Expanded Insight — Instruction M)
+    // Back-of-card: Net Worth Breakdown (chart + asset/liability columns + summary)
     const backContent = wrapper.querySelector("[data-role='back-content']")
     if (backContent) {
       let bhtml = ""
-      // Net Worth value pinned at top
-      bhtml += `<div class="text-center mb-3"><span class="text-lg font-bold text-gray-900 dark:text-white tabular-nums">Net Worth: ${this._currency(value)}</span></div>`
+      const assets = data.assets || 0
+      const liabilities = data.liabilities || 0
+      const assetItems = data.asset_items || []
+      const liabilityItems = data.liability_items || []
 
-      if (snapshots.length < 2) {
-        const msg = snapshots.length === 0 ? "No history yet" : "Not enough historical data for trend view."
-        bhtml += `<div class="w-full py-6 flex items-center justify-center"><p class="text-xs text-gray-400 dark:text-gray-500">${msg}</p></div>`
-      } else {
-        // Conditional line graph (Instruction H)
+      // Section 1: Chart
+      if (snapshots.length >= 2) {
         const amounts = snapshots.map(s => s.amount)
         const minVal = Math.min(...amounts)
         const maxVal = Math.max(...amounts)
@@ -762,39 +761,50 @@ export default class extends Controller {
           points.slice(1).map(p => `L${p[0]},${p[1]}`).join(" ") +
           ` L${points[points.length-1][0]},${padding + chartH} L${points[0][0]},${padding + chartH} Z`
 
-        bhtml += `<div class="w-full h-20 relative mb-1"><svg viewBox="0 0 200 60" class="w-full h-full" preserveAspectRatio="none">`
+        bhtml += `<div class="w-full h-16 relative mb-0.5"><svg viewBox="0 0 200 60" class="w-full h-full" preserveAspectRatio="none">`
         bhtml += `<defs><linearGradient id="netWorthGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#a855f7" stop-opacity="0.3"/><stop offset="100%" stop-color="#a855f7" stop-opacity="0"/></linearGradient></defs>`
         bhtml += `<path d="${areaPath}" fill="url(#netWorthGrad)"/>`
         bhtml += `<polyline points="${polylineStr}" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`
-        points.forEach(p => {
-          bhtml += `<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="#a855f7"/>`
-        })
+        points.forEach(p => { bhtml += `<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="#a855f7"/>` })
         bhtml += `</svg></div>`
-        bhtml += `<div class="flex justify-between text-[10px] text-gray-400 dark:text-gray-500 mb-3">`
-        snapshots.forEach(s => { bhtml += `<span>${this._esc(s.label)}</span>` })
-        bhtml += `</div>`
-
-        // Monthly snapshot list with MoM changes (newest first)
-        bhtml += `<div class="space-y-1.5">`
-        const reversed = [...snapshots].reverse()
-        reversed.forEach((s, i) => {
-          const prev = reversed[i + 1]
-          let changeHtml = ""
-          if (prev) {
-            const mom = s.amount - prev.amount
-            const momStr = mom >= 0 ? `+${this._currency(mom)}` : this._currency(mom)
-            changeHtml = `<span class="text-[10px] tabular-nums text-gray-500 dark:text-gray-400">${momStr}</span>`
-          }
-          bhtml += `<div class="flex items-center justify-between">
-            <span class="text-xs text-gray-600 dark:text-gray-400">${this._esc(s.label)}</span>
-            <div class="flex items-center space-x-2">
-              <span class="text-xs font-semibold text-gray-900 dark:text-white tabular-nums">${this._currency(s.amount)}</span>
-              ${changeHtml}
-            </div>
-          </div>`
+        bhtml += `<div class="flex justify-between text-center mb-3">`
+        snapshots.forEach(s => {
+          const shortLabel = s.label.split(" ")[0]
+          bhtml += `<div class="flex flex-col items-center"><span class="text-[10px] text-gray-400 dark:text-gray-500">${this._esc(shortLabel)}</span><span class="text-[9px] font-medium text-gray-500 dark:text-gray-400 tabular-nums">${this._currency0(s.amount)}</span></div>`
         })
         bhtml += `</div>`
+      } else {
+        const msg = snapshots.length === 0 ? "No history yet" : "Not enough data for chart."
+        bhtml += `<div class="w-full py-3 flex items-center justify-center"><p class="text-xs text-gray-400 dark:text-gray-500">${msg}</p></div>`
       }
+
+      // Section 2: Asset / Liability Breakdown
+      bhtml += `<div class="grid grid-cols-2 gap-4 mb-3">`
+      // Assets column
+      bhtml += `<div><div class="flex items-center justify-between mb-1.5"><span class="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Assets</span><span class="text-[10px] font-semibold text-gray-900 dark:text-white tabular-nums">${this._currency(assets)}</span></div>`
+      if (assetItems.length > 0) {
+        bhtml += `<div class="space-y-0.5">`
+        assetItems.forEach(i => {
+          bhtml += `<div class="flex items-center justify-between"><span class="text-[11px] text-gray-600 dark:text-gray-400 truncate mr-1">${this._esc(i.name)}</span><span class="text-[11px] font-medium text-gray-900 dark:text-white tabular-nums flex-shrink-0">${this._currency(i.value)}</span></div>`
+        })
+        bhtml += `</div>`
+      } else { bhtml += `<p class="text-[10px] text-gray-400 dark:text-gray-500">No assets.</p>` }
+      bhtml += `</div>`
+      // Liabilities column
+      bhtml += `<div><div class="flex items-center justify-between mb-1.5"><span class="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Liabilities</span><span class="text-[10px] font-semibold text-red-500 dark:text-red-400 tabular-nums">${liabilities > 0 ? "-" : ""}${this._currency(liabilities)}</span></div>`
+      if (liabilityItems.length > 0) {
+        bhtml += `<div class="space-y-0.5">`
+        liabilityItems.forEach(i => {
+          bhtml += `<div class="flex items-center justify-between"><span class="text-[11px] text-gray-600 dark:text-gray-400 truncate mr-1">${this._esc(i.name)}</span><span class="text-[11px] font-medium text-red-500 dark:text-red-400 tabular-nums flex-shrink-0">-${this._currency(i.value)}</span></div>`
+        })
+        bhtml += `</div>`
+      } else { bhtml += `<p class="text-[10px] text-gray-400 dark:text-gray-500">No liabilities.</p>` }
+      bhtml += `</div></div>`
+
+      // Section 3: Large Net Worth Summary
+      const nwColor = value >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500 dark:text-red-400"
+      bhtml += `<div class="border-t border-gray-200 dark:border-gray-600 pt-2 text-center"><span class="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Net Worth</span><div class="text-xl font-bold tabular-nums mt-0.5 ${nwColor}">${this._currency(value)}</div></div>`
+
       backContent.innerHTML = bhtml
     }
   }

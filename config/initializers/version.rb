@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.78"
+APP_VERSION = "1.3.79"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,15 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.79",
+    changes: [
+      "Net Worth Card: Back side redesigned with chart showing monthly values under dots.",
+      "Net Worth Card: Back side shows 2-column Assets vs Liabilities breakdown with individual line items.",
+      "Net Worth Card: Back side displays large centered Net Worth summary (green if positive, red if negative).",
+      "API: Returns asset_items and liability_items arrays for Net Worth card breakdown."
+    ]
+  },
   {
     version: "1.3.78",
     changes: [

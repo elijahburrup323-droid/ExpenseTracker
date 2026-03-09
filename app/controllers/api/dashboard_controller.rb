@@ -509,6 +509,40 @@ module Api
         metric_mode = "cash_coverage"
       end
 
+      # Build asset/liability line items for breakdown display
+      credit_id_set = credit_ids.to_set
+      liquid_ids = AccountTypeMaster.liquid_type_ids.to_set
+      asset_items = []
+      liability_items = []
+
+      current_user.accounts.includes(:account_type_master).each do |a|
+        if credit_id_set.include?(a.account_type_master_id)
+          liability_items << { name: a.name, value: a.balance.to_f.abs.round(2) } if a.balance.to_f.abs > 0
+        else
+          next if a.balance.to_f == 0 && !liquid_ids.include?(a.account_type_master_id)
+          asset_items << { name: a.name, value: a.balance.to_f.round(2) }
+        end
+      end
+
+      if defined?(FEATURE_ASSETS_ENABLED) && FEATURE_ASSETS_ENABLED
+        current_user.assets.where(include_in_net_worth: true).where(deleted_at: nil).each do |asset|
+          asset_items << { name: asset.name, value: asset.current_value.to_f.round(2) } if asset.current_value.to_f > 0
+        end
+      end
+
+      if defined?(FEATURE_FINANCING_ENABLED) && FEATURE_FINANCING_ENABLED
+        current_user.financing_instruments.where(include_in_net_worth: true).where(deleted_at: nil).each do |fi|
+          if fi.receivable?
+            asset_items << { name: fi.name, value: fi.current_principal.to_f.round(2) } if fi.current_principal.to_f > 0
+          else
+            liability_items << { name: fi.name, value: fi.current_principal.to_f.round(2) } if fi.current_principal.to_f > 0
+          end
+        end
+      end
+
+      asset_items.sort_by! { |i| -i[:value] }
+      liability_items.sort_by! { |i| -i[:value] }
+
       { value: net_worth_val, change: nw_change.round(2), change_pct: nw_pct,
         snapshot_count: snapshots.size, snapshots: snapshot_data,
         assets: assets, liabilities: liabilities, debt_ratio: metric_value,
@@ -516,7 +550,8 @@ module Api
         accounts_subtotal: nw[:accounts_subtotal].round(2),
         asset_module_total: (nw[:asset_module_total] || 0).round(2),
         investment_module_total: (nw[:investment_module_total] || 0).round(2),
-        liabilities_subtotal: (nw[:liabilities_subtotal] || 0).round(2) }
+        liabilities_subtotal: (nw[:liabilities_subtotal] || 0).round(2),
+        asset_items: asset_items, liability_items: liability_items }
     end
 
     def compute_income_spending(ctx)

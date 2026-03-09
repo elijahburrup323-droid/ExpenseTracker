@@ -230,6 +230,58 @@ class DashboardController < ApplicationController
     @nw_investment_module_total = nw[:investment_module_total].round(2)
     @nw_liabilities_subtotal = nw[:liabilities_subtotal].round(2)
 
+    # Asset/Liability line items for back-side breakdown
+    liquid_master_ids = AccountTypeMaster.liquid_type_ids.to_set
+    @nw_asset_items = []
+    @nw_liability_items = []
+
+    # Account-based assets (liquid + other debit accounts)
+    @accounts.select { |a| !credit_master_ids.include?(a.account_type_master_id) }.each do |a|
+      next if a.balance.to_f == 0 && !liquid_master_ids.include?(a.account_type_master_id)
+      @nw_asset_items << { name: a.name, value: a.balance.to_f.round(2) }
+    end
+
+    # Asset module items
+    if defined?(FEATURE_ASSETS_ENABLED) && FEATURE_ASSETS_ENABLED
+      current_user.assets.where(include_in_net_worth: true).where(deleted_at: nil).each do |asset|
+        next if asset.current_value.to_f == 0
+        @nw_asset_items << { name: asset.name, value: asset.current_value.to_f.round(2) }
+      end
+    end
+
+    # Investment holdings
+    if defined?(FEATURE_INVESTMENTS_ENABLED) && FEATURE_INVESTMENTS_ENABLED
+      InvestmentHolding.joins(:investment_account)
+        .where(investment_accounts: { user_id: current_user.id, include_in_net_worth: true, active: true })
+        .where(investment_holdings: { deleted_at: nil }).where.not(investment_holdings: { current_price: nil })
+        .includes(:investment_account).each do |h|
+          val = (h.shares_held.to_f * h.current_price.to_f).round(2)
+          next if val == 0
+          label = h.ticker_symbol.present? ? "#{h.security_name} (#{h.ticker_symbol})" : h.security_name
+          @nw_asset_items << { name: label, value: val }
+        end
+    end
+
+    # Financing receivables (assets) and payables (liabilities)
+    if defined?(FEATURE_FINANCING_ENABLED) && FEATURE_FINANCING_ENABLED
+      current_user.financing_instruments.where(include_in_net_worth: true).where(deleted_at: nil).each do |fi|
+        if fi.receivable?
+          @nw_asset_items << { name: fi.name, value: fi.current_principal.to_f.round(2) } if fi.current_principal.to_f > 0
+        else
+          @nw_liability_items << { name: fi.name, value: fi.current_principal.to_f.round(2) } if fi.current_principal.to_f > 0
+        end
+      end
+    end
+
+    # Account-based liabilities (credit cards, loans)
+    @accounts.select { |a| credit_master_ids.include?(a.account_type_master_id) }.each do |a|
+      next if a.balance.to_f.abs == 0
+      @nw_liability_items << { name: a.name, value: a.balance.to_f.abs.round(2) }
+    end
+
+    @nw_asset_items.sort_by! { |i| -i[:value] }
+    @nw_liability_items.sort_by! { |i| -i[:value] }
+
     # Metric swap: Debt Ratio (leveraged) vs Cash Coverage (cash-dominant)
     noncash_total = Asset.where(user_id: current_user.id, include_in_net_worth: true).where(deleted_at: nil).sum(:current_value).to_f +
       InvestmentHolding.joins(:investment_account)
