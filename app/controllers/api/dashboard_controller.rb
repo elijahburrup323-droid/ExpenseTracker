@@ -439,6 +439,8 @@ module Api
       all_accounts = current_user.accounts.includes(:account_type, :account_type_master).ordered
       liquid_total = 0.0
       liquid_count = 0
+      credit_total = 0.0
+      loan_total = 0.0
       accounts_list = all_accounts.map do |a|
         bal = (ctx[:all_balances][a.id] || a.balance).to_f
         is_liability = credit_ids.include?(a.account_type_master_id)
@@ -450,8 +452,10 @@ module Api
         group = if liquid_ids.include?(a.account_type_master_id)
                   "liquid"
                 elsif revolving_credit_ids.include?(a.account_type_master_id)
+                  credit_total += bal.abs
                   "credit"
                 elsif is_liability
+                  loan_total += bal.abs
                   "loan"
                 else
                   "other_asset"
@@ -461,7 +465,8 @@ module Api
       end
       nw = Account.net_worth_for(current_user.accounts, user: current_user)
 
-      { accounts: accounts_list, total: nw[:accounts_total].round(2), liquid_total: liquid_total.round(2), liquid_count: liquid_count }
+      { accounts: accounts_list, total: nw[:accounts_total].round(2), liquid_total: liquid_total.round(2), liquid_count: liquid_count,
+        credit_total: credit_total.round(2), loan_total: loan_total.round(2) }
     end
 
     def compute_net_worth(ctx)

@@ -1,14 +1,19 @@
 <%
   credit_master_ids = AccountTypeMaster.where(normal_balance_type: "CREDIT").pluck(:id).to_set
   liquid_master_ids = AccountTypeMaster.liquid_type_ids.to_set
+  revolving_credit_ids = AccountTypeMaster.where(normalized_key: AccountTypeMaster::CREDIT_TYPE_KEYS).pluck(:id).to_set
 
-  # Compute liquid (cash) totals for front side
+  # Compute liquid (cash) totals
   liquid_accounts = @accounts.select { |a| liquid_master_ids.include?(a.account_type_master_id) }
   liquid_total = liquid_accounts.sum { |a| a.balance.to_f }
   liquid_count = liquid_accounts.size
 
-  # Liability accounts needed for back-side grouping
+  # Liability accounts: credit cards vs loans
   liability_accounts = @accounts.select { |a| credit_master_ids.include?(a.account_type_master_id) }
+  credit_accounts = @accounts.select { |a| revolving_credit_ids.include?(a.account_type_master_id) }
+  credit_sum = credit_accounts.sum { |a| a.balance.to_f.abs }
+  loan_accounts = liability_accounts.reject { |a| revolving_credit_ids.include?(a.account_type_master_id) }
+  loan_sum = loan_accounts.sum { |a| a.balance.to_f.abs }
 %>
 <div class="relative flex-1 flex flex-col" data-role="flipper" style="transform-style: preserve-3d; transition: transform 0.6s;">
   <%# === FRONT SIDE (Calm Cash — Total Cash only) === %>
@@ -23,9 +28,19 @@
       <% if @accounts.empty? %>
         <p class="text-sm text-gray-400 dark:text-gray-500">No accounts yet.</p>
       <% else %>
-        <div class="flex flex-col items-center justify-center py-4">
-          <span class="text-2xl font-bold text-gray-900 dark:text-white tabular-nums">Total Cash: <%= number_to_currency(liquid_total) %></span>
-          <span class="text-sm text-gray-500 dark:text-gray-400 mt-1">Across <%= liquid_count %> liquid account<%= liquid_count == 1 ? '' : 's' %></span>
+        <div class="flex flex-col items-center justify-center pt-3 pb-1">
+          <span class="text-2xl font-bold text-gray-900 dark:text-white tabular-nums"><%= number_to_currency(liquid_total) %></span>
+          <span class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Total Cash &middot; <%= liquid_count %> account<%= liquid_count == 1 ? '' : 's' %></span>
+        </div>
+        <div class="flex items-center justify-center gap-6 mt-2 pb-1">
+          <div class="text-center">
+            <span class="text-sm font-semibold text-red-500 dark:text-red-400 tabular-nums"><%= credit_sum > 0 ? "-" : "" %><%= number_to_currency(credit_sum) %></span>
+            <span class="block text-[10px] text-gray-400 dark:text-gray-500">Credit Cards</span>
+          </div>
+          <div class="text-center">
+            <span class="text-sm font-semibold text-red-500 dark:text-red-400 tabular-nums"><%= loan_sum > 0 ? "-" : "" %><%= number_to_currency(loan_sum) %></span>
+            <span class="block text-[10px] text-gray-400 dark:text-gray-500">Loans &amp; Financing</span>
+          </div>
         </div>
       <% end %>
     </div>
@@ -58,14 +73,9 @@
     3 sections: Liquid (expanded), Credit (collapsed), Loans (collapsed)
   %>
   <%
-    revolving_credit_ids = AccountTypeMaster.where(normalized_key: AccountTypeMaster::CREDIT_TYPE_KEYS).pluck(:id).to_set
     liquid_accounts_sorted = liquid_accounts.sort_by { |a| -a.balance.to_f }
-    credit_accounts = @accounts.select { |a| revolving_credit_ids.include?(a.account_type_master_id) }
     credit_accounts_sorted = credit_accounts.sort_by { |a| -a.balance.to_f.abs }
-    credit_sum = credit_accounts.sum { |a| a.balance.to_f.abs }
-    loan_accounts = liability_accounts.reject { |a| revolving_credit_ids.include?(a.account_type_master_id) }
     loan_accounts_sorted = loan_accounts.sort_by { |a| -a.balance.to_f.abs }
-    loan_sum = loan_accounts.sum { |a| a.balance.to_f.abs }
   %>
   <div class="absolute inset-0 flex flex-col" data-role="back" style="backface-visibility: hidden; transform: rotateY(180deg); pointer-events: none;">
     <div data-role="back-content" class="dash-card-scroll">

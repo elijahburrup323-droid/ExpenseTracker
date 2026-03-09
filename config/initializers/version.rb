@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.76"
+APP_VERSION = "1.3.77"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,14 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.77",
+    changes: [
+      "Accounts Card: Front side now shows Total Cash, Credit Card Balance, and Loans & Financing Balance.",
+      "Accounts Card: Liabilities (credit cards and loans) displayed in red on front side.",
+      "Accounts Card: API returns credit_total and loan_total for front-side rendering."
+    ]
+  },
   {
     version: "1.3.76",
     changes: [
