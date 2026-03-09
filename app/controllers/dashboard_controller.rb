@@ -309,6 +309,8 @@ class DashboardController < ApplicationController
                       .includes(:account)
                       .map { |d| { type: :deposit, date: d.entry_date, description: d.description, amount: d.amount.to_f, category: nil } }
     @recent_activity_items = (payment_items + deposit_items).sort_by { |i| -i[:date].to_time.to_i }
+    @recent_payment_items = payment_items
+    @recent_deposit_items = deposit_items
 
     # Keep legacy variables for backward compat (pagination, back side)
     @recent_payments_total = payments_base.count
@@ -323,6 +325,8 @@ class DashboardController < ApplicationController
     total_income = income_base.sum(:amount).to_f
     income_count = income_base.count
     @net_activity = (total_income - total_payments).round(2)
+    @payment_count = @recent_payments_total
+    @deposit_count = income_count
     @activity_transaction_count = @recent_payments_total + income_count
 
     # Card 4 back & Card 5 back: All income entries for the month (scrollable)

@@ -94,7 +94,7 @@ module Api
           response[:income_spending] = s[:data]
           is_data = s[:data]
         when "recent_activity"
-          response[:recent_activity] = s[:data][:recent]
+          response[:recent_activity] = s[:data]
         end
       end
 
@@ -601,12 +601,14 @@ module Api
       net_activity = (total_income - total_payments).round(2)
       transaction_count = payments_base.count + income_base.count
 
-      # Keep legacy recent array for backward compat (pagination endpoint)
-      recent = payment_items
+      payments_count = payments_base.count
+      deposit_count = income_base.count
 
-      { recent: recent, merged: merged, total_count: payments_base.count, page: 1, per_page: RECENT_ACTIVITY_PAGE_SIZE,
-        has_more: payments_base.count > RECENT_ACTIVITY_PAGE_SIZE,
-        net_activity: net_activity, transaction_count: transaction_count }
+      { recent: payment_items, merged: merged, payments: payment_items, deposits: deposit_items,
+        total_count: payments_count, page: 1, per_page: RECENT_ACTIVITY_PAGE_SIZE,
+        has_more: payments_count > RECENT_ACTIVITY_PAGE_SIZE,
+        net_activity: net_activity, transaction_count: transaction_count,
+        payment_count: payments_count, deposit_count: deposit_count }
     end
 
     def compute_buckets(_ctx)

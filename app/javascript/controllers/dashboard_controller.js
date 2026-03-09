@@ -875,58 +875,58 @@ export default class extends Controller {
     const content = wrapper.querySelector("[data-role='card-content']")
     if (!content) return
 
-    // Update activity summary strip
+    // Front side: Recent Payments only
+    const payments = data.payments || data.recent || []
+    const paymentCount = data.payment_count || payments.length
+    const paymentTotal = payments.reduce((sum, i) => sum + i.amount, 0)
+
     const summary = wrapper.querySelector("[data-role='activity-summary']")
-    if (summary && data.net_activity != null) {
-      const net = data.net_activity
-      const count = data.transaction_count || 0
-      const colorCls = net >= 0 ? "text-emerald-500/80 dark:text-emerald-400/70" : "text-red-400/80 dark:text-red-400/60"
-      const sign = net >= 0 ? "+" : "-"
-      summary.innerHTML = `<span class="text-xs font-medium tabular-nums ${colorCls}">Net: ${sign}${this._currency(Math.abs(net))}</span>` +
-        `<span class="text-xs text-gray-400 dark:text-gray-500">${count} transaction${count === 1 ? "" : "s"}</span>`
+    if (summary) {
+      summary.innerHTML = `<span class="text-xs font-medium tabular-nums text-red-400/80 dark:text-red-400/60">Total: \u2212${this._currency(paymentTotal)}</span>` +
+        `<span class="text-xs text-gray-400 dark:text-gray-500">${paymentCount} payment${paymentCount === 1 ? "" : "s"}</span>`
     }
 
-    // Calm Scroll: merged payments + deposits (Instruction R)
-    const items = data.merged || data.recent || []
-    if (items.length === 0) {
-      content.innerHTML = `<p class="text-sm text-gray-400 dark:text-gray-500 text-center py-4">No activity this month.</p>`
-      return
+    if (payments.length === 0) {
+      content.innerHTML = `<p class="text-sm text-gray-400 dark:text-gray-500 text-center py-4">No payments this month.</p>`
+    } else {
+      let html = `<div class="space-y-1.5">`
+      payments.forEach(item => {
+        html += `<div class="flex items-center justify-between">
+          <div class="min-w-0 flex-1 mr-2">
+            <span class="text-[11px] text-gray-400 dark:text-gray-500">${this._esc(item.date)}</span>
+            <span class="text-xs text-gray-700 dark:text-gray-300 truncate">${this._esc(item.description)}</span>
+          </div>
+          <span class="text-xs font-medium text-red-400/80 dark:text-red-400/60 tabular-nums flex-shrink-0">\u2212${this._currency(item.amount)}</span>
+        </div>`
+      })
+      html += `</div>`
+      content.innerHTML = html
     }
 
-    let html = `<div class="space-y-1.5">`
-    items.forEach(item => {
-      const isDeposit = item.type === "deposit"
-      const amtClass = isDeposit ? "text-emerald-500/80 dark:text-emerald-400/70" : "text-red-400/80 dark:text-red-400/60"
-      const prefix = isDeposit ? "+" : "\u2212"
-      html += `<div class="flex items-center justify-between">
-        <div class="min-w-0 flex-1 mr-2">
-          <span class="text-[11px] text-gray-400 dark:text-gray-500">${this._esc(item.date)}</span>
-          <span class="text-xs text-gray-700 dark:text-gray-300 truncate">${this._esc(item.description)}</span>
-        </div>
-        <span class="text-xs font-medium ${amtClass} tabular-nums flex-shrink-0">${prefix}${this._currency(item.amount)}</span>
-      </div>`
-    })
-    html += `</div>`
-    content.innerHTML = html
-
-    // Back side: Expanded Monthly Activity (Instruction S)
+    // Back side: Recent Deposits only
     const backContent = wrapper.querySelector("[data-role='back-content']")
     if (backContent) {
-      if (items.length === 0) {
-        backContent.innerHTML = `<p class="text-sm text-gray-400 dark:text-gray-500 text-center py-4">No activity this month.</p>`
+      const deposits = data.deposits || []
+      const depositCount = data.deposit_count || deposits.length
+      const depositTotal = deposits.reduce((sum, i) => sum + i.amount, 0)
+
+      const depositSummary = wrapper.querySelector("[data-role='deposit-summary']")
+      if (depositSummary) {
+        depositSummary.innerHTML = `<span class="text-xs font-medium tabular-nums text-emerald-500/80 dark:text-emerald-400/70">Total: +${this._currency(depositTotal)}</span>` +
+          `<span class="text-xs text-gray-400 dark:text-gray-500">${depositCount} deposit${depositCount === 1 ? "" : "s"}</span>`
+      }
+
+      if (deposits.length === 0) {
+        backContent.innerHTML = `<p class="text-sm text-gray-400 dark:text-gray-500 text-center py-4">No deposits this month.</p>`
       } else {
         let bhtml = `<div class="space-y-1.5">`
-        items.forEach(item => {
-          const isDeposit = item.type === "deposit"
-          const amtClass = isDeposit ? "text-emerald-500/80 dark:text-emerald-400/70" : "text-red-400/80 dark:text-red-400/60"
-          const prefix = isDeposit ? "+" : "\u2212"
-          const catHtml = item.category ? `<span class="text-[10px] text-gray-400/70 dark:text-gray-500/60 ml-1">${this._esc(item.category)}</span>` : ""
+        deposits.forEach(item => {
           bhtml += `<div class="flex items-center justify-between">
             <div class="min-w-0 flex-1 mr-2">
               <span class="text-[11px] text-gray-400 dark:text-gray-500">${this._esc(item.date)}</span>
-              <span class="text-xs text-gray-700 dark:text-gray-300 truncate">${this._esc(item.description)}</span>${catHtml}
+              <span class="text-xs text-gray-700 dark:text-gray-300 truncate">${this._esc(item.description)}</span>
             </div>
-            <span class="text-xs font-medium ${amtClass} tabular-nums flex-shrink-0">${prefix}${this._currency(item.amount)}</span>
+            <span class="text-xs font-medium text-emerald-500/80 dark:text-emerald-400/70 tabular-nums flex-shrink-0">+${this._currency(item.amount)}</span>
           </div>`
         })
         bhtml += `</div>`
