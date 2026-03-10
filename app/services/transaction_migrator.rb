@@ -40,7 +40,8 @@ class TransactionMigrator
   end
 
   def migrate_deposits!
-    IncomeEntry.unscoped.find_each do |d|
+    # Only migrate received deposits — unreceived entries are planned, not actual activity
+    IncomeEntry.unscoped.where(received_flag: true).find_each do |d|
       next if already_migrated?(d.user_id, "income_entries", d.id)
 
       txn = Transaction.unscoped.create!(

@@ -176,10 +176,15 @@ module Api
     end
 
     def compute_spending_overview(ctx)
-      base_payments = tag_filtered_scope(
-        current_user.payments.where(payment_date: ctx[:month_start]...ctx[:month_end]),
-        ctx[:tag_ids]
-      )
+      # Use canonical table for non-tag queries; fall back to legacy for tag filtering
+      if ctx[:tag_ids].present?
+        base_payments = tag_filtered_scope(
+          current_user.payments.where(payment_date: ctx[:month_start]...ctx[:month_end]),
+          ctx[:tag_ids]
+        )
+      else
+        base_payments = current_user.transactions.payments.where(txn_date: ctx[:month_start]...ctx[:month_end])
+      end
       spent = base_payments.sum(:amount).to_f
 
       # Planned spending from recurring payment occurrences in open month
@@ -208,18 +213,22 @@ module Api
       comparison_pct = planned_spending && planned_spending > 0 ? ((spent - planned_spending) / planned_spending * 100).round(1) : nil
       comparison_label = "planned"
 
+      # Determine table name for SQL references based on source
+      tbl = ctx[:tag_ids].present? ? "payments" : "transactions"
+      amt_col = "#{tbl}.amount"
+
       by_category = base_payments
         .joins(:spending_category)
         .group("spending_categories.id", "spending_categories.name", "spending_categories.icon_key", "spending_categories.color_key")
-        .order(Arel.sql("SUM(payments.amount) DESC"))
-        .pluck(Arel.sql("spending_categories.id, spending_categories.name, spending_categories.icon_key, spending_categories.color_key, SUM(payments.amount)"))
+        .order(Arel.sql("SUM(#{amt_col}) DESC"))
+        .pluck(Arel.sql("spending_categories.id, spending_categories.name, spending_categories.icon_key, spending_categories.color_key, SUM(#{amt_col})"))
         .map { |id, name, icon_key, color_key, total| { id: id, name: name, icon_key: icon_key, color_key: color_key, amount: total.to_f, pct: spent > 0 ? (total.to_f / spent * 100).round(1) : 0.0 } }
 
       by_type = base_payments
         .joins(spending_category: :spending_type)
         .group("spending_types.id", "spending_types.name", "spending_types.icon_key", "spending_types.color_key")
-        .order(Arel.sql("SUM(payments.amount) DESC"))
-        .pluck(Arel.sql("spending_types.id, spending_types.name, spending_types.icon_key, spending_types.color_key, SUM(payments.amount)"))
+        .order(Arel.sql("SUM(#{amt_col}) DESC"))
+        .pluck(Arel.sql("spending_types.id, spending_types.name, spending_types.icon_key, spending_types.color_key, SUM(#{amt_col})"))
         .map { |id, name, icon_key, color_key, total| { id: id, name: name, icon_key: icon_key, color_key: color_key, amount: total.to_f, pct: spent > 0 ? (total.to_f / spent * 100).round(1) : 0.0 } }
 
       # Enrich with spending limits
@@ -242,8 +251,9 @@ module Api
         end
       end
 
-      # Spending by Tag (split payment amount evenly across tags)
-      month_payments = base_payments.includes(:tags).to_a
+      # Spending by Tag (uses legacy payments — tags are associated with payments, not transactions)
+      legacy_payments = current_user.payments.where(payment_date: ctx[:month_start]...ctx[:month_end])
+      month_payments = tag_filtered_scope(legacy_payments, ctx[:tag_ids]).includes(:tags).to_a
       tag_totals = Hash.new(0.0)
       tag_names = {}
       month_payments.each do |p|
@@ -259,20 +269,21 @@ module Api
       end
 
       # Deposits Breakdown by description (for expanded 4-column backside)
-      income_total = tag_filtered_scope(
-        current_user.income_entries
+      if ctx[:tag_ids].present?
+        deposits_scope = tag_filtered_scope(
+          current_user.income_entries
+            .where(account_id: ctx[:budget_accounts].select(:id))
+            .where(received_flag: true)
+            .where(entry_date: ctx[:month_start]...ctx[:month_end]),
+          ctx[:tag_ids], "IncomeEntry"
+        )
+      else
+        deposits_scope = current_user.transactions.deposits
           .where(account_id: ctx[:budget_accounts].select(:id))
-          .where(received_flag: true)
-          .where(entry_date: ctx[:month_start]...ctx[:month_end]),
-        ctx[:tag_ids], "IncomeEntry"
-      ).sum(:amount).to_f
-      deposits_breakdown = tag_filtered_scope(
-        current_user.income_entries
-          .where(account_id: ctx[:budget_accounts].select(:id))
-          .where(received_flag: true)
-          .where(entry_date: ctx[:month_start]...ctx[:month_end]),
-        ctx[:tag_ids], "IncomeEntry"
-      ).group(:description)
+          .where(txn_date: ctx[:month_start]...ctx[:month_end])
+      end
+      income_total = deposits_scope.sum(:amount).to_f
+      deposits_breakdown = deposits_scope.group(:description)
        .sum(:amount)
        .sort_by { |_desc, amt| -amt.to_f }
        .map { |desc, amt| { name: desc, amount: amt.to_f.round(2), pct: income_total > 0 ? (amt.to_f / income_total * 100).round(1) : 0.0 } }

@@ -164,6 +164,8 @@ module Api
 
       case action
       when :create
+        return unless entry.received_flag
+
         txn = current_user.transactions.create!(
           txn_date: entry.entry_date,
           txn_type: "deposit",
@@ -178,7 +180,8 @@ module Api
           legacy_id: entry.id, transaction_id: txn.id
         )
       when :update
-        if mapping
+        if entry.received_flag && mapping
+          # Update existing canonical transaction
           mapping.canonical_transaction.update!(
             txn_date: entry.entry_date,
             amount: entry.amount.abs,
@@ -187,6 +190,24 @@ module Api
             account_id: entry.account_id,
             reconciled: entry.reconciled
           )
+        elsif entry.received_flag && !mapping
+          # Newly marked as received — create canonical transaction
+          txn = current_user.transactions.create!(
+            txn_date: entry.entry_date,
+            txn_type: "deposit",
+            amount: entry.amount.abs,
+            description: entry.source_name,
+            memo: entry.description,
+            account_id: entry.account_id,
+            reconciled: entry.reconciled
+          )
+          TransactionMigrationMap.create!(
+            user_id: current_user.id, legacy_table: "income_entries",
+            legacy_id: entry.id, transaction_id: txn.id
+          )
+        elsif !entry.received_flag && mapping
+          # Un-received — soft-delete canonical transaction
+          mapping.canonical_transaction.soft_delete!
         end
       when :destroy
         mapping&.canonical_transaction&.soft_delete!

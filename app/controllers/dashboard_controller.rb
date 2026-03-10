@@ -30,8 +30,8 @@ class DashboardController < ApplicationController
     spendable_accounts = budget_accounts.where(account_type_master_id: spendable_master_ids)
     spendable_ids = spendable_accounts.pluck(:id)
 
-    @spent_mtd = current_user.payments
-                             .where(payment_date: @month_start...@month_end)
+    @spent_mtd = current_user.transactions.payments
+                             .where(txn_date: @month_start...@month_end)
                              .sum(:amount)
 
     # Card 1: Planned spending from recurring payment occurrences in open month
@@ -56,20 +56,20 @@ class DashboardController < ApplicationController
 
     # Card 1 back: Spending by Category and by Type
     spent_total = @spent_mtd.to_f
-    @spending_by_category = current_user.payments
-      .where(payment_date: @month_start...@month_end)
+    @spending_by_category = current_user.transactions.payments
+      .where(txn_date: @month_start...@month_end)
       .joins(:spending_category)
       .group("spending_categories.id", "spending_categories.name", "spending_categories.icon_key", "spending_categories.color_key")
-      .order(Arel.sql("SUM(payments.amount) DESC"))
-      .pluck(Arel.sql("spending_categories.id, spending_categories.name, spending_categories.icon_key, spending_categories.color_key, SUM(payments.amount)"))
+      .order(Arel.sql("SUM(transactions.amount) DESC"))
+      .pluck(Arel.sql("spending_categories.id, spending_categories.name, spending_categories.icon_key, spending_categories.color_key, SUM(transactions.amount)"))
       .map { |id, name, icon_key, color_key, total| { id: id, name: name, icon_key: icon_key, color_key: color_key, amount: total.to_f, pct: spent_total > 0 ? (total.to_f / spent_total * 100).round(1) : 0.0 } }
 
-    @spending_by_type = current_user.payments
-      .where(payment_date: @month_start...@month_end)
+    @spending_by_type = current_user.transactions.payments
+      .where(txn_date: @month_start...@month_end)
       .joins(spending_category: :spending_type)
       .group("spending_types.id", "spending_types.name", "spending_types.icon_key", "spending_types.color_key")
-      .order(Arel.sql("SUM(payments.amount) DESC"))
-      .pluck(Arel.sql("spending_types.id, spending_types.name, spending_types.icon_key, spending_types.color_key, SUM(payments.amount)"))
+      .order(Arel.sql("SUM(transactions.amount) DESC"))
+      .pluck(Arel.sql("spending_types.id, spending_types.name, spending_types.icon_key, spending_types.color_key, SUM(transactions.amount)"))
       .map { |id, name, icon_key, color_key, total| { id: id, name: name, icon_key: icon_key, color_key: color_key, amount: total.to_f, pct: spent_total > 0 ? (total.to_f / spent_total * 100).round(1) : 0.0 } }
 
     # Enrich with spending limits
@@ -136,10 +136,10 @@ class DashboardController < ApplicationController
 
     # Estimated Variable Spending: historical average per category minus current month spend
     six_months_ago = @month_start - 6.months
-    historical_data = current_user.payments
-      .where(payment_date: six_months_ago...@month_start)
+    historical_data = current_user.transactions.payments
+      .where(txn_date: six_months_ago...@month_start)
       .group(:spending_category_id)
-      .group(Arel.sql("DATE_TRUNC('month', payment_date)"))
+      .group(Arel.sql("DATE_TRUNC('month', txn_date)"))
       .sum(:amount)
 
     category_months = Hash.new { |h, k| h[k] = [] }
@@ -211,10 +211,9 @@ class DashboardController < ApplicationController
 
     # Card 1 back (expanded): Deposits Breakdown by description
     income_total = @current_month_income.to_f
-    @deposits_breakdown = current_user.income_entries
+    @deposits_breakdown = current_user.transactions.deposits
       .where(account_id: budget_accounts.select(:id))
-      .where(received_flag: true)
-      .where(entry_date: @month_start...@month_end)
+      .where(txn_date: @month_start...@month_end)
       .group(:description)
       .sum(:amount)
       .sort_by { |_desc, amt| -amt.to_f }
@@ -327,16 +326,15 @@ class DashboardController < ApplicationController
     budget_ids = budget_accounts.pluck(:id)
     beg_balances = AccountBalanceService.balances_as_of(current_user, @month_start - 1.day)
     @beginning_balance_total = beg_balances.select { |id, _| budget_ids.include?(id) }.values.sum.to_f
-    @current_month_payments = current_user.payments
+    @current_month_payments = current_user.transactions.payments
                                           .where(account_id: budget_accounts.select(:id))
-                                          .where(payment_date: @month_start...@month_end)
+                                          .where(txn_date: @month_start...@month_end)
                                           .sum(:amount)
 
-    # Income entries received in open month for budget accounts
-    @current_month_income = current_user.income_entries
+    # Deposits in open month for budget accounts (only received entries are in canonical table)
+    @current_month_income = current_user.transactions.deposits
                                         .where(account_id: budget_accounts.select(:id))
-                                        .where(received_flag: true)
-                                        .where(entry_date: @month_start...@month_end)
+                                        .where(txn_date: @month_start...@month_end)
                                         .sum(:amount)
 
     # Current Balance = Beginning Balance + Deposits − Payments (deterministic formula)
@@ -348,21 +346,19 @@ class DashboardController < ApplicationController
                                           .order(:created_at)
     @new_account_balance_total = @new_budget_accounts.sum(:beginning_balance)
 
-    # Card 5: Recent Activity — merged payments + deposits (Calm Scroll, Instruction R)
-    payments_base = current_user.payments.where(payment_date: @month_start...@month_end)
-    income_base = current_user.income_entries
-                              .where(received_flag: true)
-                              .where(entry_date: @month_start...@month_end)
+    # Card 5: Recent Activity — merged payments + deposits from canonical ledger
+    payments_base = current_user.transactions.payments.where(txn_date: @month_start...@month_end)
+    deposits_base = current_user.transactions.deposits.where(txn_date: @month_start...@month_end)
 
     # Merge payments and deposits into one list sorted by date DESC
     payment_items = payments_base
-                      .order(payment_date: :desc, sort_order: :desc)
-                      .includes(:account, spending_category: :spending_type)
-                      .map { |p| { type: :payment, date: p.payment_date, description: p.description, amount: p.amount.to_f, category: p.spending_category&.name } }
-    deposit_items = income_base
-                      .order(entry_date: :desc)
+                      .order(txn_date: :desc, created_at: :desc)
+                      .includes(:account, :spending_category)
+                      .map { |t| { type: :payment, date: t.txn_date, description: t.description, amount: t.amount.to_f, category: t.spending_category&.name } }
+    deposit_items = deposits_base
+                      .order(txn_date: :desc, created_at: :desc)
                       .includes(:account)
-                      .map { |d| { type: :deposit, date: d.entry_date, description: d.description, amount: d.amount.to_f, category: nil } }
+                      .map { |t| { type: :deposit, date: t.txn_date, description: t.description, amount: t.amount.to_f, category: nil } }
     @recent_activity_items = (payment_items + deposit_items).sort_by { |i| -i[:date].to_time.to_i }
     @recent_payment_items = payment_items
     @recent_deposit_items = deposit_items
@@ -371,25 +367,23 @@ class DashboardController < ApplicationController
     @recent_payments_total = payments_base.count
     @recent_payments_has_more = @recent_payments_total > 10
     @recent_payments = payments_base
-                         .order(payment_date: :desc, sort_order: :desc)
-                         .includes(:account, spending_category: :spending_type)
+                         .order(txn_date: :desc, created_at: :desc)
+                         .includes(:account, :spending_category)
                          .limit(10)
 
     # Card 5: Net activity summary
     total_payments = payments_base.sum(:amount).to_f
-    total_income = income_base.sum(:amount).to_f
-    income_count = income_base.count
+    total_income = deposits_base.sum(:amount).to_f
+    income_count = deposits_base.count
     @net_activity = (total_income - total_payments).round(2)
     @payment_count = @recent_payments_total
     @deposit_count = income_count
     @activity_transaction_count = @recent_payments_total + income_count
 
-    # Card 4 back & Card 5 back: All income entries for the month (scrollable)
-    @recent_income_entries = current_user.income_entries
-                                         .where(received_flag: true)
-                                         .where(entry_date: @month_start...@month_end)
-                                         .order(entry_date: :desc)
-                                         .includes(:account)
+    # Card 4 back & Card 5 back: All deposits for the month (scrollable)
+    @recent_income_entries = deposits_base
+                               .order(txn_date: :desc, created_at: :desc)
+                               .includes(:account)
 
     # Card 6: Buckets summary (grouped by account)
     user_buckets = current_user.buckets.active.includes(:account).ordered
