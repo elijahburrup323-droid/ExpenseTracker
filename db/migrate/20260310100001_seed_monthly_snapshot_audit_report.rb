@@ -11,13 +11,13 @@ class SeedMonthlySnapshotAuditReport < ActiveRecord::Migration[7.1]
 
     # Add slots 10 and 11 if needed
     execute <<~SQL
-      INSERT INTO reports_slots_masters (slot_number, is_active, created_at, updated_at)
-      SELECT 10, true, NOW(), NOW()
+      INSERT INTO reports_slots_masters (slot_number, is_active, created_at)
+      SELECT 10, true, NOW()
       WHERE NOT EXISTS (SELECT 1 FROM reports_slots_masters WHERE slot_number = 10);
     SQL
     execute <<~SQL
-      INSERT INTO reports_slots_masters (slot_number, is_active, created_at, updated_at)
-      SELECT 11, true, NOW(), NOW()
+      INSERT INTO reports_slots_masters (slot_number, is_active, created_at)
+      SELECT 11, true, NOW()
       WHERE NOT EXISTS (SELECT 1 FROM reports_slots_masters WHERE slot_number = 11);
     SQL
 
