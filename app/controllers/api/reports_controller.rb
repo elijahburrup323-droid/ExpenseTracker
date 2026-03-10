@@ -1224,93 +1224,99 @@ module Api
       start_date = Date.new(start_year, start_month, 1)
       end_date   = Date.new(end_year, end_month, -1)
 
+      # Preload account names for transfer descriptions
+      acct_names = current_user.accounts.unscoped.where(user_id: current_user.id).pluck(:id, :name).to_h
+
       result = { accounts: [] }
 
       accounts.each do |acct|
         acct_data = { id: acct.id, name: acct.name, account_type: acct.account_type_master&.display_name, months: [] }
 
-        # Iterate months in range
         current = start_date
         while current <= end_date
           y = current.year
           m = current.month
           month_start = Date.new(y, m, 1)
-          month_end   = Date.new(y, m, -1)
+          month_end   = month_start.next_month
+          range       = month_start...month_end
 
           # Get snapshot for this month
           snapshot = current_user.account_month_snapshots
                                 .where(account_id: acct.id, year: y, month: m)
                                 .first
 
-          # Get previous month's snapshot for beginning balance
-          prev_date = month_start.prev_month
-          prev_snapshot = current_user.account_month_snapshots
-                                     .where(account_id: acct.id, year: prev_date.year, month: prev_date.month)
-                                     .first
-
-          beginning_balance = prev_snapshot&.ending_balance.to_f
+          beginning_balance = snapshot&.beginning_balance.to_f
           snapshot_ending = snapshot&.ending_balance.to_f
 
-          # Gather all transactions for this account in this month
+          # Gather all transactions from the canonical Transaction table
           transactions = []
 
           # Payments (debits from account)
-          acct_payments = current_user.payments
-                                     .where(account_id: acct.id)
-                                     .where(payment_date: month_start..month_end)
-                                     .order(:payment_date, :created_at)
-          acct_payments.each do |p|
+          current_user.transactions.payments
+                      .where(account_id: acct.id, txn_date: range)
+                      .order(:txn_date, :created_at)
+                      .each do |t|
             transactions << {
-              date: p.payment_date.to_s,
+              date: t.txn_date.to_s,
               type: "Payment",
-              description: p.description.to_s,
-              amount: -p.amount.to_f.round(2)
+              description: t.description.to_s,
+              amount: -t.amount.to_f.round(2)
             }
           end
 
           # Deposits (credits to account)
-          acct_deposits = current_user.income_entries
-                                     .where(account_id: acct.id)
-                                     .where(entry_date: month_start..month_end)
-                                     .order(:entry_date, :created_at)
-          acct_deposits.each do |d|
+          current_user.transactions.deposits
+                      .where(account_id: acct.id, txn_date: range)
+                      .order(:txn_date, :created_at)
+                      .each do |t|
             transactions << {
-              date: d.entry_date.to_s,
+              date: t.txn_date.to_s,
               type: "Deposit",
-              description: d.description.to_s,
-              amount: d.amount.to_f.round(2)
+              description: t.description.to_s,
+              amount: t.amount.to_f.round(2)
             }
           end
 
           # Transfers In (credits to account)
-          transfers_in = current_user.transfer_masters
-                                    .where(to_account_id: acct.id)
-                                    .where(transfer_date: month_start..month_end)
-                                    .order(:transfer_date, :created_at)
-          transfers_in.each do |t|
+          current_user.transactions.transfers
+                      .where(to_account_id: acct.id, txn_date: range)
+                      .order(:txn_date, :created_at)
+                      .each do |t|
             transactions << {
-              date: t.transfer_date.to_s,
+              date: t.txn_date.to_s,
               type: "Transfer In",
-              description: "From #{t.from_account&.name || 'Unknown'}",
+              description: "From #{acct_names[t.from_account_id] || 'Unknown'}",
               amount: t.amount.to_f.round(2)
             }
           end
 
           # Transfers Out (debits from account)
-          transfers_out = current_user.transfer_masters
-                                     .where(from_account_id: acct.id)
-                                     .where(transfer_date: month_start..month_end)
-                                     .order(:transfer_date, :created_at)
-          transfers_out.each do |t|
+          current_user.transactions.transfers
+                      .where(from_account_id: acct.id, txn_date: range)
+                      .order(:txn_date, :created_at)
+                      .each do |t|
             transactions << {
-              date: t.transfer_date.to_s,
+              date: t.txn_date.to_s,
               type: "Transfer Out",
-              description: "To #{t.to_account&.name || 'Unknown'}",
+              description: "To #{acct_names[t.to_account_id] || 'Unknown'}",
               amount: -t.amount.to_f.round(2)
             }
           end
 
-          # Sort all by date
+          # Balance Adjustments
+          current_user.balance_adjustments
+                      .where(account_id: acct.id, adjustment_date: range)
+                      .order(:adjustment_date, :created_at)
+                      .each do |a|
+            transactions << {
+              date: a.adjustment_date.to_s,
+              type: "Adjustment",
+              description: a.description.to_s,
+              amount: a.amount.to_f.round(2)
+            }
+          end
+
+          # Sort all by date, then by created_at (implicit via insertion order)
           transactions.sort_by! { |t| t[:date] }
 
           # Calculate running balance
@@ -1332,6 +1338,8 @@ module Api
             calculated_ending_balance: calculated_ending.round(2),
             variance: variance,
             has_variance: variance.abs > 0.005,
+            is_stale: snapshot&.is_stale || false,
+            has_snapshot: snapshot.present?,
             transactions: transactions
           }
 

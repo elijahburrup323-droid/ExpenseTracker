@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.85"
+APP_VERSION = "1.3.86"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,16 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.86",
+    changes: [
+      "Monthly Snapshot Audit Report: New diagnostic report under Reports menu comparing stored snapshot balances against transaction detail to identify discrepancies.",
+      "Monthly Snapshot Audit Report: Shows per-account, per-month breakdown with running balance, calculated vs snapshot ending balance, and variance.",
+      "Monthly Snapshot Audit Report: Includes payments, deposits, transfers, and balance adjustments from the canonical Transaction table.",
+      "Monthly Snapshot Audit Report: STALE and NO SNAPSHOT badges highlight months needing attention.",
+      "Monthly Snapshot Audit Report: Filterable by account and date range."
+    ]
+  },
   {
     version: "1.3.85",
     changes: [

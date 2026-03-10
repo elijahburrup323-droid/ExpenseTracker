@@ -104,11 +104,17 @@ export default class extends Controller {
           ? "text-red-600 dark:text-red-400 font-bold"
           : "text-green-600 dark:text-green-400"
         const varianceIcon = month.has_variance ? "⚠" : "✓"
+        const staleBadge = month.is_stale
+          ? `<span class="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300">STALE</span>`
+          : ""
+        const noSnapshotBadge = !month.has_snapshot
+          ? `<span class="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-200 text-gray-600 dark:bg-gray-600 dark:text-gray-300">NO SNAPSHOT</span>`
+          : ""
 
         html += `<div class="border-b border-gray-200 dark:border-gray-700 last:border-b-0">
           <div class="px-6 py-3 bg-gray-50/50 dark:bg-gray-700/25 flex items-center justify-between">
             <div class="flex items-center space-x-4">
-              <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">${this._esc(month.label)}</span>
+              <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">${this._esc(month.label)}</span>${staleBadge}${noSnapshotBadge}
               <span class="text-xs text-gray-500 dark:text-gray-400">Begin: ${this._fmt(month.beginning_balance)}</span>
               <span class="text-xs text-gray-500 dark:text-gray-400">Snapshot End: ${this._fmt(month.snapshot_ending_balance)}</span>
             </div>
