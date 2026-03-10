@@ -19,7 +19,8 @@ APP_ALL_VERSIONS = [
       "Monthly Snapshot Audit Report: Shows per-account, per-month breakdown with running balance, calculated vs snapshot ending balance, and variance.",
       "Monthly Snapshot Audit Report: Includes payments, deposits, transfers, and balance adjustments from the canonical Transaction table.",
       "Monthly Snapshot Audit Report: STALE and NO SNAPSHOT badges highlight months needing attention.",
-      "Monthly Snapshot Audit Report: Filterable by account and date range."
+      "Monthly Snapshot Audit Report: Filterable by account and date range.",
+      "Monthly Snapshot Audit Report: Fixed seed migration — removed non-existent updated_at column from reports_slots_masters INSERT."
     ]
   },
   {
