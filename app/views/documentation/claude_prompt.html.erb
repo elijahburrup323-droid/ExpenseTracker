@@ -115,6 +115,7 @@ The following are protected and may not be modified without approval:
   - CSS classes `dash-grid`, `dash-card`, `dash-card-scroll`, `dash-card-footer` are locked — do not override per-card
   - **CSS Architecture**: Production uses `cdn.tailwindcss.com` (v3 play CDN) which cannot process custom `@utility`/`@layer` rules. All custom dashboard classes MUST be duplicated in the inline `<style>` block in `app/views/layouts/application.html.erb` (lines 122+). The `application.css` file is the design-time source of truth; the inline styles are the runtime fallback.
   - Visual regression test: `tests/dashboard-regression.spec.js` — run after any dashboard CSS/layout change
+  - **HTML Tag Balance**: Every card partial in `app/views/dashboard/cards/` MUST have exactly balanced `&lt;div&gt;`/`&lt;/div&gt;` tags. Extra closing tags cascade through the grid container and cause cards to render outside the CSS grid (CM-84).
 
 ### 7. Change Control Policy
 Any modification to Net Worth aggregation, Cost basis method, Amortization math, or Directional accounting logic requires explicit architectural approval and updated QA coverage.
