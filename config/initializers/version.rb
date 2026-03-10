@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.86"
+APP_VERSION = "1.3.87"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,17 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.87",
+    changes: [
+      "Reports: Temporarily replaced all report screens with a 'coming soon' placeholder page. Sidebar Reports link preserved. Individual report URLs redirect to placeholder.",
+      "Dashboard Typography: Normalized all large numeric values to a consistent hierarchy — Current Balance at 22px/500 weight, primary totals at 24px/600 weight. No dashboard number uses font-weight 700+. All sizes are fixed absolute px values.",
+      "Transaction Engine: Canonical backfill migration — all legacy payments, received deposits, and transfers now exist in the transactions table. Idempotent and safe to re-run.",
+      "Transaction Engine: Fixed income entry dual-write to respect received_flag — only received deposits create canonical transaction records. Un-receiving a deposit soft-deletes its canonical record.",
+      "Transaction Engine: Dashboard controller switched to read payments and deposits from canonical transactions table. API dashboard uses canonical data when no tag filter is active.",
+      "Transaction Engine: Cleaned up stale canonical records for unreceived deposits created by prior dual-write bug."
+    ]
+  },
   {
     version: "1.3.86",
     changes: [
