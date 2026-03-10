@@ -84,7 +84,8 @@ Rails.application.routes.draw do
   get "investments/transactions/:account_id", to: "investments#transactions", as: :investment_transactions
 
   # Financing (HTML pages)
-  get "financing/loans-notes", to: "financing#loans_notes", as: :financing_loans_notes
+  get "financing/debts-loans", to: "financing#debts_loans", as: :financing_debts_loans
+  get "financing/loans-notes", to: redirect("/financing/debts-loans")  # legacy redirect
   get "financing/contracts-for-deed", to: "financing#contracts_for_deed", as: :financing_contracts_for_deed
   get "financing/instruments/:id", to: "financing#show", as: :financing_instrument_detail
 
@@ -121,6 +122,7 @@ Rails.application.routes.draw do
   get "reports/soft_close_summary", to: "reports#soft_close_summary", as: :report_soft_close_summary
   get "reports/reconciliation_summary", to: "reports#reconciliation_summary", as: :report_reconciliation_summary
   get "reports/spending_by_tag", to: "reports#spending_by_tag", as: :report_spending_by_tag
+  get "reports/monthly_snapshot_audit", to: "reports#monthly_snapshot_audit", as: :report_monthly_snapshot_audit
 
   # Soft Close Month (HTML page)
   get "soft_close", to: "soft_close#index", as: :soft_close
@@ -261,6 +263,7 @@ Rails.application.routes.draw do
     # Financing Instruments API
     resources :financing_instruments, only: [:index, :show, :create, :update, :destroy] do
       resources :financing_payments, only: [:index, :create, :update, :destroy]
+      resources :debt_transactions, only: [:index, :create, :destroy]
       resource :amortization_schedule, only: [:show], controller: "amortization_schedules" do
         post :generate
         post :simulate_payoff
@@ -312,6 +315,7 @@ Rails.application.routes.draw do
       get "soft_close_summary", action: :soft_close_summary
       get "reconciliation_summary", action: :reconciliation_summary
       get "spending_by_tag", action: :spending_by_tag
+      get "monthly_snapshot_audit", action: :monthly_snapshot_audit
     end
   end
 

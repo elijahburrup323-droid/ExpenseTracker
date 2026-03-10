@@ -48,6 +48,7 @@
  ├── has_many :financing_instruments  (financing_instruments.user_id → users.id)
  ├── has_many :financing_payments     (financing_payments.user_id → users.id)
  ├── has_many :amortization_schedule_entries (amortization_schedule_entries.user_id → users.id)
+ ├── has_many :debt_transactions      (debt_transactions.user_id → users.id)
  ├── has_many :asset_lots              (asset_lots.user_id → users.id)
  ├── has_many :audit_logs                  (audit_logs.user_id → users.id)
  ├── has_many :transactions              (transactions.user_id → users.id)
@@ -105,7 +106,13 @@ financing_instruments
  ├── belongs_to :user                  (user_id FK → users.id)
  ├── belongs_to :account (optional)    (account_id FK → accounts.id)
  ├── has_many :financing_payments      (financing_payments.financing_instrument_id)
- └── has_many :amortization_schedule_entries
+ ├── has_many :amortization_schedule_entries
+ └── has_many :debt_transactions       (debt_transactions.financing_instrument_id)
+
+debt_transactions
+ ├── belongs_to :user                  (user_id FK → users.id)
+ ├── belongs_to :financing_instrument  (financing_instrument_id FK)
+ └── belongs_to :financing_payment     (optional FK)
 
 financing_payments
  ├── belongs_to :user                  (user_id FK → users.id)
@@ -2082,6 +2089,7 @@ phone_verifications
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">description</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar(255)</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Short description</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">instrument_type</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar(10)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">PAYABLE or RECEIVABLE</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">instrument_subtype</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar(40)</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Subtype (MORTGAGE, AUTO, PERSONAL, etc.)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">debt_type</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar(40)</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Debt classification type</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">original_principal</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">decimal(12,2)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Original principal amount</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">current_principal</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">decimal(12,2)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Current outstanding principal</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">interest_rate</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">decimal(7,4)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Annual interest rate (e.g. 5.2500)</td></tr>
@@ -2169,6 +2177,36 @@ phone_verifications
     <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
       <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Indexes</p>
       <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5"><li>UNIQUE (financing_instrument_id, period_number)</li><li>INDEX (user_id, financing_instrument_id)</li></ul>
+    </div>
+  </div>
+
+  <%# ── debt_transactions ── %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">debt_transactions</h2>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Ledger of debt events (creates, payments, adjustments, interest, fees) for financing instruments</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead><tr class="border-b border-gray-100 dark:border-gray-700"><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Column</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Type</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Constraints</th><th class="px-6 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">Description</th></tr></thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr><td class="px-6 py-2 font-mono font-medium text-gray-900 dark:text-white">id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">PK</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Primary key</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">user_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; users</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Owning user</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">financing_instrument_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span> <span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; financing_instruments</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Parent financing instrument</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">financing_payment_id</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">bigint</td><td class="px-6 py-2"><span class="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded">FK &rarr; financing_payments</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Linked payment record (optional)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">transaction_date</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">date</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Date of the transaction</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">transaction_type</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar(20)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">CREATE, PAYMENT, ADJUSTMENT, INTEREST, FEE</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">amount</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">decimal(12,2)</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Transaction amount</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">source_reference</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">varchar(100)</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">External reference or source identifier</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">notes</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">text</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Free-form notes</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">deleted_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">nullable</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Soft-delete timestamp</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">created_at / updated_at</td><td class="px-6 py-2 text-gray-600 dark:text-gray-400">datetime</td><td class="px-6 py-2"><span class="text-xs bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">NOT NULL</span></td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">Timestamps</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+      <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Indexes</p>
+      <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5"><li>INDEX (financing_instrument_id, transaction_date)</li><li>INDEX (user_id, transaction_date)</li><li>INDEX (user_id, deleted_at)</li></ul>
     </div>
   </div>
 
@@ -2363,6 +2401,9 @@ phone_verifications
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">amortization_schedule_entries</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">cascade (via Rails dependent: :destroy)</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">amortization_schedule_entries</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">financing_instrument_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">financing_instruments.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (DB-level foreign key)</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">amortization_schedule_entries</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">financing_payment_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">financing_payments.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">nullify (optional, set NULL on delete)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">debt_transactions</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">cascade (via Rails dependent: :destroy)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">debt_transactions</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">financing_instrument_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">financing_instruments.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (DB-level foreign key)</td></tr>
+          <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">debt_transactions</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">financing_payment_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">financing_payments.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">nullify (optional, set NULL on delete)</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">audit_logs</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">cascade (via Rails dependent: :destroy)</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">transactions</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">user_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">users.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">cascade (via Rails dependent: :destroy)</td></tr>
           <tr><td class="px-6 py-2 font-mono text-gray-900 dark:text-white">transactions</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">account_id</td><td class="px-6 py-2 font-mono text-gray-600 dark:text-gray-400">accounts.id</td><td class="px-6 py-2 text-gray-500 dark:text-gray-400">restrict (optional, payment/deposit only)</td></tr>

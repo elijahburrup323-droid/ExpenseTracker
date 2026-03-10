@@ -3,7 +3,7 @@ class FinancingController < ApplicationController
   before_action :authenticate_user!
   before_action -> { require_feature!("financing") }
 
-  def loans_notes
+  def debts_loans
   end
 
   def contracts_for_deed
@@ -11,6 +11,6 @@ class FinancingController < ApplicationController
 
   def show
     @instrument = current_user.financing_instruments.find_by(id: params[:id])
-    redirect_to financing_loans_notes_path, alert: "Instrument not found" unless @instrument
+    redirect_to financing_debts_loans_path, alert: "Instrument not found" unless @instrument
   end
 end

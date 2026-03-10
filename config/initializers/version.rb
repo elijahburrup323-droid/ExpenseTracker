@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.84"
+APP_VERSION = "1.3.85"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,19 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.85",
+    changes: [
+      "Dashboard Flip Expansion: Cards now lock grid width before expanding — prevents layout shift when flipping Spending Details, Net Worth, Income & Spending, and Buckets cards.",
+      "Debts & Loans: Renamed 'Loans & Notes' to 'Debts & Loans' with new sidebar label, route, and dedicated view.",
+      "Debts & Loans: Added debt_type field (LOAN, MEDICAL_BILL, REPAIR_BILL, CONTRACTOR_BALANCE, PERSONAL_DEBT, TAX_DEBT, OTHER_DEBT) to financing instruments.",
+      "Debts & Loans: Ledger-driven balance system via new debt_transactions table — tracks CREATE, PAYMENT, ADJUSTMENT, INTEREST, FEE transactions with running balance.",
+      "Debts & Loans: Quick Payment modal, progress bars, status badges (Active/Paid Off/Inactive), debt type filter.",
+      "Debts & Loans: PaymentAllocationService now auto-creates PAYMENT debt transactions and soft-deletes on reversal.",
+      "Monthly Snapshot Audit Report: New diagnostic report comparing stored AccountMonthSnapshot balances against calculated transaction sums.",
+      "Monthly Snapshot Audit Report: Shows per-account, per-month breakdown with beginning balance, transactions, calculated vs snapshot ending balance, and variance highlighting.",
+    ]
+  },
   {
     version: "1.3.84",
     changes: [

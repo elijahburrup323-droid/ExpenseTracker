@@ -62,10 +62,12 @@ import InvestmentAccountsController from "controllers/investment_accounts_contro
 import InvestmentHoldingsController from "controllers/investment_holdings_controller"
 import HoldingDetailController from "controllers/holding_detail_controller"
 import FinancingLoansNotesController from "controllers/financing_loans_notes_controller"
+import FinancingDebtsLoansController from "controllers/financing_debts_loans_controller"
 import FinancingDetailController from "controllers/financing_detail_controller"
 import ChartTooltipController from "controllers/chart_tooltip_controller"
 import NetWorthBreakdownController from "controllers/net_worth_breakdown_controller"
 import FirstLoginWizardController from "controllers/first_login_wizard_controller"
+import SnapshotAuditController from "controllers/snapshot_audit_controller"
 
 application.register("flash", FlashController)
 application.register("dropdown", DropdownController)
@@ -129,7 +131,9 @@ application.register("investment-accounts", InvestmentAccountsController)
 application.register("investment-holdings", InvestmentHoldingsController)
 application.register("holding-detail", HoldingDetailController)
 application.register("financing-loans-notes", FinancingLoansNotesController)
+application.register("financing-debts-loans", FinancingDebtsLoansController)
 application.register("financing-detail", FinancingDetailController)
 application.register("chart-tooltip", ChartTooltipController)
 application.register("net-worth-breakdown", NetWorthBreakdownController)
 application.register("first-login-wizard", FirstLoginWizardController)
+application.register("snapshot-audit", SnapshotAuditController)

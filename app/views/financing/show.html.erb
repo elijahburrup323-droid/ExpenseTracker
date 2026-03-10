@@ -7,7 +7,7 @@
      data-financing-detail-simulate-url-value="<%= simulate_payoff_api_financing_instrument_amortization_schedule_path(@instrument) %>"
      data-financing-detail-reconcile-url-value="<%= reconcile_api_financing_instrument_amortization_schedule_path(@instrument) %>"
      data-financing-detail-instrument-url-value="<%= api_financing_instrument_path(@instrument) %>"
-     data-financing-detail-list-url-value="<%= financing_loans_notes_path %>"
+     data-financing-detail-list-url-value="<%= financing_debts_loans_path %>"
      data-financing-detail-csrf-token-value="<%= form_authenticity_token %>">
 
   <%# ===== Page Header (sticky) ===== %>
@@ -15,7 +15,7 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <div>
         <div class="flex items-center space-x-3 mb-1">
-          <a href="<%= financing_loans_notes_path %>" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
+          <a href="<%= financing_debts_loans_path %>" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
             </svg>

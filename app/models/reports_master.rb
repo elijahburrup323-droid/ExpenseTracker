@@ -11,7 +11,8 @@ class ReportsMaster < ApplicationRecord
     { label: "Net Worth Report", path: "/reports/net_worth_report" },
     { label: "Soft Close Summary", path: "/reports/soft_close_summary" },
     { label: "Reconciliation Summary", path: "/reports/reconciliation_summary" },
-    { label: "Spending by Tag", path: "/reports/spending_by_tag" }
+    { label: "Spending by Tag", path: "/reports/spending_by_tag" },
+    { label: "Monthly Snapshot Audit", path: "/reports/monthly_snapshot_audit" }
   ].freeze
 
   VALID_ROUTE_PATHS = REGISTERED_ROUTES.map { |r| r[:path] }.freeze

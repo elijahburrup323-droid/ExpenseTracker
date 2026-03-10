@@ -27,6 +27,15 @@ module Api
       end
 
       if instrument.save
+        # Create initial ledger entry
+        DebtTransaction.create!(
+          user: current_user,
+          financing_instrument: instrument,
+          transaction_date: instrument.start_date,
+          transaction_type: "CREATE",
+          amount: instrument.original_principal,
+          source_reference: "initial"
+        )
         render json: instrument_json(instrument), status: :created
       else
         render_errors(instrument)
@@ -61,7 +70,7 @@ module Api
 
     def instrument_params
       params.require(:financing_instrument).permit(
-        :name, :description, :instrument_type, :instrument_subtype,
+        :name, :description, :instrument_type, :instrument_subtype, :debt_type,
         :original_principal, :current_principal, :interest_rate,
         :term_months, :start_date, :maturity_date, :payment_frequency,
         :monthly_payment, :lender_or_borrower, :include_in_net_worth, :notes
@@ -69,14 +78,24 @@ module Api
     end
 
     def instrument_json(i)
+      last = i.last_activity
       {
         id: i.id,
         name: i.name,
         description: i.description,
         instrument_type: i.instrument_type,
         instrument_subtype: i.instrument_subtype,
+        debt_type: i.debt_type,
         original_principal: i.original_principal.to_f.round(2),
         current_principal: i.current_principal.to_f.round(2),
+        ledger_balance: i.ledger_balance.to_f.round(2),
+        progress_percent: i.progress_percent,
+        status: i.debt_status,
+        last_activity: last ? {
+          date: last.transaction_date.to_s,
+          type: last.transaction_type,
+          amount: last.amount.to_f.round(2)
+        } : nil,
         interest_rate: i.interest_rate.to_f,
         term_months: i.term_months,
         start_date: i.start_date&.to_s,

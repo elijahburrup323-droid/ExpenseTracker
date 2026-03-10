@@ -89,6 +89,17 @@ class PaymentAllocationService
         # Update instrument's current principal
         instrument.update!(current_principal: allocation[:principal_balance_after])
 
+        # Create debt transaction ledger entry
+        DebtTransaction.create!(
+          user: user,
+          financing_instrument: instrument,
+          financing_payment: payment,
+          transaction_date: payment_date,
+          transaction_type: "PAYMENT",
+          amount: -(allocation[:principal_amount] + allocation[:extra_principal_amount]),
+          source_reference: "FinancingPayment##{payment.id}"
+        )
+
         # Link to amortization schedule entry if one exists for this period
         matching_entry = instrument.amortization_schedule_entries
                                    .where(is_actual: false)
@@ -132,6 +143,10 @@ class PaymentAllocationService
           payment.extra_principal_amount.to_d
         ).round(2)
         instrument.update!(current_principal: restored_balance)
+
+        # Soft-delete corresponding debt transaction
+        DebtTransaction.where(financing_payment_id: payment.id)
+                       .update_all(deleted_at: Time.current)
 
         # Unlink from amortization entry
         if payment.amortization_schedule_entry

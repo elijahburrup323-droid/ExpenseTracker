@@ -232,6 +232,20 @@ module Api
       render json: result
     end
 
+    # GET /api/reports/monthly_snapshot_audit?start_year=&start_month=&end_year=&end_month=&account_id=
+    def monthly_snapshot_audit
+      return unless validate_range_date_params!
+      om = OpenMonthMaster.for_user(current_user)
+      start_year  = (params[:start_year]  || om.current_year).to_i
+      start_month = (params[:start_month] || 1).to_i
+      end_year    = (params[:end_year]    || om.current_year).to_i
+      end_month   = (params[:end_month]   || om.current_month).to_i
+      account_id  = params[:account_id].presence&.to_i
+
+      result = snapshot_audit_data(start_year, start_month, end_year, end_month, account_id)
+      render json: result
+    end
+
     private
 
     def validate_date_params!
@@ -1199,6 +1213,135 @@ module Api
         transaction_count: transaction_count,
         tags: tags
       }
+    end
+
+    # --- Monthly Snapshot Audit helpers ---
+
+    def snapshot_audit_data(start_year, start_month, end_year, end_month, account_id)
+      accounts = current_user.accounts.order(:name)
+      accounts = accounts.where(id: account_id) if account_id
+
+      start_date = Date.new(start_year, start_month, 1)
+      end_date   = Date.new(end_year, end_month, -1)
+
+      result = { accounts: [] }
+
+      accounts.each do |acct|
+        acct_data = { id: acct.id, name: acct.name, account_type: acct.account_type_master&.display_name, months: [] }
+
+        # Iterate months in range
+        current = start_date
+        while current <= end_date
+          y = current.year
+          m = current.month
+          month_start = Date.new(y, m, 1)
+          month_end   = Date.new(y, m, -1)
+
+          # Get snapshot for this month
+          snapshot = current_user.account_month_snapshots
+                                .where(account_id: acct.id, year: y, month: m)
+                                .first
+
+          # Get previous month's snapshot for beginning balance
+          prev_date = month_start.prev_month
+          prev_snapshot = current_user.account_month_snapshots
+                                     .where(account_id: acct.id, year: prev_date.year, month: prev_date.month)
+                                     .first
+
+          beginning_balance = prev_snapshot&.ending_balance.to_f
+          snapshot_ending = snapshot&.ending_balance.to_f
+
+          # Gather all transactions for this account in this month
+          transactions = []
+
+          # Payments (debits from account)
+          acct_payments = current_user.payments
+                                     .where(account_id: acct.id)
+                                     .where(payment_date: month_start..month_end)
+                                     .order(:payment_date, :created_at)
+          acct_payments.each do |p|
+            transactions << {
+              date: p.payment_date.to_s,
+              type: "Payment",
+              description: p.description.to_s,
+              amount: -p.amount.to_f.round(2)
+            }
+          end
+
+          # Deposits (credits to account)
+          acct_deposits = current_user.income_entries
+                                     .where(account_id: acct.id)
+                                     .where(entry_date: month_start..month_end)
+                                     .order(:entry_date, :created_at)
+          acct_deposits.each do |d|
+            transactions << {
+              date: d.entry_date.to_s,
+              type: "Deposit",
+              description: d.description.to_s,
+              amount: d.amount.to_f.round(2)
+            }
+          end
+
+          # Transfers In (credits to account)
+          transfers_in = current_user.transfer_masters
+                                    .where(to_account_id: acct.id)
+                                    .where(transfer_date: month_start..month_end)
+                                    .order(:transfer_date, :created_at)
+          transfers_in.each do |t|
+            transactions << {
+              date: t.transfer_date.to_s,
+              type: "Transfer In",
+              description: "From #{t.from_account&.name || 'Unknown'}",
+              amount: t.amount.to_f.round(2)
+            }
+          end
+
+          # Transfers Out (debits from account)
+          transfers_out = current_user.transfer_masters
+                                     .where(from_account_id: acct.id)
+                                     .where(transfer_date: month_start..month_end)
+                                     .order(:transfer_date, :created_at)
+          transfers_out.each do |t|
+            transactions << {
+              date: t.transfer_date.to_s,
+              type: "Transfer Out",
+              description: "To #{t.to_account&.name || 'Unknown'}",
+              amount: -t.amount.to_f.round(2)
+            }
+          end
+
+          # Sort all by date
+          transactions.sort_by! { |t| t[:date] }
+
+          # Calculate running balance
+          running = beginning_balance
+          transactions.each do |t|
+            running = (running + t[:amount]).round(2)
+            t[:running_balance] = running
+          end
+
+          calculated_ending = running
+          variance = (calculated_ending - snapshot_ending).round(2)
+
+          acct_data[:months] << {
+            year: y,
+            month: m,
+            label: Date.new(y, m, 1).strftime("%B %Y"),
+            beginning_balance: beginning_balance.round(2),
+            snapshot_ending_balance: snapshot_ending.round(2),
+            calculated_ending_balance: calculated_ending.round(2),
+            variance: variance,
+            has_variance: variance.abs > 0.005,
+            transactions: transactions
+          }
+
+          current = current.next_month
+        end
+
+        result[:accounts] << acct_data if acct_data[:months].any?
+      end
+
+      result
     end
   end
 end

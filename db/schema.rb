@@ -357,6 +357,26 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_10_002659) do
     t.index ["table_name"], name: "index_dbu_table_catalogs_on_table_name", unique: true
   end
 
+  create_table "debt_transactions", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "financing_instrument_id", null: false
+    t.bigint "financing_payment_id"
+    t.date "transaction_date", null: false
+    t.string "transaction_type", limit: 20, null: false
+    t.decimal "amount", precision: 12, scale: 2, null: false
+    t.string "source_reference", limit: 255
+    t.string "notes", limit: 500
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["financing_instrument_id", "deleted_at"], name: "idx_debt_txn_instrument_deleted"
+    t.index ["financing_instrument_id", "transaction_date"], name: "idx_debt_txn_instrument_date"
+    t.index ["financing_instrument_id"], name: "index_debt_transactions_on_financing_instrument_id"
+    t.index ["financing_payment_id"], name: "index_debt_transactions_on_financing_payment_id"
+    t.index ["user_id", "deleted_at"], name: "idx_debt_txn_user_deleted"
+    t.index ["user_id"], name: "index_debt_transactions_on_user_id"
+  end
+
   create_table "feature_block_dependencies", force: :cascade do |t|
     t.bigint "feature_block_id", null: false
     t.bigint "depends_on_id", null: false
@@ -407,8 +427,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_10_002659) do
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "debt_type", limit: 40
     t.index "user_id, lower((name)::text)", name: "idx_fin_instr_user_name_unique", unique: true, where: "(deleted_at IS NULL)"
     t.index ["account_id"], name: "index_financing_instruments_on_account_id"
+    t.index ["user_id", "debt_type"], name: "idx_fin_instr_user_debt_type"
     t.index ["user_id", "deleted_at"], name: "index_financing_instruments_on_user_id_and_deleted_at"
     t.index ["user_id", "instrument_type"], name: "idx_fin_instr_user_type"
     t.index ["user_id"], name: "index_financing_instruments_on_user_id"
@@ -1279,6 +1301,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_10_002659) do
   add_foreign_key "dashboard_month_snapshots", "users"
   add_foreign_key "dashboard_slots", "dashboard_cards"
   add_foreign_key "dashboard_slots", "users"
+  add_foreign_key "debt_transactions", "financing_instruments"
+  add_foreign_key "debt_transactions", "financing_payments"
+  add_foreign_key "debt_transactions", "users"
   add_foreign_key "feature_block_dependencies", "feature_blocks"
   add_foreign_key "feature_block_dependencies", "feature_blocks", column: "depends_on_id"
   add_foreign_key "financing_instruments", "accounts"

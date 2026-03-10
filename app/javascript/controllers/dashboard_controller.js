@@ -388,7 +388,11 @@ export default class extends Controller {
     if (!this.hasCardsGridTarget) return
     const grid = this.cardsGridTarget
     this._savedGridHeight = grid.offsetHeight
+    this._savedGridWidth = grid.offsetWidth
     this._expandedWrapper = wrapper
+
+    // Lock grid width before hiding cards to prevent container collapse
+    grid.style.width = `${this._savedGridWidth}px`
 
     Array.from(grid.children).forEach(child => {
       if (child !== wrapper) child.classList.add("hidden")
@@ -431,6 +435,7 @@ export default class extends Controller {
     })
 
     grid.style.minHeight = ""
+    grid.style.width = ""
     wrapper.style.gridColumn = ""
     wrapper.style.minHeight = ""
 

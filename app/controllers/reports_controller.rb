@@ -47,4 +47,8 @@ class ReportsController < ApplicationController
   def spending_by_tag
     @open_month = OpenMonthMaster.for_user(current_user)
   end
+
+  def monthly_snapshot_audit
+    @open_month = OpenMonthMaster.for_user(current_user)
+  end
 end
