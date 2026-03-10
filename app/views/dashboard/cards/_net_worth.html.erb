@@ -9,7 +9,7 @@
     </div>
     <%# === Calm Snapshot: Net Worth value + optional monthly change === %>
     <div class="flex-1 min-h-0 overflow-y-auto flex flex-col items-center justify-center py-4" data-role="card-content">
-      <span class="text-2xl font-bold text-gray-900 dark:text-white tabular-nums">Net Worth: <%= number_to_currency(@net_worth) %></span>
+      <span class="number-primary text-gray-900 dark:text-white tabular-nums">Net Worth: <%= number_to_currency(@net_worth) %></span>
       <% if @net_worth_snapshots.size >= 2 %>
         <span class="text-sm text-gray-500 dark:text-gray-400 mt-1 tabular-nums">
           Change this month: <%= @net_worth_change >= 0 ? "+#{number_to_currency(@net_worth_change)}" : number_to_currency(@net_worth_change) %>

@@ -20,13 +20,13 @@
         <%# === Spent This Month === %>
         <div class="flex items-center justify-between">
           <span class="text-sm text-gray-500 dark:text-gray-400">Spent This Month</span>
-          <span class="text-2xl font-bold text-gray-800 dark:text-gray-100" style="font-size: 2rem;"><%= number_to_currency(@spent_mtd, precision: 2) %></span>
+          <span class="number-primary text-gray-800 dark:text-gray-100 tabular-nums"><%= number_to_currency(@spent_mtd, precision: 2) %></span>
         </div>
 
         <%# === Cash In Spending Accounts === %>
         <div class="flex items-center justify-between">
           <span class="text-sm text-gray-500 dark:text-gray-400">Cash In Spending Accounts</span>
-          <span class="text-2xl font-bold text-gray-800 dark:text-gray-100" style="font-size: 2rem;"><%= number_to_currency(@operating_balance, precision: 2) %></span>
+          <span class="number-primary text-gray-800 dark:text-gray-100 tabular-nums"><%= number_to_currency(@operating_balance, precision: 2) %></span>
         </div>
       </div>
     </div>

@@ -29,7 +29,7 @@
         <p class="text-sm text-gray-400 dark:text-gray-500">No accounts yet.</p>
       <% else %>
         <div class="flex flex-col items-center justify-center pt-3 pb-1">
-          <span class="text-2xl font-bold text-gray-900 dark:text-white tabular-nums"><%= number_to_currency(liquid_total) %></span>
+          <span class="number-primary text-gray-900 dark:text-white tabular-nums"><%= number_to_currency(liquid_total) %></span>
           <span class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Total Cash &middot; <%= liquid_count %> account<%= liquid_count == 1 ? '' : 's' %></span>
         </div>
       <% end %>
