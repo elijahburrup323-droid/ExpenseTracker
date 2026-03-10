@@ -43,35 +43,36 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.992 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182M20.015 4.652v4.992"/>
         </svg>
       </button>
-      <div class="flex items-center space-x-3">
-        <%= link_to accounts_path, class: "text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium" do %>
-          View Accounts &rsaquo;
-        <% end %>
-        <button type="button" data-action="click->dashboard#toggleCardExpand"
-                data-role="expand-btn"
-                class="inline-flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition cursor-pointer" style="min-width:44px; min-height:44px;"
-                aria-label="Expand Net Worth Card">
-          <svg class="w-[18px] h-[18px]" data-icon="expand" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/>
-          </svg>
-          <svg class="w-[18px] h-[18px] hidden" data-icon="collapse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"/>
-          </svg>
-        </button>
-      </div>
+      <button type="button" data-action="click->dashboard#toggleCardExpand"
+              data-role="expand-btn"
+              class="inline-flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition cursor-pointer" style="min-width:44px; min-height:44px;"
+              aria-label="Expand Net Worth Card">
+        <svg class="w-[18px] h-[18px]" data-icon="expand" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/>
+        </svg>
+        <svg class="w-[18px] h-[18px] hidden" data-icon="collapse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"/>
+        </svg>
+      </button>
     </div>
   </div>
 
   <%# === BACK SIDE: Net Worth Breakdown (Expanded — full chart + asset/liability columns + summary) === %>
-  <div class="absolute inset-0 flex flex-col" data-role="back" style="backface-visibility: hidden; transform: rotateY(180deg); pointer-events: none;">
+  <div class="absolute inset-0 flex flex-col" data-role="back" style="backface-visibility: hidden; transform: rotateY(180deg); pointer-events: none;"
+       data-controller="net-worth-breakdown"
+       data-net-worth-breakdown-url-value="<%= breakdown_api_net_worth_snapshots_path %>">
     <div class="flex items-center justify-between mb-2">
-      <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Net Worth Breakdown</h2>
+      <div class="flex items-center space-x-2">
+        <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Net Worth Breakdown</h2>
+        <span class="text-[10px] text-gray-400 dark:text-gray-500" data-net-worth-breakdown-target="selectedLabel"></span>
+      </div>
       <%= link_to report_net_worth_report_path, class: "text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition", aria: { label: "Open net worth report" } do %>
         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V9m4 7V5m4 11v-4m4 4V8"/></svg>
       <% end %>
     </div>
-    <div class="flex-1 min-h-0 overflow-y-auto" data-role="back-content">
-      <%# === SECTION 1: Net Worth History Chart === %>
+
+    <%# === SECTION 1: Net Worth History Chart (FIXED — does not scroll) === %>
+    <div class="flex-shrink-0" data-role="back-content">
       <% snapshots = @net_worth_snapshots %>
       <% if snapshots.size >= 2 %>
         <%
@@ -110,9 +111,14 @@
               <circle cx="<%= points[i][0] %>" cy="<%= points[i][1] %>" r="6" fill="transparent"
                       data-month="<%= s.snapshot_date.strftime('%b %Y') %>"
                       data-amount="<%= s.amount.to_f %>"
-                      data-action="pointerdown->chart-tooltip#show"
+                      data-year="<%= s.snapshot_date.year %>"
+                      data-nw-month="<%= s.snapshot_date.month %>"
+                      data-label="<%= s.snapshot_date.strftime('%b %Y') %>"
+                      data-action="pointerdown->chart-tooltip#show pointerdown->net-worth-breakdown#selectMonth"
                       class="cursor-pointer" style="pointer-events: all;"/>
-              <circle cx="<%= points[i][0] %>" cy="<%= points[i][1] %>" r="3" fill="#a855f7" style="pointer-events: none;"/>
+              <circle cx="<%= points[i][0] %>" cy="<%= points[i][1] %>" r="3" fill="#a855f7" data-role="chart-dot"
+                      data-year="<%= s.snapshot_date.year %>" data-month="<%= s.snapshot_date.month %>"
+                      style="pointer-events: none;"/>
             <% end %>
           </svg>
           <div data-chart-tooltip-target="tooltip"
@@ -133,79 +139,78 @@
           <p class="text-xs text-gray-400 dark:text-gray-500"><%= snapshots.size == 0 ? "No history yet" : "Not enough data for chart." %></p>
         </div>
       <% end %>
+    </div>
 
-      <%# === SECTION 2: Asset / Liability Breakdown (2-column layout) === %>
-      <div class="grid grid-cols-2 gap-4 mb-3" data-role="nw-breakdown">
+    <%# === SECTION 2: Asset / Liability Breakdown (SCROLLABLE middle) === %>
+    <div class="flex-1 min-h-0 overflow-y-auto" data-role="back-content">
+      <div class="grid grid-cols-2 gap-4" data-role="nw-breakdown">
         <%# Assets column %>
         <div>
           <div class="flex items-center justify-between mb-1.5">
             <span class="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Assets</span>
-            <span class="text-[10px] font-semibold text-gray-900 dark:text-white tabular-nums"><%= number_to_currency(@net_worth_assets) %></span>
+            <span class="text-[10px] font-semibold text-gray-900 dark:text-white tabular-nums" data-net-worth-breakdown-target="assetTotal"><%= number_to_currency(@net_worth_assets) %></span>
           </div>
-          <% if @nw_asset_items.any? %>
-            <div class="space-y-0.5">
+          <div class="space-y-0.5" data-net-worth-breakdown-target="assetList">
+            <% if @nw_asset_items.any? %>
               <% @nw_asset_items.each do |item| %>
                 <div class="flex items-center justify-between">
                   <span class="text-[11px] text-gray-600 dark:text-gray-400 truncate mr-1"><%= item[:name] %></span>
                   <span class="text-[11px] font-medium text-gray-900 dark:text-white tabular-nums flex-shrink-0"><%= number_to_currency(item[:value]) %></span>
                 </div>
               <% end %>
-            </div>
-          <% else %>
-            <p class="text-[10px] text-gray-400 dark:text-gray-500">No assets.</p>
-          <% end %>
+            <% else %>
+              <p class="text-[10px] text-gray-400 dark:text-gray-500">No assets.</p>
+            <% end %>
+          </div>
         </div>
         <%# Liabilities column %>
         <div>
           <div class="flex items-center justify-between mb-1.5">
             <span class="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Liabilities</span>
-            <span class="text-[10px] font-semibold text-red-500 dark:text-red-400 tabular-nums"><%= @net_worth_liabilities > 0 ? "-" : "" %><%= number_to_currency(@net_worth_liabilities) %></span>
+            <span class="text-[10px] font-semibold text-red-500 dark:text-red-400 tabular-nums" data-net-worth-breakdown-target="liabilityTotal"><%= @net_worth_liabilities > 0 ? "-" : "" %><%= number_to_currency(@net_worth_liabilities) %></span>
           </div>
-          <% if @nw_liability_items.any? %>
-            <div class="space-y-0.5">
+          <div class="space-y-0.5" data-net-worth-breakdown-target="liabilityList">
+            <% if @nw_liability_items.any? %>
               <% @nw_liability_items.each do |item| %>
                 <div class="flex items-center justify-between">
                   <span class="text-[11px] text-gray-600 dark:text-gray-400 truncate mr-1"><%= item[:name] %></span>
                   <span class="text-[11px] font-medium text-red-500 dark:text-red-400 tabular-nums flex-shrink-0">-<%= number_to_currency(item[:value]) %></span>
                 </div>
               <% end %>
-            </div>
-          <% else %>
-            <p class="text-[10px] text-gray-400 dark:text-gray-500">No liabilities.</p>
-          <% end %>
-        </div>
-      </div>
-
-      <%# === SECTION 3: Large Net Worth Summary === %>
-      <div class="border-t border-gray-200 dark:border-gray-600 pt-2 text-center">
-        <span class="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Net Worth</span>
-        <div class="text-xl font-bold tabular-nums mt-0.5 <%= @net_worth >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400' %>">
-          <%= number_to_currency(@net_worth) %>
+            <% else %>
+              <p class="text-[10px] text-gray-400 dark:text-gray-500">No liabilities.</p>
+            <% end %>
+          </div>
         </div>
       </div>
     </div>
+
+    <%# === SECTION 3: Large Net Worth Summary (FIXED — does not scroll) === %>
+    <div class="flex-shrink-0 border-t border-gray-200 dark:border-gray-600 pt-2 text-center">
+      <span class="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Net Worth</span>
+      <div class="text-xl font-bold tabular-nums mt-0.5 <%= @net_worth >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400' %>"
+           data-net-worth-breakdown-target="netWorthValue">
+        <%= number_to_currency(@net_worth) %>
+      </div>
+    </div>
+
     <div class="dash-card-footer border-t border-gray-100 dark:border-gray-700 flex items-center justify-between" data-role="card-footer">
       <button type="button" class="inline-flex items-center justify-center text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300" style="min-width:44px; min-height:44px;" data-action="click->dashboard#flipCardBack" aria-label="Back to net worth chart">
         <svg class="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.992 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182M20.015 4.652v4.992"/>
         </svg>
       </button>
-      <div class="flex items-center space-x-3">
-        <%= link_to accounts_path, class: "text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium" do %>
-          View Accounts &rsaquo;
-        <% end %>
-        <button type="button" data-action="click->dashboard#toggleCardExpand"
-                data-role="expand-btn"
-                class="inline-flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition cursor-pointer" style="min-width:44px; min-height:44px;"
-                aria-label="Expand Net Worth Card">
-          <svg class="w-[18px] h-[18px]" data-icon="expand" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/>
-          </svg>
-          <svg class="w-[18px] h-[18px] hidden" data-icon="collapse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"/>
-          </svg>
-        </button>
-      </div>
+      <button type="button" data-action="click->dashboard#toggleCardExpand"
+              data-role="expand-btn"
+              class="inline-flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition cursor-pointer" style="min-width:44px; min-height:44px;"
+              aria-label="Expand Net Worth Card">
+        <svg class="w-[18px] h-[18px]" data-icon="expand" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/>
+        </svg>
+        <svg class="w-[18px] h-[18px] hidden" data-icon="collapse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"/>
+        </svg>
+      </button>
     </div>
   </div>
 </div>

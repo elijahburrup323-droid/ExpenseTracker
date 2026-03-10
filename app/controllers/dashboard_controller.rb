@@ -180,8 +180,11 @@ class DashboardController < ApplicationController
     # Projected Safe To Spend = Available Cash - Recurring Bills - Estimated Variable Spending
     @projected_safe_to_spend = (@operating_balance - @scheduled_payments - @variable_spending_total).round(2)
 
-    # Cash Available To Spend = Cash In Spending Accounts + Remaining Deposits - Remaining Bills
-    @cash_available_to_spend = (@operating_balance + @scheduled_deposits - @scheduled_payments).round(2)
+    # Credit Card Payoff Tracking
+    @cc_payoff = Account.credit_card_payoff_for(current_user)
+
+    # Cash Available To Spend = Cash In Spending Accounts + Remaining Deposits - Remaining Bills - Credit Card Payoff
+    @cash_available_to_spend = (@operating_balance + @scheduled_deposits - @scheduled_payments - @cc_payoff[:total_current_balance]).round(2)
 
     # Legacy safe_to_spend
     @safe_to_spend = (@operating_balance + @scheduled_deposits - @scheduled_payments).round(2)

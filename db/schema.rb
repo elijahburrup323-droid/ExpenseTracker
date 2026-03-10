@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_06_000005) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_10_002659) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_stat_statements"
   enable_extension "plpgsql"
@@ -80,6 +80,13 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_06_000005) do
     t.decimal "beginning_balance", precision: 12, scale: 2, default: "0.0", null: false
     t.boolean "month_ending_balance", default: false, null: false
     t.bigint "account_type_master_id"
+    t.integer "statement_closing_day"
+    t.integer "payment_due_day"
+    t.decimal "minimum_payment"
+    t.decimal "apr"
+    t.decimal "last_statement_balance"
+    t.date "last_statement_date"
+    t.date "last_payment_date"
     t.index "user_id, lower((name)::text)", name: "index_accounts_on_user_id_and_lower_name", unique: true, where: "(deleted_at IS NULL)"
     t.index ["account_type_id"], name: "index_accounts_on_account_type_id"
     t.index ["account_type_master_id"], name: "index_accounts_on_account_type_master_id"

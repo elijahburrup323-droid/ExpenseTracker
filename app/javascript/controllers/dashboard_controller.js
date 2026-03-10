@@ -286,8 +286,8 @@ export default class extends Controller {
     const back = wrapper.querySelector("[data-role='back']")
     if (front) front.style.pointerEvents = "none"
     if (back) back.style.pointerEvents = "auto"
-    // Auto-expand for Spending Control panel, Net Worth History, Income & Spending Details, Goal Progress, and Recent Activity
-    if (wrapper.dataset.cardType === 'spending_overview' || wrapper.dataset.cardType === 'net_worth' || wrapper.dataset.cardType === 'income_spending' || wrapper.dataset.cardType === 'buckets' || wrapper.dataset.cardType === 'recent_activity') {
+    // Auto-expand for Spending Control panel, Net Worth History, Income & Spending Details, and Goal Progress
+    if (wrapper.dataset.cardType === 'spending_overview' || wrapper.dataset.cardType === 'net_worth' || wrapper.dataset.cardType === 'income_spending' || wrapper.dataset.cardType === 'buckets') {
       this._expandCard(wrapper)
     }
   }
@@ -295,12 +295,11 @@ export default class extends Controller {
   flipCardBack(event) {
     const wrapper = event.target.closest("[data-dashboard-target='slotWrapper']")
     if (!wrapper) return
-    // Auto-collapse for Spending Control panel, Net Worth History, Income & Spending Details, Goal Progress, and Recent Activity
+    // Auto-collapse for Spending Control panel, Net Worth History, Income & Spending Details, and Goal Progress
     if ((wrapper.dataset.cardType === 'spending_overview' && this.expandedCardType === 'spending_overview') ||
         (wrapper.dataset.cardType === 'net_worth' && this.expandedCardType === 'net_worth') ||
         (wrapper.dataset.cardType === 'income_spending' && this.expandedCardType === 'income_spending') ||
-        (wrapper.dataset.cardType === 'buckets' && this.expandedCardType === 'buckets') ||
-        (wrapper.dataset.cardType === 'recent_activity' && this.expandedCardType === 'recent_activity')) {
+        (wrapper.dataset.cardType === 'buckets' && this.expandedCardType === 'buckets')) {
       this._collapseCard()
     }
     const flipper = wrapper.querySelector("[data-role='flipper']")

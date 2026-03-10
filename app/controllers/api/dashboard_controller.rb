@@ -377,8 +377,11 @@ module Api
       # Projected Safe To Spend = Available Cash - Recurring Bills - Estimated Variable Spending
       projected_safe_to_spend = (operating_balance - scheduled_payments - variable_spending_total).round(2)
 
-      # Cash Available To Spend = Cash In Spending Accounts + Remaining Deposits - Remaining Bills
-      cash_available_to_spend = (operating_balance + scheduled_deposits - scheduled_payments).round(2)
+      # Credit Card Payoff Tracking
+      cc_payoff = Account.credit_card_payoff_for(current_user)
+
+      # Cash Available To Spend = Cash In Spending Accounts + Remaining Deposits - Remaining Bills - Credit Card Payoff
+      cash_available_to_spend = (operating_balance + scheduled_deposits - scheduled_payments - cc_payoff[:total_current_balance]).round(2)
 
       # Legacy safe_to_spend (kept for backward compat)
       safe_to_spend = (operating_balance + scheduled_deposits - scheduled_payments).round(2)
@@ -416,6 +419,9 @@ module Api
         variable_spending_items: variable_spending_items,
         projected_safe_to_spend: projected_safe_to_spend,
         cash_available_to_spend: cash_available_to_spend,
+        cc_payoff_total: cc_payoff[:total_current_balance],
+        cc_statement_due: cc_payoff[:total_statement_balance],
+        cc_new_charges: cc_payoff[:total_new_charges],
         category_pressure: category_pressure,
         deposits_breakdown: deposits_breakdown,
         income_total: income_total.round(2),
@@ -461,7 +467,14 @@ module Api
                   "other_asset"
                 end
         display_bal = bal
-        { name: a.name, balance: bal.round(2), display_balance: display_bal.round(2), normal_balance_type: is_liability ? "CREDIT" : "DEBIT", account_group: group }
+        entry = { name: a.name, balance: bal.round(2), display_balance: display_bal.round(2), normal_balance_type: is_liability ? "CREDIT" : "DEBIT", account_group: group }
+        if a.credit_card?
+          entry[:statement_balance] = a.statement_balance_amount.round(2)
+          entry[:new_charges] = a.new_charges_since_statement.round(2)
+          entry[:payment_due_day] = a.payment_due_day
+          entry[:minimum_payment] = a.minimum_payment.to_f.round(2)
+        end
+        entry
       end
       nw = Account.net_worth_for(current_user.accounts, user: current_user)
 

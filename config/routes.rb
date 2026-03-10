@@ -271,6 +271,7 @@ Rails.application.routes.draw do
     resources :net_worth_snapshots, only: [:index] do
       collection do
         post :populate
+        get :breakdown
       end
     end
     # Theme API

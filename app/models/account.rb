@@ -162,4 +162,59 @@ class Account < ApplicationRecord
   def soft_delete!
     update_columns(deleted_at: Time.current)
   end
+
+  # --- Credit Card Profile ---
+
+  def credit_card?
+    account_type_master&.normalized_key&.in?(AccountTypeMaster::CREDIT_TYPE_KEYS)
+  end
+
+  # New charges since the last statement close date
+  def new_charges_since_statement
+    return 0.0 unless credit_card? && last_statement_date.present?
+    payments.where("payment_date > ?", last_statement_date).sum(:amount).to_f
+  end
+
+  # Statement balance = amount due to avoid interest
+  def statement_balance_amount
+    last_statement_balance.to_f
+  end
+
+  # Current balance = statement balance + new charges since statement
+  # (already stored in balance column, but this validates the relationship)
+  def credit_card_current_balance
+    balance.to_f.abs
+  end
+
+  # Payoff needed = current balance (what must be paid to zero the card)
+  def payoff_needed
+    balance.to_f.abs
+  end
+
+  # Credit card payoff totals across multiple accounts
+  def self.credit_card_payoff_for(user)
+    credit_ids = AccountTypeMaster.where(normalized_key: AccountTypeMaster::CREDIT_TYPE_KEYS).pluck(:id)
+    cards = user.accounts.where(account_type_master_id: credit_ids)
+
+    total_current = cards.sum { |c| c.balance.to_f.abs }
+    total_statement = cards.sum { |c| c.statement_balance_amount }
+    total_new_charges = cards.sum { |c| c.new_charges_since_statement }
+
+    {
+      total_current_balance: total_current.round(2),
+      total_statement_balance: total_statement.round(2),
+      total_new_charges: total_new_charges.round(2),
+      cards: cards.map { |c|
+        {
+          id: c.id, name: c.name,
+          current_balance: c.balance.to_f.abs.round(2),
+          statement_balance: c.statement_balance_amount.round(2),
+          new_charges: c.new_charges_since_statement.round(2),
+          payment_due_day: c.payment_due_day,
+          minimum_payment: c.minimum_payment.to_f.round(2),
+          apr: c.apr.to_f
+        }
+      }
+    }
+  end
 end

@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.82"
+APP_VERSION = "1.3.83"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,25 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.83",
+    changes: [
+      "Accounts Card: Removed redundant credit card and loan preview from front side — front now shows only Total Cash.",
+      "Accounts Card: Centered 'Manage Accounts' action in footer.",
+      "Recent Payments Card: Card no longer expands when flipped — stays at standard card size.",
+      "Dashboard Footers: Removed redundant text links (View Details, View Accounts, Manage Payments, Manage Deposits) from Spending Overview, Net Worth, and Income & Spending cards.",
+      "Dashboard Footers: Recent Payments front shows centered 'Manage Payments', back shows centered 'Manage Deposits'.",
+      "Dashboard Footers: Buckets card footer 'Manage Buckets' centered on both sides.",
+      "Credit Cards: Added statement-aware tracking fields (statement closing day, due date, minimum payment, APR, statement balance).",
+      "Credit Cards: Credit card payoff tracking — dashboard shows Payments Due Now, New Charges Not Yet Due, and Total Payoff Needed.",
+      "Credit Cards: Cash Available To Spend now deducts credit card payoff obligations.",
+      "Net Worth: Fixed backfill to skip months before user creation date — prevents phantom snapshots.",
+      "Net Worth: Deleted invalid December 2025 data for user Jaci (account created Feb 2026).",
+      "Net Worth Back: Ideal layout — chart pinned at top, scrollable asset/liability breakdown in middle, net worth summary pinned at bottom.",
+      "Net Worth Back: Click any chart dot to load historical asset/liability breakdown for that month via new API endpoint.",
+      "Net Worth Back: Selected month label shown in header, dot highlights on selection."
+    ]
+  },
   {
     version: "1.3.82",
     changes: [
