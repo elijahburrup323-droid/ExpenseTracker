@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.88"
+APP_VERSION = "1.3.89"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,14 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.89",
+    changes: [
+      "Snapshot Rebuild: Reverse-calculated Jaci's snapshots from current account balances backward through all transactions — ensures snapshots match the true historical ledger.",
+      "Snapshot Rebuild: Zero-variance validation passed for all 3 accounts (Checking, Savings, Venmo) across all 3 months (Jan, Feb, Mar 2026).",
+      "Snapshot Rebuild: Rebuilt dashboard snapshots, net worth snapshots, and month close records. March 2026 set as open month."
+    ]
+  },
   {
     version: "1.3.88",
     changes: [
