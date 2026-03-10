@@ -41,7 +41,7 @@ blocks_data = [
     }
   },
   {
-    key: "income_tracking", display_name: "Income / Deposits", tagline: "Track money coming in",
+    key: "income_tracking", display_name: "Income/Deposits", tagline: "Track money coming in",
     description: "Record income deposits from paychecks, side gigs, or other sources. Includes recurring deposit scheduling. See how much you earn each month.",
     icon: "currency-dollar", category: "Core", tier: "free", sort_order: 4, is_core: true, estimated_setup: "Already set up",
     activate_path: "/income_entries",
@@ -55,7 +55,7 @@ blocks_data = [
   {
     key: "transfers", display_name: "Transfers", tagline: "Move money between accounts",
     description: "Record transfers between your accounts — checking to savings, credit card payments, and more.",
-    icon: "arrows-right-left", category: "Core", tier: "free", sort_order: 5, is_core: true, estimated_setup: "Already set up",
+    icon: "arrows-right-left", category: "Core", tier: "free", sort_order: 6, is_core: true, estimated_setup: "Already set up",
     activate_path: "/transfer_masters",
     tutorial_data: {
       "steps" => [
@@ -67,7 +67,7 @@ blocks_data = [
   {
     key: "tags", display_name: "Tags", tagline: "Organize payments with custom labels",
     description: "Create custom tags to label and filter your payments. Great for tracking projects, trips, or anything you want to group.",
-    icon: "tag", category: "Core", tier: "free", sort_order: 6, is_core: true, estimated_setup: "Already set up",
+    icon: "tag", category: "Core", tier: "free", sort_order: 7, is_core: true, estimated_setup: "Already set up",
     activate_path: "/tags",
     tutorial_data: {
       "steps" => [
@@ -79,7 +79,7 @@ blocks_data = [
   {
     key: "buckets", display_name: "Buckets", tagline: "Split accounts into savings goals",
     description: "Divide any account balance into named buckets — each with its own target amount and balance. Perfect for saving toward multiple goals in one account.",
-    icon: "cube-transparent", category: "Core", tier: "free", sort_order: 7, is_core: true, estimated_setup: "Already set up",
+    icon: "cube-transparent", category: "Add-On", tier: "free", sort_order: 8, is_core: false, estimated_setup: "Already set up",
     activate_path: "/buckets",
     tutorial_data: {
       "steps" => [
@@ -92,7 +92,7 @@ blocks_data = [
   {
     key: "smart_import", display_name: "Smart Import", tagline: "Import bank statements automatically",
     description: "Upload CSV bank statements and let Smart Import classify, categorize, and create payments for you.",
-    icon: "arrow-up-tray", category: "Premium", tier: "paid", sort_order: 10, is_core: false, estimated_setup: "5 minutes",
+    icon: "arrow-up-tray", category: "Premium", tier: "paid", sort_order: 9, is_core: false, estimated_setup: "5 minutes",
     activate_path: "/smart_import",
     tutorial_data: {
       "steps" => [
@@ -104,7 +104,7 @@ blocks_data = [
   {
     key: "reconciliation", display_name: "Reconciliation", tagline: "Verify your account balances match the bank",
     description: "Compare your tracked balance against your bank statement to catch missed transactions or errors.",
-    icon: "check-circle", category: "Premium", tier: "paid", sort_order: 11, is_core: false, estimated_setup: "5 minutes",
+    icon: "check-circle", category: "Premium", tier: "paid", sort_order: 10, is_core: false, estimated_setup: "5 minutes",
     activate_path: "/account_reconciliation",
     tutorial_data: {
       "steps" => [
@@ -116,7 +116,7 @@ blocks_data = [
   {
     key: "monthly_close", display_name: "Monthly Close", tagline: "Close out each month and lock it down",
     description: "Soft-close a month to snapshot balances and prevent accidental edits. Opens the next month automatically.",
-    icon: "lock-closed", category: "Premium", tier: "paid", sort_order: 12, is_core: false, estimated_setup: "1 minute",
+    icon: "lock-closed", category: "Core", tier: "free", sort_order: 5, is_core: true, estimated_setup: "1 minute",
     activate_path: "/soft_close",
     tutorial_data: {
       "steps" => [
@@ -128,7 +128,7 @@ blocks_data = [
   {
     key: "reports", display_name: "Reports", tagline: "See trends, breakdowns, and insights",
     description: "Analyze your finances with reports: spending by category, income by source, net worth over time, and more.",
-    icon: "chart-bar", category: "Premium", tier: "paid", sort_order: 13, is_core: false, estimated_setup: "Already set up",
+    icon: "chart-bar", category: "Premium", tier: "paid", sort_order: 11, is_core: false, estimated_setup: "Already set up",
     activate_path: "/reports",
     tutorial_data: {
       "steps" => [
@@ -140,7 +140,7 @@ blocks_data = [
   {
     key: "ss_planner", display_name: "SS Benefit Planner", tagline: "Plan your Social Security retirement benefits",
     description: "Model different retirement ages and see how they affect your monthly Social Security income.",
-    icon: "calculator", category: "Advanced", tier: "advanced", sort_order: 14, is_core: false, estimated_setup: "5 minutes",
+    icon: "calculator", category: "Advanced", tier: "advanced", sort_order: 12, is_core: false, estimated_setup: "5 minutes",
     activate_path: "/social_security_planner",
     tutorial_data: {
       "steps" => [

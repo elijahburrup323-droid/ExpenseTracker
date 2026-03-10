@@ -213,10 +213,10 @@ Any modification to Net Worth aggregation, Cost basis method, Amortization math,
 
 ### Feature Store (Modular Setup)
 - **feature_blocks** — key (unique), display_name, tagline, description, icon, category, tier (free/paid/advanced, default free), sort_order, is_core (boolean), tutorial_data (jsonb — array of step objects with title, text, selector, position), estimated_setup, activate_path (string — URL path for the feature, e.g. "/payments", "/accounts"). Global catalog of activatable feature modules.
-- **Current feature blocks (after v1.3.90 restructure):**
-  - **Core (is_core=true, tier=free, sort_order 1-5, always active, cannot be deactivated):** core_dashboard (1), accounts_basic (2), payments_basic (3), income_tracking (4), monthly_close (5). All users automatically get activations for these 5.
-  - **Add-ons (is_core=false, sort_order 6+):** buckets (6, free), smart_import (7, paid), reconciliation (8, paid), reports (9, paid), assets (10, paid), investments (11, paid), financing (12, paid), ss_planner (14, advanced).
-  - **Deleted features:** recurring_income, recurring_payments, transfers, tags — removed along with their dependencies, activations, tutorial progress, and smart suggestions.
+- **Current feature blocks (after v1.3.91 correction):**
+  - **Core (is_core=true, tier=free, sort_order 1-7, always active, cannot be deactivated):** core_dashboard (1), accounts_basic (2), payments_basic (3), income_tracking (4, label "Income/Deposits"), monthly_close (5), transfers (6), tags (7). All users automatically get activations for these 7.
+  - **Add-ons (is_core=false, sort_order 8+):** buckets (8, free), smart_import (9, paid), reconciliation (10, paid), reports (11, paid), assets (paid), investments (paid), financing (paid), ss_planner (advanced).
+  - **Deleted features:** recurring_income, recurring_payments — removed along with their dependencies, activations, tutorial progress, and smart suggestions.
 - **feature_block_dependencies** — feature_block_id (FK), depends_on_id (FK → feature_blocks). DAG of block prerequisites. Unique constraint on [feature_block_id, depends_on_id].
 - **user_feature_activations** — user_id (FK), feature_block_id (FK), activated_at (datetime). Tracks which blocks each user has activated. Unique constraint on [user_id, feature_block_id]. Core features (is_core=true) always have activations for every user.
 - **user_tutorial_progress** — user_id (FK), feature_block_id (FK), completed_at (datetime), current_step (int, default 0). Tracks tutorial completion per user per block. Unique constraint on [user_id, feature_block_id].

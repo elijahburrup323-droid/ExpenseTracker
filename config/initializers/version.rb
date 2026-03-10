@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.90"
+APP_VERSION = "1.3.91"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,15 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.91",
+    changes: [
+      "Feature Store Correction: Restored Transfers and Tags as Core Features — both cards now visible in the Feature Store.",
+      "Feature Store Correction: Renamed Income card label from 'Income / Deposits' to 'Income/Deposits'.",
+      "Feature Store Correction: Moved Buckets from Core Features to Available Add-Ons.",
+      "Feature Store Correction: Core Features now displays 7 cards: Dashboard, Accounts, Payments, Income/Deposits, Monthly Close, Transfers, Tags."
+    ]
+  },
   {
     version: "1.3.90",
     changes: [
