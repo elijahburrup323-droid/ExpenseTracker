@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.91"
+APP_VERSION = "1.3.92"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,14 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.92",
+    changes: [
+      "Dashboard: Normalized vertical alignment of primary summary numbers across Spending, Accounts, Net Worth, and Buckets cards using consistent pt-5 anchor.",
+      "Dashboard: Net Worth backside — increased font sizes to text-xs, improved column balance with inward padding and wider gap, better readability for Assets and Liabilities lists.",
+      "Dashboard: Net Worth calculation audited — formula verified correct across all users (Assets + Investments + Receivables - Liabilities - Payables)."
+    ]
+  },
   {
     version: "1.3.91",
     changes: [

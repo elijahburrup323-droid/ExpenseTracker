@@ -68,12 +68,12 @@ export default class extends Controller {
       if (data.assets.length > 0) {
         this.assetListTarget.innerHTML = data.assets.map(a =>
           `<div class="flex items-center justify-between">
-            <span class="text-[11px] text-gray-600 dark:text-gray-400 truncate mr-1">${this._esc(a.name)}</span>
-            <span class="text-[11px] font-medium text-gray-900 dark:text-white tabular-nums flex-shrink-0">${fmt(a.value)}</span>
+            <span class="text-xs text-gray-600 dark:text-gray-400 truncate mr-2">${this._esc(a.name)}</span>
+            <span class="text-xs font-medium text-gray-900 dark:text-white tabular-nums flex-shrink-0">${fmt(a.value)}</span>
           </div>`
         ).join("")
       } else {
-        this.assetListTarget.innerHTML = '<p class="text-[10px] text-gray-400 dark:text-gray-500">No assets.</p>'
+        this.assetListTarget.innerHTML = '<p class="text-xs text-gray-400 dark:text-gray-500">No assets.</p>'
       }
     }
 
@@ -82,12 +82,12 @@ export default class extends Controller {
       if (data.liabilities.length > 0) {
         this.liabilityListTarget.innerHTML = data.liabilities.map(l =>
           `<div class="flex items-center justify-between">
-            <span class="text-[11px] text-gray-600 dark:text-gray-400 truncate mr-1">${this._esc(l.name)}</span>
-            <span class="text-[11px] font-medium text-red-500 dark:text-red-400 tabular-nums flex-shrink-0">-${fmt(l.value)}</span>
+            <span class="text-xs text-gray-600 dark:text-gray-400 truncate mr-2">${this._esc(l.name)}</span>
+            <span class="text-xs font-medium text-red-500 dark:text-red-400 tabular-nums flex-shrink-0">-${fmt(l.value)}</span>
           </div>`
         ).join("")
       } else {
-        this.liabilityListTarget.innerHTML = '<p class="text-[10px] text-gray-400 dark:text-gray-500">No liabilities.</p>'
+        this.liabilityListTarget.innerHTML = '<p class="text-xs text-gray-400 dark:text-gray-500">No liabilities.</p>'
       }
     }
 
