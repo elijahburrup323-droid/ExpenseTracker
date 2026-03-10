@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.89"
+APP_VERSION = "1.3.90"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,14 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.90",
+    changes: [
+      "Feature Store Restructure: Promoted Payments, Income (Deposits), and Monthly Close to Core Features — always enabled for all users.",
+      "Feature Store Restructure: Removed Recurring Deposits, Recurring Payments, Transfers, and Tags from the Feature Store registry.",
+      "Feature Store Restructure: Core Features section now displays: Dashboard, Accounts, Payments, Income (Deposits), Monthly Close."
+    ]
+  },
   {
     version: "1.3.89",
     changes: [
