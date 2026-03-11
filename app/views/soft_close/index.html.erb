@@ -2,6 +2,7 @@
      data-controller="soft-close"
      data-soft-close-status-url-value="<%= api_soft_close_status_path %>"
      data-soft-close-confirm-url-value="<%= api_soft_close_confirm_path %>"
+     data-soft-close-reopen-url-value="<%= api_soft_close_reopen_path %>"
      data-soft-close-dashboard-url-value="<%= dashboard_path %>"
      data-soft-close-csrf-token-value="<%= form_authenticity_token %>"
      data-soft-close-month-label-value="<%= @month_label %>"
@@ -39,6 +40,16 @@
           Close Month
         </button>
       </div>
+    </div>
+  </div>
+
+  <%# Reopen banner (hidden by default, shown when is_reopened == true) %>
+  <div class="hidden mb-6 rounded-lg bg-yellow-50 dark:bg-yellow-900/30 p-4 ring-1 ring-yellow-200 dark:ring-yellow-800" data-soft-close-target="reopenBanner">
+    <div class="flex">
+      <svg class="h-5 w-5 text-yellow-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+      </svg>
+      <p class="ml-3 text-sm text-yellow-700 dark:text-yellow-300" data-soft-close-target="reopenBannerText"></p>
     </div>
   </div>
 
@@ -92,6 +103,19 @@
     <div class="grid grid-cols-2 sm:grid-cols-3 gap-4" data-soft-close-target="summaryBody">
       <div class="text-sm text-gray-400 dark:text-gray-500">Loading summary...</div>
     </div>
+  </div>
+
+  <%# Re-open Prior Month button (hidden by default, shown when applicable) %>
+  <div class="hidden mb-6" data-soft-close-target="reopenSection">
+    <button type="button"
+            class="inline-flex items-center px-4 py-2 border border-amber-300 dark:border-amber-600 text-sm font-medium rounded-lg shadow-sm text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/30 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition"
+            data-soft-close-target="reopenButton"
+            data-action="click->soft-close#reopenMonth">
+      <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12.75 15l3-3m0 0l-3-3m3 3h-7.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <span data-soft-close-target="reopenButtonLabel">Re-open Prior Month</span>
+    </button>
   </div>
 
   <%# Error display %>

@@ -73,8 +73,6 @@ class OpenMonthMaster < ApplicationRecord
 
   # Section 3 & 4: Reopen previous month
   def reopen_previous_month!(reopening_user)
-    raise "REOPEN_BLOCKED_NEW_MONTH_HAS_DATA" if has_data
-
     prev_month = current_month - 1
     prev_year = current_year
     if prev_month < 1
@@ -83,23 +81,100 @@ class OpenMonthMaster < ApplicationRecord
     end
 
     ActiveRecord::Base.transaction do
-      # Mark snapshots for previous month as stale (Option A from spec)
+      # Mark snapshots for previous month as stale
       AccountMonthSnapshot.where(user_id: user_id, year: prev_year, month: prev_month)
                           .update_all(is_stale: true)
       DashboardMonthSnapshot.where(user_id: user_id, year: prev_year, month: prev_month)
                             .update_all(is_stale: true)
 
-      # Move open month pointer back
+      # Delete the close record (will be recreated on re-close)
+      CloseMonthMaster.find_by(
+        user_id: user_id, closed_year: prev_year, closed_month: prev_month
+      )&.destroy
+
+      # Move open month pointer back, store forwarded month
       update!(
+        forwarded_year: current_year,
+        forwarded_month: current_month,
+        is_reopened: true,
         current_year: prev_year,
         current_month: prev_month,
         is_closed: false,
-        has_data: true, # Previous month had data (that's why it was closed)
+        has_data: true,
         first_data_at: nil,
         first_data_source: nil,
         reopen_count: reopen_count + 1,
         last_reopened_at: Time.current,
         last_reopened_by_user_id: reopening_user.id
+      )
+    end
+  end
+
+  # Re-close a reopened month: regenerate snapshots, cascade balances, advance pointer back
+  def reclose_reopened_month!(closing_user)
+    raise "Not in reopened state" unless is_reopened
+
+    reopened_year = current_year
+    reopened_month = current_month
+    fwd_year = forwarded_year
+    fwd_month = forwarded_month
+
+    ActiveRecord::Base.transaction do
+      # 1. Regenerate snapshots for the reopened month (overwrites stale records)
+      generate_snapshots!
+
+      # 2. Cascade beginning balances to the forwarded month
+      # Per-account: forwarded month's beginning_balance = account's current balance
+      user.accounts.each do |account|
+        snap = AccountMonthSnapshot.find_or_initialize_by(
+          user_id: user_id, year: fwd_year, month: fwd_month, account_id: account.id
+        )
+        snap.update!(
+          beginning_balance: account.balance,
+          is_stale: true
+        )
+      end
+
+      # Dashboard snapshot for forwarded month: recalculate beginning_balance
+      credit_ids = AccountTypeMaster.where(normal_balance_type: "CREDIT").pluck(:id)
+      budget_accounts = user.accounts.where(include_in_budget: true)
+      debit_budget = budget_accounts.where.not(account_type_master_id: credit_ids)
+      fwd_beg_bal = debit_budget.sum(:balance)
+
+      fwd_dash = DashboardMonthSnapshot.find_or_initialize_by(
+        user_id: user_id, year: fwd_year, month: fwd_month
+      )
+      fwd_dash.update!(
+        beginning_balance: fwd_beg_bal,
+        is_stale: true
+      )
+
+      # 3. Update live account beginning_balance fields
+      user.accounts.each do |account|
+        account.update_column(:beginning_balance, account.balance)
+      end
+
+      # 4. Advance pointer back to forwarded month
+      update!(
+        current_year: fwd_year,
+        current_month: fwd_month,
+        is_reopened: false,
+        forwarded_year: nil,
+        forwarded_month: nil,
+        is_closed: false,
+        has_data: false,
+        first_data_at: nil,
+        first_data_source: nil
+      )
+
+      # 5. Recreate CloseMonthMaster for the reopened month
+      CloseMonthMaster.find_or_initialize_by(
+        user_id: user_id,
+        closed_year: reopened_year,
+        closed_month: reopened_month
+      ).update!(
+        closed_at: Time.current,
+        closed_by_user_id: closing_user.id
       )
     end
   end

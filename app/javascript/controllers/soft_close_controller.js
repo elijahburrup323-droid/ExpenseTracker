@@ -4,11 +4,14 @@ export default class extends Controller {
   static targets = [
     "monthLabel", "checklistBody", "summaryBody",
     "reviewedTotals", "finalConfirmation",
-    "closeButton", "errorBox", "successBox"
+    "closeButton", "errorBox", "successBox",
+    "reopenBanner", "reopenBannerText",
+    "reopenSection", "reopenButton", "reopenButtonLabel"
   ]
   static values = {
     statusUrl: String,
     confirmUrl: String,
+    reopenUrl: String,
     dashboardUrl: String,
     csrfToken: String,
     monthLabel: String,
@@ -17,6 +20,7 @@ export default class extends Controller {
 
   connect() {
     this.systemPassed = false
+    this.isReopened = false
     this._fetchStatus()
     this._pollInterval = setInterval(() => this._fetchStatus(), 5000)
   }
@@ -33,9 +37,52 @@ export default class extends Controller {
       this._renderChecklist(data.items)
       this._renderSummary(data.summary)
       this.systemPassed = data.items.every(i => i.passed)
+      this.isReopened = data.is_reopened || false
+      this._updateReopenState(data)
       this.updateCloseButton()
     } catch (e) {
       // silently fail, try again next poll
+    }
+  }
+
+  _updateReopenState(data) {
+    // Yellow banner when in reopened mode
+    if (this.hasReopenBannerTarget) {
+      if (this.isReopened && data.forwarded_month_label) {
+        this.reopenBannerTarget.classList.remove("hidden")
+        this.reopenBannerTextTarget.innerHTML =
+          `You are editing <strong>${this._esc(data.month_label)}</strong>. When you soft-close, you will return to <strong>${this._esc(data.forwarded_month_label)}</strong>.`
+      } else {
+        this.reopenBannerTarget.classList.add("hidden")
+      }
+    }
+
+    // Update close button label
+    if (this.hasCloseButtonTarget) {
+      if (this.isReopened) {
+        this.closeButtonTarget.innerHTML = `<svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>Re-close ${this._esc(data.month_label)}`
+      }
+    }
+
+    // Update checkbox labels when reopened
+    if (this.isReopened && data.forwarded_month_label) {
+      const reviewLabel = this.reviewedTotalsTarget.closest("label")
+      if (reviewLabel) {
+        reviewLabel.querySelector("span").innerHTML = `I have reviewed the totals shown below for <strong>${this._esc(data.month_label)}</strong>.`
+      }
+      const confirmLabel = this.finalConfirmationTarget.closest("label")
+      if (confirmLabel) {
+        confirmLabel.querySelector("span").innerHTML = `Yes, re-lock <strong>${this._esc(data.month_label)}</strong> and return to <strong>${this._esc(data.forwarded_month_label)}</strong>.`
+      }
+    }
+
+    // Show/hide reopen section
+    if (this.hasReopenSectionTarget) {
+      if (!this.isReopened && data.has_prior_close) {
+        this.reopenSectionTarget.classList.remove("hidden")
+      } else {
+        this.reopenSectionTarget.classList.add("hidden")
+      }
     }
   }
 
@@ -58,7 +105,6 @@ export default class extends Controller {
         : "text-red-600 dark:text-red-400 font-medium"
 
       if (!item.passed && item.link) {
-        // Failed + has link: entire row is a clickable anchor
         const arrowIcon = `<svg class="h-4 w-4 text-red-300 dark:text-red-600 flex-shrink-0 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>`
         html += `
         <a href="${this._esc(item.link)}"
@@ -69,7 +115,6 @@ export default class extends Controller {
           ${arrowIcon}
         </a>`
       } else {
-        // Passed or no link: non-clickable row
         html += `
         <div class="flex items-start space-x-3 px-3 py-2 -mx-3">
           ${icon}
@@ -109,7 +154,8 @@ export default class extends Controller {
 
   async closeMonth() {
     this.closeButtonTarget.disabled = true
-    this.closeButtonTarget.innerHTML = `<svg class="animate-spin h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>Closing...`
+    const label = this.isReopened ? "Re-closing..." : "Closing..."
+    this.closeButtonTarget.innerHTML = `<svg class="animate-spin h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>${label}`
     this._hideError()
 
     try {
@@ -132,19 +178,109 @@ export default class extends Controller {
 
       if (res.ok && data.success) {
         if (this._pollInterval) clearInterval(this._pollInterval)
-        this.successBoxTarget.textContent = `Month closed successfully! Now viewing ${data.new_month_label}. Redirecting to dashboard...`
+        const verb = this.isReopened ? "re-closed" : "closed"
+        this.successBoxTarget.textContent = `Month ${verb} successfully! Now viewing ${data.new_month_label}. Redirecting to dashboard...`
         this.successBoxTarget.classList.remove("hidden")
         setTimeout(() => { window.location.href = this.dashboardUrlValue }, 2000)
       } else {
         this._showError(data.error || "Failed to close month.")
-        this.closeButtonTarget.disabled = false
-        this.closeButtonTarget.innerHTML = `<svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>Close Month`
+        this._resetCloseButton()
       }
     } catch (e) {
       this._showError("Network error. Please try again.")
-      this.closeButtonTarget.disabled = false
-      this.closeButtonTarget.innerHTML = `<svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>Close Month`
+      this._resetCloseButton()
     }
+  }
+
+  async reopenMonth() {
+    // First confirmation
+    const priorLabel = this._getPriorMonthLabel()
+    if (!confirm(`Re-open ${priorLabel}?\n\nThis will allow you to edit ${priorLabel} transactions. You will need to soft-close it again when done.`)) {
+      return
+    }
+
+    this.reopenButtonTarget.disabled = true
+    this.reopenButtonLabelTarget.textContent = "Re-opening..."
+
+    try {
+      // Pass 1: no force
+      const res = await fetch(this.reopenUrlValue, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "X-CSRF-Token": this.csrfTokenValue
+        },
+        body: JSON.stringify({})
+      })
+
+      const data = await res.json()
+
+      if (data.warning) {
+        // Show warning modal about current month having data
+        const msg = `${data.reopened_month_label || "The current month"} has ${data.transaction_count} transaction(s).\n\nReopening will temporarily affect calculations until you re-close. Your data is safe \u2014 only the starting balance will be corrected on re-close.\n\nContinue?`
+        if (!confirm(msg)) {
+          this.reopenButtonTarget.disabled = false
+          this.reopenButtonLabelTarget.textContent = "Re-open Prior Month"
+          return
+        }
+
+        // Pass 2: with force
+        const res2 = await fetch(this.reopenUrlValue, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "X-CSRF-Token": this.csrfTokenValue
+          },
+          body: JSON.stringify({ force: true })
+        })
+
+        const data2 = await res2.json()
+        if (data2.success) {
+          window.location.reload()
+          return
+        } else {
+          this._showError(data2.message || data2.error || "Failed to reopen month.")
+          this.reopenButtonTarget.disabled = false
+          this.reopenButtonLabelTarget.textContent = "Re-open Prior Month"
+        }
+      } else if (data.success) {
+        window.location.reload()
+      } else if (data.error) {
+        this._showError(data.message || data.error)
+        this.reopenButtonTarget.disabled = false
+        this.reopenButtonLabelTarget.textContent = "Re-open Prior Month"
+      }
+    } catch (e) {
+      this._showError("Network error. Please try again.")
+      this.reopenButtonTarget.disabled = false
+      this.reopenButtonLabelTarget.textContent = "Re-open Prior Month"
+    }
+  }
+
+  _getPriorMonthLabel() {
+    // Derive from the current status data
+    const monthLabel = this.monthLabelValue
+    // Parse "March 2026" to get prior month
+    const parts = monthLabel.split(" ")
+    if (parts.length === 2) {
+      const months = ["January","February","March","April","May","June","July","August","September","October","November","December"]
+      const idx = months.indexOf(parts[0])
+      const year = parseInt(parts[1])
+      if (idx >= 0) {
+        const prevIdx = idx === 0 ? 11 : idx - 1
+        const prevYear = idx === 0 ? year - 1 : year
+        return `${months[prevIdx]} ${prevYear}`
+      }
+    }
+    return "the prior month"
+  }
+
+  _resetCloseButton() {
+    this.closeButtonTarget.disabled = false
+    const label = this.isReopened ? "Re-close Month" : "Close Month"
+    this.closeButtonTarget.innerHTML = `<svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>${label}`
   }
 
   _showError(message) {

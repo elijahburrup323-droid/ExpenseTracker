@@ -201,6 +201,7 @@ Rails.application.routes.draw do
     end
     get  'soft_close/status',  to: 'soft_close#status'
     post 'soft_close/confirm', to: 'soft_close#confirm'
+    post 'soft_close/reopen',  to: 'soft_close#reopen'
     resources :quotes, only: [:index, :create, :update, :destroy] do
       collection do
         post :populate

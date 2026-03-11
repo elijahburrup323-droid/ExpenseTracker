@@ -16,14 +16,22 @@ module Api
         next_y += 1
       end
 
-      render json: {
+      response = {
         month_label: month_start.strftime("%B %Y"),
         year: om.current_year,
         month: om.current_month,
         next_month_label: Date.new(next_y, next_m, 1).strftime("%B %Y"),
         items: items,
-        summary: summary
+        summary: summary,
+        is_reopened: om.is_reopened,
+        has_prior_close: CloseMonthMaster.exists?(user_id: current_user.id)
       }
+
+      if om.is_reopened && om.forwarded_year && om.forwarded_month
+        response[:forwarded_month_label] = Date.new(om.forwarded_year, om.forwarded_month, 1).strftime("%B %Y")
+      end
+
+      render json: response
     end
 
     # POST /api/soft_close/confirm
@@ -49,8 +57,12 @@ module Api
         }, status: :conflict
       end
 
-      # Execute close via single canonical writer (OpenMonthMaster#soft_close!)
-      om.soft_close!(current_user)
+      # Branch on reopened state
+      if om.is_reopened
+        om.reclose_reopened_month!(current_user)
+      else
+        om.soft_close!(current_user)
+      end
 
       new_label = Date.new(om.current_year, om.current_month, 1).strftime("%B %Y")
       render json: { success: true, new_month_label: new_label }
@@ -58,7 +70,71 @@ module Api
       render json: { error: e.message }, status: :internal_server_error
     end
 
+    # POST /api/soft_close/reopen
+    def reopen
+      om = OpenMonthMaster.for_user(current_user)
+
+      # Hard block: already in reopen mode
+      if om.is_reopened
+        return render json: { error: "REOPEN_BLOCKED_ALREADY_REOPENED", message: "A month is already open for editing." }, status: :conflict
+      end
+
+      # Hard block: no prior closed month
+      unless CloseMonthMaster.exists?(user_id: current_user.id)
+        return render json: { error: "REOPEN_BLOCKED_NO_PRIOR_CLOSE", message: "No closed month to reopen." }, status: :conflict
+      end
+
+      # Derive prior month for labels
+      prev_m = om.current_month - 1
+      prev_y = om.current_year
+      if prev_m < 1
+        prev_m = 12
+        prev_y -= 1
+      end
+      prior_label = Date.new(prev_y, prev_m, 1).strftime("%B %Y")
+      current_label = Date.new(om.current_year, om.current_month, 1).strftime("%B %Y")
+
+      # Two-pass flow: check if current month has data
+      force = params[:force].to_s == "true"
+
+      if !force && (om.has_data || current_month_has_transactions?(om))
+        txn_count = count_current_month_transactions(om)
+        return render json: {
+          warning: true,
+          warning_code: "CURRENT_MONTH_HAS_DATA",
+          transaction_count: txn_count,
+          reopened_month_label: prior_label,
+          message: "#{current_label} has #{txn_count} transaction(s). Reopening will temporarily affect #{current_label}'s calculations until you re-close. Pass force=true to proceed."
+        }
+      end
+
+      om.reopen_previous_month!(current_user)
+      render json: {
+        success: true,
+        reopened_month_label: prior_label,
+        forwarded_month_label: current_label
+      }
+    rescue => e
+      render json: { error: e.message }, status: :internal_server_error
+    end
+
     private
+
+    def current_month_has_transactions?(om)
+      count_current_month_transactions(om) > 0
+    end
+
+    def count_current_month_transactions(om)
+      month_start = Date.new(om.current_year, om.current_month, 1)
+      month_end = month_start.end_of_month
+      range = month_start..month_end
+
+      count = 0
+      count += current_user.payments.where(payment_date: range).where(deleted_at: nil).count
+      count += current_user.income_entries.where(entry_date: range).where(deleted_at: nil).count
+      count += current_user.transfer_masters.where(transfer_date: range).count
+      count
+    end
 
     def build_checklist(month_start, month_end)
       range = month_start...month_end
