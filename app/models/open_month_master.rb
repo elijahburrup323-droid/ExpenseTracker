@@ -36,11 +36,10 @@ class OpenMonthMaster < ApplicationRecord
     ActiveRecord::Base.transaction do
       generate_snapshots!
 
-      # Roll forward: set each account's beginning_balance to its current balance
-      # so the next month starts from the correct baseline.
-      user.accounts.each do |account|
-        account.update_columns(beginning_balance: account.balance)
-      end
+      # NOTE: Do NOT roll forward account.beginning_balance here.
+      # AccountBalanceService computes balance as: beginning_balance + ALL transactions.
+      # Updating beginning_balance to current balance would double-count prior transactions.
+      # Snapshot beginning_balance is computed correctly via AccountBalanceService.
 
       next_month = current_month + 1
       next_year = current_year
@@ -115,12 +114,13 @@ class OpenMonthMaster < ApplicationRecord
     month_start = Date.new(year, month, 1)
     month_end = month_start.end_of_month
 
-    # Per-account snapshots
+    # Per-account snapshots — use computed beginning balance (not static field)
+    computed_beg_all = AccountBalanceService.balances_as_of(user, month_start - 1.day)
     user.accounts.each do |account|
       AccountMonthSnapshot.find_or_initialize_by(
         user_id: user_id, year: year, month: month, account_id: account.id
       ).update!(
-        beginning_balance: account.beginning_balance,
+        beginning_balance: (computed_beg_all[account.id] || 0.0).round(2),
         ending_balance: account.balance,
         is_stale: false
       )
