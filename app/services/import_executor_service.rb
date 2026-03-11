@@ -64,6 +64,23 @@ class ImportExecutorService
       notes: "Imported via Smart Import"
     )
 
+    # Sync to canonical transaction ledger
+    txn = @user.transactions.create!(
+      txn_date: payment.payment_date,
+      txn_type: "payment",
+      amount: payment.amount.abs,
+      description: payment.description,
+      memo: payment.notes,
+      account_id: payment.account_id,
+      spending_category_id: payment.spending_category_id,
+      spending_type_id: payment.spending_category&.spending_type_id,
+      reconciled: payment.reconciled
+    )
+    TransactionMigrationMap.create!(
+      user_id: @user.id, legacy_table: "payments",
+      legacy_id: payment.id, transaction_id: txn.id
+    )
+
     # Adjust account balance (sign-aware via centralized method)
     @account.reload
     @account.apply_payment!(payment.amount)
@@ -78,6 +95,11 @@ class ImportExecutorService
     date = parse_date(mapped["date"])
     amount = mapped["amount"].to_d.abs
 
+    # Guard: deposits to CREDIT (liability) accounts are invalid
+    if @account.account_type_master&.normal_balance_type == "CREDIT"
+      raise "Deposits cannot be imported to liability (CREDIT) accounts. Use a transfer instead."
+    end
+
     entry = @user.income_entries.create!(
       account: @account,
       source_name: (data[:source_name].presence || mapped["description"]).to_s.truncate(80),
@@ -87,10 +109,20 @@ class ImportExecutorService
       received_flag: true
     )
 
-    # Guard: deposits to CREDIT (liability) accounts are invalid
-    if @account.account_type_master&.normal_balance_type == "CREDIT"
-      raise "Deposits cannot be imported to liability (CREDIT) accounts. Use a transfer instead."
-    end
+    # Sync to canonical transaction ledger
+    txn = @user.transactions.create!(
+      txn_date: entry.entry_date,
+      txn_type: "deposit",
+      amount: entry.amount.abs,
+      description: entry.source_name,
+      memo: entry.description,
+      account_id: entry.account_id,
+      reconciled: entry.reconciled
+    )
+    TransactionMigrationMap.create!(
+      user_id: @user.id, legacy_table: "income_entries",
+      legacy_id: entry.id, transaction_id: txn.id
+    )
 
     # Adjust account balance (deposits only to DEBIT accounts, no multiplier needed)
     @account.reload
@@ -122,6 +154,21 @@ class ImportExecutorService
       transfer_date: date,
       amount: amount,
       memo: mapped["description"].to_s.truncate(255)
+    )
+
+    # Sync to canonical transaction ledger
+    txn = @user.transactions.create!(
+      txn_date: transfer.transfer_date,
+      txn_type: "transfer",
+      amount: transfer.amount.abs,
+      memo: transfer.memo,
+      from_account_id: transfer.from_account_id,
+      to_account_id: transfer.to_account_id,
+      reconciled: transfer.reconciled
+    )
+    TransactionMigrationMap.create!(
+      user_id: @user.id, legacy_table: "transfer_masters",
+      legacy_id: transfer.id, transaction_id: txn.id
     )
 
     # Adjust account balances for inter-account transfers (sign-aware via centralized methods)

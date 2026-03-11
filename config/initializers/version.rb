@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.95"
+APP_VERSION = "1.3.96"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,14 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.96",
+    changes: [
+      "Bug Fix: ImportExecutorService (Smart Import) now creates canonical transactions and TransactionMigrationMap entries alongside legacy records. Previously imported transactions only existed in legacy tables, causing them to be invisible to dashboard snapshots, month close totals, and soft close summaries that read from the canonical transaction ledger.",
+      "Bug Fix: Moved CREDIT account guard check in import deposits to before record creation, preventing unnecessary rollback.",
+      "Data Fix: Reset 4 stale reconciliation records (User 6) from 'reconciled' to 'open' after v1.3.95 balance corrections made their stored outside_balance values no longer match computed budget balances."
+    ]
+  },
   {
     version: "1.3.95",
     changes: [
