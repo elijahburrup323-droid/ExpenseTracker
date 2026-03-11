@@ -60,7 +60,10 @@ transactions
  ├── belongs_to :from_account (optional) (from_account_id FK → accounts.id, transfers)
  ├── belongs_to :to_account (optional) (to_account_id FK → accounts.id, transfers)
  ├── belongs_to :spending_category (optional) (spending_category_id FK → spending_categories.id)
- └── belongs_to :spending_type (optional) (spending_type_id FK → spending_types.id)
+ ├── belongs_to :spending_type (optional) (spending_type_id FK → spending_types.id)
+ ├── is_synthetic (boolean, default: false) — system-generated transaction flag
+ ├── synthetic_reason (string, limit: 50) — e.g., "new_account_opening_balance"
+ └── unique index (user_id, account_id, synthetic_reason, txn_date) WHERE is_synthetic = true
 
 asset_types
  ├── belongs_to :user (optional)       (user_id FK → users.id, NULL = system type)

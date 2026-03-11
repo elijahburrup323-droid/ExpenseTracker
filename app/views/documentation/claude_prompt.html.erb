@@ -111,7 +111,7 @@ The following are protected and may not be modified without approval:
   - Card height MUST NOT change based on content — overflow handled by internal scroll (`dash-card-scroll`). Hard ceiling: `max-height: 28rem` on `.dash-card` at md+ (CM-5)
   - Flex containment chain: `.dash-card` → `[data-role="flipper"]` → `[data-role="front"]` all require `min-height: 0` to allow flex children to shrink below content size (CM-5)
   - Bottom divider/baseline line MUST be at the same vertical position across all cards (`.dash-card-footer` with `flex-shrink:0; margin-top:auto`)
-  - Flip icon (↻) and Expand icon (⬜) MUST remain visible on all cards — 44x44px min touch target, inside card footer
+  - Flip icon (↻) with hint label MUST remain visible on all cards — 44x44px min touch target, inside card footer. Expand and report icons removed in v1.4.0.
   - CSS classes `dash-grid`, `dash-card`, `dash-card-scroll`, `dash-card-footer` are locked — do not override per-card
   - **CSS Architecture**: Production uses `cdn.tailwindcss.com` (v3 play CDN) which cannot process custom `@utility`/`@layer` rules. All custom dashboard classes MUST be duplicated in the inline `<style>` block in `app/views/layouts/application.html.erb` (lines 122+). The `application.css` file is the design-time source of truth; the inline styles are the runtime fallback.
   - Visual regression test: `tests/dashboard-regression.spec.js` — run after any dashboard CSS/layout change

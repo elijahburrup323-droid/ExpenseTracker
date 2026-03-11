@@ -405,6 +405,13 @@ class DashboardController < ApplicationController
                                .order(txn_date: :desc, created_at: :desc)
                                .includes(:account)
 
+    # Synthetic deposits for new accounts added mid-month
+    month_range = Date.new(@open_month.current_year, @open_month.current_month, 1)..Date.new(@open_month.current_year, @open_month.current_month, 1).end_of_month
+    @synthetic_deposits = Transaction.unscoped.where(user_id: current_user.id, is_synthetic: true, synthetic_reason: "new_account_opening_balance", deleted_at: nil)
+                                    .where(txn_date: month_range)
+                                    .includes(:account)
+                                    .map { |t| { account_name: t.account&.name || "Unknown", added_date: t.txn_date, amount: t.amount.to_f } }
+
     # Card 6: Buckets summary (grouped by account)
     user_buckets = current_user.buckets.active.includes(:account).ordered
     if user_buckets.empty?

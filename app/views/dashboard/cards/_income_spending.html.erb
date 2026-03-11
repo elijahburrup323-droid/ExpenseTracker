@@ -13,63 +13,62 @@
         <button type="button" data-action="click->dashboard#nextMonth" data-dashboard-target="nextBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
         </button>
-        <%= link_to report_monthly_cash_flow_path, class: "ml-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition", aria: { label: "Open cash flow report" } do %>
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V9m4 7V5m4 11v-4m4 4V8"/></svg>
-        <% end %>
       </div>
     </div>
-    <%# === Calm Snapshot: 4-line equation stack (Instruction N) === %>
-    <div class="flex-1 min-h-0 overflow-y-auto flex flex-col justify-center py-3" data-role="card-content">
-      <div class="space-y-1.5">
-        <div class="flex items-center justify-between">
-          <span class="text-sm text-gray-600 dark:text-gray-400">Beginning Balance</span>
-          <span class="text-sm text-gray-700 dark:text-gray-300 tabular-nums"><%= number_to_currency(@beginning_balance_total) %></span>
-        </div>
-        <div class="flex items-center justify-between">
-          <span class="text-sm text-gray-600 dark:text-gray-400">+ Deposits</span>
-          <span class="text-sm text-gray-700 dark:text-gray-300 tabular-nums"><%= number_to_currency(@current_month_income) %></span>
-        </div>
-        <div class="flex items-center justify-between">
-          <span class="text-sm text-gray-600 dark:text-gray-400">&minus; Payments</span>
-          <span class="text-sm text-gray-700 dark:text-gray-300 tabular-nums"><%= number_to_currency(@current_month_payments) %></span>
-        </div>
-        <% if @net_transfers && @net_transfers != 0 %>
+    <%# === Income & Spending: scrollable line items + two-tone summary bar === %>
+    <div class="flex-1 min-h-0 flex flex-col py-1" data-role="card-content">
+      <%# Scrollable middle section %>
+      <div class="max-h-[120px] overflow-y-auto space-y-1" style="font-variant-numeric: tabular-nums;">
+        <%# Deposits %>
+        <% @recent_income_entries.each do |entry| %>
           <div class="flex items-center justify-between">
-            <span class="text-sm text-gray-600 dark:text-gray-400"><%= @net_transfers > 0 ? "+ Transfers In" : "&minus; Transfers Out".html_safe %></span>
-            <span class="text-sm text-gray-700 dark:text-gray-300 tabular-nums"><%= number_to_currency(@net_transfers.abs) %></span>
+            <span class="text-xs text-gray-600 dark:text-gray-400 truncate mr-2"><%= entry.description %></span>
+            <span class="text-xs font-medium text-emerald-600 dark:text-emerald-400 tabular-nums flex-shrink-0">+<%= number_to_currency(entry.amount) %></span>
           </div>
         <% end %>
-        <% if @budget_adjustments && @budget_adjustments != 0 %>
-          <div class="flex items-center justify-between">
-            <span class="text-sm text-gray-600 dark:text-gray-400"><%= @budget_adjustments > 0 ? "+ Adjustments" : "&minus; Adjustments".html_safe %></span>
-            <span class="text-sm text-gray-700 dark:text-gray-300 tabular-nums"><%= number_to_currency(@budget_adjustments.abs) %></span>
+        <%# Synthetic new account deposits %>
+        <% (@synthetic_deposits || []).each do |syn| %>
+          <div class="flex items-center justify-between bg-green-50 dark:bg-green-900/20 rounded px-1">
+            <span class="text-xs text-emerald-700 dark:text-emerald-400 truncate mr-2">+ New Account (<%= syn[:account_name] %> &middot; added <%= syn[:added_date].strftime("%-m/%-d") %>)</span>
+            <span class="text-xs font-medium text-emerald-600 dark:text-emerald-400 tabular-nums flex-shrink-0">+<%= number_to_currency(syn[:amount]) %></span>
           </div>
         <% end %>
-        <div class="border-t border-gray-200 dark:border-gray-600 my-1"></div>
-        <div class="flex items-center justify-between">
-          <span class="number-base text-gray-900 dark:text-white">= Current Balance</span>
-          <span class="number-base text-gray-900 dark:text-white tabular-nums"><%= number_to_currency(@budget_total) %></span>
-        </div>
+        <%# Payments %>
+        <% @recent_payment_items.each do |item| %>
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-gray-600 dark:text-gray-400 truncate mr-2"><%= item[:description] %></span>
+            <span class="text-xs font-medium text-red-500 dark:text-red-400 tabular-nums flex-shrink-0">&minus;<%= number_to_currency(item[:amount]) %></span>
+          </div>
+        <% end %>
       </div>
+
+      <%# Two-tone income vs spending summary bar %>
+      <%
+        inc = @current_month_income.to_f
+        spent = @current_month_payments.to_f
+        bar_max = [inc, spent].max
+      %>
+      <% if bar_max > 0 %>
+        <div class="mt-auto pt-2">
+          <div class="flex h-3 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700">
+            <div class="bg-emerald-500 rounded-l-full" style="width: <%= (inc / bar_max * 100).round(1) %>%"></div>
+            <div class="w-px bg-white dark:bg-gray-800 flex-shrink-0"></div>
+            <div class="bg-red-500 rounded-r-full" style="width: <%= (spent / bar_max * 100).round(1) %>%"></div>
+          </div>
+          <div class="flex justify-between mt-0.5">
+            <span class="text-[10px] text-emerald-600 dark:text-emerald-400 tabular-nums">Income <%= number_to_currency(inc) %></span>
+            <span class="text-[10px] text-red-500 dark:text-red-400 tabular-nums">Spent <%= number_to_currency(spent) %></span>
+          </div>
+        </div>
+      <% end %>
     </div>
     <div class="dash-card-footer border-t border-gray-100 dark:border-gray-700 flex items-center justify-between" data-role="card-footer">
-      <button type="button" class="inline-flex items-center justify-center text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300" style="min-width:44px; min-height:44px;" data-action="click->dashboard#flipCard" aria-label="View recent deposits">
+      <button type="button" class="inline-flex items-center gap-1.5 text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300" style="min-height:44px;" data-action="click->dashboard#flipCard" aria-label="View recent deposits">
         <svg class="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.992 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182M20.015 4.652v4.992"/>
         </svg>
+        <span class="text-[10px] font-medium">Category Breakdown</span>
       </button>
-      <button type="button" data-action="click->dashboard#toggleCardExpand"
-                data-role="expand-btn"
-                class="inline-flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition cursor-pointer" style="min-width:44px; min-height:44px;"
-                aria-label="Expand Income & Spending Card">
-          <svg class="w-[18px] h-[18px]" data-icon="expand" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/>
-          </svg>
-          <svg class="w-[18px] h-[18px] hidden" data-icon="collapse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"/>
-          </svg>
-        </button>
-      </div>
     </div>
 
   <%# === BACK SIDE: Expanded Clarity (Instruction O) === %>
@@ -84,9 +83,6 @@
         <button type="button" data-action="click->dashboard#nextMonth" data-dashboard-target="nextBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
         </button>
-        <%= link_to report_monthly_cash_flow_path, class: "ml-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition", aria: { label: "Open cash flow report" } do %>
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V9m4 7V5m4 11v-4m4 4V8"/></svg>
-        <% end %>
       </div>
     </div>
     <div class="flex-1 overflow-y-auto" data-role="back-content">
@@ -167,22 +163,11 @@
       </div>
     </div>
     <div class="dash-card-footer border-t border-gray-100 dark:border-gray-700 flex items-center justify-between" data-role="card-footer">
-      <button type="button" class="inline-flex items-center justify-center text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300" style="min-width:44px; min-height:44px;" data-action="click->dashboard#flipCardBack" aria-label="Back to income & spending">
+      <button type="button" class="inline-flex items-center gap-1.5 text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300" style="min-height:44px;" data-action="click->dashboard#flipCardBack" aria-label="Back to income & spending">
         <svg class="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.992 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182M20.015 4.652v4.992"/>
         </svg>
+        <span class="text-[10px] font-medium">Income & Spending</span>
       </button>
-      <button type="button" data-action="click->dashboard#toggleCardExpand"
-                data-role="expand-btn"
-                class="inline-flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition cursor-pointer" style="min-width:44px; min-height:44px;"
-                aria-label="Expand Income & Spending Card">
-          <svg class="w-[18px] h-[18px]" data-icon="expand" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/>
-          </svg>
-          <svg class="w-[18px] h-[18px] hidden" data-icon="collapse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"/>
-          </svg>
-        </button>
-      </div>
     </div>
   </div>

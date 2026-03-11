@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.99"
+APP_VERSION = "1.4.0"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,20 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.4.0",
+    changes: [
+      "Feature: Dashboard front card improvements — removed expand/report icons, added flip hint labels to all cards.",
+      "Feature: Financial Pulse strip with colored status pills (Cash Runway, Debt Ratio, Savings Rate) and info tooltips.",
+      "Feature: Net Worth card — month-over-month change indicator with colored arrow and inline sparkline chart.",
+      "Feature: Spending Overview — color-coded amounts (red spent, green available) and spending progress bar vs income.",
+      "Feature: Account Groups card now shows individual account rows within each group with liability coloring.",
+      "Feature: Income & Spending card — color-coded scrollable transaction list with two-tone summary bar.",
+      "Feature: Recent Payments — full scrollable list for all current month payments, amounts in red.",
+      "Feature: Buckets card — progress bars showing current vs goal and 'Goal Met' badges.",
+      "Feature: Synthetic opening-balance transactions auto-created for new mid-month budget accounts."
+    ]
+  },
   {
     version: "1.3.99",
     changes: [

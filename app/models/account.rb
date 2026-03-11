@@ -11,6 +11,10 @@ class Account < ApplicationRecord
   has_many :tag_assignments, as: :taggable, dependent: :destroy
   has_many :tags, through: :tag_assignments
 
+  has_many :synthetic_transactions, -> { where(is_synthetic: true) }, class_name: "Transaction"
+
+  after_create :generate_opening_balance_transaction!
+
   default_scope { where(deleted_at: nil) }
 
   scope :active, -> { where(deleted_at: nil) }
@@ -216,5 +220,34 @@ class Account < ApplicationRecord
         }
       }
     }
+  end
+
+  private
+
+  def generate_opening_balance_transaction!
+    return unless include_in_budget?
+    return unless account_type_master&.normalized_key&.in?(AccountTypeMaster::SPENDABLE_TYPE_KEYS)
+    return unless beginning_balance.to_f > 0
+
+    om = OpenMonthMaster.find_by(user_id: user_id)
+    return unless om
+
+    month_start = Date.new(om.current_year, om.current_month, 1)
+    return if Date.today == month_start
+    return unless Date.today.between?(month_start, month_start.end_of_month)
+
+    Transaction.create!(
+      user_id:          user_id,
+      txn_date:         Date.today,
+      amount:           beginning_balance,
+      txn_type:         "deposit",
+      description:      "Opening balance \u2014 #{name}",
+      account_id:       id,
+      source:           "system_synthetic",
+      is_synthetic:     true,
+      synthetic_reason: "new_account_opening_balance"
+    )
+  rescue ActiveRecord::RecordNotUnique
+    # Idempotency guard: synthetic already exists
   end
 end

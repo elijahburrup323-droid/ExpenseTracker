@@ -3,45 +3,62 @@
   <div class="flex flex-col flex-1" data-role="front" style="backface-visibility: hidden;">
     <div class="flex items-center justify-between mb-2">
       <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200"><%= card.title %></h2>
-      <%= link_to buckets_path, class: "text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition", aria: { label: "Open buckets page" } do %>
-        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V9m4 7V5m4 11v-4m4 4V8"/></svg>
-      <% end %>
     </div>
     <%# === Calm Goals Snapshot (Instruction P) === %>
-    <div class="flex-1 min-h-0 overflow-y-auto flex flex-col items-center pt-5" data-role="card-content">
+    <div class="flex-1 min-h-0 overflow-y-auto pt-2" data-role="card-content">
       <% if @buckets_summary[:empty] %>
-        <p class="text-sm text-gray-400 dark:text-gray-500 text-center">No buckets yet. Create one to start allocating money.</p>
+        <p class="text-sm text-gray-400 dark:text-gray-500 text-center pt-3">No buckets yet. Create one to start allocating money.</p>
       <% else %>
-        <span class="number-primary text-gray-900 dark:text-white tabular-nums"><%= number_to_currency(@buckets_summary[:total_balance]) %> saved in goals</span>
-        <span class="text-sm text-gray-500 dark:text-gray-400 mt-1">Across <%= @buckets_summary[:count] %> active bucket<%= @buckets_summary[:count] != 1 ? "s" : "" %></span>
-        <% if @buckets_summary[:largest_bucket] && @buckets_summary[:count] > 1 %>
-          <span class="text-xs text-gray-400 dark:text-gray-500 mt-2 tabular-nums">Largest: <%= @buckets_summary[:largest_bucket].name %> (<%= number_to_currency(@buckets_summary[:largest_bucket].current_balance) %>)</span>
-        <% end %>
+        <div class="text-center mb-3">
+          <span class="text-lg font-bold text-gray-900 dark:text-white tabular-nums"><%= number_to_currency(@buckets_summary[:total_balance]) %></span>
+          <span class="text-xs text-gray-500 dark:text-gray-400 ml-1">saved in <%= @buckets_summary[:count] %> bucket<%= @buckets_summary[:count] != 1 ? "s" : "" %></span>
+        </div>
+        <div class="space-y-2.5">
+          <% (@buckets_summary[:priority_sorted] || []).each do |b| %>
+            <%
+              has_goal = b.target_amount.present? && b.target_amount > 0
+              pct = has_goal ? [(b.current_balance.to_f / b.target_amount.to_f * 100).round(1), 100].min : nil
+              goal_met = has_goal && b.current_balance.to_f >= b.target_amount.to_f
+              bar_color = goal_met ? "bg-amber-500" : "bg-emerald-500"
+            %>
+            <div>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-1.5 min-w-0">
+                  <span class="text-xs font-medium text-gray-900 dark:text-white truncate"><%= b.name %></span>
+                  <% if goal_met %>
+                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">&#10003; Goal Met</span>
+                  <% end %>
+                </div>
+                <% if has_goal %>
+                  <span class="text-[10px] text-gray-500 dark:text-gray-400 tabular-nums flex-shrink-0 ml-1"><%= number_to_currency(b.current_balance, precision: 0) %> / <%= number_to_currency(b.target_amount, precision: 0) %></span>
+                <% else %>
+                  <span class="text-[10px] text-gray-500 dark:text-gray-400 tabular-nums flex-shrink-0 ml-1"><%= number_to_currency(b.current_balance) %></span>
+                <% end %>
+              </div>
+              <% if has_goal %>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                  <div class="flex-1 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                    <div class="<%= bar_color %> h-full rounded-full" style="width: <%= pct %>%"></div>
+                  </div>
+                  <span class="text-[9px] text-gray-400 dark:text-gray-500 tabular-nums w-7 text-right"><%= pct.to_i %>%</span>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
       <% end %>
     </div>
     <div class="dash-card-footer border-t border-gray-100 dark:border-gray-700 flex items-center justify-between" data-role="card-footer">
-      <button type="button" class="inline-flex items-center justify-center text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300" style="min-width:44px; min-height:44px;" data-action="click->dashboard#flipCard" aria-label="View bucket details">
+      <button type="button" class="inline-flex items-center gap-1.5 text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300" style="min-height:44px;" data-action="click->dashboard#flipCard" aria-label="View bucket details">
         <svg class="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.992 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182M20.015 4.652v4.992"/>
         </svg>
+        <span class="text-[10px] font-medium">Bucket History</span>
       </button>
       <div class="flex-1 flex items-center justify-center">
         <%= link_to buckets_path, class: "text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium" do %>
           Manage Buckets
         <% end %>
-      </div>
-      <div class="flex items-center">
-        <button type="button" data-action="click->dashboard#toggleCardExpand"
-                data-role="expand-btn"
-                class="inline-flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition cursor-pointer" style="min-width:44px; min-height:44px;"
-                aria-label="Expand Buckets Card">
-          <svg class="w-[18px] h-[18px]" data-icon="expand" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/>
-          </svg>
-          <svg class="w-[18px] h-[18px] hidden" data-icon="collapse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"/>
-          </svg>
-        </button>
       </div>
     </div>
   </div>
@@ -50,9 +67,6 @@
   <div class="absolute inset-0 flex flex-col" data-role="back" style="backface-visibility: hidden; transform: rotateY(180deg); pointer-events: none;">
     <div class="flex items-center justify-between mb-2">
       <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Goal Progress</h2>
-      <%= link_to buckets_path, class: "text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition", aria: { label: "Open buckets page" } do %>
-        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V9m4 7V5m4 11v-4m4 4V8"/></svg>
-      <% end %>
     </div>
     <div class="flex-1 overflow-y-auto" data-role="back-content">
       <% unless @buckets_summary[:empty] %>
@@ -92,28 +106,16 @@
       <% end %>
     </div>
     <div class="dash-card-footer border-t border-gray-100 dark:border-gray-700 flex items-center justify-between" data-role="card-footer">
-      <button type="button" class="inline-flex items-center justify-center text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300" style="min-width:44px; min-height:44px;" data-action="click->dashboard#flipCardBack" aria-label="Back to buckets overview">
+      <button type="button" class="inline-flex items-center gap-1.5 text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300" style="min-height:44px;" data-action="click->dashboard#flipCardBack" aria-label="Back to buckets overview">
         <svg class="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.992 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182M20.015 4.652v4.992"/>
         </svg>
+        <span class="text-[10px] font-medium">Buckets</span>
       </button>
       <div class="flex-1 flex items-center justify-center">
         <%= link_to buckets_path, class: "text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium" do %>
           Manage Buckets
         <% end %>
-      </div>
-      <div class="flex items-center">
-        <button type="button" data-action="click->dashboard#toggleCardExpand"
-                data-role="expand-btn"
-                class="inline-flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition cursor-pointer" style="min-width:44px; min-height:44px;"
-                aria-label="Expand Buckets Card">
-          <svg class="w-[18px] h-[18px]" data-icon="expand" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/>
-          </svg>
-          <svg class="w-[18px] h-[18px] hidden" data-icon="collapse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"/>
-          </svg>
-        </button>
       </div>
     </div>
   </div>

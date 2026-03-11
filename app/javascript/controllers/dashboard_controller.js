@@ -15,7 +15,6 @@ export default class extends Controller {
     this.currentYear = this.yearValue
     this.earliestMonth = this.earliestMonthValue || 1
     this.earliestYear = this.earliestYearValue || 2020
-    this.expandedCardType = null
     this._selectedTagIds = []
     this._allTags = []
     this._updateArrowState()
@@ -44,11 +43,7 @@ export default class extends Controller {
       }
     }
 
-    // ESC key to collapse expanded card
-    this._escHandler = (e) => {
-      if (e.key === "Escape" && this.expandedCardType) this._collapseCard()
-    }
-    document.addEventListener("keydown", this._escHandler)
+    this._escHandler = null
 
     // Close tag dropdown on outside click
     this._outsideClickHandler = (e) => {
@@ -286,22 +281,11 @@ export default class extends Controller {
     const back = wrapper.querySelector("[data-role='back']")
     if (front) front.style.pointerEvents = "none"
     if (back) back.style.pointerEvents = "auto"
-    // Auto-expand for Spending Control panel, Net Worth History, Income & Spending Details, and Goal Progress
-    if (wrapper.dataset.cardType === 'spending_overview' || wrapper.dataset.cardType === 'net_worth' || wrapper.dataset.cardType === 'income_spending' || wrapper.dataset.cardType === 'buckets') {
-      this._expandCard(wrapper)
-    }
   }
 
   flipCardBack(event) {
     const wrapper = event.target.closest("[data-dashboard-target='slotWrapper']")
     if (!wrapper) return
-    // Auto-collapse for Spending Control panel, Net Worth History, Income & Spending Details, and Goal Progress
-    if ((wrapper.dataset.cardType === 'spending_overview' && this.expandedCardType === 'spending_overview') ||
-        (wrapper.dataset.cardType === 'net_worth' && this.expandedCardType === 'net_worth') ||
-        (wrapper.dataset.cardType === 'income_spending' && this.expandedCardType === 'income_spending') ||
-        (wrapper.dataset.cardType === 'buckets' && this.expandedCardType === 'buckets')) {
-      this._collapseCard()
-    }
     const flipper = wrapper.querySelector("[data-role='flipper']")
     if (!flipper) return
     flipper.style.transform = "rotateY(0deg)"
@@ -309,19 +293,6 @@ export default class extends Controller {
     const back = wrapper.querySelector("[data-role='back']")
     if (front) front.style.pointerEvents = ""
     if (back) back.style.pointerEvents = "none"
-  }
-
-  // --- Generic Expand/Collapse ---
-
-  toggleCardExpand(event) {
-    const wrapper = event.target.closest("[data-dashboard-target='slotWrapper']")
-    if (!wrapper) return
-    const cardType = wrapper.dataset.cardType
-    if (this.expandedCardType === cardType) {
-      this._collapseCard()
-    } else {
-      this._expandCard(wrapper)
-    }
   }
 
   async loadMorePayments(event) {
@@ -382,86 +353,6 @@ export default class extends Controller {
         </li>`)
       }
     } catch (e) { /* silently fail */ }
-  }
-
-  _expandCard(wrapper) {
-    if (!this.hasCardsGridTarget) return
-    const grid = this.cardsGridTarget
-    this._savedGridHeight = grid.offsetHeight
-    this._savedGridWidth = grid.offsetWidth
-    this._expandedWrapper = wrapper
-
-    // Lock grid width before hiding cards to prevent container collapse
-    grid.style.width = `${this._savedGridWidth}px`
-
-    Array.from(grid.children).forEach(child => {
-      if (child !== wrapper) child.classList.add("hidden")
-    })
-
-    grid.style.minHeight = `${this._savedGridHeight}px`
-    wrapper.style.gridColumn = "1 / -1"
-    wrapper.style.minHeight = `${this._savedGridHeight}px`
-
-    this._updateExpandIcons(wrapper, true)
-    wrapper.setAttribute("data-expanded", "true")
-    this.expandedCardType = wrapper.dataset.cardType
-    if (this.sortable) this.sortable.option("disabled", true)
-
-    // Center content in expanded mode with bounded width + lift height cap
-    const isWideCard = wrapper.dataset.cardType === 'spending_overview'
-    wrapper.querySelectorAll("[data-role='card-content'], [data-role='front-content'], [data-role='back-content']").forEach(el => {
-      el.style.maxWidth = isWideCard ? "100%" : "1000px"
-      el.style.marginLeft = "auto"
-      el.style.marginRight = "auto"
-      el.style.width = "100%"
-      el.style.maxHeight = "none"
-    })
-
-    // Piston open: scroll to the top of the expanded card after render
-    requestAnimationFrame(() => {
-      wrapper.scrollIntoView({ block: "start", behavior: "instant" })
-      // Also reset any internal scroll containers
-      wrapper.querySelectorAll("[data-role='card-content']").forEach(el => { el.scrollTop = 0 })
-    })
-  }
-
-  _collapseCard() {
-    if (!this.hasCardsGridTarget || !this._expandedWrapper) return
-    const grid = this.cardsGridTarget
-    const wrapper = this._expandedWrapper
-
-    Array.from(grid.children).forEach(child => {
-      child.classList.remove("hidden")
-    })
-
-    grid.style.minHeight = ""
-    grid.style.width = ""
-    wrapper.style.gridColumn = ""
-    wrapper.style.minHeight = ""
-
-    // Remove expanded centering styles + restore height cap
-    wrapper.querySelectorAll("[data-role='card-content'], [data-role='front-content'], [data-role='back-content']").forEach(el => {
-      el.style.maxWidth = ""
-      el.style.marginLeft = ""
-      el.style.marginRight = ""
-      el.style.width = ""
-      el.style.maxHeight = ""
-    })
-
-    this._updateExpandIcons(wrapper, false)
-    wrapper.removeAttribute("data-expanded")
-    this.expandedCardType = null
-    this._expandedWrapper = null
-    if (this.sortable) this.sortable.option("disabled", false)
-  }
-
-  _updateExpandIcons(wrapper, expanded) {
-    wrapper.querySelectorAll("[data-role='expand-btn']").forEach(btn => {
-      const expandIcon = btn.querySelector('[data-icon="expand"]')
-      const collapseIcon = btn.querySelector('[data-icon="collapse"]')
-      if (expandIcon) expandIcon.classList.toggle("hidden", expanded)
-      if (collapseIcon) collapseIcon.classList.toggle("hidden", !expanded)
-    })
   }
 
   // --- SortableJS Drag-and-Drop ---
@@ -532,16 +423,31 @@ export default class extends Controller {
       const spent = data.spent || 0
       const opBal = data.operating_balance || 0
 
+      const income = data.income_total || 0
+      let progressBar = ''
+      if (income > 0) {
+        const pct = Math.min((spent / income * 100), 100).toFixed(1)
+        const overBudget = spent > income
+        progressBar = `<div>
+          <div class="h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+            <div class="h-full bg-red-500 rounded-full" style="width: ${overBudget ? 100 : pct}%"></div>
+          </div>
+          <div class="flex justify-end mt-0.5">
+            <span class="text-[10px] text-gray-500 dark:text-gray-400">${overBudget ? 'Over budget' : pct + '% of income'}</span>
+          </div>
+        </div>`
+      }
       content.innerHTML = `
-        <div class="flex flex-col flex-1 justify-center py-4 space-y-6" style="font-variant-numeric: tabular-nums;">
+        <div class="flex flex-col flex-1 pt-5 space-y-4" style="font-variant-numeric: tabular-nums;">
           <div class="flex items-center justify-between">
             <span class="text-sm text-gray-500 dark:text-gray-400">Spent This Month</span>
-            <span class="text-2xl font-bold text-gray-800 dark:text-gray-100" style="font-size: 2rem;">${this._currency(spent)}</span>
+            <span class="number-primary text-red-500 dark:text-red-400 tabular-nums">${this._currency(spent)}</span>
           </div>
           <div class="flex items-center justify-between">
             <span class="text-sm text-gray-500 dark:text-gray-400">Cash In Spending Accounts</span>
-            <span class="text-2xl font-bold text-gray-800 dark:text-gray-100" style="font-size: 2rem;">${this._currency(opBal)}</span>
+            <span class="number-primary text-emerald-600 dark:text-emerald-400 tabular-nums">${this._currency(opBal)}</span>
           </div>
+          ${progressBar}
         </div>`
     }
 
@@ -619,14 +525,11 @@ export default class extends Controller {
     const liquidTotal = data.liquid_total || 0
     const liquidCount = data.liquid_count || 0
 
-    const reportIcon = `<a class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition" aria-label="Open accounts report" href="/reports/account_balance_history"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V9m4 7V5m4 11v-4m4 4V8"/></svg></a>`
-
     const frontContent = wrapper.querySelector("[data-role='front-content']")
     if (frontContent) {
       let html = `
         <div class="flex items-center justify-between mb-2">
           <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Accounts</h2>
-          ${reportIcon}
         </div>`
 
       if (accounts.length === 0) {
@@ -654,7 +557,6 @@ export default class extends Controller {
       let html = `
         <div class="flex items-center justify-between mb-2">
           <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Account Groups</h2>
-          ${reportIcon}
         </div>`
 
       if (accounts.length === 0) {
@@ -814,37 +716,45 @@ export default class extends Controller {
     const content = wrapper.querySelector("[data-role='card-content']")
     if (!content) return
 
-    // Calm Snapshot: equation stack (Instruction N)
-    let extraRows = ''
-    if (data.net_transfers && data.net_transfers !== 0) {
-      const label = data.net_transfers > 0 ? '+ Transfers In' : '\u2212 Transfers Out'
-      extraRows += `<div class="flex items-center justify-between"><span class="text-sm text-gray-600 dark:text-gray-400">${label}</span><span class="text-sm text-gray-700 dark:text-gray-300 tabular-nums">${this._currency(Math.abs(data.net_transfers))}</span></div>`
-    }
-    if (data.adjustments && data.adjustments !== 0) {
-      const label = data.adjustments > 0 ? '+ Adjustments' : '\u2212 Adjustments'
-      extraRows += `<div class="flex items-center justify-between"><span class="text-sm text-gray-600 dark:text-gray-400">${label}</span><span class="text-sm text-gray-700 dark:text-gray-300 tabular-nums">${this._currency(Math.abs(data.adjustments))}</span></div>`
-    }
-    content.innerHTML = `
-      <div class="space-y-1.5">
-        <div class="flex items-center justify-between">
-          <span class="text-sm text-gray-600 dark:text-gray-400">Beginning Balance</span>
-          <span class="text-sm text-gray-700 dark:text-gray-300 tabular-nums">${this._currency(data.beginning_balance)}</span>
+    // Scrollable line items + two-tone summary bar
+    const inc = data.income || 0
+    const spent = data.expenses || 0
+    const deposits = data.top_deposits || []
+    const synthetics = data.synthetic_deposits || []
+    const payments = data.top_payments || []
+
+    let lineItems = ''
+    deposits.forEach(d => {
+      lineItems += `<div class="flex items-center justify-between"><span class="text-xs text-gray-600 dark:text-gray-400 truncate mr-2">${this._esc(d.source || d.description || '')}</span><span class="text-xs font-medium text-emerald-600 dark:text-emerald-400 tabular-nums flex-shrink-0">+${this._currency(d.amount)}</span></div>`
+    })
+    synthetics.forEach(s => {
+      lineItems += `<div class="flex items-center justify-between bg-green-50 dark:bg-green-900/20 rounded px-1"><span class="text-xs text-emerald-700 dark:text-emerald-400 truncate mr-2">+ New Account (${this._esc(s.account_name)} \u00b7 added ${this._esc(s.added_date)})</span><span class="text-xs font-medium text-emerald-600 dark:text-emerald-400 tabular-nums flex-shrink-0">+${this._currency(s.amount)}</span></div>`
+    })
+    payments.forEach(p => {
+      lineItems += `<div class="flex items-center justify-between"><span class="text-xs text-gray-600 dark:text-gray-400 truncate mr-2">${this._esc(p.category || p.description || '')}</span><span class="text-xs font-medium text-red-500 dark:text-red-400 tabular-nums flex-shrink-0">\u2212${this._currency(p.amount)}</span></div>`
+    })
+
+    const barMax = Math.max(inc, spent)
+    let summaryBar = ''
+    if (barMax > 0) {
+      summaryBar = `<div class="mt-auto pt-2">
+        <div class="flex h-3 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700">
+          <div class="bg-emerald-500 rounded-l-full" style="width: ${(inc / barMax * 100).toFixed(1)}%"></div>
+          <div class="w-px bg-white dark:bg-gray-800 flex-shrink-0"></div>
+          <div class="bg-red-500 rounded-r-full" style="width: ${(spent / barMax * 100).toFixed(1)}%"></div>
         </div>
-        <div class="flex items-center justify-between">
-          <span class="text-sm text-gray-600 dark:text-gray-400">+ Deposits</span>
-          <span class="text-sm text-gray-700 dark:text-gray-300 tabular-nums">${this._currency(data.income)}</span>
-        </div>
-        <div class="flex items-center justify-between">
-          <span class="text-sm text-gray-600 dark:text-gray-400">\u2212 Payments</span>
-          <span class="text-sm text-gray-700 dark:text-gray-300 tabular-nums">${this._currency(data.expenses)}</span>
-        </div>
-        ${extraRows}
-        <div class="border-t border-gray-200 dark:border-gray-600 my-1"></div>
-        <div class="flex items-center justify-between">
-          <span class="text-base font-bold text-gray-900 dark:text-white">= Current Balance</span>
-          <span class="text-base font-bold text-gray-900 dark:text-white tabular-nums">${this._currency(data.current_balance)}</span>
+        <div class="flex justify-between mt-0.5">
+          <span class="text-[10px] text-emerald-600 dark:text-emerald-400 tabular-nums">Income ${this._currency(inc)}</span>
+          <span class="text-[10px] text-red-500 dark:text-red-400 tabular-nums">Spent ${this._currency(spent)}</span>
         </div>
       </div>`
+    }
+
+    content.innerHTML = `
+      <div class="max-h-[120px] overflow-y-auto space-y-1" style="font-variant-numeric: tabular-nums;">
+        ${lineItems || '<p class="text-xs text-gray-400 dark:text-gray-500 text-center py-2">No transactions this month.</p>'}
+      </div>
+      ${summaryBar}`
 
     // Back-of-card: Expanded Clarity (Instruction O)
     const backContent = wrapper.querySelector("[data-role='back-content']")
@@ -911,7 +821,7 @@ export default class extends Controller {
 
     const summary = wrapper.querySelector("[data-role='activity-summary']")
     if (summary) {
-      summary.innerHTML = `<span class="text-xs font-medium tabular-nums text-red-400/80 dark:text-red-400/60">Total: \u2212${this._currency(paymentTotal)}</span>` +
+      summary.innerHTML = `<span class="text-xs font-medium tabular-nums text-red-500 dark:text-red-400">Total: \u2212${this._currency(paymentTotal)}</span>` +
         `<span class="text-xs text-gray-400 dark:text-gray-500">${paymentCount} payment${paymentCount === 1 ? "" : "s"}</span>`
     }
 
@@ -925,7 +835,7 @@ export default class extends Controller {
             <span class="text-[11px] text-gray-400 dark:text-gray-500">${this._esc(item.date)}</span>
             <span class="text-xs text-gray-700 dark:text-gray-300 truncate">${this._esc(item.description)}</span>
           </div>
-          <span class="text-xs font-medium text-red-400/80 dark:text-red-400/60 tabular-nums flex-shrink-0">\u2212${this._currency(item.amount)}</span>
+          <span class="text-xs font-medium text-red-500 dark:text-red-400 tabular-nums flex-shrink-0">\u2212${this._currency(item.amount)}</span>
         </div>`
       })
       html += `</div>`
@@ -1062,7 +972,6 @@ export default class extends Controller {
     try {
       const state = {
         flippedCardTypes: this._getFlippedCardTypes(),
-        expandedCardType: this.expandedCardType || null,
         selectedTagIds: [...this._selectedTagIds],
         month: this.currentMonth,
         year: this.currentYear,
@@ -1164,15 +1073,7 @@ export default class extends Controller {
         })
       }
 
-      // 2. Restore expanded card
-      if (state.expandedCardType) {
-        const wrapper = this.slotWrapperTargets.find(
-          w => w.dataset.cardType === state.expandedCardType
-        )
-        if (wrapper) this._expandCard(wrapper)
-      }
-
-      // 3. Restore tag filter selections
+      // 2. Restore tag filter selections
       if (Array.isArray(state.selectedTagIds) && state.selectedTagIds.length > 0) {
         this._selectedTagIds = [...state.selectedTagIds]
         this._updateTagFilterLabel()

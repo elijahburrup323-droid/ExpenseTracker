@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_11_195440) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_11_210000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_stat_statements"
   enable_extension "plpgsql"
@@ -1061,11 +1061,15 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_11_195440) do
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "is_synthetic", default: false, null: false
+    t.string "synthetic_reason", limit: 50
+    t.string "source", limit: 50
     t.index ["account_id"], name: "index_transactions_on_account_id"
     t.index ["from_account_id"], name: "index_transactions_on_from_account_id"
     t.index ["spending_category_id"], name: "index_transactions_on_spending_category_id"
     t.index ["spending_type_id"], name: "index_transactions_on_spending_type_id"
     t.index ["to_account_id"], name: "index_transactions_on_to_account_id"
+    t.index ["user_id", "account_id", "synthetic_reason", "txn_date"], name: "idx_transactions_synthetic_unique", unique: true, where: "(is_synthetic = true)"
     t.index ["user_id", "account_id", "txn_date"], name: "idx_txns_user_account_date", where: "(account_id IS NOT NULL)"
     t.index ["user_id", "deleted_at"], name: "idx_txns_user_deleted"
     t.index ["user_id", "external_id"], name: "idx_txns_user_external_id", unique: true, where: "((external_id IS NOT NULL) AND (deleted_at IS NULL))"
