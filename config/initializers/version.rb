@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.97"
+APP_VERSION = "1.3.98"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,12 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.98",
+    changes: [
+      "Bug Fix: Dashboard Accounts card now includes financing instruments (loans, mortgages, etc.) in the Loans / Financing section. Previously compute_accounts_overview() only iterated Account records, so financing instruments with include_in_net_worth were missing from the Accounts card despite appearing in Net Worth."
+    ]
+  },
   {
     version: "1.3.97",
     changes: [

@@ -487,6 +487,22 @@ module Api
         end
         entry
       end
+      # Include financing instruments in the Accounts card as loan-group items
+      if defined?(FEATURE_FINANCING_ENABLED) && FEATURE_FINANCING_ENABLED
+        current_user.financing_instruments.where(include_in_net_worth: true).each do |fi|
+          bal = fi.current_principal.to_f
+          next if bal == 0
+          if fi.payable?
+            loan_total += bal
+            accounts_list << { name: fi.name, balance: -bal.round(2), display_balance: -bal.round(2),
+                               normal_balance_type: "CREDIT", account_group: "loan" }
+          else
+            accounts_list << { name: fi.name, balance: bal.round(2), display_balance: bal.round(2),
+                               normal_balance_type: "DEBIT", account_group: "other_asset" }
+          end
+        end
+      end
+
       nw = Account.net_worth_for(current_user.accounts, user: current_user)
 
       { accounts: accounts_list, total: nw[:accounts_total].round(2), liquid_total: liquid_total.round(2), liquid_count: liquid_count,
