@@ -21,7 +21,6 @@ import DbuController from "controllers/dbu_controller"
 import SettingsEmailsController from "controllers/settings_emails_controller"
 import SettingsPhonesController from "controllers/settings_phones_controller"
 import BugReportsController from "controllers/bug_reports_controller"
-import NetWorthPopulateController from "controllers/net_worth_populate_controller"
 import DashboardController from "controllers/dashboard_controller"
 import LegalTocController from "controllers/legal_toc_controller"
 import TransferMastersController from "controllers/transfer_masters_controller"
@@ -90,7 +89,6 @@ application.register("dbu", DbuController)
 application.register("settings-emails", SettingsEmailsController)
 application.register("settings-phones", SettingsPhonesController)
 application.register("bug-reports", BugReportsController)
-application.register("net-worth-populate", NetWorthPopulateController)
 application.register("dashboard", DashboardController)
 application.register("legal-toc", LegalTocController)
 application.register("transfer-masters", TransferMastersController)

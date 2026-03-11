@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.93"
+APP_VERSION = "1.3.94"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,13 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.94",
+    changes: [
+      "Hotfix: Remove orphaned admin populate endpoint reference from Net Worth dashboard card that caused 500 error after v1.3.93 route removal.",
+      "Cleanup: Remove unused net_worth_populate_controller.js and its Stimulus registration."
+    ]
+  },
   {
     version: "1.3.93",
     changes: [
