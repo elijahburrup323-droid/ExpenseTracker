@@ -144,42 +144,42 @@
 
     <%# === SECTION 2: Asset / Liability Breakdown (SCROLLABLE middle) === %>
     <div class="flex-1 min-h-0 overflow-y-auto" data-role="back-content">
-      <div class="grid grid-cols-2 gap-6 px-2" data-role="nw-breakdown">
+      <div class="grid grid-cols-2 gap-4" data-role="nw-breakdown">
         <%# Assets column %>
         <div>
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Assets</span>
-            <span class="text-xs font-bold text-gray-900 dark:text-white tabular-nums" data-net-worth-breakdown-target="assetTotal"><%= number_to_currency(@net_worth_assets) %></span>
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Assets</span>
+            <span class="text-[10px] font-semibold text-gray-900 dark:text-white tabular-nums" data-net-worth-breakdown-target="assetTotal"><%= number_to_currency(@net_worth_assets) %></span>
           </div>
-          <div class="space-y-1" data-net-worth-breakdown-target="assetList">
+          <div class="space-y-0.5" data-net-worth-breakdown-target="assetList">
             <% if @nw_asset_items.any? %>
               <% @nw_asset_items.each do |item| %>
                 <div class="flex items-center justify-between">
-                  <span class="text-xs text-gray-600 dark:text-gray-400 truncate mr-2"><%= item[:name] %></span>
-                  <span class="text-xs font-medium text-gray-900 dark:text-white tabular-nums flex-shrink-0"><%= number_to_currency(item[:value]) %></span>
+                  <span class="text-[11px] text-gray-600 dark:text-gray-400 truncate mr-1"><%= item[:name] %></span>
+                  <span class="text-[11px] font-medium text-gray-900 dark:text-white tabular-nums flex-shrink-0"><%= number_to_currency(item[:value]) %></span>
                 </div>
               <% end %>
             <% else %>
-              <p class="text-xs text-gray-400 dark:text-gray-500">No assets.</p>
+              <p class="text-[10px] text-gray-400 dark:text-gray-500">No assets.</p>
             <% end %>
           </div>
         </div>
         <%# Liabilities column %>
         <div>
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Liabilities</span>
-            <span class="text-xs font-bold text-red-500 dark:text-red-400 tabular-nums" data-net-worth-breakdown-target="liabilityTotal"><%= @net_worth_liabilities > 0 ? "-" : "" %><%= number_to_currency(@net_worth_liabilities) %></span>
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Liabilities</span>
+            <span class="text-[10px] font-semibold text-red-500 dark:text-red-400 tabular-nums" data-net-worth-breakdown-target="liabilityTotal"><%= @net_worth_liabilities > 0 ? "-" : "" %><%= number_to_currency(@net_worth_liabilities) %></span>
           </div>
-          <div class="space-y-1" data-net-worth-breakdown-target="liabilityList">
+          <div class="space-y-0.5" data-net-worth-breakdown-target="liabilityList">
             <% if @nw_liability_items.any? %>
               <% @nw_liability_items.each do |item| %>
                 <div class="flex items-center justify-between">
-                  <span class="text-xs text-gray-600 dark:text-gray-400 truncate mr-2"><%= item[:name] %></span>
-                  <span class="text-xs font-medium text-red-500 dark:text-red-400 tabular-nums flex-shrink-0">-<%= number_to_currency(item[:value]) %></span>
+                  <span class="text-[11px] text-gray-600 dark:text-gray-400 truncate mr-1"><%= item[:name] %></span>
+                  <span class="text-[11px] font-medium text-red-500 dark:text-red-400 tabular-nums flex-shrink-0">-<%= number_to_currency(item[:value]) %></span>
                 </div>
               <% end %>
             <% else %>
-              <p class="text-xs text-gray-400 dark:text-gray-500">No liabilities.</p>
+              <p class="text-[10px] text-gray-400 dark:text-gray-500">No liabilities.</p>
             <% end %>
           </div>
         </div>
