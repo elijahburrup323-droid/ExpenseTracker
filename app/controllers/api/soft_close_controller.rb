@@ -49,41 +49,8 @@ module Api
         }, status: :conflict
       end
 
-      # Execute close (same logic as OpenMonthMastersController#close)
-      closing_year = om.current_year
-      closing_month = om.current_month
-
-      ActiveRecord::Base.transaction do
-        om.generate_snapshots!
-
-        next_month = om.current_month + 1
-        next_year = om.current_year
-        if next_month > 12
-          next_month = 1
-          next_year += 1
-        end
-
-        om.update!(
-          is_closed: false,
-          locked_at: Time.current,
-          locked_by_user_id: current_user.id,
-          current_year: next_year,
-          current_month: next_month,
-          has_data: false,
-          first_data_at: nil,
-          first_data_source: nil
-        )
-
-        # Record the closed month in the ledger
-        CloseMonthMaster.find_or_initialize_by(
-          user_id: current_user.id,
-          closed_year: closing_year,
-          closed_month: closing_month
-        ).update!(
-          closed_at: Time.current,
-          closed_by_user_id: current_user.id
-        )
-      end
+      # Execute close via single canonical writer (OpenMonthMaster#soft_close!)
+      om.soft_close!(current_user)
 
       new_label = Date.new(om.current_year, om.current_month, 1).strftime("%B %Y")
       render json: { success: true, new_month_label: new_label }

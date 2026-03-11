@@ -24,53 +24,45 @@ class OpenMonthMaster < ApplicationRecord
     )
   end
 
-  # Section 5: Generate snapshots when closing a month
-  def generate_snapshots!
-    year = current_year
-    month = current_month
-    month_start = Date.new(year, month, 1)
-    month_end = month_start.end_of_month
+  # Soft close: snapshot the month, record the close, and advance to next month.
+  # This is the ONLY allowed writer for snapshot tables and close_month_master.
+  # Write-on-soft-close only. Do not call from CRUD or dashboard logic.
+  def soft_close!(closing_user)
+    raise "Month is already closed" if is_closed
+
+    closing_year = current_year
+    closing_month = current_month
 
     ActiveRecord::Base.transaction do
-      # Per-account snapshots
-      user.accounts.each do |account|
-        AccountMonthSnapshot.find_or_initialize_by(
-          user_id: user_id, year: year, month: month, account_id: account.id
-        ).update!(
-          beginning_balance: account.beginning_balance,
-          ending_balance: account.balance,
-          is_stale: false
-        )
+      generate_snapshots!
+
+      next_month = current_month + 1
+      next_year = current_year
+      if next_month > 12
+        next_month = 1
+        next_year += 1
       end
 
-      # Dashboard aggregated snapshot
-      budget_accounts = user.accounts.where(include_in_budget: true)
-      # Read from canonical transactions table (Transaction Engine)
-      month_txns = user.transactions.where(txn_date: month_start..month_end)
-      total_spent = month_txns.payments.sum(:amount)
-      total_income = month_txns.deposits.sum(:amount)
-      # Budget totals: DEBIT-only for cash position
-      credit_ids = AccountTypeMaster.where(normal_balance_type: "CREDIT").pluck(:id)
-      debit_budget = budget_accounts.where.not(account_type_master_id: credit_ids)
-      beg_bal = debit_budget.sum(:beginning_balance)
-      end_bal = debit_budget.sum(:balance)
-      nw = Account.net_worth_for(user.accounts, user: user)[:net_worth]
-
-      DashboardMonthSnapshot.find_or_initialize_by(
-        user_id: user_id, year: year, month: month
-      ).update!(
-        total_spent: total_spent,
-        total_income: total_income,
-        beginning_balance: beg_bal,
-        ending_balance: end_bal,
-        net_worth: nw,
-        is_stale: false
+      update!(
+        is_closed: false,
+        locked_at: Time.current,
+        locked_by_user_id: closing_user.id,
+        current_year: next_year,
+        current_month: next_month,
+        has_data: false,
+        first_data_at: nil,
+        first_data_source: nil
       )
 
-      # Net worth snapshot for chart history
-      NetWorthSnapshot.find_or_initialize_by(
-        user_id: user_id, snapshot_date: month_end
-      ).update!(amount: nw)
+      # Write-on-soft-close only. Do not call from CRUD or dashboard logic.
+      CloseMonthMaster.find_or_initialize_by(
+        user_id: user_id,
+        closed_year: closing_year,
+        closed_month: closing_month
+      ).update!(
+        closed_at: Time.current,
+        closed_by_user_id: closing_user.id
+      )
     end
   end
 
@@ -105,5 +97,54 @@ class OpenMonthMaster < ApplicationRecord
         last_reopened_by_user_id: reopening_user.id
       )
     end
+  end
+
+  private
+
+  # Write-on-soft-close only. Do not call from CRUD or dashboard logic.
+  # This method is private — only callable via soft_close! above.
+  def generate_snapshots!
+    year = current_year
+    month = current_month
+    month_start = Date.new(year, month, 1)
+    month_end = month_start.end_of_month
+
+    # Per-account snapshots
+    user.accounts.each do |account|
+      AccountMonthSnapshot.find_or_initialize_by(
+        user_id: user_id, year: year, month: month, account_id: account.id
+      ).update!(
+        beginning_balance: account.beginning_balance,
+        ending_balance: account.balance,
+        is_stale: false
+      )
+    end
+
+    # Dashboard aggregated snapshot
+    budget_accounts = user.accounts.where(include_in_budget: true)
+    month_txns = user.transactions.where(txn_date: month_start..month_end)
+    total_spent = month_txns.payments.sum(:amount)
+    total_income = month_txns.deposits.sum(:amount)
+    credit_ids = AccountTypeMaster.where(normal_balance_type: "CREDIT").pluck(:id)
+    debit_budget = budget_accounts.where.not(account_type_master_id: credit_ids)
+    beg_bal = debit_budget.sum(:beginning_balance)
+    end_bal = debit_budget.sum(:balance)
+    nw = Account.net_worth_for(user.accounts, user: user)[:net_worth]
+
+    DashboardMonthSnapshot.find_or_initialize_by(
+      user_id: user_id, year: year, month: month
+    ).update!(
+      total_spent: total_spent,
+      total_income: total_income,
+      beginning_balance: beg_bal,
+      ending_balance: end_bal,
+      net_worth: nw,
+      is_stale: false
+    )
+
+    # Net worth snapshot for chart history
+    NetWorthSnapshot.find_or_initialize_by(
+      user_id: user_id, snapshot_date: month_end
+    ).update!(amount: nw)
   end
 end

@@ -307,8 +307,8 @@ class DashboardController < ApplicationController
       end
       @nw_metric_mode = :cash_coverage
     end
-    NetWorthSnapshot.backfill_for_user!(current_user)
-    @net_worth_snapshots = current_user.net_worth_snapshots.eligible_for_user(current_user).recent(6).to_a.sort_by(&:snapshot_date)
+    # Read-only: closed months from snapshots (written by soft close), current month computed live
+    @net_worth_snapshots = NetWorthSnapshot.chart_data_for_user(current_user)
     if @net_worth_snapshots.size >= 2
       prev_amount = @net_worth_snapshots[-2].amount
       @net_worth_change = @net_worth - prev_amount

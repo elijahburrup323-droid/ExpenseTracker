@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.92"
+APP_VERSION = "1.3.93"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,17 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.93",
+    changes: [
+      "Snapshot Write Removal: All snapshot table writes (account_month_snapshots, dashboard_month_snapshots, net_worth_snapshots) and close_month_master writes are now exclusively performed during soft close via OpenMonthMaster#soft_close!.",
+      "Snapshot Write Removal: Removed NetWorthSnapshot.backfill_for_user! — dashboard no longer writes to net_worth_snapshots on every load. Current-month net worth is computed live via read-only NetWorthSnapshot.chart_data_for_user.",
+      "Snapshot Write Removal: Removed admin-only POST /api/net_worth_snapshots/populate endpoint and route.",
+      "Snapshot Write Removal: Removed snapshot generation from OpenMonthMastersController#update — month navigation no longer writes snapshots.",
+      "Soft Close Centralization: Duplicate close logic in SoftCloseController#confirm and OpenMonthMastersController#close consolidated into single OpenMonthMaster#soft_close! method wrapping all writes in one DB transaction.",
+      "Hard Guards: generate_snapshots! is now private on OpenMonthMaster — only callable from soft_close!. Code comments mark all snapshot/close writers as write-on-soft-close-only."
+    ]
+  },
   {
     version: "1.3.92",
     changes: [

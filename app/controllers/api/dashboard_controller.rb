@@ -496,8 +496,8 @@ module Api
     def compute_net_worth(ctx)
       nw = Account.net_worth_for(current_user.accounts, user: current_user)
       net_worth_val = nw[:net_worth].round(2)
-      NetWorthSnapshot.backfill_for_user!(current_user)
-      snapshots = current_user.net_worth_snapshots.eligible_for_user(current_user).recent(6).to_a.sort_by(&:snapshot_date)
+      # Read-only: closed months from snapshots (written by soft close), current month computed live
+      snapshots = NetWorthSnapshot.chart_data_for_user(current_user)
       if snapshots.size >= 2
         prev_amount = snapshots[-2].amount.to_f
         nw_change = net_worth_val - prev_amount
