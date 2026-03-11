@@ -936,24 +936,65 @@ export default class extends Controller {
   }
 
   _updatePulseStrip(pulse) {
-    const warn = `<svg class="inline w-3 h-3 -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>`
-    const parts = [`<span class="font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider" style="font-size: 10px;">Financial Pulse</span>`]
+    const _pillColor = (val, thresholds) => {
+      // thresholds: { green: fn, amber: fn } — returns color name
+      if (thresholds.green(val)) return "emerald"
+      if (thresholds.amber(val)) return "amber"
+      return "red"
+    }
+
+    let html = `<span class="font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider" style="font-size: 10px;">Financial Pulse</span>`
+    html += `<div class="flex flex-wrap gap-2">`
+
+    // Cash Runway pill
     if (pulse.liquidity != null) {
-      const cls = pulse.liquidity < 1.0 ? "text-amber-600 dark:text-amber-400 font-medium" : ""
-      parts.push(`<span class="${cls}">Cash ${pulse.liquidity} mo${pulse.liquidity < 1.0 ? " " + warn : ""}</span>`)
+      const c = _pillColor(pulse.liquidity, { green: v => v >= 3, amber: v => v >= 1 })
+      html += `<div class="flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-${c}-50 dark:bg-${c}-900/20 border-${c}-200 dark:border-${c}-800 text-${c}-700 dark:text-${c}-400 text-xs flex-1 min-w-[140px]">
+        <span class="flex-shrink-0">&#x1f6e1;</span>
+        <span class="font-medium">Cash Runway</span>
+        <span class="ml-auto tabular-nums font-semibold">${pulse.liquidity} mo</span>
+        <span class="text-${c}-400 dark:text-${c}-500 cursor-help" title="How many months your cash accounts could cover your average monthly spending. Healthy: 3+ months.">&#9432;</span>
+      </div>`
     }
+
+    // Debt Ratio pill
     if (pulse.debt_ratio != null) {
-      const cls = pulse.debt_ratio > 100 ? "text-red-600 dark:text-red-400 font-medium" : ""
-      parts.push(`<span class="${cls}">Debt ${pulse.debt_ratio}%${pulse.debt_ratio > 100 ? " " + warn : ""}</span>`)
+      const c = _pillColor(pulse.debt_ratio, { green: v => v < 36, amber: v => v < 50 })
+      html += `<div class="flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-${c}-50 dark:bg-${c}-900/20 border-${c}-200 dark:border-${c}-800 text-${c}-700 dark:text-${c}-400 text-xs flex-1 min-w-[140px]">
+        <span class="flex-shrink-0">&#x1f4ca;</span>
+        <span class="font-medium">Debt Ratio</span>
+        <span class="ml-auto tabular-nums font-semibold">${pulse.debt_ratio}%</span>
+        <span class="text-${c}-400 dark:text-${c}-500 cursor-help" title="Your total liabilities divided by total assets. Below 36% is healthy; above 50% is high risk.">&#9432;</span>
+      </div>`
     } else {
-      parts.push(`<span>Debt &mdash;</span>`)
+      html += `<div class="flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 text-xs flex-1 min-w-[140px]">
+        <span class="flex-shrink-0">&#x1f4ca;</span>
+        <span class="font-medium">Debt Ratio</span>
+        <span class="ml-auto tabular-nums font-semibold">&mdash;</span>
+        <span class="text-gray-400 dark:text-gray-500 cursor-help" title="Your total liabilities divided by total assets. Below 36% is healthy; above 50% is high risk.">&#9432;</span>
+      </div>`
     }
+
+    // Savings Rate pill
     if (pulse.savings_rate != null) {
-      parts.push(`<span>Savings ${pulse.savings_rate}%</span>`)
+      const c = _pillColor(pulse.savings_rate, { green: v => v >= 20, amber: v => v >= 5 })
+      html += `<div class="flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-${c}-50 dark:bg-${c}-900/20 border-${c}-200 dark:border-${c}-800 text-${c}-700 dark:text-${c}-400 text-xs flex-1 min-w-[140px]">
+        <span class="flex-shrink-0">&#x1f331;</span>
+        <span class="font-medium">Savings Rate</span>
+        <span class="ml-auto tabular-nums font-semibold">${pulse.savings_rate}%</span>
+        <span class="text-${c}-400 dark:text-${c}-500 cursor-help" title="Percentage of your income that went toward savings or reduced debt this month. Target: 20%+.">&#9432;</span>
+      </div>`
     } else {
-      parts.push(`<span>Savings &mdash;</span>`)
+      html += `<div class="flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 text-xs flex-1 min-w-[140px]">
+        <span class="flex-shrink-0">&#x1f331;</span>
+        <span class="font-medium">Savings Rate</span>
+        <span class="ml-auto tabular-nums font-semibold">&mdash;</span>
+        <span class="text-gray-400 dark:text-gray-500 cursor-help" title="Percentage of your income that went toward savings or reduced debt this month. Target: 20%+.">&#9432;</span>
+      </div>`
     }
-    this.pulseStripTarget.innerHTML = parts.join("")
+
+    html += `</div>`
+    this.pulseStripTarget.innerHTML = html
   }
 
   _esc(str) {
