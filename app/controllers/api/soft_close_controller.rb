@@ -155,12 +155,14 @@ module Api
     def build_summary(month_start, month_end)
       range = month_start...month_end
 
-      payments_total = current_user.payments
-        .where(payment_date: range, deleted_at: nil)
+      # Use canonical transactions table for consistency with what generate_snapshots! saves.
+      # This ensures the summary shown before closing matches the snapshot data.
+      payments_total = current_user.transactions.payments
+        .where(txn_date: range)
         .sum(:amount).to_f
 
-      deposits_total = current_user.income_entries
-        .where(entry_date: range, deleted_at: nil)
+      deposits_total = current_user.transactions.deposits
+        .where(txn_date: range)
         .sum(:amount).to_f
 
       transfers_total = current_user.transfer_masters

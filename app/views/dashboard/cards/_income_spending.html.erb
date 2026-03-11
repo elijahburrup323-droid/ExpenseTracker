@@ -33,6 +33,18 @@
           <span class="text-sm text-gray-600 dark:text-gray-400">&minus; Payments</span>
           <span class="text-sm text-gray-700 dark:text-gray-300 tabular-nums"><%= number_to_currency(@current_month_payments) %></span>
         </div>
+        <% if @net_transfers && @net_transfers != 0 %>
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-gray-600 dark:text-gray-400"><%= @net_transfers > 0 ? "+ Transfers In" : "&minus; Transfers Out".html_safe %></span>
+            <span class="text-sm text-gray-700 dark:text-gray-300 tabular-nums"><%= number_to_currency(@net_transfers.abs) %></span>
+          </div>
+        <% end %>
+        <% if @budget_adjustments && @budget_adjustments != 0 %>
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-gray-600 dark:text-gray-400"><%= @budget_adjustments > 0 ? "+ Adjustments" : "&minus; Adjustments".html_safe %></span>
+            <span class="text-sm text-gray-700 dark:text-gray-300 tabular-nums"><%= number_to_currency(@budget_adjustments.abs) %></span>
+          </div>
+        <% end %>
         <div class="border-t border-gray-200 dark:border-gray-600 my-1"></div>
         <div class="flex items-center justify-between">
           <span class="number-base text-gray-900 dark:text-white">= Current Balance</span>
@@ -92,6 +104,18 @@
           <span class="text-xs text-gray-500 dark:text-gray-400">&minus; Payments</span>
           <span class="text-xs text-gray-600 dark:text-gray-300 tabular-nums"><%= number_to_currency(@current_month_payments) %></span>
         </div>
+        <% if @net_transfers && @net_transfers != 0 %>
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-gray-500 dark:text-gray-400"><%= @net_transfers > 0 ? "+ Transfers In" : "&minus; Transfers Out".html_safe %></span>
+            <span class="text-xs text-gray-600 dark:text-gray-300 tabular-nums"><%= number_to_currency(@net_transfers.abs) %></span>
+          </div>
+        <% end %>
+        <% if @budget_adjustments && @budget_adjustments != 0 %>
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-gray-500 dark:text-gray-400"><%= @budget_adjustments > 0 ? "+ Adjustments" : "&minus; Adjustments".html_safe %></span>
+            <span class="text-xs text-gray-600 dark:text-gray-300 tabular-nums"><%= number_to_currency(@budget_adjustments.abs) %></span>
+          </div>
+        <% end %>
         <div class="border-t border-gray-200 dark:border-gray-600 my-0.5"></div>
         <div class="flex items-center justify-between">
           <span class="text-sm font-bold text-gray-900 dark:text-white">= Current Balance</span>

@@ -598,8 +598,27 @@ module Api
                        .where.not(beginning_balance: 0)
                        .order(:created_at)
                        .map { |a| { name: a.name, beginning_balance: a.beginning_balance.to_f } }
-      # Current Balance = Beginning Balance + Deposits − Payments (deterministic formula)
-      current_balance = (beginning_balance + income - expenses).round(2)
+      # Net transfers: money flowing in/out of budget accounts from non-budget accounts
+      transfers_in = current_user.transactions.transfers
+                       .where(to_account_id: ctx[:budget_ids])
+                       .where.not(from_account_id: ctx[:budget_ids])
+                       .where(txn_date: ctx[:month_start]...ctx[:month_end])
+                       .sum(:amount).to_f
+      transfers_out = current_user.transactions.transfers
+                        .where(from_account_id: ctx[:budget_ids])
+                        .where.not(to_account_id: ctx[:budget_ids])
+                        .where(txn_date: ctx[:month_start]...ctx[:month_end])
+                        .sum(:amount).to_f
+      net_transfers = (transfers_in - transfers_out).round(2)
+
+      # Balance adjustments on budget accounts this month
+      adjustments = current_user.balance_adjustments
+                      .where(account_id: ctx[:budget_ids])
+                      .where(adjustment_date: ctx[:month_start]...ctx[:month_end])
+                      .sum(:amount).to_f.round(2)
+
+      # Current Balance = Beginning + Deposits − Payments + Net Transfers + Adjustments
+      current_balance = (beginning_balance + income - expenses + net_transfers + adjustments).round(2)
 
       net_change = (income - expenses).round(2)
       savings_rate = income > 0 ? ((net_change / income) * 100).round(1) : nil
@@ -627,7 +646,7 @@ module Api
        .pluck(:description, :amount)
        .map { |desc, amt| { source: desc, amount: amt.to_f } }
 
-      { beginning_balance: beginning_balance, income: income, expenses: expenses, net_change: net_change, savings_rate: savings_rate, new_accounts: new_accounts, current_balance: current_balance, top_payments: top_payments, top_deposits: top_deposits }
+      { beginning_balance: beginning_balance, income: income, expenses: expenses, net_change: net_change, savings_rate: savings_rate, new_accounts: new_accounts, current_balance: current_balance, net_transfers: net_transfers, adjustments: adjustments, top_payments: top_payments, top_deposits: top_deposits }
     end
 
     RECENT_ACTIVITY_PAGE_SIZE = 10

@@ -814,7 +814,16 @@ export default class extends Controller {
     const content = wrapper.querySelector("[data-role='card-content']")
     if (!content) return
 
-    // Calm Snapshot: 4-line equation stack (Instruction N)
+    // Calm Snapshot: equation stack (Instruction N)
+    let extraRows = ''
+    if (data.net_transfers && data.net_transfers !== 0) {
+      const label = data.net_transfers > 0 ? '+ Transfers In' : '\u2212 Transfers Out'
+      extraRows += `<div class="flex items-center justify-between"><span class="text-sm text-gray-600 dark:text-gray-400">${label}</span><span class="text-sm text-gray-700 dark:text-gray-300 tabular-nums">${this._currency(Math.abs(data.net_transfers))}</span></div>`
+    }
+    if (data.adjustments && data.adjustments !== 0) {
+      const label = data.adjustments > 0 ? '+ Adjustments' : '\u2212 Adjustments'
+      extraRows += `<div class="flex items-center justify-between"><span class="text-sm text-gray-600 dark:text-gray-400">${label}</span><span class="text-sm text-gray-700 dark:text-gray-300 tabular-nums">${this._currency(Math.abs(data.adjustments))}</span></div>`
+    }
     content.innerHTML = `
       <div class="space-y-1.5">
         <div class="flex items-center justify-between">
@@ -829,6 +838,7 @@ export default class extends Controller {
           <span class="text-sm text-gray-600 dark:text-gray-400">\u2212 Payments</span>
           <span class="text-sm text-gray-700 dark:text-gray-300 tabular-nums">${this._currency(data.expenses)}</span>
         </div>
+        ${extraRows}
         <div class="border-t border-gray-200 dark:border-gray-600 my-1"></div>
         <div class="flex items-center justify-between">
           <span class="text-base font-bold text-gray-900 dark:text-white">= Current Balance</span>
@@ -847,6 +857,14 @@ export default class extends Controller {
       bhtml += `<div class="flex items-center justify-between"><span class="text-xs text-gray-500 dark:text-gray-400">Beginning Balance</span><span class="text-xs text-gray-600 dark:text-gray-300 tabular-nums">${this._currency(data.beginning_balance)}</span></div>`
       bhtml += `<div class="flex items-center justify-between"><span class="text-xs text-gray-500 dark:text-gray-400">+ Deposits</span><span class="text-xs text-gray-600 dark:text-gray-300 tabular-nums">${this._currency(data.income)}</span></div>`
       bhtml += `<div class="flex items-center justify-between"><span class="text-xs text-gray-500 dark:text-gray-400">\u2212 Payments</span><span class="text-xs text-gray-600 dark:text-gray-300 tabular-nums">${this._currency(data.expenses)}</span></div>`
+      if (data.net_transfers && data.net_transfers !== 0) {
+        const tLabel = data.net_transfers > 0 ? '+ Transfers In' : '\u2212 Transfers Out'
+        bhtml += `<div class="flex items-center justify-between"><span class="text-xs text-gray-500 dark:text-gray-400">${tLabel}</span><span class="text-xs text-gray-600 dark:text-gray-300 tabular-nums">${this._currency(Math.abs(data.net_transfers))}</span></div>`
+      }
+      if (data.adjustments && data.adjustments !== 0) {
+        const aLabel = data.adjustments > 0 ? '+ Adjustments' : '\u2212 Adjustments'
+        bhtml += `<div class="flex items-center justify-between"><span class="text-xs text-gray-500 dark:text-gray-400">${aLabel}</span><span class="text-xs text-gray-600 dark:text-gray-300 tabular-nums">${this._currency(Math.abs(data.adjustments))}</span></div>`
+      }
       bhtml += `<div class="border-t border-gray-200 dark:border-gray-600 my-0.5"></div>`
       bhtml += `<div class="flex items-center justify-between"><span class="text-sm font-bold text-gray-900 dark:text-white">= Current Balance</span><span class="text-sm font-bold text-gray-900 dark:text-white tabular-nums">${this._currency(data.current_balance)}</span></div>`
       bhtml += `</div>`

@@ -210,6 +210,11 @@ class DashboardController < ApplicationController
     end
 
     # Card 1 back (expanded): Deposits Breakdown by description
+    # Pre-compute income total here (also used by Card 4 below)
+    @current_month_income = current_user.transactions.deposits
+                                        .where(account_id: budget_accounts.select(:id))
+                                        .where(txn_date: @month_start...@month_end)
+                                        .sum(:amount)
     income_total = @current_month_income.to_f
     @deposits_breakdown = current_user.transactions.deposits
       .where(account_id: budget_accounts.select(:id))
@@ -331,14 +336,29 @@ class DashboardController < ApplicationController
                                           .where(txn_date: @month_start...@month_end)
                                           .sum(:amount)
 
-    # Deposits in open month for budget accounts (only received entries are in canonical table)
-    @current_month_income = current_user.transactions.deposits
-                                        .where(account_id: budget_accounts.select(:id))
-                                        .where(txn_date: @month_start...@month_end)
-                                        .sum(:amount)
+    # @current_month_income already computed above (Card 1 deposits breakdown)
 
-    # Current Balance = Beginning Balance + Deposits − Payments (deterministic formula)
-    @budget_total = (@beginning_balance_total + @current_month_income.to_f - @current_month_payments.to_f).round(2)
+    # Net transfers: money flowing in/out of budget accounts from non-budget accounts
+    @transfers_into_budget = current_user.transactions.transfers
+                                         .where(to_account_id: budget_ids)
+                                         .where.not(from_account_id: budget_ids)
+                                         .where(txn_date: @month_start...@month_end)
+                                         .sum(:amount).to_f
+    @transfers_out_of_budget = current_user.transactions.transfers
+                                           .where(from_account_id: budget_ids)
+                                           .where.not(to_account_id: budget_ids)
+                                           .where(txn_date: @month_start...@month_end)
+                                           .sum(:amount).to_f
+    @net_transfers = (@transfers_into_budget - @transfers_out_of_budget).round(2)
+
+    # Balance adjustments on budget accounts this month
+    @budget_adjustments = current_user.balance_adjustments
+                                      .where(account_id: budget_ids)
+                                      .where(adjustment_date: @month_start...@month_end)
+                                      .sum(:amount).to_f.round(2)
+
+    # Current Balance = Beginning + Deposits − Payments + Net Transfers + Adjustments
+    @budget_total = (@beginning_balance_total + @current_month_income.to_f - @current_month_payments.to_f + @net_transfers + @budget_adjustments).round(2)
 
     # Accounts added to budget in open month (for "New Account Added" line items)
     @new_budget_accounts = budget_accounts.where(created_at: @month_start.beginning_of_day...@month_end.beginning_of_day)

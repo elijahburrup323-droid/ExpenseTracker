@@ -1,4 +1,4 @@
-APP_VERSION = "1.3.94"
+APP_VERSION = "1.3.95"
 QA_MODE = false  # Set to true during production QA testing, false after moving to Ready for QA
 TEXT_SCALE_TEST_MODE = true  # true = show text scale control on every page for all users; false = Settings only
 MANUAL_CHANGE_SEQ = 0  # Manual Change Requests sequence for current version. Reset to 0 when bumping APP_VERSION.
@@ -12,6 +12,16 @@ FEATURE_FINANCING_ENABLED = true
 
 # Full version history for Release Notes page (up to 30 entries)
 APP_ALL_VERSIONS = [
+  {
+    version: "1.3.95",
+    changes: [
+      "Bug Fix: Beginning balance now rolls forward after month close. Previously account.beginning_balance was never updated after soft_close!, causing all subsequent month snapshots to store the original account creation value instead of the actual month-start balance.",
+      "Bug Fix: DashboardMonthSnapshot beginning_balance now computed from AccountBalanceService instead of the static account field, ensuring accurate historical data.",
+      "Bug Fix: Deposits breakdown percentages on dashboard Card 1 were always 0% because income_total was read from an uninitialized variable. Moved income computation before its first use.",
+      "Bug Fix: Card 4 (Income & Spending) current balance formula now includes net transfers to/from non-budget accounts and balance adjustments. Previously only deposits and payments were counted, causing the displayed balance to diverge from actual account totals.",
+      "Data Fix: Backfilled 54 incorrect snapshot beginning_balance values across Users 1, 2. Resynced 3 drifted account balances for User 6 (Jaci). Corrected 20 dashboard snapshot beginning_balance values."
+    ]
+  },
   {
     version: "1.3.94",
     changes: [

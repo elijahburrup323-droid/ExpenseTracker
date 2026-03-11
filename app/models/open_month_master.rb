@@ -36,6 +36,12 @@ class OpenMonthMaster < ApplicationRecord
     ActiveRecord::Base.transaction do
       generate_snapshots!
 
+      # Roll forward: set each account's beginning_balance to its current balance
+      # so the next month starts from the correct baseline.
+      user.accounts.each do |account|
+        account.update_columns(beginning_balance: account.balance)
+      end
+
       next_month = current_month + 1
       next_year = current_year
       if next_month > 12
@@ -127,7 +133,11 @@ class OpenMonthMaster < ApplicationRecord
     total_income = month_txns.deposits.sum(:amount)
     credit_ids = AccountTypeMaster.where(normal_balance_type: "CREDIT").pluck(:id)
     debit_budget = budget_accounts.where.not(account_type_master_id: credit_ids)
-    beg_bal = debit_budget.sum(:beginning_balance)
+    debit_budget_ids = debit_budget.pluck(:id)
+    # Compute beginning balance from AccountBalanceService (day before month start)
+    # instead of the static account.beginning_balance field
+    computed_beg = AccountBalanceService.balances_as_of(user, month_start - 1.day)
+    beg_bal = computed_beg.select { |id, _| debit_budget_ids.include?(id) }.values.sum
     end_bal = debit_budget.sum(:balance)
     nw = Account.net_worth_for(user.accounts, user: user)[:net_worth]
 
