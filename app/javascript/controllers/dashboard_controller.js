@@ -535,11 +535,39 @@ export default class extends Controller {
       if (accounts.length === 0) {
         html += `<p class="text-sm text-gray-400 dark:text-gray-500">No accounts yet.</p>`
       } else {
-        const plural = liquidCount === 1 ? '' : 's'
-        html += `<div class="flex flex-col items-center justify-center py-4">
-          <span class="text-2xl font-bold text-gray-900 dark:text-white tabular-nums">Total Cash: ${this._currency(liquidTotal)}</span>
-          <span class="text-sm text-gray-500 dark:text-gray-400 mt-1">Across ${liquidCount} liquid account${plural}</span>
-        </div>`
+        // Group accounts by account_group for grouped row display
+        const groups = {}
+        const groupOrder = ["liquid", "credit", "loan", "other_asset"]
+        const groupLabels = { liquid: "Liquid Accounts", credit: "Credit Cards", loan: "Loans / Financing", other_asset: "Other Assets" }
+        accounts.forEach(a => {
+          const g = a.account_group || "other_asset"
+          if (!groups[g]) groups[g] = []
+          groups[g].push(a)
+        })
+        const totalRowCount = Object.values(groups).reduce((sum, arr) => sum + 1 + arr.length, 0)
+        const scrollClass = totalRowCount > 8 ? 'max-h-[200px] overflow-y-auto' : ''
+        html += `<div class="${scrollClass} space-y-1 pt-1" style="font-variant-numeric: tabular-nums;">`
+        for (const gKey of groupOrder) {
+          const accts = groups[gKey]
+          if (!accts || accts.length === 0) continue
+          const isLiab = gKey === "credit" || gKey === "loan"
+          const groupTotal = accts.reduce((s, a) => s + a.balance, 0)
+          const displayGroupTotal = isLiab && Math.abs(groupTotal) > 0 ? `(${this._currency(Math.abs(groupTotal))})` : this._currency(groupTotal)
+          const totalColor = isLiab ? 'text-red-500 dark:text-red-400' : 'text-gray-900 dark:text-white'
+          html += `<div class="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 rounded px-2 py-1">
+            <span class="text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">${this._esc(groupLabels[gKey] || gKey)}</span>
+            <span class="text-[11px] font-semibold tabular-nums ${totalColor}">${displayGroupTotal}</span>
+          </div>`
+          accts.forEach(a => {
+            const balColor = isLiab ? 'text-red-500 dark:text-red-400' : 'text-gray-900 dark:text-white'
+            const displayBal = isLiab && Math.abs(a.balance) > 0 ? `(${this._currency(Math.abs(a.balance))})` : this._currency(a.balance)
+            html += `<div class="flex items-center justify-between pl-5 pr-2">
+              <span class="text-xs text-gray-700 dark:text-gray-300 truncate mr-1">${this._esc(a.name)}</span>
+              <span class="text-xs tabular-nums flex-shrink-0 ${balColor}">${displayBal}</span>
+            </div>`
+          })
+        }
+        html += `</div>`
       }
       frontContent.innerHTML = html
     }
@@ -627,12 +655,41 @@ export default class extends Controller {
     const changePct = data.change_pct || 0
     const snapshots = data.snapshots || []
 
-    // Calm Snapshot: Net Worth value + optional monthly change
-    let html = `<div class="flex flex-col items-center justify-center py-4">`
-    html += `<span class="text-2xl font-bold text-gray-900 dark:text-white tabular-nums">Net Worth: ${this._currency(value)}</span>`
+    // Calm Snapshot: Net Worth value + colored change arrow + sparkline
+    let html = `<div class="flex flex-col items-center pt-5">`
+    html += `<span class="number-primary text-gray-900 dark:text-white tabular-nums">${this._currency(value)}</span>`
     if (snapshots.length >= 2) {
-      const changeStr = change >= 0 ? `+${this._currency(change)}` : this._currency(change)
-      html += `<span class="text-sm text-gray-500 dark:text-gray-400 mt-1 tabular-nums">Change this month: ${changeStr}</span>`
+      if (change >= 0) {
+        html += `<span class="text-sm text-emerald-600 dark:text-emerald-400 mt-1 tabular-nums font-medium">&#9650; +${this._currency(change)}</span>`
+      } else {
+        html += `<span class="text-sm text-red-500 dark:text-red-400 mt-1 tabular-nums font-medium">&#9660; ${this._currency(change)}</span>`
+      }
+    }
+    // Sparkline from last 4 snapshots
+    const sparkSnaps = snapshots.slice(-4)
+    if (sparkSnaps.length >= 2) {
+      const amounts = sparkSnaps.map(s => s.amount)
+      const sMin = Math.min(...amounts)
+      const sMax = Math.max(...amounts)
+      let sRange = sMax - sMin
+      if (sRange === 0) sRange = 1
+      const sW = 120, sH = 32, sPad = 4
+      const pts = sparkSnaps.map((s, i) => {
+        const x = sPad + (i / (sparkSnaps.length - 1)) * (sW - sPad * 2)
+        const y = sPad + (sH - sPad * 2) - ((s.amount - sMin) / sRange * (sH - sPad * 2))
+        return [x.toFixed(1), y.toFixed(1)]
+      })
+      const polyline = pts.map(p => p.join(",")).join(" ")
+      html += `<svg class="mt-2" width="120" height="32" viewBox="0 0 120 32" fill="none">`
+      html += `<polyline points="${polyline}" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`
+      pts.forEach((p, i) => {
+        if (i === pts.length - 1) {
+          html += `<circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="#3b82f6"/>`
+        } else {
+          html += `<circle cx="${p[0]}" cy="${p[1]}" r="2" fill="#93c5fd"/>`
+        }
+      })
+      html += `</svg>`
     }
     html += `</div>`
     content.innerHTML = html
@@ -720,7 +777,7 @@ export default class extends Controller {
     const inc = data.income || 0
     const spent = data.expenses || 0
     const deposits = data.top_deposits || []
-    const synthetics = data.synthetic_deposits || []
+    const synthetics = data.synthetic_deposits || data.new_accounts || []
     const payments = data.top_payments || []
 
     let lineItems = ''
