@@ -144,7 +144,7 @@ test('CRITICAL: month nav preserves accounts grouped format', async ({ page }) =
   const front = card.locator('[data-role="front-content"]');
 
   // Navigate back one month
-  await page.locator('[data-dashboard-target="prevBtn"]').click();
+  await page.locator('[data-dashboard-target="prevBtn"]').first().click();
   await page.waitForTimeout(2500);
 
   // After month nav, should NOT show "Total Cash" (old format)
@@ -159,7 +159,7 @@ test('CRITICAL: month nav preserves net worth colored arrows', async ({ page }) 
   const content = card.locator('[data-role="card-content"]');
 
   // Navigate back
-  await page.locator('[data-dashboard-target="prevBtn"]').click();
+  await page.locator('[data-dashboard-target="prevBtn"]').first().click();
   await page.waitForTimeout(2500);
 
   const html = await content.innerHTML();
@@ -173,7 +173,7 @@ test('CRITICAL: month nav preserves pulse strip pill structure', async ({ page }
   expect(await strip.locator('[data-pulse-metric]').count()).toBeGreaterThanOrEqual(2);
 
   // Navigate back
-  await page.locator('[data-dashboard-target="prevBtn"]').click();
+  await page.locator('[data-dashboard-target="prevBtn"]').first().click();
   await page.waitForTimeout(2500);
 
   // Pills should still exist
