@@ -811,8 +811,9 @@ export default class extends Controller {
   }
 
   _renderRecentActivity(wrapper, data) {
-    const content = wrapper.querySelector("[data-role='card-content']")
-    if (!content) return
+    // Target payment-list specifically, not the entire card-content
+    const paymentList = wrapper.querySelector("[data-role='payment-list']")
+    if (!paymentList) return
 
     // Front side: Recent Payments only
     const payments = data.payments || data.recent || []
@@ -826,20 +827,17 @@ export default class extends Controller {
     }
 
     if (payments.length === 0) {
-      content.innerHTML = `<p class="text-sm text-gray-400 dark:text-gray-500 text-center py-4">No payments this month.</p>`
+      paymentList.innerHTML = `<p class="text-sm text-gray-400 dark:text-gray-500 text-center py-4">No payments this month.</p>`
     } else {
-      let html = `<div class="space-y-1.5">`
+      let html = ''
       payments.forEach(item => {
-        html += `<div class="flex items-center justify-between">
-          <div class="min-w-0 flex-1 mr-2">
-            <span class="text-[11px] text-gray-400 dark:text-gray-500">${this._esc(item.date)}</span>
-            <span class="text-xs text-gray-700 dark:text-gray-300 truncate">${this._esc(item.description)}</span>
-          </div>
-          <span class="text-xs font-medium text-red-500 dark:text-red-400 tabular-nums flex-shrink-0">\u2212${this._currency(item.amount)}</span>
+        html += `<div class="flex items-center py-1.5 text-sm border-b border-gray-50 dark:border-gray-800 last:border-0">
+          <span class="w-8 flex-shrink-0 text-xs text-gray-400 tabular-nums">${this._esc(item.date)}</span>
+          <span class="flex-1 text-gray-700 dark:text-gray-300 truncate px-2 text-xs">${this._esc(item.description)}</span>
+          <span class="text-red-500 dark:text-red-400 font-medium tabular-nums flex-shrink-0 text-xs">\u2212${this._currency(item.amount)}</span>
         </div>`
       })
-      html += `</div>`
-      content.innerHTML = html
+      paymentList.innerHTML = html
     }
 
     // Back side: Recent Deposits only
@@ -879,22 +877,55 @@ export default class extends Controller {
     if (!content) return
 
     if (!data || data.empty) {
-      content.innerHTML = `<p class="text-sm text-gray-400 dark:text-gray-500 text-center">No buckets yet. Create one to start allocating money.</p>`
+      content.innerHTML = `<p class="text-sm text-gray-400 dark:text-gray-500 text-center pt-3">No buckets yet. Create one to start allocating money.</p>`
       return
     }
 
-    // Calm Goals Snapshot (Instruction P)
-    let html = `<span class="text-2xl font-bold text-gray-900 dark:text-white tabular-nums">${this._currency(data.total_balance)} saved in goals</span>`
-    html += `<span class="text-sm text-gray-500 dark:text-gray-400 mt-1">Across ${data.count} active bucket${data.count !== 1 ? "s" : ""}</span>`
-
-    // Optional largest bucket line
     const buckets = data.buckets || []
-    if (buckets.length > 1) {
-      const largest = buckets.reduce((a, b) => (b.balance || 0) > (a.balance || 0) ? b : a, buckets[0])
-      if (largest) {
-        html += `<span class="text-xs text-gray-400 dark:text-gray-500 mt-2 tabular-nums">Largest: ${this._esc(largest.name)} (${this._currency(largest.balance)})</span>`
+    const goalCount = buckets.filter(b => b.target != null && b.target > 0).length
+
+    let html = `<div class="text-center mb-3">
+      <span class="text-lg font-bold text-gray-900 dark:text-white tabular-nums">${this._currency(data.total_balance)}</span>
+      <span class="text-xs text-gray-500 dark:text-gray-400 ml-1">saved in ${goalCount} bucket${goalCount !== 1 ? "s" : ""}</span>
+    </div>`
+
+    html += `<div class="space-y-2.5">`
+    for (const b of buckets) {
+      const bal = b.balance || 0
+      const target = b.target || 0
+      const hasGoal = target > 0
+      const pct = hasGoal ? Math.min((bal / target * 100), 100).toFixed(1) : null
+      const goalMet = hasGoal && bal >= target
+      const barColor = goalMet ? "bg-amber-500" : "bg-emerald-500"
+
+      html += `<div>`
+      // Name + goal badge + balance
+      html += `<div class="flex items-center justify-between">
+        <div class="flex items-center gap-1.5 min-w-0">
+          <span class="text-xs font-medium text-gray-900 dark:text-white truncate">${this._esc(b.name)}</span>`
+      if (goalMet) {
+        html += `<span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">\u2713 Goal Met</span>`
       }
+      html += `</div>`
+      if (hasGoal) {
+        html += `<span class="text-[10px] text-gray-500 dark:text-gray-400 tabular-nums flex-shrink-0 ml-1">${this._currency0(bal)} / ${this._currency0(target)}</span>`
+      } else {
+        html += `<span class="text-[10px] text-gray-500 dark:text-gray-400 tabular-nums flex-shrink-0 ml-1">${this._currency(bal)}</span>`
+      }
+      html += `</div>`
+
+      // Progress bar
+      if (hasGoal) {
+        html += `<div class="flex items-center gap-1.5 mt-0.5">
+          <div class="flex-1 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+            <div class="${barColor} h-full rounded-full" style="width: ${pct}%"></div>
+          </div>
+          <span class="text-[9px] text-gray-400 dark:text-gray-500 tabular-nums w-7 text-right">${Math.round(pct)}%</span>
+        </div>`
+      }
+      html += `</div>`
     }
+    html += `</div>`
 
     content.innerHTML = html
 
@@ -936,65 +967,54 @@ export default class extends Controller {
   }
 
   _updatePulseStrip(pulse) {
-    const _pillColor = (val, thresholds) => {
-      // thresholds: { green: fn, amber: fn } — returns color name
-      if (thresholds.green(val)) return "emerald"
-      if (thresholds.amber(val)) return "amber"
-      return "red"
+    const strip = this.pulseStripTarget
+    this._updatePill(strip, "cash_runway",  pulse.liquidity,    " mo", [3, 1])
+    this._updatePill(strip, "debt_ratio",   pulse.debt_ratio,   "%",   [36, 50], true)
+    this._updatePill(strip, "savings_rate", pulse.savings_rate, "%",   [20, 5])
+  }
+
+  _updatePill(strip, metric, value, suffix, thresholds, invertColor = false) {
+    const pill = strip.querySelector(`[data-pulse-metric="${metric}"]`)
+    if (!pill) return
+
+    const valueEl = pill.querySelector("[data-pulse-value]")
+    if (!valueEl) return
+
+    // Determine color
+    let color = null
+    if (value != null) {
+      if (invertColor) {
+        // Lower is better (debt ratio): green < t[0], amber < t[1], red >= t[1]
+        color = value < thresholds[0] ? "emerald" : value < thresholds[1] ? "amber" : "red"
+      } else {
+        // Higher is better: green >= t[0], amber >= t[1], red < t[1]
+        color = value >= thresholds[0] ? "emerald" : value >= thresholds[1] ? "amber" : "red"
+      }
     }
 
-    let html = `<span class="font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider" style="font-size: 10px;">Financial Pulse</span>`
-    html += `<div class="flex flex-wrap gap-2">`
+    // Update value text
+    valueEl.textContent = value != null ? `${value}${suffix}` : "\u2014"
 
-    // Cash Runway pill
-    if (pulse.liquidity != null) {
-      const c = _pillColor(pulse.liquidity, { green: v => v >= 3, amber: v => v >= 1 })
-      html += `<div class="flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-${c}-50 dark:bg-${c}-900/20 border-${c}-200 dark:border-${c}-800 text-${c}-700 dark:text-${c}-400 text-xs flex-1 min-w-[140px]">
-        <span class="flex-shrink-0">&#x1f6e1;</span>
-        <span class="font-medium">Cash Runway</span>
-        <span class="ml-auto tabular-nums font-semibold">${pulse.liquidity} mo</span>
-        <span class="text-${c}-400 dark:text-${c}-500 cursor-help" title="How many months your cash accounts could cover your average monthly spending. Healthy: 3+ months.">&#9432;</span>
-      </div>`
-    }
+    // Update color classes on the pill and value element
+    const colors = ["emerald", "amber", "red"]
+    const bgClasses = colors.flatMap(c => [`bg-${c}-50`, `dark:bg-${c}-950/30`])
+    const borderClasses = colors.flatMap(c => [`border-${c}-200`, `dark:border-${c}-800`])
+    const valueClasses = colors.flatMap(c => [`text-${c}-700`, `dark:text-${c}-400`])
+    const grayBg = ["bg-gray-50", "dark:bg-gray-800"]
+    const grayBorder = ["border-gray-200", "dark:border-gray-700"]
+    const grayValue = ["text-gray-400", "dark:text-gray-500"]
 
-    // Debt Ratio pill
-    if (pulse.debt_ratio != null) {
-      const c = _pillColor(pulse.debt_ratio, { green: v => v < 36, amber: v => v < 50 })
-      html += `<div class="flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-${c}-50 dark:bg-${c}-900/20 border-${c}-200 dark:border-${c}-800 text-${c}-700 dark:text-${c}-400 text-xs flex-1 min-w-[140px]">
-        <span class="flex-shrink-0">&#x1f4ca;</span>
-        <span class="font-medium">Debt Ratio</span>
-        <span class="ml-auto tabular-nums font-semibold">${pulse.debt_ratio}%</span>
-        <span class="text-${c}-400 dark:text-${c}-500 cursor-help" title="Your total liabilities divided by total assets. Below 36% is healthy; above 50% is high risk.">&#9432;</span>
-      </div>`
+    // Remove all color classes
+    pill.classList.remove(...bgClasses, ...borderClasses, ...grayBg, ...grayBorder)
+    valueEl.classList.remove(...valueClasses, ...grayValue)
+
+    if (color) {
+      pill.classList.add(`bg-${color}-50`, `dark:bg-${color}-950/30`, `border-${color}-200`, `dark:border-${color}-800`)
+      valueEl.classList.add(`text-${color}-700`, `dark:text-${color}-400`)
     } else {
-      html += `<div class="flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 text-xs flex-1 min-w-[140px]">
-        <span class="flex-shrink-0">&#x1f4ca;</span>
-        <span class="font-medium">Debt Ratio</span>
-        <span class="ml-auto tabular-nums font-semibold">&mdash;</span>
-        <span class="text-gray-400 dark:text-gray-500 cursor-help" title="Your total liabilities divided by total assets. Below 36% is healthy; above 50% is high risk.">&#9432;</span>
-      </div>`
+      pill.classList.add(...grayBg, ...grayBorder)
+      valueEl.classList.add(...grayValue)
     }
-
-    // Savings Rate pill
-    if (pulse.savings_rate != null) {
-      const c = _pillColor(pulse.savings_rate, { green: v => v >= 20, amber: v => v >= 5 })
-      html += `<div class="flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-${c}-50 dark:bg-${c}-900/20 border-${c}-200 dark:border-${c}-800 text-${c}-700 dark:text-${c}-400 text-xs flex-1 min-w-[140px]">
-        <span class="flex-shrink-0">&#x1f331;</span>
-        <span class="font-medium">Savings Rate</span>
-        <span class="ml-auto tabular-nums font-semibold">${pulse.savings_rate}%</span>
-        <span class="text-${c}-400 dark:text-${c}-500 cursor-help" title="Percentage of your income that went toward savings or reduced debt this month. Target: 20%+.">&#9432;</span>
-      </div>`
-    } else {
-      html += `<div class="flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 text-xs flex-1 min-w-[140px]">
-        <span class="flex-shrink-0">&#x1f331;</span>
-        <span class="font-medium">Savings Rate</span>
-        <span class="ml-auto tabular-nums font-semibold">&mdash;</span>
-        <span class="text-gray-400 dark:text-gray-500 cursor-help" title="Percentage of your income that went toward savings or reduced debt this month. Target: 20%+.">&#9432;</span>
-      </div>`
-    }
-
-    html += `</div>`
-    this.pulseStripTarget.innerHTML = html
   }
 
   _esc(str) {

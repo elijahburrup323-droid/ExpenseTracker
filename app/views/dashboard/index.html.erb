@@ -60,48 +60,63 @@
       end
     end
   %>
-  <div class="flex flex-col gap-1.5 mb-3 px-1" data-dashboard-target="pulseStrip">
-    <span class="font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider" style="font-size: 10px;">Financial Pulse</span>
-    <div class="flex flex-wrap gap-2">
-      <% if @pulse_liquidity %>
-        <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-<%= runway_color %>-50 dark:bg-<%= runway_color %>-900/20 border-<%= runway_color %>-200 dark:border-<%= runway_color %>-800 text-<%= runway_color %>-700 dark:text-<%= runway_color %>-400 text-xs flex-1 min-w-[140px]">
-          <span class="flex-shrink-0">&#x1f6e1;</span>
-          <span class="font-medium">Cash Runway</span>
-          <span class="ml-auto tabular-nums font-semibold"><%= @pulse_liquidity %> mo</span>
-          <span class="text-<%= runway_color %>-400 dark:text-<%= runway_color %>-500 cursor-help" title="How many months your cash accounts could cover your average monthly spending. Healthy: 3+ months.">&#9432;</span>
-        </div>
-      <% end %>
-      <% if @pulse_debt_ratio %>
-        <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-<%= debt_color %>-50 dark:bg-<%= debt_color %>-900/20 border-<%= debt_color %>-200 dark:border-<%= debt_color %>-800 text-<%= debt_color %>-700 dark:text-<%= debt_color %>-400 text-xs flex-1 min-w-[140px]">
-          <span class="flex-shrink-0">&#x1f4ca;</span>
-          <span class="font-medium">Debt Ratio</span>
-          <span class="ml-auto tabular-nums font-semibold"><%= @pulse_debt_ratio %>%</span>
-          <span class="text-<%= debt_color %>-400 dark:text-<%= debt_color %>-500 cursor-help" title="Your total liabilities divided by total assets. Below 36% is healthy; above 50% is high risk.">&#9432;</span>
-        </div>
-      <% elsif @net_worth_assets == 0 %>
-        <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 text-xs flex-1 min-w-[140px]">
-          <span class="flex-shrink-0">&#x1f4ca;</span>
-          <span class="font-medium">Debt Ratio</span>
-          <span class="ml-auto tabular-nums font-semibold">&mdash;</span>
-          <span class="text-gray-400 dark:text-gray-500 cursor-help" title="Your total liabilities divided by total assets. Below 36% is healthy; above 50% is high risk.">&#9432;</span>
-        </div>
-      <% end %>
-      <% if @pulse_savings_rate %>
-        <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-<%= savings_color %>-50 dark:bg-<%= savings_color %>-900/20 border-<%= savings_color %>-200 dark:border-<%= savings_color %>-800 text-<%= savings_color %>-700 dark:text-<%= savings_color %>-400 text-xs flex-1 min-w-[140px]">
-          <span class="flex-shrink-0">&#x1f331;</span>
-          <span class="font-medium">Savings Rate</span>
-          <span class="ml-auto tabular-nums font-semibold"><%= @pulse_savings_rate %>%</span>
-          <span class="text-<%= savings_color %>-400 dark:text-<%= savings_color %>-500 cursor-help" title="Percentage of your income that went toward savings or reduced debt this month. Target: 20%+.">&#9432;</span>
-        </div>
-      <% else %>
-        <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 text-xs flex-1 min-w-[140px]">
-          <span class="flex-shrink-0">&#x1f331;</span>
-          <span class="font-medium">Savings Rate</span>
-          <span class="ml-auto tabular-nums font-semibold">&mdash;</span>
-          <span class="text-gray-400 dark:text-gray-500 cursor-help" title="Percentage of your income that went toward savings or reduced debt this month. Target: 20%+.">&#9432;</span>
-        </div>
-      <% end %>
-    </div>
+  <div class="flex items-center gap-x-3 flex-wrap mb-4" data-dashboard-target="pulseStrip">
+    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">Financial Pulse</span>
+    <div class="w-px h-4 bg-gray-200 dark:bg-gray-700"></div>
+
+    <%# Cash Runway pill %>
+    <% if @pulse_liquidity %>
+      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border bg-<%= runway_color %>-50 dark:bg-<%= runway_color %>-950/30 border-<%= runway_color %>-200 dark:border-<%= runway_color %>-800"
+            data-pulse-metric="cash_runway"
+            title="How many months your cash accounts could cover your average monthly spending. Healthy: 3+ months.">
+        <span>&#x1f6e1;</span>
+        <span class="text-gray-500 dark:text-gray-400">Cash Runway</span>
+        <span class="font-bold text-<%= runway_color %>-700 dark:text-<%= runway_color %>-400" data-pulse-value><%= @pulse_liquidity %> mo</span>
+        <span class="text-gray-300 dark:text-gray-600 text-[10px]">&#9432;</span>
+      </span>
+    <% end %>
+
+    <%# Debt Ratio pill %>
+    <% if @pulse_debt_ratio %>
+      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border bg-<%= debt_color %>-50 dark:bg-<%= debt_color %>-950/30 border-<%= debt_color %>-200 dark:border-<%= debt_color %>-800"
+            data-pulse-metric="debt_ratio"
+            title="Your total liabilities divided by total assets. Below 36% is healthy; above 50% is high risk.">
+        <span>&#x1f4ca;</span>
+        <span class="text-gray-500 dark:text-gray-400">Debt Ratio</span>
+        <span class="font-bold text-<%= debt_color %>-700 dark:text-<%= debt_color %>-400" data-pulse-value><%= @pulse_debt_ratio %>%</span>
+        <span class="text-gray-300 dark:text-gray-600 text-[10px]">&#9432;</span>
+      </span>
+    <% else %>
+      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+            data-pulse-metric="debt_ratio"
+            title="Your total liabilities divided by total assets. Below 36% is healthy; above 50% is high risk.">
+        <span>&#x1f4ca;</span>
+        <span class="text-gray-500 dark:text-gray-400">Debt Ratio</span>
+        <span class="font-bold text-gray-400 dark:text-gray-500" data-pulse-value>&mdash;</span>
+        <span class="text-gray-300 dark:text-gray-600 text-[10px]">&#9432;</span>
+      </span>
+    <% end %>
+
+    <%# Savings Rate pill %>
+    <% if @pulse_savings_rate %>
+      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border bg-<%= savings_color %>-50 dark:bg-<%= savings_color %>-950/30 border-<%= savings_color %>-200 dark:border-<%= savings_color %>-800"
+            data-pulse-metric="savings_rate"
+            title="Percentage of your income that went toward savings or reduced debt this month. Target: 20%+.">
+        <span>&#x1f331;</span>
+        <span class="text-gray-500 dark:text-gray-400">Savings Rate</span>
+        <span class="font-bold text-<%= savings_color %>-700 dark:text-<%= savings_color %>-400" data-pulse-value><%= @pulse_savings_rate %>%</span>
+        <span class="text-gray-300 dark:text-gray-600 text-[10px]">&#9432;</span>
+      </span>
+    <% else %>
+      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+            data-pulse-metric="savings_rate"
+            title="Percentage of your income that went toward savings or reduced debt this month. Target: 20%+.">
+        <span>&#x1f331;</span>
+        <span class="text-gray-500 dark:text-gray-400">Savings Rate</span>
+        <span class="font-bold text-gray-400 dark:text-gray-500" data-pulse-value>&mdash;</span>
+        <span class="text-gray-300 dark:text-gray-600 text-[10px]">&#9432;</span>
+      </span>
+    <% end %>
   </div>
 
   <%# ===== 6-CARD GRID (3 x 2, equal size) ===== %>

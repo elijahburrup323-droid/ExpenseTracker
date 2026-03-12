@@ -21,22 +21,25 @@
       </span>
       <span class="text-xs text-gray-400 dark:text-gray-500"><%= @payment_count %> payment<%= @payment_count == 1 ? '' : 's' %></span>
     </div>
-    <div class="flex-1 min-h-0 overflow-y-auto" style="max-height: 220px;" data-role="card-content">
-      <% if @recent_payment_items.any? %>
-        <div class="space-y-1.5">
-          <% @recent_payment_items.each do |item| %>
-            <div class="flex items-center justify-between">
-              <div class="min-w-0 flex-1 mr-2">
-                <span class="text-[11px] text-gray-400 dark:text-gray-500"><%= item[:date].strftime("%-m/%-d") %></span>
-                <span class="text-xs text-gray-700 dark:text-gray-300 truncate"><%= item[:description] %></span>
+    <div class="flex-1 min-h-0 overflow-y-auto" data-role="card-content">
+      <div class="max-h-[220px] overflow-y-auto" data-role="payment-list">
+        <% if @recent_payment_items.any? %>
+          <div class="space-y-1.5">
+            <% @recent_payment_items.each do |item| %>
+              <div class="flex items-center py-1.5 text-sm border-b border-gray-50 dark:border-gray-800 last:border-0">
+                <span class="w-8 flex-shrink-0 text-xs text-gray-400 tabular-nums"><%= item[:date].strftime("%-m/%-d") %></span>
+                <span class="flex-1 text-gray-700 dark:text-gray-300 truncate px-2 text-xs"><%= item[:description] %></span>
+                <span class="text-red-500 dark:text-red-400 font-medium tabular-nums flex-shrink-0 text-xs">&minus;<%= number_to_currency(item[:amount].abs) %></span>
               </div>
-              <span class="text-xs font-medium text-red-500 dark:text-red-400 tabular-nums flex-shrink-0">&minus;<%= number_to_currency(item[:amount]) %></span>
-            </div>
-          <% end %>
-        </div>
-      <% else %>
-        <p class="text-sm text-gray-400 dark:text-gray-500 text-center py-4">No payments this month.</p>
-      <% end %>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-sm text-gray-400 dark:text-gray-500 text-center py-4">No payments this month.</p>
+        <% end %>
+      </div>
+      <a href="<%= payments_path %>" class="block text-center text-brand-600 dark:text-brand-400 text-xs font-semibold py-2 mt-1">
+        Manage Payments
+      </a>
     </div>
     <div class="dash-card-footer border-t border-gray-100 dark:border-gray-700 flex items-center justify-between" data-role="card-footer">
       <button type="button" class="inline-flex items-center gap-1.5 text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300" style="min-height:44px;" data-action="click->dashboard#flipCard" aria-label="View recent deposits">
@@ -45,11 +48,6 @@
         </svg>
         <span class="text-[10px] font-medium">Recent Deposits</span>
       </button>
-      <div class="flex-1 flex items-center justify-center">
-        <%= link_to payments_path, class: "text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium" do %>
-          Manage Payments
-        <% end %>
-      </div>
     </div>
   </div>
 

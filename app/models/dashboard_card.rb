@@ -20,26 +20,61 @@ class DashboardCard < ApplicationRecord
   ].freeze
 
   def self.seed_defaults_for(user)
-    return if where(user_id: user.id).exists?
+    existing = where(user_id: user.id)
 
-    ActiveRecord::Base.transaction do
+    if existing.exists?
+      # Repair: ensure all default cards exist and are active
       DEFAULTS.each do |attrs|
-        card = user.dashboard_cards.create!(
-          card_key: attrs[:card_key],
-          title: attrs[:title],
-          card_type: attrs[:card_type],
-          is_active: true
-        )
-        user.dashboard_slots.create!(
-          slot_number: attrs[:slot],
-          dashboard_card: card
-        )
-        DashboardCardAccountRule.create!(
-          user: user,
-          dashboard_card: card,
-          match_mode: "all",
-          is_enabled: true
-        )
+        card = existing.find_by(card_key: attrs[:card_key])
+        if card
+          card.update!(is_active: true) unless card.is_active
+        else
+          card = user.dashboard_cards.create!(
+            card_key: attrs[:card_key],
+            title: attrs[:title],
+            card_type: attrs[:card_type],
+            is_active: true
+          )
+        end
+        # Ensure card is linked to a slot
+        unless card.dashboard_slot
+          slot = user.dashboard_slots.find_by(slot_number: attrs[:slot])
+          if slot && slot.dashboard_card_id.nil?
+            slot.update!(dashboard_card: card)
+          elsif slot.nil?
+            user.dashboard_slots.create!(slot_number: attrs[:slot], dashboard_card: card)
+          else
+            # Slot taken by another card — find first open slot number
+            used = user.dashboard_slots.pluck(:slot_number)
+            free_slot = (1..12).find { |n| !used.include?(n) } || (used.max + 1)
+            user.dashboard_slots.create!(slot_number: free_slot, dashboard_card: card)
+          end
+        end
+        # Ensure account rule exists
+        unless DashboardCardAccountRule.exists?(user_id: user.id, dashboard_card_id: card.id)
+          DashboardCardAccountRule.create!(user: user, dashboard_card: card, match_mode: "all", is_enabled: true)
+        end
+      end
+    else
+      ActiveRecord::Base.transaction do
+        DEFAULTS.each do |attrs|
+          card = user.dashboard_cards.create!(
+            card_key: attrs[:card_key],
+            title: attrs[:title],
+            card_type: attrs[:card_type],
+            is_active: true
+          )
+          user.dashboard_slots.create!(
+            slot_number: attrs[:slot],
+            dashboard_card: card
+          )
+          DashboardCardAccountRule.create!(
+            user: user,
+            dashboard_card: card,
+            match_mode: "all",
+            is_enabled: true
+          )
+        end
       end
     end
   end

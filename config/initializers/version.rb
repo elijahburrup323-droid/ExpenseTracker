@@ -15,7 +15,11 @@ APP_ALL_VERSIONS = [
   {
     version: "1.4.1",
     changes: [
-      "Dashboard: Restored Net Worth card backside to original styling — reverted unintended font size and spacing changes from v1.3.92."
+      "Dashboard: Restored Net Worth card backside to original styling — reverted unintended font size and spacing changes from v1.3.92.",
+      "Fix: Income & Spending card restored — auto-repair ensures all users have the card active in slot 4.",
+      "Fix: Recent Payments card — payment list rows now render correctly; JS targets payment-list container instead of wiping card-content.",
+      "Fix: Buckets card — full bucket list with progress bars, goal-met badges, and balance/target amounts now renders in both server and JS views.",
+      "Change: Financial Pulse strip — compact inline pill layout (~36px tall) replaces wide card-style tiles; in-place JS updates preserve tooltips on month change."
     ]
   },
   {
