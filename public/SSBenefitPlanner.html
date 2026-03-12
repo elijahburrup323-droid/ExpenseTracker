@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Social Security Benefit Planner — MyBudgetHQ</title>
+  <!-- Google Analytics 4 -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX');
+    function gaEvent(name) { try { gtag('event', name); } catch(e){} }
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; font-size: 15px; color: #1a1a1a; background: #f9fafb; line-height: 1.6; }
+    .page { max-width: 800px; margin: 0 auto; padding: 24px 16px 80px; }
+
+    /* Header */
+    .header { text-align: center; margin-bottom: 24px; }
+    .header a { color: #7c3aed; text-decoration: none; font-weight: 800; font-size: 22px; letter-spacing: -0.5px; }
+    .header h1 { font-size: 24px; font-weight: 700; color: #111; margin-top: 4px; }
+
+    /* Disclaimer */
+    .disclaimer { background: #fef2f2; border: 1px solid #fca5a5; border-left: 4px solid #ef4444; padding: 14px 16px; border-radius: 6px; margin-bottom: 24px; font-size: 13px; color: #7f1d1d; }
+    .disclaimer strong { display: block; margin-bottom: 4px; font-size: 14px; }
+
+    /* Cards / Sections */
+    .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+    .card h2 { font-size: 17px; font-weight: 700; color: #7c3aed; margin-bottom: 14px; }
+    .card h3 { font-size: 14px; font-weight: 600; color: #374151; margin: 16px 0 8px; }
+
+    /* Form grid */
+    .form-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+    @media (min-width: 640px) { .form-grid { grid-template-columns: 1fr 1fr; } }
+    .form-group { display: flex; flex-direction: column; }
+    .form-group.full-width { grid-column: 1 / -1; }
+    .form-group label { font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 4px; }
+    .form-group .helper { font-size: 11px; color: #6b7280; margin-top: 2px; }
+    .form-group input, .form-group select { padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; color: #111; background: #fff; }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124,58,237,0.15); }
+    .form-group .error-msg { font-size: 11px; color: #dc2626; margin-top: 2px; display: none; }
+    .form-group.has-error input, .form-group.has-error select { border-color: #dc2626; }
+    .form-group.has-error .error-msg { display: block; }
+    .fra-note { font-size: 12px; color: #7c3aed; font-weight: 600; margin-top: 4px; }
+
+    /* Toggle */
+    .toggle-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .toggle-row label { font-size: 14px; font-weight: 600; color: #374151; cursor: pointer; }
+    .toggle { position: relative; width: 44px; height: 24px; cursor: pointer; }
+    .toggle input { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; z-index: 1; margin: 0; }
+    .toggle .slider { position: absolute; inset: 0; background: #d1d5db; border-radius: 12px; transition: 0.2s; }
+    .toggle .slider::before { content: ''; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: 0.2s; }
+    .toggle input:checked + .slider { background: #7c3aed; }
+    .toggle input:checked + .slider::before { transform: translateX(20px); }
+
+    /* Accordion */
+    .accordion-header { display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 10px 0; border-top: 1px solid #e5e7eb; margin-top: 10px; }
+    .accordion-header h3 { margin: 0; color: #6b7280; font-size: 13px; }
+    .accordion-header .arrow { font-size: 12px; color: #6b7280; transition: transform 0.2s; }
+    .accordion-header.open .arrow { transform: rotate(180deg); }
+    .accordion-body { display: none; padding-top: 10px; }
+    .accordion-body.open { display: block; }
+
+    /* Calculate button */
+    .calc-btn { display: block; width: 100%; padding: 14px; background: #7c3aed; color: #fff; font-size: 16px; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; margin-top: 8px; transition: background 0.15s; }
+    .calc-btn:hover { background: #6d28d9; }
+    .calc-btn:disabled { background: #c4b5fd; cursor: not-allowed; }
+
+    /* Results */
+    #results { display: none; }
+    .assumptions-bar { background: #f3f4f6; border-radius: 6px; padding: 10px 14px; font-size: 12px; color: #6b7280; margin-bottom: 16px; }
+    .findings-card { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; }
+    .findings-card ul { padding-left: 18px; font-size: 13px; }
+    .findings-card li { margin-bottom: 6px; }
+
+    /* Comparison table */
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 16px; }
+    .cmp-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 520px; }
+    .cmp-table th { background: #f3f4f6; padding: 8px 10px; border: 1px solid #e5e7eb; font-weight: 600; text-align: right; white-space: nowrap; }
+    .cmp-table th:first-child { text-align: left; }
+    .cmp-table td { padding: 8px 10px; border: 1px solid #e5e7eb; text-align: right; }
+    .cmp-table td:first-child { text-align: left; font-weight: 500; }
+    .cmp-table .highlight-row td { background: #f0fdf4; }
+    .cmp-table .grayed td { color: #9ca3af; background: #f9fafb; }
+    .badge-green { display: inline-block; background: #d1fae5; color: #065f46; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; margin-left: 4px; }
+    .val-pos { color: #16a34a; }
+    .val-neg { color: #dc2626; }
+    .val-zero { color: #6b7280; }
+
+    /* Chart */
+    .chart-container { margin: 16px 0; }
+    .chart-container svg { width: 100%; height: auto; display: block; }
+    .chart-legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; margin-top: 8px; justify-content: center; }
+    .chart-legend span { display: flex; align-items: center; gap: 4px; }
+    .chart-legend .swatch { width: 14px; height: 3px; border-radius: 2px; }
+
+    /* Callout cards */
+    .callout { padding: 14px 16px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; }
+    .callout-amber { background: #fffbeb; border: 1px solid #fcd34d; border-left: 4px solid #f59e0b; }
+    .callout-blue { background: #eff6ff; border: 1px solid #93c5fd; border-left: 4px solid #3b82f6; }
+    .callout-purple { background: #f5f3ff; border: 1px solid #c4b5fd; border-left: 4px solid #7c3aed; }
+    .callout strong { display: block; margin-bottom: 4px; }
+
+    /* Mode 2 CTA */
+    .mode2-cta { background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; border-radius: 10px; padding: 24px; text-align: center; margin-top: 24px; }
+    .mode2-cta h3 { font-size: 18px; margin-bottom: 6px; }
+    .mode2-cta p { font-size: 14px; opacity: 0.9; margin-bottom: 14px; }
+    .mode2-cta button { background: #fff; color: #7c3aed; font-weight: 700; font-size: 15px; border: none; border-radius: 8px; padding: 12px 28px; cursor: pointer; }
+    .mode2-cta .sub { font-size: 11px; opacity: 0.7; margin-top: 8px; }
+
+    /* Footer */
+    .footer { text-align: center; font-size: 11px; color: #9ca3af; margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e7eb; }
+    .footer a { color: #7c3aed; text-decoration: none; }
+
+    /* Screen reader only */
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <a href="https://mybudgethq.com">MyBudgetHQ</a>
+    <h1>Social Security Benefit Planner</h1>
+  </div>
+
+  <!-- Disclaimer -->
+  <div class="disclaimer" role="alert">
+    <strong>For Informational Purposes Only.</strong>
+    This tool provides estimates based on the information you enter and general Social Security rules. It is not financial, legal, or tax advice. Results are projections, not guarantees. Social Security rules, your health, taxes, and personal circumstances vary. Consult a qualified financial advisor or the Social Security Administration (ssa.gov) before making any claiming decision.
+  </div>
+
+  <!-- Input Form -->
+  <form id="ssForm" novalidate autocomplete="off">
+
+    <!-- Married toggle -->
+    <div class="card">
+      <div class="toggle-row">
+        <label class="toggle" for="married">
+          <input type="checkbox" id="married">
+          <span class="slider"></span>
+        </label>
+        <label for="married">Married or in a domestic partnership?</label>
+      </div>
+    </div>
+
+    <!-- Primary inputs -->
+    <div class="card">
+      <h2>Your Information</h2>
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label for="dob">Date of Birth</label>
+          <input type="month" id="dob" required>
+          <div class="fra-note" id="fraNote"></div>
+          <div class="error-msg" id="dobError">Please enter a valid birth date (ages 40–80).</div>
+        </div>
+
+        <div class="form-group">
+          <label for="gender">Gender</label>
+          <select id="gender" required>
+            <option value="">Select…</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="avg">Prefer not to say</option>
+          </select>
+          <div class="error-msg">Please select a gender.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="retireAge">At what age do you plan to stop working?</label>
+          <input type="number" id="retireAge" min="55" max="75" required placeholder="55–75">
+          <div class="error-msg">Enter an age between 55 and 75.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="working">Are you currently working?</label>
+          <select id="working" required>
+            <option value="">Select…</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+          <div class="error-msg">Please select an option.</div>
+        </div>
+
+        <div class="form-group" id="incomeGroup" style="display:none;">
+          <label for="income">Current Annual Earned Income</label>
+          <input type="text" id="income" inputmode="numeric" placeholder="$65,000">
+          <div class="helper">Wages and self-employment income only (not investment/rental/pension).</div>
+          <div class="error-msg">Please enter your annual income.</div>
+        </div>
+
+        <div class="form-group full-width" style="border-top:1px solid #e5e7eb;padding-top:14px;margin-top:4px;">
+          <h3 style="margin:0 0 10px;color:#7c3aed;">SSA Statement Benefits</h3>
+        </div>
+
+        <div class="form-group">
+          <label for="fraB">Your FRA Benefit (monthly)</label>
+          <input type="text" id="fraB" inputmode="numeric" placeholder="$2,000" required>
+          <div class="fra-note" id="fraAgeNote"></div>
+          <div class="error-msg">Enter your FRA monthly benefit from your SSA statement.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="b62">Your Benefit at Age 62 (monthly)</label>
+          <input type="text" id="b62" inputmode="numeric" placeholder="$1,450" required>
+          <div class="error-msg" id="b62Error">Enter your age 62 monthly benefit.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="b70">Your Benefit at Age 70 (monthly)</label>
+          <input type="text" id="b70" inputmode="numeric" placeholder="$2,480" required>
+          <div class="error-msg" id="b70Error">Enter your age 70 monthly benefit.</div>
+        </div>
+
+      </div>
+
+      <!-- Assumptions accordion -->
+      <div class="accordion-header" id="accHeader" role="button" tabindex="0" aria-expanded="false">
+        <h3>Assumptions &amp; Advanced Settings</h3>
+        <span class="arrow">&#9660;</span>
+      </div>
+      <div class="accordion-body" id="accBody">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="cola">COLA (Cost-of-Living Adjustment)</label>
+            <input type="number" id="cola" min="1.0" max="4.0" step="0.1" value="2.6" placeholder="2.6%">
+            <div class="helper">The 10-year historical average COLA is 2.6%. Adjust to model different inflation scenarios.</div>
+          </div>
+          <div class="form-group">
+            <label for="leOverride">Life Expectancy Override</label>
+            <input type="number" id="leOverride" min="63" max="110" placeholder="Leave blank for SSA estimate">
+            <div class="helper">Leave blank to use the SSA 2022 actuarial estimate for your age and gender.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Spouse inputs -->
+    <div class="card" id="spouseCard" style="display:none;">
+      <h2>Spouse's Information</h2>
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label for="sDob">Spouse Date of Birth</label>
+          <input type="month" id="sDob">
+          <div class="fra-note" id="sFraNote"></div>
+          <div class="error-msg">Please enter a valid birth date (ages 40–80).</div>
+        </div>
+
+        <div class="form-group">
+          <label for="sGender">Spouse Gender</label>
+          <select id="sGender">
+            <option value="">Select…</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="avg">Prefer not to say</option>
+          </select>
+          <div class="error-msg">Please select a gender.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="sRetireAge">Spouse planned retirement age</label>
+          <input type="number" id="sRetireAge" min="55" max="75" placeholder="55–75">
+          <div class="error-msg">Enter an age between 55 and 75.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="sWorking">Is your spouse currently working?</label>
+          <select id="sWorking">
+            <option value="">Select…</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+          <div class="error-msg">Please select an option.</div>
+        </div>
+
+        <div class="form-group" id="sIncomeGroup" style="display:none;">
+          <label for="sIncome">Spouse Annual Earned Income</label>
+          <input type="text" id="sIncome" inputmode="numeric" placeholder="$50,000">
+          <div class="error-msg">Please enter spouse's annual income.</div>
+        </div>
+
+        <div class="form-group full-width" style="border-top:1px solid #e5e7eb;padding-top:14px;margin-top:4px;">
+          <h3 style="margin:0 0 4px;color:#7c3aed;">Spouse's SSA Statement Benefits</h3>
+          <div class="helper" style="margin-bottom:10px;">If your spouse has no SSA record (never worked), enter $0 for all three. Their benefit will be calculated as 50% of your FRA benefit.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="sFraB">Spouse FRA Benefit (monthly)</label>
+          <input type="text" id="sFraB" inputmode="numeric" placeholder="$1,800">
+          <div class="fra-note" id="sFraAgeNote"></div>
+          <div class="error-msg">Enter spouse's FRA monthly benefit.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="sB62">Spouse Benefit at Age 62</label>
+          <input type="text" id="sB62" inputmode="numeric" placeholder="$1,200">
+          <div class="error-msg" id="sB62Error">Enter spouse's age 62 benefit.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="sB70">Spouse Benefit at Age 70</label>
+          <input type="text" id="sB70" inputmode="numeric" placeholder="$2,200">
+          <div class="error-msg" id="sB70Error">Enter spouse's age 70 benefit.</div>
+        </div>
+
+      </div>
+    </div>
+
+    <button type="submit" class="calc-btn" id="calcBtn">Calculate</button>
+  </form>
+
+  <!-- Results -->
+  <div id="results">
+    <div class="card" id="primaryResults">
+      <h2>Your Results</h2>
+      <div class="assumptions-bar" id="assumptionsBar"></div>
+      <div class="findings-card" id="findings"><ul></ul></div>
+      <div class="table-wrap" id="tableWrap"></div>
+      <div id="chartArea" class="chart-container"></div>
+      <div id="earningsWarn"></div>
+      <div id="survivorNote"></div>
+      <!-- Screen reader chart summary -->
+      <div class="sr-only" id="chartSummary" aria-live="polite"></div>
+    </div>
+
+    <div class="card" id="spouseResults" style="display:none;">
+      <h2>Spouse's Analysis</h2>
+      <div class="assumptions-bar" id="sAssumptionsBar"></div>
+      <div class="findings-card" id="sFindings"><ul></ul></div>
+      <div class="table-wrap" id="sTableWrap"></div>
+      <div id="sEarningsWarn"></div>
+    </div>
+
+    <!-- Mode 2 CTA -->
+    <div class="mode2-cta" id="mode2Cta">
+      <h3>Want a deeper analysis?</h3>
+      <p>Mode 2 factors in your savings, monthly budget, planned retirement age gap, and investment returns to give you a more complete financial picture.</p>
+      <button type="button" onclick="gaEvent('ss_advanced_unlocked')">Unlock Advanced Analysis &rarr;</button>
+      <div class="sub">Free &middot; No account required</div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    This tool is for informational purposes only and does not constitute financial advice.<br>
+    &copy; 2026 <a href="https://mybudgethq.com">MyBudgetHQ</a>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ─── SSA 2022 Period Life Table (remaining years by age, male/female) ───
+  // Source: SSA 2022 Period Life Table. Index = current age (40–100).
+  const LIFE_TABLE_MALE = {
+    40:39.0,41:38.1,42:37.1,43:36.2,44:35.3,45:34.3,46:33.4,47:32.5,48:31.6,49:30.7,
+    50:29.8,51:28.9,52:28.1,53:27.2,54:26.4,55:25.5,56:24.7,57:23.9,58:23.1,59:22.3,
+    60:21.5,61:20.7,62:19.9,63:19.2,64:18.4,65:17.7,66:17.0,67:16.3,68:15.6,69:14.9,
+    70:14.2,71:13.5,72:12.9,73:12.2,74:11.6,75:11.0,76:10.4,77:9.8,78:9.2,79:8.7,
+    80:8.1
+  };
+  const LIFE_TABLE_FEMALE = {
+    40:42.8,41:41.8,42:40.9,43:39.9,44:39.0,45:38.0,46:37.1,47:36.1,48:35.2,49:34.2,
+    50:33.3,51:32.4,52:31.5,53:30.5,54:29.6,55:28.7,56:27.8,57:26.9,58:26.1,59:25.2,
+    60:24.3,61:23.5,62:22.6,63:21.8,64:21.0,65:20.1,66:19.3,67:18.5,68:17.7,69:16.9,
+    70:16.1,71:15.3,72:14.5,73:13.8,74:13.0,75:12.3,76:11.6,77:10.9,78:10.2,79:9.5,
+    80:8.9
+  };
+
+  function lifeExpectancy(currentAge, gender) {
+    const age = Math.round(currentAge);
+    const clampedAge = Math.max(40, Math.min(80, age));
+    if (gender === 'male') return clampedAge + (LIFE_TABLE_MALE[clampedAge] || 15);
+    if (gender === 'female') return clampedAge + (LIFE_TABLE_FEMALE[clampedAge] || 18);
+    // average
+    const m = clampedAge + (LIFE_TABLE_MALE[clampedAge] || 15);
+    const f = clampedAge + (LIFE_TABLE_FEMALE[clampedAge] || 18);
+    return (m + f) / 2;
+  }
+
+  // ─── FRA Derivation ───
+  function getFRA(birthYear) {
+    if (birthYear <= 1954) return { years: 66, months: 0 };
+    if (birthYear === 1955) return { years: 66, months: 2 };
+    if (birthYear === 1956) return { years: 66, months: 4 };
+    if (birthYear === 1957) return { years: 66, months: 6 };
+    if (birthYear === 1958) return { years: 66, months: 8 };
+    if (birthYear === 1959) return { years: 66, months: 10 };
+    return { years: 67, months: 0 };
+  }
+
+  function fraToMonths(fra) { return fra.years * 12 + fra.months; }
+  function fraLabel(fra) { return fra.months === 0 ? fra.years + ' years' : fra.years + ' years, ' + fra.months + ' months'; }
+
+  // ─── Benefit Interpolation ───
+  function reductionFactor(monthsBefore) {
+    if (monthsBefore <= 36) return 1 - (monthsBefore * 5 / 900);
+    return 1 - (36 * 5 / 900) - (monthsBefore - 36) * 5 / 1200;
+  }
+  function creditFactor(monthsAfter) {
+    return 1 + (monthsAfter * 2 / 300);
+  }
+
+  function interpolateBenefits(fraBenefit, b62Entered, b70Entered, fra) {
+    const fraMonth = fraToMonths(fra);
+    const results = {};
+    for (let age = 62; age <= 70; age++) {
+      const claimMonth = age * 12;
+      let derived;
+      if (claimMonth < fraMonth) {
+        const monthsBefore = fraMonth - claimMonth;
+        derived = fraBenefit * reductionFactor(monthsBefore);
+      } else if (claimMonth > fraMonth) {
+        const monthsAfter = claimMonth - fraMonth;
+        derived = fraBenefit * creditFactor(monthsAfter);
+      } else {
+        derived = fraBenefit;
+      }
+      results[age] = Math.round(derived);
+    }
+    // Hard anchor: use entered values at 62 and 70 if close, else use entered
+    if (Math.abs(results[62] - b62Entered) > 5) results[62] = b62Entered;
+    if (Math.abs(results[70] - b70Entered) > 5) results[70] = b70Entered;
+    return results;
+  }
+
+  // ─── Lifetime Value Calc ───
+  function lifetimeCalc(monthlyBenefits, colaRate, deathAge) {
+    const results = {};
+    for (let claimAge = 62; claimAge <= 70; claimAge++) {
+      if (deathAge <= claimAge) {
+        results[claimAge] = { monthly: monthlyBenefits[claimAge], lifetime: 0, yearsCollecting: 0, reachable: false };
+        continue;
+      }
+      const totalMonths = Math.round((deathAge - claimAge) * 12);
+      let cumulative = 0;
+      const base = monthlyBenefits[claimAge];
+      for (let m = 0; m < totalMonths; m++) {
+        const year = Math.floor(m / 12);
+        cumulative += base * Math.pow(1 + colaRate, year);
+      }
+      results[claimAge] = {
+        monthly: monthlyBenefits[claimAge],
+        lifetime: Math.round(cumulative / 100) * 100,
+        yearsCollecting: Math.round((deathAge - claimAge) * 10) / 10,
+        reachable: true
+      };
+    }
+    return results;
+  }
+
+  // ─── Break-Even ───
+  function breakEvenAge(earlyAge, laterAge, monthlyBenefits, colaRate) {
+    const earlyBase = monthlyBenefits[earlyAge];
+    const laterBase = monthlyBenefits[laterAge];
+    let earlyCum = 0, laterCum = 0;
+    // Start from age earlyAge month by month
+    for (let m = 0; m < (100 - earlyAge) * 12; m++) {
+      const currentAge = earlyAge + m / 12;
+      const earlyYear = Math.floor(m / 12);
+      earlyCum += earlyBase * Math.pow(1 + colaRate, earlyYear);
+      if (currentAge >= laterAge) {
+        const laterMonth = Math.round((currentAge - laterAge) * 12);
+        const laterYear = Math.floor(laterMonth / 12);
+        laterCum += laterBase * Math.pow(1 + colaRate, laterYear);
+      }
+      if (laterCum > earlyCum && currentAge >= laterAge) {
+        return Math.round(currentAge * 10) / 10;
+      }
+    }
+    return null;
+  }
+
+  // ─── Earnings Test ───
+  function earningsTest(annualIncome, claimAge, retireAge, fraAgeDecimal, isWorking) {
+    if (!isWorking) return null;
+    if (claimAge >= retireAge) return null;
+    if (claimAge >= fraAgeDecimal) return null;
+    // Determine if reaching FRA in the claim year
+    const claimYearFRA = Math.floor(fraAgeDecimal) === claimAge;
+    const limit = claimYearFRA ? 59520 : 22320;
+    const divisor = claimYearFRA ? 3 : 2;
+    const excess = Math.max(0, annualIncome - limit);
+    const withheld = Math.round(excess / divisor);
+    return { limit, divisor, withheld, claimYearFRA };
+  }
+
+  // ─── Dollar formatting ───
+  function fmt(n) { return '$' + Math.abs(Math.round(n)).toLocaleString('en-US'); }
+  function fmtSigned(n) {
+    if (n === 0) return '—';
+    return (n > 0 ? '+' : '-') + fmt(n);
+  }
+
+  // ─── Parse dollar input ───
+  function parseDollar(el) {
+    const v = el.value.replace(/[^0-9.]/g, '');
+    return v === '' ? NaN : parseFloat(v);
+  }
+  function formatDollarInput(el) {
+    const v = parseDollar(el);
+    if (!isNaN(v)) el.value = '$' + Math.round(v).toLocaleString('en-US');
+  }
+
+  // ─── DOM refs ───
+  const $ = id => document.getElementById(id);
+  const marriedToggle = $('married');
+  const spouseCard = $('spouseCard');
+  const form = $('ssForm');
+  const resultsDiv = $('results');
+
+  // ─── Toggle handlers ───
+  marriedToggle.addEventListener('change', function() {
+    spouseCard.style.display = this.checked ? '' : 'none';
+    if (!this.checked) {
+      // Clear spouse data
+      ['sDob','sGender','sRetireAge','sWorking','sIncome','sFraB','sB62','sB70'].forEach(id => {
+        const el = $(id);
+        if (el) { el.value = ''; el.parentElement.classList.remove('has-error'); }
+      });
+      $('sIncomeGroup').style.display = 'none';
+    }
+    gaEvent('ss_spouse_added');
+  });
+
+  $('working').addEventListener('change', function() {
+    $('incomeGroup').style.display = this.value === 'yes' ? '' : 'none';
+  });
+  $('sWorking').addEventListener('change', function() {
+    $('sIncomeGroup').style.display = this.value === 'yes' ? '' : 'none';
+  });
+
+  // Accordion
+  $('accHeader').addEventListener('click', function() {
+    this.classList.toggle('open');
+    $('accBody').classList.toggle('open');
+    if ($('accBody').classList.contains('open')) gaEvent('ss_assumptions_opened');
+  });
+  $('accHeader').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.click(); }
+  });
+
+  // Dollar input formatting
+  ['income','fraB','b62','b70','sIncome','sFraB','sB62','sB70'].forEach(id => {
+    const el = $(id);
+    if (el) el.addEventListener('blur', function() { formatDollarInput(this); });
+  });
+
+  // FRA auto-display on DOB change
+  function updateFRANote(dobId, noteId, ageNoteId) {
+    const dob = $(dobId).value;
+    if (!dob) { $(noteId).textContent = ''; if (ageNoteId) $(ageNoteId).textContent = ''; return; }
+    const [y] = dob.split('-').map(Number);
+    const fra = getFRA(y);
+    $(noteId).textContent = 'Full Retirement Age: ' + fraLabel(fra);
+    if (ageNoteId) $(ageNoteId).textContent = 'Your Full Retirement Age is ' + fraLabel(fra) + '.';
+  }
+  $('dob').addEventListener('change', function() { updateFRANote('dob', 'fraNote', 'fraAgeNote'); });
+  $('sDob').addEventListener('change', function() { updateFRANote('sDob', 'sFraNote', 'sFraAgeNote'); });
+
+  // ─── Validation ───
+  function currentAge(dobStr) {
+    const [y, m] = dobStr.split('-').map(Number);
+    const now = new Date();
+    let age = now.getFullYear() - y;
+    if (now.getMonth() + 1 < m) age--;
+    return age;
+  }
+
+  function validatePerson(prefix) {
+    const isSpouse = prefix === 's';
+    const dobEl = $(isSpouse ? 'sDob' : 'dob');
+    const genderEl = $(isSpouse ? 'sGender' : 'gender');
+    const retireEl = $(isSpouse ? 'sRetireAge' : 'retireAge');
+    const workingEl = $(isSpouse ? 'sWorking' : 'working');
+    const incomeEl = $(isSpouse ? 'sIncome' : 'income');
+    const fraBEl = $(isSpouse ? 'sFraB' : 'fraB');
+    const b62El = $(isSpouse ? 'sB62' : 'b62');
+    const b70El = $(isSpouse ? 'sB70' : 'b70');
+
+    let valid = true;
+    const setErr = (el, show) => { el.parentElement.classList.toggle('has-error', show); if (show) valid = false; };
+
+    // DOB
+    const dob = dobEl.value;
+    let dobOk = !!dob;
+    if (dobOk) {
+      const age = currentAge(dob);
+      dobOk = age >= 40 && age <= 80;
+    }
+    setErr(dobEl, !dobOk);
+
+    // Gender
+    setErr(genderEl, !genderEl.value);
+
+    // Retire age
+    const ra = parseInt(retireEl.value);
+    setErr(retireEl, isNaN(ra) || ra < 55 || ra > 75);
+
+    // Working
+    setErr(workingEl, !workingEl.value);
+
+    // Income (conditional)
+    if (workingEl.value === 'yes') {
+      const inc = parseDollar(incomeEl);
+      setErr(incomeEl, isNaN(inc) || inc <= 0);
+    }
+
+    // FRA benefit
+    const fraB = parseDollar(fraBEl);
+    setErr(fraBEl, isNaN(fraB) || fraB <= 0);
+
+    // Age 62
+    const b62 = parseDollar(b62El);
+    let b62ok = !isNaN(b62) && b62 > 0;
+    if (b62ok && !isNaN(fraB) && b62 >= fraB) {
+      b62ok = false;
+      const errEl = $(isSpouse ? 'sB62Error' : 'b62Error');
+      if (errEl) errEl.textContent = 'Age 62 benefit should be less than your FRA benefit.';
+    }
+    setErr(b62El, !b62ok);
+
+    // Age 70
+    const b70 = parseDollar(b70El);
+    let b70ok = !isNaN(b70) && b70 > 0;
+    if (b70ok && !isNaN(fraB) && b70 <= fraB) {
+      b70ok = false;
+      const errEl = $(isSpouse ? 'sB70Error' : 'b70Error');
+      if (errEl) errEl.textContent = 'Age 70 benefit should be greater than your FRA benefit.';
+    }
+    setErr(b70El, !b70ok);
+
+    return valid;
+  }
+
+  // ─── Build results ───
+  function buildResults(prefix) {
+    const isSpouse = prefix === 's';
+    const dobEl = $(isSpouse ? 'sDob' : 'dob');
+    const genderEl = $(isSpouse ? 'sGender' : 'gender');
+    const retireEl = $(isSpouse ? 'sRetireAge' : 'retireAge');
+    const workingEl = $(isSpouse ? 'sWorking' : 'working');
+    const incomeEl = $(isSpouse ? 'sIncome' : 'income');
+    const fraBEl = $(isSpouse ? 'sFraB' : 'fraB');
+    const b62El = $(isSpouse ? 'sB62' : 'b62');
+    const b70El = $(isSpouse ? 'sB70' : 'b70');
+
+    const dob = dobEl.value;
+    const [birthY, birthM] = dob.split('-').map(Number);
+    const gender = genderEl.value;
+    const retireAge = parseInt(retireEl.value);
+    const isWorking = workingEl.value === 'yes';
+    const annualIncome = isWorking ? parseDollar(incomeEl) : 0;
+    let fraBenefit = parseDollar(fraBEl);
+    let b62Val = parseDollar(b62El);
+    let b70Val = parseDollar(b70El);
+
+    // Spousal benefit floor: if spouse benefits are all 0, use 50% of primary FRA
+    if (isSpouse && b62Val === 0 && fraBenefit === 0 && b70Val === 0) {
+      const primaryFRA = parseDollar($('fraB'));
+      fraBenefit = Math.round(primaryFRA * 0.5);
+      // Derive 62 and 70 from the spousal FRA floor
+      const sFra = getFRA(birthY);
+      const sFraMonths = fraToMonths(sFra);
+      b62Val = Math.round(fraBenefit * reductionFactor(sFraMonths - 62 * 12));
+      b70Val = Math.round(fraBenefit * creditFactor(70 * 12 - sFraMonths));
+    }
+
+    const fra = getFRA(birthY);
+    const fraDecimal = fra.years + fra.months / 12;
+    const colaRate = parseFloat($('cola').value || '2.6') / 100;
+    const age = currentAge(dob);
+
+    // Life expectancy
+    let leCustom = parseFloat($('leOverride').value);
+    let deathAge, leSource;
+    if (!isNaN(leCustom) && leCustom > 62 && !isSpouse) {
+      deathAge = leCustom;
+      leSource = deathAge + ' (custom)';
+    } else {
+      deathAge = Math.round(lifeExpectancy(age, gender) * 10) / 10;
+      const gLabel = gender === 'male' ? 'Male' : gender === 'female' ? 'Female' : 'Avg';
+      leSource = Math.round(deathAge) + ' (SSA 2022 table · ' + gLabel + ' · Age ' + age + ')';
+    }
+
+    // Interpolate benefits
+    const monthlyBenefits = interpolateBenefits(fraBenefit, b62Val, b70Val, fra);
+
+    // Lifetime calcs
+    const lifetime = lifetimeCalc(monthlyBenefits, colaRate, deathAge);
+
+    // Find highest lifetime total
+    let bestAge = 62, bestTotal = 0;
+    for (let a = 62; a <= 70; a++) {
+      if (lifetime[a].reachable && lifetime[a].lifetime > bestTotal) {
+        bestTotal = lifetime[a].lifetime;
+        bestAge = a;
+      }
+    }
+
+    // Break-even: 62 vs best age
+    const be = bestAge > 62 ? breakEvenAge(62, bestAge, monthlyBenefits, colaRate) : null;
+
+    // Earnings test for each age
+    const earningsTests = {};
+    let hasEarningsTest = false;
+    for (let a = 62; a <= 70; a++) {
+      const et = earningsTest(annualIncome, a, retireAge, fraDecimal, isWorking);
+      earningsTests[a] = et;
+      if (et && et.withheld > 0) hasEarningsTest = true;
+    }
+
+    return { fra, fraDecimal, colaRate, age, deathAge, leSource, monthlyBenefits, lifetime, bestAge, bestTotal, be, earningsTests, hasEarningsTest, annualIncome, fraBenefit, isWorking, retireAge };
+  }
+
+  function renderResults(data, prefix) {
+    const isSpouse = prefix === 's';
+    const barEl = $(isSpouse ? 'sAssumptionsBar' : 'assumptionsBar');
+    const findEl = $(isSpouse ? 'sFindings' : 'findings');
+    const tableEl = $(isSpouse ? 'sTableWrap' : 'tableWrap');
+    const warnEl = $(isSpouse ? 'sEarningsWarn' : 'earningsWarn');
+
+    // Assumptions bar
+    barEl.textContent = 'Projections based on: Life expectancy age ' + data.leSource +
+      ' · COLA ' + (data.colaRate * 100).toFixed(1) + '% · All figures in today\'s dollars adjusted for COLA';
+
+    // Key findings
+    const findings = [];
+    const diff70v62 = data.monthlyBenefits[70] - data.monthlyBenefits[62];
+    const pct = Math.round(diff70v62 / data.monthlyBenefits[62] * 100);
+    findings.push('Waiting from age 62 to age 70 increases the monthly benefit by ' + fmt(diff70v62) + ' (+' + pct + '%).');
+    findings.push('At the projected life expectancy of age ' + Math.round(data.deathAge) + ', claiming at age ' + data.bestAge + ' produces the highest projected cumulative total.');
+    if (data.be) {
+      findings.push('The break-even age between claiming at 62 and claiming at ' + data.bestAge + ' is age ' + Math.round(data.be) + '. Living past ' + Math.round(data.be) + ' favors the later claim date.');
+    }
+    if (data.hasEarningsTest) {
+      findings.push('\u26A0 Earnings test applies to early claim ages \u2014 see warning below.');
+    }
+    findEl.innerHTML = '<ul>' + findings.map(f => '<li>' + f + '</li>').join('') + '</ul>';
+
+    // Comparison table
+    let html = '<table class="cmp-table"><thead><tr><th>Claim Age</th><th>Monthly Benefit</th><th>Years Collecting</th><th>Projected Lifetime Total</th><th>vs. Age 62</th></tr></thead><tbody>';
+    const base62 = data.lifetime[62].lifetime;
+    for (let a = 62; a <= 70; a++) {
+      const d = data.lifetime[a];
+      const isFRA = (a === data.fra.years && data.fra.months === 0) || (Math.abs(a - data.fraDecimal) < 0.01);
+      const isBest = a === data.bestAge && d.reachable;
+      const isPast = a < data.age;
+
+      let cls = '';
+      if (isPast) cls = 'grayed';
+      else if (isBest) cls = 'highlight-row';
+
+      let ageLabel = '' + a;
+      if (isFRA) ageLabel += ' (FRA)';
+      if (isBest && !isPast) ageLabel += ' <span class="badge-green">Highest Lifetime Total</span>';
+
+      if (isPast) {
+        html += '<tr class="' + cls + '"><td>' + ageLabel + '</td><td colspan="4" style="text-align:center;">N/A — already past this age</td></tr>';
+      } else if (!d.reachable) {
+        html += '<tr class="grayed"><td>' + ageLabel + '</td><td>' + fmt(d.monthly) + '</td><td>0</td><td colspan="2" style="text-align:center;">$0 — projected life expectancy does not reach this claim age</td></tr>';
+      } else {
+        // Check earnings test
+        const et = data.earningsTests[a];
+        let monthlyDisplay = fmt(d.monthly);
+        let footnote = '';
+        if (et && et.withheld > 0) {
+          const effectiveAnnual = Math.max(0, d.monthly * 12 - et.withheld);
+          const effectiveMonthly = Math.round(effectiveAnnual / 12);
+          if (effectiveMonthly === 0) {
+            monthlyDisplay = '<span style="color:#dc2626;">$0 effective</span>';
+            footnote = ' <span style="font-size:10px;color:#dc2626;">&dagger;</span>';
+          } else {
+            monthlyDisplay += ' <span style="font-size:11px;color:#92400e;">(' + fmt(effectiveMonthly) + ' after earnings test)</span>';
+          }
+        }
+
+        const diff = d.lifetime - base62;
+        let diffClass = 'val-zero';
+        if (diff > 0) diffClass = 'val-pos';
+        else if (diff < 0) diffClass = 'val-neg';
+
+        html += '<tr class="' + cls + '"><td>' + ageLabel + footnote + '</td><td>' + monthlyDisplay + '</td><td>' + d.yearsCollecting.toFixed(1) + '</td><td>' + fmt(d.lifetime) + '</td><td class="' + diffClass + '">' + (a === 62 ? '—' : fmtSigned(diff)) + '</td></tr>';
+      }
+    }
+    html += '</tbody></table>';
+    if (data.hasEarningsTest) {
+      html += '<p style="font-size:11px;color:#dc2626;margin-top:4px;">&dagger; Earnings test withholds full benefit at this income level. Withheld amounts are credited back at FRA.</p>';
+    }
+    tableEl.innerHTML = html;
+
+    // Earnings test warning
+    if (data.hasEarningsTest) {
+      // Find the first applicable test
+      let sampleET = null;
+      for (let a = 62; a <= 70; a++) { if (data.earningsTests[a] && data.earningsTests[a].withheld > 0) { sampleET = data.earningsTests[a]; break; } }
+      warnEl.innerHTML = '<div class="callout callout-amber"><strong>Earnings Test May Apply to Early Claim Ages</strong>' +
+        '<p>If you claim Social Security before your Full Retirement Age and continue working, the SSA may temporarily withhold part of your benefit.</p>' +
+        '<p>At your income of ' + fmt(data.annualIncome) + ', the annual exempt amount is ' + fmt(sampleET.limit) + '. ' +
+        'For every $' + sampleET.divisor + ' you earn above that limit, $1 is withheld. Estimated annual withholding: <strong>' + fmt(sampleET.withheld) + '</strong>.</p>' +
+        '<p><strong>Important:</strong> Withheld benefits are not permanently lost. SSA recalculates your benefit at Full Retirement Age and credits any withheld months, resulting in a higher monthly benefit going forward.</p></div>';
+    } else {
+      warnEl.innerHTML = '';
+    }
+
+    return data;
+  }
+
+  // ─── SVG Chart ───
+  function renderChart(data) {
+    const container = $('chartArea');
+    const W = 700, H = 320, pad = { top: 20, right: 20, bottom: 40, left: 60 };
+    const plotW = W - pad.left - pad.right;
+    const plotH = H - pad.top - pad.bottom;
+
+    // Lines: 62, FRA age (rounded), 70, and bestAge if different
+    const lineAges = [62];
+    const fraInt = data.fra.years;
+    if (fraInt !== 62 && fraInt !== 70) lineAges.push(fraInt);
+    if (data.bestAge !== 62 && data.bestAge !== fraInt && data.bestAge !== 70) lineAges.push(data.bestAge);
+    lineAges.push(70);
+
+    const colors = {};
+    colors[62] = '#9ca3af';
+    colors[fraInt] = '#3b82f6';
+    colors[70] = '#7c3aed';
+    if (data.bestAge !== 62 && data.bestAge !== fraInt && data.bestAge !== 70) colors[data.bestAge] = '#22c55e';
+
+    const xMin = 62;
+    const xMax = Math.max(95, Math.round(data.deathAge) + 10);
+    const colaRate = data.colaRate;
+
+    // Build cumulative data for each line
+    const series = {};
+    let globalMax = 0;
+    lineAges.forEach(claimAge => {
+      const points = [];
+      const base = data.monthlyBenefits[claimAge];
+      let cum = 0;
+      for (let age = xMin; age <= xMax; age++) {
+        if (age >= claimAge && data.lifetime[claimAge].reachable) {
+          const yearsCollecting = age - claimAge;
+          // Sum months for this year
+          for (let m = 0; m < 12; m++) {
+            cum += base * Math.pow(1 + colaRate, yearsCollecting);
+          }
+        }
+        points.push({ age, cum });
+        if (cum > globalMax) globalMax = cum;
+      }
+      series[claimAge] = points;
+    });
+
+    const xScale = age => pad.left + ((age - xMin) / (xMax - xMin)) * plotW;
+    const yScale = val => pad.top + plotH - (val / globalMax) * plotH;
+
+    let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cumulative benefits chart">';
+
+    // Grid lines
+    const yTicks = 5;
+    for (let i = 0; i <= yTicks; i++) {
+      const val = (globalMax / yTicks) * i;
+      const y = yScale(val);
+      svg += '<line x1="' + pad.left + '" y1="' + y + '" x2="' + (W - pad.right) + '" y2="' + y + '" stroke="#e5e7eb" stroke-width="1"/>';
+      let label = val >= 1000000 ? '$' + (val / 1000000).toFixed(1) + 'm' : '$' + Math.round(val / 1000) + 'k';
+      svg += '<text x="' + (pad.left - 6) + '" y="' + (y + 4) + '" text-anchor="end" font-size="10" fill="#9ca3af">' + label + '</text>';
+    }
+
+    // X axis labels
+    for (let age = xMin; age <= xMax; age += 5) {
+      const x = xScale(age);
+      svg += '<text x="' + x + '" y="' + (H - 10) + '" text-anchor="middle" font-size="10" fill="#9ca3af">' + age + '</text>';
+    }
+    svg += '<text x="' + (pad.left + plotW / 2) + '" y="' + (H - 0) + '" text-anchor="middle" font-size="11" fill="#6b7280">Age</text>';
+
+    // Life expectancy vertical line
+    const leX = xScale(Math.round(data.deathAge));
+    svg += '<line x1="' + leX + '" y1="' + pad.top + '" x2="' + leX + '" y2="' + (pad.top + plotH) + '" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="5,4"/>';
+    svg += '<text x="' + (leX + 4) + '" y="' + (pad.top + 12) + '" font-size="10" fill="#f59e0b">Life Exp. (' + Math.round(data.deathAge) + ')</text>';
+
+    // Lines
+    lineAges.forEach(claimAge => {
+      const pts = series[claimAge];
+      let d = '';
+      pts.forEach((p, i) => {
+        const x = xScale(p.age);
+        const y = yScale(p.cum);
+        d += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1);
+      });
+      svg += '<path d="' + d + '" fill="none" stroke="' + (colors[claimAge] || '#666') + '" stroke-width="2.5"/>';
+    });
+
+    // Break-even dot
+    if (data.be && series[data.bestAge]) {
+      const beX = xScale(data.be);
+      const bePt = series[62].find(p => p.age === Math.round(data.be));
+      if (bePt) {
+        const beY = yScale(bePt.cum);
+        svg += '<circle cx="' + beX + '" cy="' + beY + '" r="4" fill="#ef4444" stroke="#fff" stroke-width="1.5"/>';
+        svg += '<text x="' + (beX + 6) + '" y="' + (beY - 6) + '" font-size="10" fill="#ef4444">Break-even (' + Math.round(data.be) + ')</text>';
+      }
+    }
+
+    svg += '</svg>';
+
+    // Legend
+    let legend = '<div class="chart-legend">';
+    lineAges.forEach(a => {
+      let label = 'Age ' + a;
+      if (a === fraInt) label += ' (FRA)';
+      if (a === data.bestAge && a !== 62 && a !== fraInt && a !== 70) label += ' (Highest)';
+      legend += '<span><span class="swatch" style="background:' + (colors[a] || '#666') + '"></span>' + label + '</span>';
+    });
+    legend += '</div>';
+
+    container.innerHTML = svg + legend;
+
+    // Screen reader summary
+    $('chartSummary').textContent = 'Cumulative benefits chart showing projected lifetime totals for claiming at ages ' +
+      lineAges.join(', ') + '. The highest projected lifetime total is ' + fmt(data.bestTotal) + ' at age ' + data.bestAge + '.';
+  }
+
+  // ─── Form Submit ───
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    gaEvent('ss_calculate_clicked');
+
+    // Validate primary
+    let valid = validatePerson('');
+    const isMarried = marriedToggle.checked;
+    if (isMarried) {
+      valid = validatePerson('s') && valid;
+    }
+
+    if (!valid) {
+      // Scroll to first error
+      const firstErr = document.querySelector('.has-error input, .has-error select');
+      if (firstErr) { firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' }); firstErr.focus(); }
+      return;
+    }
+
+    // Build and render primary
+    const pData = buildResults('');
+    renderResults(pData, '');
+    renderChart(pData);
+
+    // Survivor note
+    const survEl = $('survivorNote');
+    if (isMarried && pData.bestAge >= pData.fraDecimal) {
+      survEl.innerHTML = '<div class="callout callout-blue"><strong>Survivor Benefit Note</strong>' +
+        '<p>If the primary earner claims at or after their Full Retirement Age (' + pData.fra.years + '), the surviving spouse would receive 100% of the primary earner\'s benefit amount after the primary earner\'s death. Claiming before FRA permanently reduces the survivor benefit as well.</p></div>';
+    } else {
+      survEl.innerHTML = '';
+    }
+
+    // Spouse results
+    const spouseResDiv = $('spouseResults');
+    if (isMarried) {
+      const sData = buildResults('s');
+      renderResults(sData, 's');
+      spouseResDiv.style.display = 'block';
+    } else {
+      spouseResDiv.style.display = 'none';
+    }
+
+    resultsDiv.style.display = 'block';
+    resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+})();
+</script>
+</body>
+</html>
